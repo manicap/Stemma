@@ -1,3 +1,6 @@
+from django.apps import apps
+from django.db import models
+from django.db.migrations.state import ProjectState
 from django.test import SimpleTestCase
 
 from .choices import (
@@ -7,6 +10,7 @@ from .choices import (
     Gender,
     VerificationStatus,
 )
+from .models import AccessControlledModel, TimestampedModel, VerifiableModel
 
 
 class FixedChoicesTests(SimpleTestCase):
@@ -87,3 +91,77 @@ class FixedChoicesTests(SimpleTestCase):
                     len(choice_type.values),
                     len(set(choice_type.values)),
                 )
+
+
+class AbstractModelsTests(SimpleTestCase):
+    """Test metadata of shared abstract models."""
+
+    abstract_models = (
+        TimestampedModel,
+        AccessControlledModel,
+        VerifiableModel,
+    )
+
+    def test_models_are_abstract(self):
+        for abstract_model in self.abstract_models:
+            with self.subTest(model=abstract_model.__name__):
+                self.assertTrue(abstract_model._meta.abstract)
+
+    def test_timestamped_model_fields(self):
+        self.assertEqual(
+            [field.name for field in TimestampedModel._meta.local_fields],
+            ["created_at", "updated_at"],
+        )
+
+        created_at = TimestampedModel._meta.get_field("created_at")
+        updated_at = TimestampedModel._meta.get_field("updated_at")
+
+        self.assertIsInstance(created_at, models.DateTimeField)
+        self.assertTrue(created_at.auto_now_add)
+        self.assertIsInstance(updated_at, models.DateTimeField)
+        self.assertTrue(updated_at.auto_now)
+
+    def test_access_controlled_model_field(self):
+        self.assertEqual(
+            [field.name for field in AccessControlledModel._meta.local_fields],
+            ["access_level"],
+        )
+
+        access_level = AccessControlledModel._meta.get_field("access_level")
+
+        self.assertIsInstance(access_level, models.CharField)
+        self.assertEqual(access_level.max_length, 20)
+        self.assertEqual(access_level.choices, AccessLevel.choices)
+        self.assertEqual(access_level.default, AccessLevel.PUBLIC)
+
+    def test_verifiable_model_field(self):
+        self.assertEqual(
+            [field.name for field in VerifiableModel._meta.local_fields],
+            ["verification_status"],
+        )
+
+        verification_status = VerifiableModel._meta.get_field(
+            "verification_status"
+        )
+
+        self.assertIsInstance(verification_status, models.CharField)
+        self.assertEqual(verification_status.max_length, 20)
+        self.assertEqual(
+            verification_status.choices,
+            VerificationStatus.choices,
+        )
+        self.assertEqual(
+            verification_status.default,
+            VerificationStatus.UNCONFIRMED,
+        )
+
+    def test_abstract_models_do_not_define_database_tables(self):
+        migration_models = ProjectState.from_apps(apps).models
+
+        for abstract_model in self.abstract_models:
+            with self.subTest(model=abstract_model.__name__):
+                model_key = (
+                    abstract_model._meta.app_label,
+                    abstract_model._meta.model_name,
+                )
+                self.assertNotIn(model_key, migration_models)
