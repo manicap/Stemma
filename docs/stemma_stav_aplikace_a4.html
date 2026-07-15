@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stemma – stav aplikace po M1</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 210mm; height: 297mm; }
+    body {
+      color: #243033;
+      background: #f5f1e8;
+      font-family: "Segoe UI", Arial, sans-serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .sheet {
+      width: 210mm;
+      height: 297mm;
+      padding: 13mm 14mm 11mm;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 5mm;
+      overflow: hidden;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8mm;
+      align-items: start;
+      border-bottom: 1.2mm solid #167d7b;
+      padding-bottom: 4mm;
+    }
+    .eyebrow { color: #167d7b; font-size: 8.5pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 1.5mm 0 1mm; font-size: 25pt; line-height: 1; letter-spacing: -.02em; }
+    .subtitle { margin: 0; color: #6e7472; font-size: 10pt; }
+    .date { text-align: right; color: #6e7472; font-size: 8pt; line-height: 1.5; }
+    .date strong { display: block; color: #243033; font-size: 10pt; }
+    .milestones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+    .milestone { padding: 3.2mm 4mm; border-radius: 3mm; border: .35mm solid #ddd5c8; background: #fffcf6; }
+    .milestone.done { background: #e5f2df; border-color: #bfd5b8; }
+    .milestone.next { background: #d7ece7; border-color: #9dcfc7; }
+    .milestone small { display: block; color: #6e7472; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+    .milestone strong { display: block; margin-top: 1mm; font-size: 10.5pt; }
+    .milestone span { display: block; margin-top: .8mm; font-size: 7.8pt; color: #4c5859; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; min-height: 0; }
+    .column { display: grid; align-content: start; gap: 3.5mm; }
+    section { background: #fffcf6; border: .3mm solid #ddd5c8; border-radius: 3mm; padding: 4mm; }
+    h2 { margin: 0 0 2.2mm; color: #167d7b; font-size: 9pt; text-transform: uppercase; letter-spacing: .08em; }
+    h3 { margin: 0 0 1mm; font-size: 9pt; }
+    p, li { font-size: 7.7pt; line-height: 1.35; }
+    p { margin: 0; }
+    ul { margin: 0; padding-left: 4mm; }
+    li + li { margin-top: .8mm; }
+    .stack { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.8mm; }
+    .chip { border-radius: 2mm; background: #f0eadf; padding: 2mm 2.5mm; font-size: 7.6pt; }
+    .chip strong { display: block; font-size: 9pt; margin-bottom: .4mm; }
+    .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm; }
+    .metric { text-align: center; background: #e2eef4; color: #315c70; border-radius: 2mm; padding: 2.2mm 1mm; }
+    .metric strong { display: block; color: #243033; font-size: 15pt; line-height: 1; }
+    .metric span { display: block; margin-top: .8mm; font-size: 6.8pt; }
+    .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2mm; align-items: stretch; }
+    .flow div { background: #f0eadf; padding: 2.2mm 1mm; text-align: center; border-radius: 2mm; font-size: 7pt; font-weight: 700; }
+    .flow div:last-child { background: #d7ece7; color: #106966; }
+    .principles { columns: 2; column-gap: 5mm; }
+    .principles li { break-inside: avoid; }
+    footer { display: flex; justify-content: space-between; align-items: center; border-top: .3mm solid #ddd5c8; padding-top: 2.5mm; color: #6e7472; font-size: 6.8pt; }
+    code { font-family: Consolas, monospace; font-size: .92em; }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <header>
+      <div>
+        <div class="eyebrow">Rodinný informační systém</div>
+        <h1>Stemma · stav aplikace</h1>
+        <p class="subtitle">Implementační přehled po dokončení společného základu M1</p>
+      </div>
+      <div class="date"><strong>16. 7. 2026</strong>větev <code>feature/mvp</code><br>dokumentace 0.8</div>
+    </header>
+
+    <div class="milestones">
+      <div class="milestone done"><small>M0 · dokončeno</small><strong>Django projekt</strong><span>config, accounts.User, první migrace</span></div>
+      <div class="milestone done"><small>M1 · dokončeno</small><strong>Společný základ</strong><span>common, výčty, abstraktní modely, validace</span></div>
+      <div class="milestone next"><small>M2 · následuje</small><strong>Jádro domény</strong><span>Osoba · Místo · Událost · Vazba</span></div>
+    </div>
+
+    <main>
+      <div class="column">
+        <section>
+          <h2>Technologický základ</h2>
+          <div class="stack">
+            <div class="chip"><strong>Python 3.14.6</strong>standardní <code>venv</code> + <code>pip</code></div>
+            <div class="chip"><strong>Django 5.2.16</strong>LTS, serverové šablony</div>
+            <div class="chip"><strong>SQLite 3.50.4</strong>vývoj a první provoz</div>
+            <div class="chip"><strong>HTMX</strong>dílčí aktualizace, minimum JS</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Co dnes existuje</h2>
+          <h3>Projektové aplikace</h3>
+          <ul>
+            <li><strong>accounts</strong> — vlastní konkrétní model <code>accounts.User</code></li>
+            <li><strong>common</strong> — sdílený základ bez obchodních entit a vlastní tabulky</li>
+          </ul>
+          <h3 style="margin-top:2.5mm">Abstraktní modely common</h3>
+          <p>Timestamped, Authored, AccessControlled, Verifiable, Lifecycle, PartialDate a Lookup.</p>
+        </section>
+
+        <section>
+          <h2>Common · implementováno</h2>
+          <ul>
+            <li>5 pevných <code>TextChoices</code>: pohlaví, přístup, ověření, přesnost a kvalifikátor data.</li>
+            <li>Archivace a měkké odstranění zůstávají dvě odlišné operace.</li>
+            <li>Neúplná data uchovávají skutečně známé části bez falešného 1. ledna.</li>
+            <li>Čistá validace kontroluje kalendář, návaznost částí, rozsahy a kvalifikátory.</li>
+            <li><code>sort_date</code> a <code>sort_date_end</code> jsou pouze technické odvozené meze.</li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="column">
+        <section>
+          <h2>Kvalita a databáze</h2>
+          <div class="metric-grid">
+            <div class="metric"><strong>28</strong><span>testů projektu · OK</span></div>
+            <div class="metric"><strong>26</strong><span>testů common · OK</span></div>
+            <div class="metric"><strong>0</strong><span>nových migrací v M1</span></div>
+          </div>
+          <p style="margin-top:2.5mm"><strong>Django check:</strong> bez problémů · <strong>makemigrations:</strong> No changes detected.</p>
+        </section>
+
+        <section>
+          <h2>Následující krok · M2</h2>
+          <div class="flow">
+            <div>Osoba</div><div>Místo</div><div>Událost</div><div>Vazba</div>
+          </div>
+          <ul style="margin-top:2.5mm">
+            <li>založit potřebné doménové aplikace a základní číselníky,</li>
+            <li>implementovat modely po malých strukturálních krocích,</li>
+            <li>držet strukturální a datové migrace oddělené,</li>
+            <li>průběžně testovat integritu a doménová pravidla.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Hlavní zásady</h2>
+          <ul class="principles">
+            <li>Jeden fakt se ukládá jen jednou.</li>
+            <li>Narození a úmrtí jsou události.</li>
+            <li>Odvozené hodnoty se zbytečně neukládají.</li>
+            <li>Neúplná data nezískávají falešnou přesnost.</li>
+            <li>Pevné hodnoty jsou <code>TextChoices</code>; rozšiřitelné pojmy číselníky.</li>
+            <li>Zápisy patří do služeb, složité čtení do selektorů.</li>
+            <li>Oprávnění se vždy vynucují na serveru.</li>
+            <li>Přílohy a zdroje používají explicitní vazby.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Orientace v projektu</h2>
+          <p><strong>Zdroj pravdy:</strong> GitHub repozitář <code>manicap/Stemma</code>.<br><strong>Technický návrh:</strong> <code>docs/11_DATABAZOVY_NAVRH.md</code>.<br><strong>Workflow:</strong> návrh → malý krok → testy → kontrola diffu → commit.</p>
+        </section>
+      </div>
+    </main>
+
+    <footer><span>Stemma · pracovní stavový sheet</span><span>M0 + M1 dokončeny · M2 připraven</span></footer>
+  </div>
+</body>
+</html>

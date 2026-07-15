@@ -1,15 +1,22 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.3  
-**Stav:** schválený technický návrh před implementací  
-**Datum revize:** 15. 7. 2026
+**Verze:** 0.4
+**Stav:** schválený technický návrh v implementaci
+**Datum revize:** 16. 7. 2026
 
 ## 1. Účel
 
 Dokument definuje implementovatelný databázový návrh aplikace **Stemma** pro Django a SQLite. Navazuje zejména na dokumenty `02_FUNKCNI_SPECIFIKACE.md`, `03_DATOVY_MODEL.md`, `04_UZIVATELSKE_ROLE_A_PRAVA.md`, `08_ARCHITEKTONICKE_PRINCIPY.md`, `09_CODING_STANDARD.md` a `10_UI_UX_NAVRH.md`.
 
-Návrh prošel logickou i architektonickou revizí. Další etapou je vytvoření konkrétních Django modelů, migrací, doménových služeb a testů integrity.
+Návrh prošel logickou i architektonickou revizí. Milníky M0 a M1 jsou implementovány; další etapou je vytvoření konkrétních doménových modelů, migrací, služeb a testů integrity v M2.
+
+### 1.1 Stav implementace
+
+- M0: projekt `config`, aplikace `accounts`, vlastní `accounts.User` a první migrace jsou dokončeny.
+- M1: aplikace `common`, pět aktuálně potřebných pevných výčtů, sedm abstraktních modelů a validace neúplných dat jsou dokončeny.
+- `common` nevytváří vlastní tabulku; při dokončení M1 nevznikla nová migrace.
+- Aktuální implementační krok je M2: Osoba, Místo, Událost a Vazba.
 
 ## 2. Závazné principy
 
@@ -53,7 +60,7 @@ Pevnými Django `TextChoices` budou zejména:
 - auditní operace,
 - stav fyzického souboru.
 
-Tyto hodnoty nebudou uživatelsky spravovanými číselníky, protože jsou součástí validační nebo bezpečnostní logiky.
+Tyto hodnoty nebudou uživatelsky spravovanými číselníky, protože jsou součástí validační nebo bezpečnostní logiky. V M1 byly implementovány výčty pro pohlaví, přístupovou úroveň, stav ověření, přesnost data a kvalifikátor data. Auditní operace a stav fyzického souboru budou doplněny s příslušnými doménami.
 
 ### 4.2 Abstraktní modely
 
@@ -67,7 +74,7 @@ Společná pole se budou sdílet pomocí abstraktních Django modelů:
 - `PartialDateModel` — neúplný a nejistý časový údaj,
 - `LookupModel` — společný základ číselníků.
 
-Abstraktní model nevytváří vlastní tabulku. Jeho pole se vloží do konkrétních modelů.
+Abstraktní model nevytváří vlastní tabulku. Jeho pole se vloží do konkrétních modelů. Všechny uvedené abstraktní modely byly implementovány a otestovány v M1.
 
 ### 4.3 Archivace a měkké odstranění
 
@@ -111,7 +118,7 @@ Logická pole:
 
 Technická řadicí data se automaticky odvozují a nesmějí se zobrazovat jako historický fakt. Uživatel je neupravuje.
 
-Validace musí hlídat například správný rozsah měsíce, existenci dne v konkrétním měsíci, zákaz dne bez měsíce, zákaz konce mimo rozmezí a zákaz konce před začátkem.
+Validace hlídá správný rozsah roku a měsíce, existenci dne v konkrétním měsíci, návaznost částí data, povolené kvalifikátory, zákaz konce mimo rozmezí a zákaz konce před začátkem. Implementace v `common/partial_dates.py` používá čisté pomocné funkce a stabilní chybové kódy. Modelová metoda `clean()` validuje a nastavuje technické meze; `save()` nevolá `full_clean()` a pouze zajišťuje jejich přepočet před uložením.
 
 ## 6. Osoba a jména
 

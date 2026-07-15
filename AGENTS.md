@@ -193,4 +193,4 @@ git diff
 
 The active implementation branch is `feature/mvp`.
 
-Milestone M0 is complete. Current work is milestone M1: the shared `common` foundation, including fixed choices, abstract models and partial-date validation with tests.
+Milestones M0 and M1 are complete. Current work is milestone M2: the core domain model for Person, Place, Event and Relationship, implemented in small structural and data-migration steps.

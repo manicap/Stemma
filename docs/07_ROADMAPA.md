@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.5  
-**Stav:** návrh postupu  
-**Datum revize:** 15. 7. 2026
+**Verze:** 0.6
+**Stav:** realizace MVP
+**Datum revize:** 16. 7. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -49,23 +49,35 @@
 - nastavena SQLite, čeština, časové pásmo `Europe/Prague` a lokální tajná konfigurace mimo Git,
 - změny commitnuty a pushnuty do `feature/mvp`.
 
-#### M1 – společný základ
+#### M1 – společný základ ✅
 
-1. založit aplikaci `common`,
-2. vytvořit pevné výčty,
-3. vytvořit abstraktní modely,
-4. doplnit validaci neúplného data a její testy.
+- založena a registrována aplikace `common`,
+- vytvořeny pevné výčty pro pohlaví, přístup, ověření a neúplná data,
+- vytvořeno sedm abstraktních modelů společných polí a číselníků,
+- doplněna validace neúplných a nejistých dat,
+- doplněn výpočet technických mezí `sort_date` a `sort_date_end`,
+- doplněny testy; M1 nevytváří vlastní databázovou tabulku ani migraci,
+- změny implementovány a ověřeny ve větvi `feature/mvp`.
+
+#### M2 – jádro Osoba, Místo, Událost a Vazba ◀ aktuální
+
+1. založit doménové aplikace potřebné pro jádro,
+2. implementovat základní číselníky a model Osoba,
+3. implementovat Místo,
+4. implementovat Událost a účastníky události,
+5. implementovat Vazbu mezi osobami,
+6. vytvářet malé strukturální a datové migrace,
+7. doplňovat testy databázové integrity a doménových pravidel.
 
 #### Následující implementační kroky
 
-1. implementovat jádro Osoba, Místo, Událost a Vazba,
-2. vytvářet malé strukturální a datové migrace,
-3. doplnit bydliště a hrobová místa,
-4. doplnit přílohy, zdroje a jejich propojení,
-5. doplnit zdravotní záznamy,
-6. doplnit audit a projektová oprávnění,
-7. rozšiřovat testy databázové integrity,
-8. připravit vývojová ukázková data.
+1. dokončit M2 – jádro Osoba, Místo, Událost a Vazba,
+2. doplnit bydliště a hrobová místa,
+3. doplnit přílohy, zdroje a jejich propojení,
+4. doplnit zdravotní záznamy,
+5. doplnit audit a projektová oprávnění,
+6. rozšiřovat testy databázové integrity,
+7. připravit vývojová ukázková data.
 
 ## Fáze 4 – Interaktivní prototyp
 

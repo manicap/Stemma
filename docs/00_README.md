@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.7
-**Stav:** pracovní návrh  
-**Datum revize:** 15. 7. 2026
+**Verze dokumentace:** 0.8
+**Stav:** pracovní návrh v implementaci
+**Datum revize:** 16. 7. 2026
 
 ## Účel balíčku
 
@@ -26,6 +26,12 @@ Projekt není zamýšlen pouze jako rodokmen, ale jako dlouhodobě rozšiřiteln
 12. `12_ARCHITEKTONICKA_ROZHODNUTI.md`
 13. `CHANGELOG.md`
 
+Přehledové výstupy:
+
+- `stemma_databaze_a4_prehled.pdf` – stručný přehled databázového návrhu,
+- `stemma_stav_aplikace_a4.html` – editovatelný zdroj stavového sheetu,
+- `stemma_stav_aplikace_a4.pdf` – A4 stavový sheet po dokončení M1.
+
 ## Jak dokumentaci používat
 
 - Za platnou se považuje vždy nejnovější verze dokumentu.
@@ -35,6 +41,19 @@ Projekt není zamýšlen pouze jako rodokmen, ale jako dlouhodobě rozšiřiteln
 - Starší verze se nemažou; přesouvají se do archivu.
 
 
+
+## Stav verze 0.8
+
+Verze 0.8 zaznamenává dokončení milníku M1 a přechod k jádru domény:
+
+- potvrzuje založení a registraci aplikace `common`,
+- eviduje pět pevných `TextChoices` a sedm abstraktních modelů,
+- zaznamenává validaci neúplných a nejistých dat bez falešné přesnosti,
+- potvrzuje automatické odvozování technických mezí `sort_date` a `sort_date_end`,
+- eviduje 26 testů aplikace `common` a 28 testů celého projektu,
+- potvrzuje, že M1 nevytvořil vlastní databázovou tabulku ani migraci,
+- označuje M2 – jádro Osoba, Místo, Událost a Vazba – jako následující implementační krok,
+- přidává editovatelný zdroj a PDF stavového A4 sheetu.
 
 ## Stav verze 0.7
 
@@ -110,9 +129,10 @@ Oficiální GitHub repozitář projektu:
 - Návrh UI/UX je uzavřen jako schválený pracovní základ.
 - Databázový a technický návrh je dokončen jako schválený pracovní základ.
 - Implementace MVP byla zahájena ve větvi `feature/mvp`.
-- Milník M0 – založení Django projektu – je dokončen.
-- Existuje konfigurační balíček `config`, aplikace `accounts`, vlastní model `accounts.User`, první migrace a základní testy.
-- Následujícím krokem je aplikace `common`, společné výčty a abstraktní modely.
+- Milníky M0 – založení Django projektu – a M1 – společný základ – jsou dokončeny.
+- Existuje konfigurační balíček `config`, aplikace `accounts` a `common`, vlastní model `accounts.User`, první projektová migrace a testovaný společný základ.
+- `common` obsahuje pevné výčty, abstraktní modely a validaci neúplných dat včetně technických řadicích mezí.
+- Aktuálním krokem je M2: jádro Osoba, Místo, Událost a Vazba.
 - Hlavním technickým dokumentem zůstává `11_DATABAZOVY_NAVRH.md`.
 
 

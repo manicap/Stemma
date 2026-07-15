@@ -1,5 +1,18 @@
 # Historie změn dokumentace
 
+## Verze 0.8 – 16. 7. 2026
+
+- dokončen milník M1 – společný základ aplikace `common`,
+- implementováno pět pevných výčtů a sedm abstraktních modelů,
+- doplněna validace neúplných a nejistých dat se stabilními chybovými kódy,
+- doplněno automatické odvozování `sort_date` a `sort_date_end` bez falešné historické přesnosti,
+- ověřeno 26 testů aplikace `common` a 28 testů celého projektu,
+- potvrzen čistý stav migrací: `No changes detected`,
+- roadmapa přesunuta na M2 – jádro Osoba, Místo, Událost a Vazba,
+- aktualizován implementační stav v databázovém návrhu a evidence rozhodnutí,
+- přidán editovatelný HTML zdroj a PDF stavového A4 sheetu,
+- nebyla zjištěna potřeba nového ACP.
+
 ## Verze 0.7 – 15. 7. 2026
 
 - zahájena implementace MVP ve větvi `feature/mvp`,

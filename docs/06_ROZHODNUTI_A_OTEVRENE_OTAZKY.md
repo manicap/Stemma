@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.7  
+**Verze:** 0.8
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 15. 7. 2026
+**Datum revize:** 16. 7. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -54,6 +54,12 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 108. Lokální `SECRET_KEY`, `DEBUG` a `ALLOWED_HOSTS` jsou uloženy v ignorovaném souboru `config/settings_local.py`; v repozitáři je pouze vzor.
 109. Implementace MVP probíhá ve větvi `feature/mvp`.
 110. Dokončení M0 nevyžaduje nové ACP; jde o realizaci a konkretizaci ACP-001, ACP-004 a schváleného databázového návrhu.
+111. Aplikace `common` je společným technickým základem a nevlastní obchodní entity.
+112. V M1 bylo implementováno pět aktuálně potřebných pevných výčtů: pohlaví, přístupová úroveň, stav ověření, přesnost data a kvalifikátor data; další systémové výčty vzniknou v příslušných doménových milnících.
+113. Společná pole poskytují abstraktní modely `TimestampedModel`, `AuthoredModel`, `AccessControlledModel`, `VerifiableModel`, `LifecycleModel`, `PartialDateModel` a `LookupModel`.
+114. Neúplné datum se validuje společnou čistou logikou; historické části data zůstávají zdrojem pravdy a `sort_date` a `sort_date_end` jsou pouze automaticky odvozené technické meze.
+115. Přímé `save()` nevolá `full_clean()`; validaci zajišťují formuláře, explicitní `full_clean()` nebo doménové služby, zatímco uložení pouze přepočítá technické řadicí hodnoty.
+116. Milník M1 je dokončen bez nové projektové migrace a bez potřeby nového ACP. Následujícím krokem je M2 – jádro Osoba, Místo, Událost a Vazba.
 
 ## 2. Otevřené otázky
 
