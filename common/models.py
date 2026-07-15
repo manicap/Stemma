@@ -88,3 +88,32 @@ class LifecycleModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class LookupModel(models.Model):
+    """Společný základ uživatelsky spravovaných číselníků."""
+
+    code = models.CharField(
+        max_length=50,
+        unique=True,
+    )
+    name = models.CharField(
+        max_length=100,
+    )
+    description = models.TextField(
+        blank=True,
+    )
+    sort_order = models.PositiveIntegerField(
+        default=0,
+    )
+    is_active = models.BooleanField(
+        default=True,
+    )
+    is_system = models.BooleanField(
+        default=False,
+        editable=False,
+    )
+
+    class Meta:
+        abstract = True
+        ordering = ("sort_order", "name", "code")

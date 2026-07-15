@@ -14,6 +14,7 @@ from .models import (
     AccessControlledModel,
     AuthoredModel,
     LifecycleModel,
+    LookupModel,
     TimestampedModel,
     VerifiableModel,
 )
@@ -108,6 +109,7 @@ class AbstractModelsTests(SimpleTestCase):
         AccessControlledModel,
         VerifiableModel,
         LifecycleModel,
+        LookupModel,
     )
 
     def test_models_are_abstract(self):
@@ -218,6 +220,52 @@ class AbstractModelsTests(SimpleTestCase):
                 self.assertIsInstance(reason_field, models.TextField)
                 self.assertTrue(reason_field.blank)
                 self.assertFalse(reason_field.null)
+
+    def test_lookup_model_fields(self):
+        self.assertEqual(
+            [field.name for field in LookupModel._meta.local_fields],
+            [
+                "code",
+                "name",
+                "description",
+                "sort_order",
+                "is_active",
+                "is_system",
+            ],
+        )
+
+        code = LookupModel._meta.get_field("code")
+        self.assertIsInstance(code, models.CharField)
+        self.assertEqual(code.max_length, 50)
+        self.assertTrue(code.unique)
+
+        name = LookupModel._meta.get_field("name")
+        self.assertIsInstance(name, models.CharField)
+        self.assertEqual(name.max_length, 100)
+
+        description = LookupModel._meta.get_field("description")
+        self.assertIsInstance(description, models.TextField)
+        self.assertTrue(description.blank)
+        self.assertFalse(description.null)
+
+        sort_order = LookupModel._meta.get_field("sort_order")
+        self.assertIsInstance(sort_order, models.PositiveIntegerField)
+        self.assertEqual(sort_order.default, 0)
+
+        is_active = LookupModel._meta.get_field("is_active")
+        self.assertIsInstance(is_active, models.BooleanField)
+        self.assertIs(is_active.default, True)
+
+        is_system = LookupModel._meta.get_field("is_system")
+        self.assertIsInstance(is_system, models.BooleanField)
+        self.assertIs(is_system.default, False)
+        self.assertFalse(is_system.editable)
+
+    def test_lookup_model_ordering(self):
+        self.assertEqual(
+            LookupModel._meta.ordering,
+            ("sort_order", "name", "code"),
+        )
 
     def test_abstract_models_are_not_registered_as_concrete_models(self):
         registered_models = set(apps.get_models())
