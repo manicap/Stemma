@@ -186,7 +186,7 @@ class PartialDateModel(models.Model):
             self._partial_date_value()
         )
         update_fields = kwargs.get("update_fields")
-        if update_fields is not None:
+        if update_fields:
             kwargs["update_fields"] = set(update_fields) | {
                 "sort_date",
                 "sort_date_end",

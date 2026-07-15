@@ -993,6 +993,32 @@ class PartialDateDerivationTests(SimpleTestCase):
                 )
                 self.assertEqual(derive_sort_dates(value), expected)
 
+    def test_range_day_without_month_does_not_create_false_date(self):
+        invalid_ranges = (
+            PartialDateValue(
+                DatePrecision.RANGE,
+                DateQualifier.NONE,
+                start_year=1900,
+                start_day=15,
+                end_year=1901,
+            ),
+            PartialDateValue(
+                DatePrecision.RANGE,
+                DateQualifier.NONE,
+                start_year=1900,
+                end_year=1901,
+                end_day=15,
+            ),
+        )
+
+        for value in invalid_ranges:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "Den nelze odvodit bez měsíce",
+                ):
+                    derive_sort_dates(value)
+
 
 class PartialDateModelBehaviorTests(SimpleTestCase):
     """Test model integration without creating a persistent model."""
@@ -1088,6 +1114,31 @@ class PartialDateModelSaveTests(TransactionTestCase):
             instance.refresh_from_db()
             self.assertEqual(instance.sort_date, date(2000, 2, 1))
             self.assertEqual(instance.sort_date_end, date(2000, 2, 29))
+        finally:
+            with connection.schema_editor() as schema_editor:
+                schema_editor.delete_model(test_model)
+
+    @isolate_apps("common")
+    def test_save_with_empty_update_fields_does_not_write(self):
+        test_model = create_partial_date_test_model()
+        with connection.schema_editor() as schema_editor:
+            schema_editor.create_model(test_model)
+
+        try:
+            instance = test_model.objects.create(
+                date_precision=DatePrecision.YEAR,
+                date_qualifier=DateQualifier.NONE,
+                start_year=1900,
+            )
+            instance.start_year = 2000
+
+            with self.assertNumQueries(0):
+                instance.save(update_fields=set())
+
+            instance.refresh_from_db()
+            self.assertEqual(instance.start_year, 1900)
+            self.assertEqual(instance.sort_date, date(1900, 1, 1))
+            self.assertEqual(instance.sort_date_end, date(1900, 12, 31))
         finally:
             with connection.schema_editor() as schema_editor:
                 schema_editor.delete_model(test_model)

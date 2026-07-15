@@ -260,8 +260,16 @@ def _earliest_date(
     day: int | None,
 ) -> date | None:
     if year is None:
+        if month is not None or day is not None:
+            raise ValueError("Měsíc ani den nelze odvodit bez roku.")
         return None
-    return date(year, month or 1, day or 1)
+    if day is not None:
+        if month is None:
+            raise ValueError("Den nelze odvodit bez měsíce.")
+        return date(year, month, day)
+    if month is not None:
+        return date(year, month, 1)
+    return date(year, 1, 1)
 
 
 def _latest_date(
@@ -270,9 +278,13 @@ def _latest_date(
     day: int | None,
 ) -> date | None:
     if year is None:
+        if month is not None or day is not None:
+            raise ValueError("Měsíc ani den nelze odvodit bez roku.")
         return None
     if day is not None:
-        return date(year, month or 1, day)
+        if month is None:
+            raise ValueError("Den nelze odvodit bez měsíce.")
+        return date(year, month, day)
     if month is not None:
         return date(year, month, monthrange(year, month)[1])
     return date(year, 12, 31)
