@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.1  
+**Verze:** 0.2  
 **Stav:** koncept  
-**Datum revize:** 14. 7. 2026
+**Datum revize:** 15. 7. 2026
 
 ## 1. Základní pilíře
 
@@ -35,6 +35,7 @@ Navržená pole:
 - další jména,
 - přezdívka,
 - pohlaví,
+- kategorie osoby,
 - titul před jménem,
 - titul za jménem,
 - stručná poznámka,
@@ -54,6 +55,26 @@ Neukládá se přímo:
 - římská číslice.
 
 Tyto údaje se odvozují z událostí a pravidel aplikace.
+
+### 2.1 Kategorie osoby
+
+Každá osoba může být zařazena do jedné hlavní kategorie podle svého vztahu k rodině a významu v rodinném příběhu.
+
+Základní kategorie:
+
+1. **Přímá rodina** – přímí předci a potomci.
+2. **Ostatní rodina** – sourozenci předků, jejich potomci, příbuzní sňatkem a další vzdálenější příbuzenstvo.
+3. **Blízcí rodině** – rodinní přátelé, kmotři a další dlouhodobě blízké osoby, pokud již nepatří do některé rodinné kategorie.
+4. **Duchovní** – farář nebo jiný duchovní významně spojený s rodinou.
+5. **Další související osoby** – svědci, sousedé, zaměstnavatelé, hospodářští správci a jiné osoby důležité pro rodinný příběh.
+
+Pravidla:
+
+- kategorie je obecné zařazení osoby a nenahrazuje konkrétní vazby mezi osobami,
+- kmotrovství, příbuzenství, partnerství a další konkrétní vztahy se nadále evidují jako vazby,
+- pokud osoba splňuje více možností, přednost má rodinná kategorie,
+- seznam kategorií má být spravován jako číselník, aby jej bylo možné později rozšířit bez změny struktury entity Osoba,
+- kategorie může být dočasně nevyplněná, pokud zatím nelze osobu spolehlivě zařadit.
 
 ## 3. Událost
 
