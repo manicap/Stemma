@@ -13,6 +13,7 @@ from .choices import (
 from .models import (
     AccessControlledModel,
     AuthoredModel,
+    LifecycleModel,
     TimestampedModel,
     VerifiableModel,
 )
@@ -106,6 +107,7 @@ class AbstractModelsTests(SimpleTestCase):
         AuthoredModel,
         AccessControlledModel,
         VerifiableModel,
+        LifecycleModel,
     )
 
     def test_models_are_abstract(self):
@@ -175,6 +177,47 @@ class AbstractModelsTests(SimpleTestCase):
             verification_status.default,
             VerificationStatus.UNCONFIRMED,
         )
+
+    def test_lifecycle_model_fields(self):
+        self.assertEqual(
+            [field.name for field in LifecycleModel._meta.local_fields],
+            [
+                "archived_at",
+                "archived_by",
+                "archive_reason",
+                "deleted_at",
+                "deleted_by",
+                "deletion_reason",
+            ],
+        )
+
+        for field_name in ("archived_at", "deleted_at"):
+            with self.subTest(field=field_name):
+                date_field = LifecycleModel._meta.get_field(field_name)
+                self.assertIsInstance(date_field, models.DateTimeField)
+                self.assertTrue(date_field.null)
+                self.assertTrue(date_field.blank)
+                self.assertFalse(date_field.editable)
+
+        for field_name in ("archived_by", "deleted_by"):
+            with self.subTest(field=field_name):
+                user_field = LifecycleModel._meta.get_field(field_name)
+                self.assertIsInstance(user_field, models.ForeignKey)
+                self.assertEqual(
+                    user_field.remote_field.model,
+                    settings.AUTH_USER_MODEL,
+                )
+                self.assertIs(user_field.remote_field.on_delete, models.SET_NULL)
+                self.assertTrue(user_field.null)
+                self.assertTrue(user_field.blank)
+                self.assertEqual(user_field.remote_field.related_name, "+")
+
+        for field_name in ("archive_reason", "deletion_reason"):
+            with self.subTest(field=field_name):
+                reason_field = LifecycleModel._meta.get_field(field_name)
+                self.assertIsInstance(reason_field, models.TextField)
+                self.assertTrue(reason_field.blank)
+                self.assertFalse(reason_field.null)
 
     def test_abstract_models_are_not_registered_as_concrete_models(self):
         registered_models = set(apps.get_models())

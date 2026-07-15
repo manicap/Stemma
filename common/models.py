@@ -53,3 +53,38 @@ class VerifiableModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class LifecycleModel(models.Model):
+    """Rozlišuje archivaci záznamu a jeho měkké odstranění."""
+
+    archived_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    archived_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    archive_reason = models.TextField(blank=True)
+
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    deletion_reason = models.TextField(blank=True)
+
+    class Meta:
+        abstract = True
