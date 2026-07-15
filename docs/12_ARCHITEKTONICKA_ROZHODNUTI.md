@@ -1,7 +1,7 @@
 # Architektonická rozhodnutí
 
 **Dokument:** 12  
-**Verze:** 0.1  
+**Verze:** 0.2  
 **Stav:** platný registr rozhodnutí  
 **Datum vytvoření:** 15. 7. 2026
 
@@ -28,7 +28,9 @@ Projekt potřebuje rychlý vývoj, vyzrálou autentizaci, administraci, databáz
 
 ### Rozhodnutí
 
-Hlavním jazykem je Python. Webová aplikace bude postavena na Django.
+Hlavním jazykem je Python 3.14. Webová aplikace bude postavena na Django 5.2 LTS.
+
+Milník M0 byl ověřen s Pythonem 3.14.6 a Django 5.2.16. Přímé závislosti jsou evidovány v `requirements.txt`.
 
 ### Důvod
 
@@ -41,7 +43,7 @@ Hlavním jazykem je Python. Webová aplikace bude postavena na Django.
 
 ### Dopady
 
-Projekt přijímá konvence Djanga a Python ekosystému. Přesná podporovaná verze bude uzavřena před implementací.
+Projekt přijímá konvence Djanga a Python ekosystému. Podporovanou řadou je Python 3.14 a Django 5.2 LTS; aktualizace opravných verzí probíhají průběžně po ověření testy. Konkretizace verzí nemění podstatu ACP-001 a nevyžaduje nové ACP.
 
 ---
 

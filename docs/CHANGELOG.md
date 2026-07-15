@@ -1,5 +1,20 @@
 # Historie změn dokumentace
 
+## Verze 0.7 – 15. 7. 2026
+
+- zahájena implementace MVP ve větvi `feature/mvp`,
+- dokončen milník M0 – založení Django projektu,
+- potvrzen podporovaný základ Python 3.14 a Django 5.2 LTS,
+- zaznamenáno ověřené prostředí Python 3.14.6, Django 5.2.16 a SQLite 3.50.4,
+- založen konfigurační balíček `config`,
+- vytvořena aplikace `accounts` a vlastní model `accounts.User`,
+- vytvořena a aplikována migrace `accounts.0001_initial`,
+- doplněna registrace uživatele v Django Adminu a základní testy,
+- zavedena lokální tajná konfigurace mimo Git a veřejný vzor nastavení,
+- doplněn `requirements.txt` a pravidla reprodukovatelného prostředí,
+- uzavřena otevřená otázka podporovaných verzí,
+- nebyla zjištěna potřeba nového ACP.
+
 ## Verze 0.6 – 15. 7. 2026
 
 - dokončen logický a technický databázový návrh,

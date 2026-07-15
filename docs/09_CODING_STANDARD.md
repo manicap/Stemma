@@ -1,7 +1,7 @@
 # Coding standard
 
 **Dokument:** 09  
-**Verze:** 0.3  
+**Verze:** 0.4  
 **Stav:** platná pravidla pro začátek implementace  
 **Datum revize:** 15. 7. 2026
 
@@ -11,17 +11,20 @@ Pravidla implementace projektu Stemma pro vývojáře, Codex a další AI nástr
 
 ## 2. Potvrzený technologický základ
 
-- Python
-- Django
+- Python 3.14
+- Django 5.2 LTS
 - Django templates
 - HTMX
 - SQLite
 - minimum vlastního JavaScriptu
 - Git a GitHub
 
-Přesné podporované verze Pythonu a Djanga budou potvrzeny před založením projektu.
+Milník M0 byl ověřen s Pythonem 3.14.6, Django 5.2.16 a SQLite 3.50.4. Přímé závislosti se evidují v `requirements.txt`; aktualizace patch verze musí být vědomá, otestovaná změna.
 
-## 3. Struktura Django aplikací
+## 3. Struktura Django projektu a aplikací
+
+Konfigurační balíček projektu se jmenuje `config`. Aplikace jsou umístěny přímo v kořeni repozitáře; projekt nepoužívá další vrstvu `src/`.
+
 
 ```text
 accounts/      uživatelé a oprávnění
@@ -35,6 +38,10 @@ audit/         historie změn
 ```
 
 Obchodní logika se nesmí přesouvat do šablon.
+
+Lokální tajné nastavení je v `config/settings_local.py`, který se necommituje. Repozitář obsahuje pouze `config/settings_local.example.py`.
+
+Vlastní uživatelský model je `accounts.User` a musí se používat přes `settings.AUTH_USER_MODEL` nebo `get_user_model()` podle kontextu.
 
 ## 4. Základní pravidla kódu
 

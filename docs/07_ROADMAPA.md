@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.4  
+**Verze:** 0.5  
 **Stav:** návrh postupu  
 **Datum revize:** 15. 7. 2026
 
@@ -36,19 +36,36 @@
 - návrh pořadí migrací,
 - architektonická revize.
 
-### Následující implementační kroky
+### Implementační milníky
 
-1. potvrdit podporované verze Pythonu a Djanga,
-2. založit Django projekt a vlastní uživatelský model,
-3. vytvořit společné výčty a abstraktní modely,
-4. implementovat jádro Osoba, Místo, Událost a Vazba,
-5. vytvořit malé strukturální a datové migrace,
-6. doplnit bydliště a hrobová místa,
-7. doplnit přílohy, zdroje a jejich propojení,
-8. doplnit zdravotní záznamy,
-9. doplnit audit a projektová oprávnění,
-10. vytvořit testy databázové integrity,
-11. připravit vývojová ukázková data.
+#### M0 – založení Django projektu ✅
+
+- potvrzen Python 3.14 a Django 5.2 LTS,
+- založeno reprodukovatelné prostředí `venv` + `pip`,
+- založen Django projekt s balíčkem `config`,
+- vytvořena aplikace `accounts`,
+- vytvořen vlastní model `accounts.User` a migrace `accounts.0001_initial`,
+- doplněna registrace v Django Adminu a základní testy,
+- nastavena SQLite, čeština, časové pásmo `Europe/Prague` a lokální tajná konfigurace mimo Git,
+- změny commitnuty a pushnuty do `feature/mvp`.
+
+#### M1 – společný základ
+
+1. založit aplikaci `common`,
+2. vytvořit pevné výčty,
+3. vytvořit abstraktní modely,
+4. doplnit validaci neúplného data a její testy.
+
+#### Následující implementační kroky
+
+1. implementovat jádro Osoba, Místo, Událost a Vazba,
+2. vytvářet malé strukturální a datové migrace,
+3. doplnit bydliště a hrobová místa,
+4. doplnit přílohy, zdroje a jejich propojení,
+5. doplnit zdravotní záznamy,
+6. doplnit audit a projektová oprávnění,
+7. rozšiřovat testy databázové integrity,
+8. připravit vývojová ukázková data.
 
 ## Fáze 4 – Interaktivní prototyp
 

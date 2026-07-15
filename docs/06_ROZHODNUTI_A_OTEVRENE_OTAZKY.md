@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.6  
+**Verze:** 0.7  
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 15. 7. 2026
 
@@ -44,11 +44,21 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 101. Databázová etapa neodhalila potřebu nového ACP.
 102. Databázový návrh je připraven k implementaci Django modelů, migrací a testů integrity.
 
+### Zahájení implementace MVP
+
+103. Podporovaným základem implementace je Python 3.14 a Django 5.2 LTS.
+104. Milník M0 byl ověřen s Pythonem 3.14.6, Django 5.2.16 a SQLite 3.50.4.
+105. Vývojové prostředí používá standardní `venv` a `pip`; přímé závislosti se evidují v `requirements.txt`.
+106. Konfigurační balíček Django projektu se jmenuje `config` a doménové aplikace jsou umístěny přímo v kořeni repozitáře.
+107. Vlastní uživatelský model `accounts.User` založený na `AbstractUser` vznikl v migraci `accounts.0001_initial` před prvním provozním použitím databáze.
+108. Lokální `SECRET_KEY`, `DEBUG` a `ALLOWED_HOSTS` jsou uloženy v ignorovaném souboru `config/settings_local.py`; v repozitáři je pouze vzor.
+109. Implementace MVP probíhá ve větvi `feature/mvp`.
+110. Dokončení M0 nevyžaduje nové ACP; jde o realizaci a konkretizaci ACP-001, ACP-004 a schváleného databázového návrhu.
+
 ## 2. Otevřené otázky
 
 ### Implementace a provoz
 
-- Které konkrétní podporované verze Pythonu a Djanga budou použity?
 - Kde budou fyzicky ukládány fotografie a dokumenty v prvním nasazení?
 - Kde bude aplikace nasazena?
 - Jak bude řešeno zálohování databáze a souborů?
@@ -67,6 +77,8 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 - Zda bude později zaveden univerzální model tvrzení pro zdrojování jednotlivých polí.
 
 ## 3. Uzavřené dřívější otázky
+
+- Podporovaným základem jsou Python 3.14 a Django 5.2 LTS; M0 byl ověřen na Pythonu 3.14.6 a Django 5.2.16.
 
 - Zdravotní záznam je samostatná entita.
 - Typy částečných a nejistých dat pro první verzi jsou určeny.

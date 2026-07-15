@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.6
+**Verze dokumentace:** 0.7
 **Stav:** pracovní návrh  
 **Datum revize:** 15. 7. 2026
 
@@ -35,6 +35,17 @@ Projekt není zamýšlen pouze jako rodokmen, ale jako dlouhodobě rozšiřiteln
 - Starší verze se nemažou; přesouvají se do archivu.
 
 
+
+## Stav verze 0.7
+
+Verze 0.7 zaznamenává zahájení implementace MVP a dokončení milníku M0:
+
+- potvrzuje Python 3.14 a Django 5.2 LTS,
+- zaznamenává ověřené vývojové prostředí Python 3.14.6, Django 5.2.16 a SQLite 3.50.4,
+- potvrzuje použití `venv` a `pip`,
+- zaznamenává založení Django projektu s konfiguračním balíčkem `config`,
+- potvrzuje vlastní uživatelský model `accounts.User` od první projektové migrace,
+- zaznamenává bezpečnou lokální konfiguraci mimo Git, základní testy a zahájení práce ve větvi `feature/mvp`.
 
 ## Stav verze 0.6
 
@@ -77,8 +88,8 @@ Verze 0.1 sjednocuje dosavadní návrh, odstraňuje rozpory verze 0.0 a doplňuj
 
 ## Technologické rozhodnutí
 
-- Python
-- Django
+- Python 3.14
+- Django 5.2 LTS
 - serverově renderované Django šablony
 - HTMX pro dílčí aktualizace rozhraní
 - SQLite pro vývoj a první provozní verzi
@@ -98,8 +109,11 @@ Oficiální GitHub repozitář projektu:
 
 - Návrh UI/UX je uzavřen jako schválený pracovní základ.
 - Databázový a technický návrh je dokončen jako schválený pracovní základ.
-- Hlavním technickým dokumentem je `11_DATABAZOVY_NAVRH.md`.
-- Projekt je připraven k založení Django projektu, modelů, migrací, doménových služeb a testů integrity.
+- Implementace MVP byla zahájena ve větvi `feature/mvp`.
+- Milník M0 – založení Django projektu – je dokončen.
+- Existuje konfigurační balíček `config`, aplikace `accounts`, vlastní model `accounts.User`, první migrace a základní testy.
+- Následujícím krokem je aplikace `common`, společné výčty a abstraktní modely.
+- Hlavním technickým dokumentem zůstává `11_DATABAZOVY_NAVRH.md`.
 
 
 ## Autoritativní úložiště
