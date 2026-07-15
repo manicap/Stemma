@@ -1,94 +1,76 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.3  
+**Verze:** 0.6  
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 15. 7. 2026
 
 ## 1. Přijatá rozhodnutí
 
-1. Projekt je rodinná databáze a informační systém, ne pouze rodokmen.
-2. Backend a frontend budou součástí jednoho projektu.
-3. Bez přihlášení je aplikace primárně pouze pro čtení.
-4. Hlavní obrazovka má trvale viditelný seznam osob a detail vybrané osoby.
-5. Nad seznamem je vyhledávání s našeptávačem.
-6. Narození a úmrtí jsou speciální typy událostí.
-7. Stav žijící/zemřelý se odvozuje z existence události Úmrtí.
-8. Věk se dopočítává automaticky.
-9. Událost Úmrtí může obsahovat příčinu úmrtí.
-10. Osoby se shodným jménem a příjmením dostávají automatickou římskou číslici podle data narození.
-11. Římská číslice se zobrazuje v seznamu i detailu.
-12. Vazby mezi osobami jsou univerzální a obousměrné.
-13. Opačný význam vazby se dopočítává automaticky.
-14. Vazby mohou zahrnovat rodiče, děti, partnery, sourozence, kmotry, pěstouny, nevlastní rodiče, poručníky a vlastní typy.
-15. Každá osoba může mít neomezený počet událostí, bydlišť, fotografií, dokumentů a příloh.
-16. Každá osoba může mít jednu hlavní fotografii.
-17. Pokud hlavní fotografie neexistuje, zobrazí se silueta busty.
-18. Fotografie mají název a samostatný popis.
-19. Zdravotní informace tvoří samostatnou záložku.
-20. Zdravotní záznamy zahrnují i očkování.
-21. Zdravotní záznamy jsou ve výchozím stavu omezené.
-22. Hrobové místo je samostatná entita, nikoli událost.
-23. Jedno hrobové místo může být propojeno s více osobami.
-24. Přílohy jsou univerzální a mohou být znovu použity.
-25. Štítky nejsou součástí projektu.
-26. Záznamy se nemají fyzicky mazat jako výchozí operace.
-27. Dokumentace je hlavní zdroj pravdy.
-28. Při práci se vychází z nejnovější verze.
-29. Asistent připomene aktualizaci dokumentace, když hrozí ztráta kontextu.
-30. Asistent kontroluje konzistenci návrhu s dokumentací.
-31. Role hlavního architekta projektu se označuje jménem Marcus.
-32. Významná změna schválené architektury se řeší formou ACP.
-33. Projekt se řídí zásadou „nejdříve návrh, potom implementace“.
-34. Hlavním implementačním jazykem bude Python.
-35. Webová aplikace bude postavena na frameworku Django.
-36. Rozhraní bude primárně serverově renderované.
-37. Pro dílčí aktualizace bude použit HTMX.
-38. Vlastní JavaScript bude omezen na nezbytné minimum.
-39. Aplikace nebude navržena jako SPA.
-40. Výchozí databází bude SQLite.
-41. PostgreSQL se použije pouze při skutečné provozní potřebě.
-42. Oficiální repozitář je https://github.com/manicap/Stemma.
-43. Ve zdrojích projektu je pouze aktuální dokumentace.
-44. Historii dokumentace uchovává GitHub.
-45. Pravidla implementace budou vedena v 09_CODING_STANDARD.md.
-46. UI/UX projektu je popsáno v 10_UI_UX_NAVRH.md.
-47. Aplikace má působit jednoduše, intuitivně, domácím dojmem a současně profesionálně.
-48. Stemma je primárně studijní a poznávací nástroj o předcích a aktuálních členech rodiny, nikoli pouze genealogická aplikace.
-49. Detail osoby má trvale viditelné záhlaví a karty Přehled, Vztahy, Události, Bydliště, Zdraví a Materiály.
-50. U každé osoby lze vytvořit samostatně formátovaný souhrnný dokument PDF A4.
-51. Seznam osob obsahuje fotografii nebo bustu, dvě textové řádky, kategorii osoby, vyhledávání, filtr a řazení.
-52. Výchozí řazení seznamu osob je od nejmladších.
-53. Na telefonu se seznam osob otevírá jako vysouvací panel zleva; na tabletu lze seznam sbalit.
-54. Aplikace má od první verze světlý a tmavý režim dostupný i bez přihlášení.
-55. Světlý a tmavý režim jsou dvě varianty stejného designového systému.
-56. Druhotně uvedená jména se výchozím způsobem barevně rozlišují podle pohlaví; hlavní jméno v záhlaví nikoli.
-57. Tlačítka Zpět a Vpřed procházejí historii zobrazených osob.
-58. Změny se po uložení ihned promítnou do všech zobrazených souvisejících částí bez ručního obnovení stránky.
-59. Celá osoba se nemaže, ale archivuje; jednotlivé záznamy se odstraňují měkce po potvrzení.
-60. Důležitá upozornění se zobrazují přímo v místě práce uživatele, nikoli pouze v rohu obrazovky.
+Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
+
+### Databázová etapa
+
+71. Logický databázový návrh je uzavřen jako schválený pracovní základ.
+72. Pohlaví osoby má hodnoty muž, žena a neznámé.
+73. Hlavní jméno a příjmení zůstávají přímo na osobě; další, historická a alternativní jména se ukládají samostatně.
+74. Neúplné a nejisté datum používá společný strukturovaný model bez falešných hodnot typu 1. 1. daného roku.
+75. Technický řadicí bod data se může ukládat jako automaticky odvozená hodnota kvůli indexům a řazení.
+76. Typy událostí a role účastníků jsou číselníky; povolené role a jejich minimální a maximální počty se konfigurují pro každý typ události.
+77. Událost může být propojena s více přílohami, například se snímkem matriky, a s více zdroji.
+78. Příčina a okolnosti úmrtí se ukládají ve specializovaném detailu události úmrtí.
+79. Jedna osoba smí mít nejvýše jednu aktivní událost narození a jednu aktivní událost úmrtí prostřednictvím systémové role účastníka.
+80. Symetrické vazby se ukládají v normalizovaném pořadí; směrové vazby zachovávají význam osob A a B.
+81. Biologické sourozenectví se primárně odvozuje ze společných biologických rodičů a běžně se neukládá.
+82. Genealogicky nemožné vazby jsou tvrdé chyby; nepravděpodobné nebo rozporné údaje vyvolávají varování.
+83. Místo je znovu použitelný objekt; detailní adresa může zůstat u konkrétního bydliště nebo události.
+84. Bydliště, pohřební událost a hrobové místo jsou rozdílné skutečnosti.
+85. Jedna osoba může být spojena s více hrobovými nebo pamětními místy a jedno hrobové místo s více osobami.
+86. Přílohy a zdroje používají explicitní spojovací tabulky, nikoli generické Django vztahy.
+87. Hlavní fotografie osoby je role spojení Osoba–Příloha; osoba nemá druhý přímý odkaz na soubor.
+88. Zdroj a příloha jsou rozdílné objekty: zdroj popisuje původ informace, příloha konkrétní digitální soubor.
+89. Zdroje se v první verzi vážou ke strukturovaným záznamům, nikoli univerzálně ke každému poli.
+90. Zdravotní záznam je samostatná entita a zdravotní skutečnost se neukládá současně jako obecná událost.
+91. Významný zdravotní záznam se může zobrazit v obecné časové ose bez vytvoření kopie.
+92. Přístupová úroveň je pevný výčet: veřejné, pouze přihlášení, omezené, pouze správce.
+93. Základní role se realizují prostřednictvím Django Groups a konkrétní oprávnění prostřednictvím Django Permissions.
+94. Hlavní entity rozlišují archivaci a měkké odstranění; číselníky používají aktivitu a systémový příznak.
+95. Audit eviduje jednu operaci a její jednotlivé změny polí.
+96. Audit používá generickou identifikaci typu a ID objektu; obchodní vazby nadále používají skutečné cizí klíče.
+97. Významné zápisy se provádějí prostřednictvím transakčních doménových služeb, nikoli sérií přímých volání `save()` ve views.
+98. Složitější čtecí dotazy a optimalizace se soustředí v selektorech.
+99. Django projekt bude rozdělen na aplikace `accounts`, `common`, `people`, `places`, `events`, `materials`, `health` a `audit`.
+100. Vlastní uživatelský model vznikne v první migraci; volitelné propojení účtu s osobou až v pozdější migraci.
+101. Databázová etapa neodhalila potřebu nového ACP.
+102. Databázový návrh je připraven k implementaci Django modelů, migrací a testů integrity.
 
 ## 2. Otevřené otázky
 
-- Kde budou ukládány fotografie a dokumenty?
+### Implementace a provoz
+
+- Které konkrétní podporované verze Pythonu a Djanga budou použity?
+- Kde budou fyzicky ukládány fotografie a dokumenty v prvním nasazení?
 - Kde bude aplikace nasazena?
+- Jak bude řešeno zálohování databáze a souborů?
+- Jak bude řešeno verzování a obnova příloh?
+- Jak dlouho se bude uchovávat auditní historie?
 - Bude podporován offline režim?
-- Jak bude řešeno přihlašování?
-- Kolik rolí bude skutečně potřeba v první verzi?
+- Jaké konkrétní přihlašovací metody budou podporovány?
+
+### Budoucí funkce
+
 - Jak přesně se bude zobrazovat rodokmen?
 - Jak bude řešeno slučování duplicit?
 - Jaké exportní formáty budou podporovány?
 - Bude podporován GEDCOM?
-- Jak bude řešeno zálohování?
-- Jak dlouho se bude uchovávat historie změn?
-- Jak bude řešeno verzování a obnova příloh?
-- Zda bude „Příběh nebo vzpomínka“ samostatná entita, nebo typ dokumentu/poznámky.
-- Zda bude zdravotní záznam samostatná entita, nebo specializovaný typ události v technické implementaci.
-- Jaké typy částečných a nejistých dat budou podporovány v první verzi.
+- Zda bude „Příběh nebo vzpomínka“ samostatná entita, nebo typ dokumentu či poznámky.
+- Zda bude později zaveden univerzální model tvrzení pro zdrojování jednotlivých polí.
 
+## 3. Uzavřené dřívější otázky
 
-## 3. Odůvodnění technologického rozhodnutí
-
-Django bylo zvoleno kvůli rychlému vývoji, vestavěné autentizaci a administraci, lehkému serverově renderovanému rozhraní a možnosti používat Python také pro importy, exporty, údržbové skripty a budoucí zpracování dokumentů.
-
-HTMX umožní měnit pouze potřebné části stránky bez velkého javascriptového frameworku. SQLite odpovídá malému počtu uživatelů a převážně čtecímu provozu.
+- Zdravotní záznam je samostatná entita.
+- Typy částečných a nejistých dat pro první verzi jsou určeny.
+- Základní role jsou Čtenář, Editor a Správce; návštěvník je anonymní uživatel.
+- Přílohy a zdroje používají explicitní spojovací modely.
+- Audit je na úrovni objektové operace i jednotlivých změněných polí.
+- Technický návrh Django aplikací a pořadí migrací jsou určeny.

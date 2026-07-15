@@ -1,52 +1,60 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.2  
+**Verze:** 0.4  
 **Stav:** návrh postupu  
-**Datum revize:** 14. 7. 2026
+**Datum revize:** 15. 7. 2026
 
-## Fáze 1 – Konsolidace návrhu
+## Fáze 1 – Konsolidace návrhu ✅
 
-- uzavřít datový model Osoba,
-- uzavřít model událostí,
-- uzavřít model vazeb,
-- uzavřít model příloh a zdrojů,
-- rozhodnout otevřené otázky první verze.
+- uzavřen funkční a základní datový model,
+- uzavřeny hlavní entity a architektonické principy.
 
-## Fáze 2 – Návrh UI/UX
+## Fáze 2 – Návrh UI/UX ✅
 
-- hlavní dvousloupcová obrazovka,
-- seznam osob,
-- našeptávač,
-- detail osoby,
-- záložky detailu,
-- editace osoby,
-- editace událostí,
-- editace vazeb,
-- fotografie a dokumenty,
-- zdravotní informace,
-- hrobové místo,
-- mobilní zobrazení.
+- uzavřen schválený pracovní základ hlavního rozhraní,
+- definovány světlý a tmavý motiv,
+- definována responzivita, editace a ochrana neuložených změn.
 
-## Fáze 3 – Technický návrh
+## Fáze 3 – Databázový a technický návrh ✅
 
-- potvrdit podporovanou verzi Pythonu a Djanga,
-- navrhnout strukturu Django projektu a aplikací,
-- připravit coding standard,
-- databázové schéma,
-- autentizace,
-- oprávnění,
-- ukládání souborů,
-- zálohování,
-- audit změn,
-- GitHub workflow,
-- prostředí pro vývoj a nasazení.
+### Dokončené výstupy
+
+- katalog entit a jejich odpovědností,
+- přesný katalog polí,
+- kardinality a povinné vazby,
+- společný model neúplného data,
+- pravidla integrity a unikátnosti,
+- pravidla archivace a měkkého odstranění,
+- přílohy a zdroje s explicitními vazbami,
+- ochrana zdravotních údajů,
+- návrh auditního modelu,
+- návrh indexů,
+- ER diagram,
+- struktura Django aplikací,
+- rozdělení validace mezi databázi, modely a služby,
+- návrh pořadí migrací,
+- architektonická revize.
+
+### Následující implementační kroky
+
+1. potvrdit podporované verze Pythonu a Djanga,
+2. založit Django projekt a vlastní uživatelský model,
+3. vytvořit společné výčty a abstraktní modely,
+4. implementovat jádro Osoba, Místo, Událost a Vazba,
+5. vytvořit malé strukturální a datové migrace,
+6. doplnit bydliště a hrobová místa,
+7. doplnit přílohy, zdroje a jejich propojení,
+8. doplnit zdravotní záznamy,
+9. doplnit audit a projektová oprávnění,
+10. vytvořit testy databázové integrity,
+11. připravit vývojová ukázková data.
 
 ## Fáze 4 – Interaktivní prototyp
 
-- layout bez reálné databáze,
+- layout nad skutečnými Django views a šablonami,
 - ukázkový seznam osob,
-- přepínání detailu,
+- přepínání detailu pomocí HTMX,
 - základní záložky,
 - ukázkové formuláře,
 - test použitelnosti.
@@ -91,4 +99,5 @@
 - návrhy duplicit,
 - veřejné sdílení vybraných částí,
 - pokročilé vyhledávání,
+- univerzální model tvrzení,
 - automatizované zpracování dokumentů.

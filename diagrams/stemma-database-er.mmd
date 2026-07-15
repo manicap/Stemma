@@ -1,0 +1,81 @@
+erDiagram
+    PERSON_CATEGORY ||--o{ PERSON : classifies
+    PERSON ||--o{ PERSON_NAME : has
+    NAME_TYPE ||--o{ PERSON_NAME : defines
+
+    PLACE_TYPE ||--o{ PLACE : classifies
+    PLACE o|--o{ PLACE : contains
+    PLACE ||--o{ PLACE_NAME : has
+
+    EVENT_TYPE ||--o{ ALLOWED_EVENT_ROLE : configures
+    PARTICIPANT_ROLE ||--o{ ALLOWED_EVENT_ROLE : permits
+    EVENT_TYPE ||--o{ EVENT : classifies
+    PLACE o|--o{ EVENT : occurs_at
+    EVENT ||--o{ EVENT_PARTICIPATION : has
+    PERSON ||--o{ EVENT_PARTICIPATION : participates
+    PARTICIPANT_ROLE ||--o{ EVENT_PARTICIPATION : defines
+    EVENT ||--o| DEATH_DETAIL : may_have
+
+    RELATIONSHIP_TYPE ||--o{ PERSON_RELATIONSHIP : classifies
+    PERSON ||--o{ PERSON_RELATIONSHIP : person_a
+    PERSON ||--o{ PERSON_RELATIONSHIP : person_b
+
+    RESIDENCE_TYPE o|--o{ RESIDENCE : classifies
+    PERSON ||--o{ RESIDENCE : has
+    PLACE o|--o{ RESIDENCE : located_at
+
+    GRAVE_SITE_TYPE ||--o{ GRAVE_SITE : classifies
+    PLACE o|--o{ GRAVE_SITE : located_at
+    PERSON ||--o{ GRAVE_PERSON_LINK : associated
+    GRAVE_SITE ||--o{ GRAVE_PERSON_LINK : contains
+    GRAVE_LINK_TYPE ||--o{ GRAVE_PERSON_LINK : defines
+
+    ATTACHMENT_CATEGORY ||--o{ ATTACHMENT : classifies
+    ATTACHMENT_ROLE ||--o{ PERSON_ATTACHMENT : role
+    ATTACHMENT_ROLE ||--o{ EVENT_ATTACHMENT : role
+    ATTACHMENT_ROLE ||--o{ RELATIONSHIP_ATTACHMENT : role
+    ATTACHMENT_ROLE ||--o{ RESIDENCE_ATTACHMENT : role
+    ATTACHMENT_ROLE ||--o{ GRAVE_SITE_ATTACHMENT : role
+    ATTACHMENT_ROLE ||--o{ PLACE_ATTACHMENT : role
+
+    PERSON ||--o{ PERSON_ATTACHMENT : has
+    EVENT ||--o{ EVENT_ATTACHMENT : has
+    PERSON_RELATIONSHIP ||--o{ RELATIONSHIP_ATTACHMENT : has
+    RESIDENCE ||--o{ RESIDENCE_ATTACHMENT : has
+    GRAVE_SITE ||--o{ GRAVE_SITE_ATTACHMENT : has
+    PLACE ||--o{ PLACE_ATTACHMENT : has
+
+    ATTACHMENT ||--o{ PERSON_ATTACHMENT : linked
+    ATTACHMENT ||--o{ EVENT_ATTACHMENT : linked
+    ATTACHMENT ||--o{ RELATIONSHIP_ATTACHMENT : linked
+    ATTACHMENT ||--o{ RESIDENCE_ATTACHMENT : linked
+    ATTACHMENT ||--o{ GRAVE_SITE_ATTACHMENT : linked
+    ATTACHMENT ||--o{ PLACE_ATTACHMENT : linked
+
+    SOURCE_TYPE ||--o{ SOURCE : classifies
+    PERSON_NAME ||--o{ PERSON_NAME_SOURCE : supported_by
+    EVENT ||--o{ EVENT_SOURCE : supported_by
+    PERSON_RELATIONSHIP ||--o{ RELATIONSHIP_SOURCE : supported_by
+    RESIDENCE ||--o{ RESIDENCE_SOURCE : supported_by
+    GRAVE_SITE ||--o{ GRAVE_SITE_SOURCE : supported_by
+    ATTACHMENT ||--o{ ATTACHMENT_SOURCE : represents
+
+    SOURCE ||--o{ PERSON_NAME_SOURCE : supports
+    SOURCE ||--o{ EVENT_SOURCE : supports
+    SOURCE ||--o{ RELATIONSHIP_SOURCE : supports
+    SOURCE ||--o{ RESIDENCE_SOURCE : supports
+    SOURCE ||--o{ GRAVE_SITE_SOURCE : supports
+    SOURCE ||--o{ ATTACHMENT_SOURCE : supports
+
+    HEALTH_RECORD_TYPE ||--o{ HEALTH_RECORD : classifies
+    PERSON ||--o{ HEALTH_RECORD : has
+    PLACE o|--o{ HEALTH_RECORD : occurs_at
+    HEALTH_RECORD ||--o{ HEALTH_RECORD_ATTACHMENT : has
+    HEALTH_RECORD ||--o{ HEALTH_RECORD_SOURCE : supported_by
+    ATTACHMENT ||--o{ HEALTH_RECORD_ATTACHMENT : linked
+    SOURCE ||--o{ HEALTH_RECORD_SOURCE : supports
+
+    USER ||--o{ AUDIT_OPERATION : performs
+    AUDIT_OPERATION ||--o{ AUDIT_FIELD_CHANGE : contains
+    USER ||--o| USER_PROFILE : has
+    PERSON o|--o| USER_PROFILE : represents

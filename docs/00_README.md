@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.3  
+**Verze dokumentace:** 0.6
 **Stav:** pracovní návrh  
 **Datum revize:** 15. 7. 2026
 
@@ -22,7 +22,9 @@ Projekt není zamýšlen pouze jako rodokmen, ale jako dlouhodobě rozšiřiteln
 8. `08_ARCHITEKTONICKE_PRINCIPY.md`
 9. `09_CODING_STANDARD.md`
 10. `10_UI_UX_NAVRH.md`
-11. `CHANGELOG.md`
+11. `11_DATABAZOVY_NAVRH.md`
+12. `12_ARCHITEKTONICKA_ROZHODNUTI.md`
+13. `CHANGELOG.md`
 
 ## Jak dokumentaci používat
 
@@ -32,6 +34,18 @@ Projekt není zamýšlen pouze jako rodokmen, ale jako dlouhodobě rozšiřiteln
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
 
+
+
+## Stav verze 0.6
+
+Verze 0.6 dokončuje databázovou a technickou návrhovou etapu:
+
+- uzavírá logický databázový model a katalog polí,
+- definuje společný model neúplných a nejistých dat,
+- stanovuje kardinality, integritní pravidla, indexy a audit,
+- potvrzuje explicitní propojení příloh a zdrojů,
+- navrhuje strukturu Django aplikací, doménové služby a selektory,
+- určuje pořadí migrací a připravuje projekt k implementaci.
 
 ## Stav verze 0.3
 
@@ -78,3 +92,28 @@ Django bylo zvoleno jako kompromis mezi rychlostí výsledné aplikace, rychlost
 Oficiální GitHub repozitář projektu:
 
 `https://github.com/manicap/Stemma`
+
+
+## Aktuální fáze projektu
+
+- Návrh UI/UX je uzavřen jako schválený pracovní základ.
+- Databázový a technický návrh je dokončen jako schválený pracovní základ.
+- Hlavním technickým dokumentem je `11_DATABAZOVY_NAVRH.md`.
+- Projekt je připraven k založení Django projektu, modelů, migrací, doménových služeb a testů integrity.
+
+
+## Autoritativní úložiště
+
+Jediným autoritativním úložištěm projektu je GitHub:
+
+`https://github.com/manicap/Stemma`
+
+Projektové zdroje v ChatGPT jsou pracovní kopií aktuální dokumentace pro právě řešenou etapu. Historii, platné soubory a konečný stav projektu uchovává GitHub.
+
+## Architektonická rozhodnutí
+
+Významná a dlouhodobá rozhodnutí jsou evidována v dokumentu:
+
+`12_ARCHITEKTONICKA_ROZHODNUTI.md`
+
+Každé takové rozhodnutí má označení ACP, důvod, dopady a stav.
