@@ -7,6 +7,11 @@ from .choices import (
     DateQualifier,
     VerificationStatus,
 )
+from .partial_dates import (
+    PartialDateValue,
+    derive_sort_dates,
+    validate_partial_date,
+)
 
 
 class TimestampedModel(models.Model):
@@ -157,6 +162,36 @@ class PartialDateModel(models.Model):
 
     class Meta:
         abstract = True
+
+    def _partial_date_value(self) -> PartialDateValue:
+        return PartialDateValue(
+            date_precision=self.date_precision,
+            date_qualifier=self.date_qualifier,
+            start_year=self.start_year,
+            start_month=self.start_month,
+            start_day=self.start_day,
+            end_year=self.end_year,
+            end_month=self.end_month,
+            end_day=self.end_day,
+        )
+
+    def clean(self) -> None:
+        super().clean()
+        value = self._partial_date_value()
+        validate_partial_date(value)
+        self.sort_date, self.sort_date_end = derive_sort_dates(value)
+
+    def save(self, *args, **kwargs):
+        self.sort_date, self.sort_date_end = derive_sort_dates(
+            self._partial_date_value()
+        )
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = set(update_fields) | {
+                "sort_date",
+                "sort_date_end",
+            }
+        return super().save(*args, **kwargs)
 
 
 class LookupModel(models.Model):
