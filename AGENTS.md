@@ -84,6 +84,78 @@ For each task:
 
 Before a larger architectural decision, stop and request approval. If needed, identify the affected documentation and whether a new ACP is required.
 
+## Documentation updates
+
+Documentation is part of the product and must remain consistent with the implementation.
+
+Update existing documentation when a change:
+
+- completes or materially advances an implementation milestone,
+- changes the current project state recorded in the roadmap or README,
+- introduces or changes a model, fixed system value, validation rule, permission, workflow or architectural decision,
+- resolves an open question,
+- creates a meaningful difference between implementation and the current documentation.
+
+Create new documentation only when the subject is significant, long-lived and not adequately covered by an existing document. Before creating a new document:
+
+- verify that the information does not belong in an existing document,
+- follow the naming and numbering rules in `docs/05_PRAVIDLA_DOKUMENTACE.md`,
+- add the new document to `docs/00_README.md`,
+- record the addition in `docs/CHANGELOG.md`,
+- do not create a new ACP document; architectural decisions belong in `docs/12_ARCHITEKTONICKA_ROZHODNUTI.md` and require explicit approval.
+
+For significant documentation updates:
+
+- update the relevant document version, revision date and status when required by `docs/05_PRAVIDLA_DOKUMENTACE.md`,
+- update `docs/CHANGELOG.md`,
+- update `docs/07_ROADMAPA.md` when milestone status changes,
+- update `docs/00_README.md` when the current project state or documentation index changes,
+- update `docs/06_ROZHODNUTI_A_OTEVRENE_OTAZKY.md` when a decision is made or an open question is resolved,
+- do not create or modify an ACP without explicit approval.
+
+Do not update documentation for trivial internal refactoring, formatting-only changes, or tests that do not change documented behavior or milestone status.
+
+If it is unclear whether documentation should be updated or created, stop and report the affected files and recommended action before editing.
+
+## Git and branch safety
+
+Protect the repository history and the user's local work.
+
+Before editing:
+
+- run `git branch --show-current` and `git status --short`,
+- confirm that the repository is Stemma and that the expected base branch is active,
+- stop if there are unrelated uncommitted changes, merge conflicts, an unfinished rebase, or an unexpected detached `HEAD`,
+- never discard, overwrite, stash, stage, or modify unrelated user changes without explicit approval.
+
+Branch workflow:
+
+- The normal active integration branch for MVP work is `feature/mvp`.
+- Small, sequential, reviewed tasks may be implemented directly on `feature/mvp` when the task explicitly allows local edits there.
+- For larger, risky, experimental, or parallel tasks, create a dedicated task branch from the current `feature/mvp` state.
+- Name task branches `codex/<milestone>-<short-description>`, for example `codex/m1-partial-date-validation`.
+- Do not create a new branch for trivial formatting-only work or a tiny follow-up that belongs to the current uncommitted task.
+- Do not switch branches, create a branch, or create a worktree unless the task explicitly permits it or the current task is classified as larger, risky, experimental, or parallel. When uncertain, stop and ask.
+- If working in a Codex worktree, verify the selected base branch before editing. If `HEAD` is detached, create a named task branch before any commit.
+
+Commit and remote rules:
+
+- Do not commit, amend, merge, rebase, push, force-push, open a pull request, or delete a branch unless the user explicitly requests that action for the current task.
+- Before a requested commit, run tests and checks, inspect `git diff --check`, `git status --short`, and the staged diff.
+- A commit must contain only one coherent change and must not include unrelated files, secrets, local settings, caches, generated artifacts, or database files.
+- Never use `git add .` or `git add -A` when a narrower explicit file list is available.
+- Never use destructive commands such as `git reset --hard`, `git clean -fd`, checkout/restore that discards changes, or history rewriting without explicit approval.
+- Never force-push. Never rewrite commits already pushed to a shared branch.
+- Do not merge a task branch into `feature/mvp`; prepare the diff and report the recommended integration step unless explicitly instructed otherwise.
+
+At the end of each task, report:
+
+- current branch,
+- changed and untracked files,
+- whether a task branch or worktree was used,
+- whether any commit, push, merge, rebase, or pull request was performed,
+- the exact recommended next Git command, if appropriate.
+
 ## Required checks
 
 Run at least:
