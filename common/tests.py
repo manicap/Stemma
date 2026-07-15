@@ -1,6 +1,6 @@
 from django.apps import apps
+from django.conf import settings
 from django.db import models
-from django.db.migrations.state import ProjectState
 from django.test import SimpleTestCase
 
 from .choices import (
@@ -10,7 +10,12 @@ from .choices import (
     Gender,
     VerificationStatus,
 )
-from .models import AccessControlledModel, TimestampedModel, VerifiableModel
+from .models import (
+    AccessControlledModel,
+    AuthoredModel,
+    TimestampedModel,
+    VerifiableModel,
+)
 
 
 class FixedChoicesTests(SimpleTestCase):
@@ -98,6 +103,7 @@ class AbstractModelsTests(SimpleTestCase):
 
     abstract_models = (
         TimestampedModel,
+        AuthoredModel,
         AccessControlledModel,
         VerifiableModel,
     )
@@ -134,6 +140,21 @@ class AbstractModelsTests(SimpleTestCase):
         self.assertEqual(access_level.choices, AccessLevel.choices)
         self.assertEqual(access_level.default, AccessLevel.PUBLIC)
 
+    def test_authored_model_field(self):
+        self.assertEqual(
+            [field.name for field in AuthoredModel._meta.local_fields],
+            ["created_by"],
+        )
+
+        created_by = AuthoredModel._meta.get_field("created_by")
+
+        self.assertIsInstance(created_by, models.ForeignKey)
+        self.assertEqual(created_by.remote_field.model, settings.AUTH_USER_MODEL)
+        self.assertIs(created_by.remote_field.on_delete, models.SET_NULL)
+        self.assertTrue(created_by.null)
+        self.assertTrue(created_by.blank)
+        self.assertEqual(created_by.remote_field.related_name, "+")
+
     def test_verifiable_model_field(self):
         self.assertEqual(
             [field.name for field in VerifiableModel._meta.local_fields],
@@ -155,13 +176,9 @@ class AbstractModelsTests(SimpleTestCase):
             VerificationStatus.UNCONFIRMED,
         )
 
-    def test_abstract_models_do_not_define_database_tables(self):
-        migration_models = ProjectState.from_apps(apps).models
+    def test_abstract_models_are_not_registered_as_concrete_models(self):
+        registered_models = set(apps.get_models())
 
         for abstract_model in self.abstract_models:
             with self.subTest(model=abstract_model.__name__):
-                model_key = (
-                    abstract_model._meta.app_label,
-                    abstract_model._meta.model_name,
-                )
-                self.assertNotIn(model_key, migration_models)
+                self.assertNotIn(abstract_model, registered_models)
