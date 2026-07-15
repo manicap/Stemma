@@ -1,7 +1,12 @@
 from django.conf import settings
 from django.db import models
 
-from .choices import AccessLevel, VerificationStatus
+from .choices import (
+    AccessLevel,
+    DatePrecision,
+    DateQualifier,
+    VerificationStatus,
+)
 
 
 class TimestampedModel(models.Model):
@@ -85,6 +90,70 @@ class LifecycleModel(models.Model):
         related_name="+",
     )
     deletion_reason = models.TextField(blank=True)
+
+    class Meta:
+        abstract = True
+
+
+class PartialDateModel(models.Model):
+    """Ukládá neúplný nebo nejistý časový údaj bez falešné přesnosti."""
+
+    date_precision = models.CharField(
+        max_length=10,
+        choices=DatePrecision.choices,
+        default=DatePrecision.UNKNOWN,
+    )
+    date_qualifier = models.CharField(
+        max_length=12,
+        choices=DateQualifier.choices,
+        default=DateQualifier.NONE,
+    )
+
+    start_year = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
+    start_month = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
+    start_day = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    end_year = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
+    end_month = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
+    end_day = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    original_date_text = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+    date_note = models.TextField(
+        blank=True,
+    )
+
+    sort_date = models.DateField(
+        null=True,
+        blank=True,
+        editable=False,
+        db_index=True,
+    )
+    sort_date_end = models.DateField(
+        null=True,
+        blank=True,
+        editable=False,
+    )
 
     class Meta:
         abstract = True

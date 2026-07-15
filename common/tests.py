@@ -15,6 +15,7 @@ from .models import (
     AuthoredModel,
     LifecycleModel,
     LookupModel,
+    PartialDateModel,
     TimestampedModel,
     VerifiableModel,
 )
@@ -109,6 +110,7 @@ class AbstractModelsTests(SimpleTestCase):
         AccessControlledModel,
         VerifiableModel,
         LifecycleModel,
+        PartialDateModel,
         LookupModel,
     )
 
@@ -260,6 +262,82 @@ class AbstractModelsTests(SimpleTestCase):
         self.assertIsInstance(is_system, models.BooleanField)
         self.assertIs(is_system.default, False)
         self.assertFalse(is_system.editable)
+
+    def test_partial_date_model_fields(self):
+        self.assertEqual(
+            [field.name for field in PartialDateModel._meta.local_fields],
+            [
+                "date_precision",
+                "date_qualifier",
+                "start_year",
+                "start_month",
+                "start_day",
+                "end_year",
+                "end_month",
+                "end_day",
+                "original_date_text",
+                "date_note",
+                "sort_date",
+                "sort_date_end",
+            ],
+        )
+
+        date_precision = PartialDateModel._meta.get_field("date_precision")
+        self.assertIsInstance(date_precision, models.CharField)
+        self.assertEqual(date_precision.max_length, 10)
+        self.assertEqual(date_precision.choices, DatePrecision.choices)
+        self.assertEqual(date_precision.default, DatePrecision.UNKNOWN)
+
+        date_qualifier = PartialDateModel._meta.get_field("date_qualifier")
+        self.assertIsInstance(date_qualifier, models.CharField)
+        self.assertEqual(date_qualifier.max_length, 12)
+        self.assertEqual(date_qualifier.choices, DateQualifier.choices)
+        self.assertEqual(date_qualifier.default, DateQualifier.NONE)
+
+        date_part_fields = (
+            "start_year",
+            "start_month",
+            "start_day",
+            "end_year",
+            "end_month",
+            "end_day",
+        )
+        for field_name in date_part_fields:
+            with self.subTest(field=field_name):
+                date_part = PartialDateModel._meta.get_field(field_name)
+                self.assertIsInstance(
+                    date_part,
+                    models.PositiveSmallIntegerField,
+                )
+                self.assertTrue(date_part.null)
+                self.assertTrue(date_part.blank)
+
+        original_date_text = PartialDateModel._meta.get_field(
+            "original_date_text"
+        )
+        self.assertIsInstance(original_date_text, models.CharField)
+        self.assertEqual(original_date_text.max_length, 255)
+        self.assertTrue(original_date_text.blank)
+        self.assertFalse(original_date_text.null)
+
+        date_note = PartialDateModel._meta.get_field("date_note")
+        self.assertIsInstance(date_note, models.TextField)
+        self.assertTrue(date_note.blank)
+        self.assertFalse(date_note.null)
+
+        sort_date = PartialDateModel._meta.get_field("sort_date")
+        self.assertIsInstance(sort_date, models.DateField)
+        self.assertTrue(sort_date.null)
+        self.assertTrue(sort_date.blank)
+        self.assertFalse(sort_date.editable)
+        self.assertTrue(sort_date.db_index)
+
+        sort_date_end = PartialDateModel._meta.get_field("sort_date_end")
+        self.assertIsInstance(sort_date_end, models.DateField)
+        self.assertTrue(sort_date_end.null)
+        self.assertTrue(sort_date_end.blank)
+        self.assertFalse(sort_date_end.editable)
+        self.assertFalse(sort_date_end.db_index)
 
     def test_lookup_model_ordering(self):
         self.assertEqual(
