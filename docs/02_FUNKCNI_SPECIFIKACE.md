@@ -1,36 +1,50 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.1  
+**Verze:** 0.2  
 **Stav:** pracovní návrh  
-**Datum revize:** 14. 7. 2026
+**Datum revize:** 15. 7. 2026
 
 ## 1. Hlavní obrazovka
 
 Desktopové rozhraní používá dvousloupcový model:
 
 - vlevo je trvale viditelný seznam osob,
-- nad seznamem je vyhledávání s našeptávačem,
 - vpravo je detail právě vybrané osoby,
-- kliknutí na jinou osobu změní pouze detail vpravo,
-- vybraná osoba je v seznamu zvýrazněna.
+- kliknutí na osobu změní pouze detail vpravo,
+- vybraná osoba je v seznamu zřetelně zvýrazněna,
+- změny se po uložení bez obnovení stránky promítnou do všech souvisejících částí rozhraní.
 
-Na mobilním zařízení bude seznam dostupný jako vysouvací nebo sbalitelný panel, bez ztráty kontextu detailu osoby.
+Na tabletu zůstává dvousloupcové rozhraní, ale seznam lze sbalit. Na telefonu se seznam otevírá jako panel vysunutý zleva a po výběru osoby se automaticky zavře.
+
+Horní lišta obsahuje piktogram rozvětveného stromu, název Stemma, přepínač světlého a tmavého režimu a přihlášení nebo profilové menu.
 
 ## 2. Seznam osob
 
-Každý řádek obsahuje minimálně:
+Každý záznam osoby obsahuje:
 
+- malou fotografii nebo výchozí bustu vlevo přes dva textové řádky,
 - jméno a příjmení,
-- automaticky dopočítanou římskou číslici u shodných jmen,
-- rok narození a úmrtí, jsou-li známé,
-- označení vybrané osoby.
+- automatickou římskou číslici u shodných jmen,
+- datum nebo rok narození a úmrtí,
+- kategorii osoby.
 
-Výchozí řazení:
+Nad seznamem jsou:
 
-1. příjmení,
-2. jméno,
-3. datum narození.
+- vyhledávání s našeptávačem,
+- filtr kategorie,
+- rozbalovací nabídka řazení,
+- pro oprávněného uživatele tlačítko + Přidat osobu.
+
+Výchozí řazení je Od nejmladších. Další možnosti:
+
+- Od nejstarších,
+- Příjmení A–Z,
+- Příjmení Z–A,
+- Jméno A–Z,
+- Jméno Z–A.
+
+Osoby bez známého data narození se při řazení podle věku zobrazují až za osobami se známým datem.
 
 Vyhledávání pracuje minimálně s:
 
@@ -43,29 +57,37 @@ Vyhledávání pracuje minimálně s:
 
 Vyhledávání nerozlišuje velikost písmen a je tolerantní k diakritice.
 
+Archivované osoby se ve výchozím seznamu nezobrazují. Oprávněný uživatel je může zobrazit zvláštní volbou filtru.
+
 ## 3. Detail osoby
 
-Záhlaví detailu obsahuje:
+Záhlaví detailu zůstává viditelné při přepínání karet a obsahuje:
 
-- hlavní fotografii nebo výchozí siluetu busty,
+- hlavní fotografii nebo výchozí bustu,
 - celé jméno,
 - rodné příjmení,
 - římskou číslici,
-- roky života,
-- automaticky vypočítaný věk.
+- kategorii osoby,
+- pohlaví,
+- datum narození,
+- datum úmrtí,
+- automaticky vypočítaný věk,
+- navigaci Zpět a Vpřed v historii zobrazených osob,
+- tlačítko Upravit osobu podle oprávnění,
+- tlačítko pro vytvoření souhrnného PDF A4.
 
-Navržené záložky:
+Pod záhlavím jsou záložky:
 
 - Přehled,
+- Vztahy,
 - Události,
-- Vazby,
 - Bydliště,
-- Fotografie,
-- Dokumenty,
-- Zdravotní informace,
-- Hrobové místo,
-- Zdroje,
-- Historie změn.
+- Zdraví,
+- Materiály.
+
+Výchozí záložkou je Přehled. Aktivní záložka je zřetelně označena textem, pozadím a barevnou spodní linkou.
+
+Podrobný vzhled a chování rozhraní definuje `10_UI_UX_NAVRH.md`.
 
 ## 4. Osoba
 

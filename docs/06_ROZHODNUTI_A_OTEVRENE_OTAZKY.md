@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.2  
+**Verze:** 0.3  
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 14. 7. 2026
+**Datum revize:** 15. 7. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -52,6 +52,21 @@
 43. Ve zdrojích projektu je pouze aktuální dokumentace.
 44. Historii dokumentace uchovává GitHub.
 45. Pravidla implementace budou vedena v 09_CODING_STANDARD.md.
+46. UI/UX projektu je popsáno v 10_UI_UX_NAVRH.md.
+47. Aplikace má působit jednoduše, intuitivně, domácím dojmem a současně profesionálně.
+48. Stemma je primárně studijní a poznávací nástroj o předcích a aktuálních členech rodiny, nikoli pouze genealogická aplikace.
+49. Detail osoby má trvale viditelné záhlaví a karty Přehled, Vztahy, Události, Bydliště, Zdraví a Materiály.
+50. U každé osoby lze vytvořit samostatně formátovaný souhrnný dokument PDF A4.
+51. Seznam osob obsahuje fotografii nebo bustu, dvě textové řádky, kategorii osoby, vyhledávání, filtr a řazení.
+52. Výchozí řazení seznamu osob je od nejmladších.
+53. Na telefonu se seznam osob otevírá jako vysouvací panel zleva; na tabletu lze seznam sbalit.
+54. Aplikace má od první verze světlý a tmavý režim dostupný i bez přihlášení.
+55. Světlý a tmavý režim jsou dvě varianty stejného designového systému.
+56. Druhotně uvedená jména se výchozím způsobem barevně rozlišují podle pohlaví; hlavní jméno v záhlaví nikoli.
+57. Tlačítka Zpět a Vpřed procházejí historii zobrazených osob.
+58. Změny se po uložení ihned promítnou do všech zobrazených souvisejících částí bez ručního obnovení stránky.
+59. Celá osoba se nemaže, ale archivuje; jednotlivé záznamy se odstraňují měkce po potvrzení.
+60. Důležitá upozornění se zobrazují přímo v místě práce uživatele, nikoli pouze v rohu obrazovky.
 
 ## 2. Otevřené otázky
 
@@ -60,7 +75,6 @@
 - Bude podporován offline režim?
 - Jak bude řešeno přihlašování?
 - Kolik rolí bude skutečně potřeba v první verzi?
-- Jak bude vypadat mobilní panel seznamu osob?
 - Jak přesně se bude zobrazovat rodokmen?
 - Jak bude řešeno slučování duplicit?
 - Jaké exportní formáty budou podporovány?

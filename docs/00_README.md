@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.2  
+**Verze dokumentace:** 0.3  
 **Stav:** pracovní návrh  
-**Datum revize:** 14. 7. 2026
+**Datum revize:** 15. 7. 2026
 
 ## Účel balíčku
 
@@ -12,16 +12,17 @@ Projekt není zamýšlen pouze jako rodokmen, ale jako dlouhodobě rozšiřiteln
 
 ## Obsah
 
-1. `01_VIZE_A_ROZSAH_v0.1.md`
-2. `02_FUNKCNI_SPECIFIKACE_v0.1.md`
-3. `03_DATOVY_MODEL_v0.1.md`
-4. `04_UZIVATELSKE_ROLE_A_PRAVA_v0.1.md`
-5. `05_PRAVIDLA_DOKUMENTACE_v0.1.md`
-6. `06_ROZHODNUTI_A_OTEVRENE_OTAZKY_v0.1.md`
-7. `07_ROADMAPA_v0.1.md`
-8. `08_ARCHITEKTONICKE_PRINCIPY_v0.1.md`
+1. `01_VIZE_A_ROZSAH.md`
+2. `02_FUNKCNI_SPECIFIKACE.md`
+3. `03_DATOVY_MODEL.md`
+4. `04_UZIVATELSKE_ROLE_A_PRAVA.md`
+5. `05_PRAVIDLA_DOKUMENTACE.md`
+6. `06_ROZHODNUTI_A_OTEVRENE_OTAZKY.md`
+7. `07_ROADMAPA.md`
+8. `08_ARCHITEKTONICKE_PRINCIPY.md`
 9. `09_CODING_STANDARD.md`
-10. `CHANGELOG.md`
+10. `10_UI_UX_NAVRH.md`
+11. `CHANGELOG.md`
 
 ## Jak dokumentaci používat
 
@@ -30,6 +31,18 @@ Projekt není zamýšlen pouze jako rodokmen, ale jako dlouhodobě rozšiřiteln
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+
+## Stav verze 0.3
+
+Verze 0.3 doplňuje:
+
+- první ucelený návrh UI/UX,
+- strukturu seznamu a detailu osoby,
+- responzivní chování pro počítač, tablet a telefon,
+- pravidla editace, upozornění a prázdných stavů,
+- světlý a tmavý motiv včetně konkrétních barevných proměnných,
+- kategorie osob v datovém modelu.
 
 ## Stav verze 0.1
 
