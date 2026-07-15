@@ -1,7 +1,7 @@
 # Pravidla dokumentace projektu
 
 **Dokument:** 05  
-**Verze:** 0.2  
+**Verze:** 0.3
 **Stav:** platné pracovní pravidlo  
 **Datum revize:** 14. 7. 2026
 
@@ -11,7 +11,7 @@ Každý dokument má uvedenou verzi. Při další práci se vždy vychází z ne
 
 ## 2. Zdroj pravdy
 
-Dokumenty uložené ve zdrojích projektu představují hlavní projektovou dokumentaci.
+GitHub repozitář představuje autoritativní projektovou dokumentaci. Dokumenty uložené ve zdrojích projektu ChatGPT jsou aktuální pracovní kopií pro danou etapu.
 
 Informace z chatu, které nejsou do dokumentace přeneseny, se považují za pracovní diskusi.
 
@@ -175,11 +175,36 @@ Oficiální repozitář projektu je:
 
 `https://github.com/manicap/Stemma`
 
-- GitHub uchovává historii dokumentace a zdrojového kódu.
-- Zdroje projektu v ChatGPT obsahují pouze aktuální dokumentaci.
+- GitHub uchovává autoritativní aktuální stav, historii dokumentace a zdrojového kódu.
+- Zdroje projektu v ChatGPT obsahují pouze aktuální pracovní kopii dokumentace potřebnou pro danou etapu.
 - Při nové verzi zdrojů asistent připraví kopírovatelný blok příkazů pro commit a push.
 - Verze dokumentace a aplikace se evidují odděleně.
 
 ## 16. Výstup nové verze dokumentace
 
 Každý balíček obsahuje aktuální dokumenty, přehled změn, seznam dotčených souborů, doporučený commit, Git příkazy a stručný orientační údaj o náročnosti.
+
+
+## 17. Evidence architektonických rozhodnutí
+
+Významná rozhodnutí se evidují jako ACP v dokumentu `12_ARCHITEKTONICKA_ROZHODNUTI.md`.
+
+ACP se používá zejména pro:
+
+- volbu technologií,
+- změnu základního datového modelu,
+- změnu architektury rozhraní,
+- změnu databáze nebo úložiště,
+- změnu zdroje pravdy nebo vývojového workflow.
+
+Každé ACP obsahuje minimálně:
+
+- identifikátor,
+- název,
+- stav,
+- kontext,
+- rozhodnutí,
+- důvod,
+- dopady.
+
+Již schválené ACP se nepřepisuje beze stopy. Změna se zaznamená novým ACP, které původní rozhodnutí nahrazuje nebo upravuje.
