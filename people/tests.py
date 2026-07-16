@@ -2,12 +2,22 @@ from importlib import import_module
 
 from django.apps import apps
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
+from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 
-from common.models import LookupModel
+from common.choices import AccessLevel, Gender, VerificationStatus
+from common.models import (
+    AccessControlledModel,
+    AuthoredModel,
+    LifecycleModel,
+    LookupModel,
+    TimestampedModel,
+    VerifiableModel,
+)
 
-from .models import PersonCategory
+from .models import Person, PersonCategory
 
 
 INITIAL_CATEGORIES = (
@@ -220,3 +230,184 @@ class PersonCategoryAdminTests(SimpleTestCase):
 
     def test_model_is_registered_in_admin(self) -> None:
         self.assertTrue(admin.site.is_registered(PersonCategory))
+
+
+class PersonModelTests(SimpleTestCase):
+    """Ověření struktury, metadat a validace osoby."""
+
+    inherited_field_names = {
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "access_level",
+        "verification_status",
+        "archived_at",
+        "archived_by",
+        "archive_reason",
+        "deleted_at",
+        "deleted_by",
+        "deletion_reason",
+    }
+
+    def test_model_is_concrete_and_uses_common_models(self) -> None:
+        self.assertFalse(Person._meta.abstract)
+        self.assertEqual(
+            Person.__bases__,
+            (
+                TimestampedModel,
+                AccessControlledModel,
+                VerifiableModel,
+                AuthoredModel,
+                LifecycleModel,
+                models.Model,
+            ),
+        )
+
+    def test_model_has_only_expected_identity_fields(self) -> None:
+        identity_fields = tuple(
+            field.name
+            for field in Person._meta.local_fields
+            if field.name not in self.inherited_field_names
+        )
+
+        self.assertEqual(
+            identity_fields,
+            ("category", "gender", "first_name", "last_name", "notes"),
+        )
+
+    def test_inherited_fields_are_present(self) -> None:
+        field_names = {
+            field.name for field in Person._meta.local_fields
+        }
+
+        self.assertTrue(self.inherited_field_names <= field_names)
+
+    def test_identity_field_types_and_options(self) -> None:
+        category = Person._meta.get_field("category")
+        gender = Person._meta.get_field("gender")
+        first_name = Person._meta.get_field("first_name")
+        last_name = Person._meta.get_field("last_name")
+        notes = Person._meta.get_field("notes")
+
+        self.assertIsInstance(category, models.ForeignKey)
+        self.assertIsInstance(gender, models.CharField)
+        self.assertEqual(gender.max_length, 10)
+        self.assertEqual(gender.choices, Gender.choices)
+        self.assertEqual(gender.default, Gender.UNKNOWN)
+        self.assertIsInstance(first_name, models.CharField)
+        self.assertEqual(first_name.max_length, 100)
+        self.assertTrue(first_name.blank)
+        self.assertIsInstance(last_name, models.CharField)
+        self.assertEqual(last_name.max_length, 100)
+        self.assertTrue(last_name.blank)
+        self.assertIsInstance(notes, models.TextField)
+        self.assertTrue(notes.blank)
+
+    def test_category_relation(self) -> None:
+        field = Person._meta.get_field("category")
+
+        self.assertIs(field.remote_field.model, PersonCategory)
+        self.assertIs(field.remote_field.on_delete, models.PROTECT)
+        self.assertTrue(field.null)
+        self.assertTrue(field.blank)
+        self.assertEqual(field.remote_field.related_name, "persons")
+
+    def test_inherited_and_lifecycle_defaults(self) -> None:
+        person = Person()
+
+        self.assertEqual(person.gender, Gender.UNKNOWN)
+        self.assertEqual(person.access_level, AccessLevel.PUBLIC)
+        self.assertEqual(
+            person.verification_status,
+            VerificationStatus.UNCONFIRMED,
+        )
+        self.assertIsNone(person.created_by)
+        self.assertIsNone(person.archived_at)
+        self.assertIsNone(person.archived_by)
+        self.assertEqual(person.archive_reason, "")
+        self.assertIsNone(person.deleted_at)
+        self.assertIsNone(person.deleted_by)
+        self.assertEqual(person.deletion_reason, "")
+
+    def test_model_metadata(self) -> None:
+        self.assertEqual(
+            Person._meta.ordering,
+            ("last_name", "first_name"),
+        )
+        self.assertEqual(Person._meta.verbose_name, "Osoba")
+        self.assertEqual(Person._meta.verbose_name_plural, "Osoby")
+
+    def test_string_representation(self) -> None:
+        cases = (
+            (Person(first_name="Jan", last_name="Novák"), "Novák Jan"),
+            (Person(first_name="Jan"), "Jan"),
+            (Person(last_name="Novák"), "Novák"),
+            (Person(), ""),
+        )
+
+        for person, expected in cases:
+            with self.subTest(
+                first_name=person.first_name,
+                last_name=person.last_name,
+            ):
+                self.assertEqual(str(person), expected)
+
+    def test_at_least_one_main_name_is_required(self) -> None:
+        with self.assertRaisesRegex(
+            ValidationError,
+            "alespoň jméno nebo příjmení",
+        ):
+            Person().full_clean()
+
+    def test_either_main_name_is_valid(self) -> None:
+        for person in (
+            Person(first_name="Jan"),
+            Person(last_name="Novák"),
+        ):
+            with self.subTest(
+                first_name=person.first_name,
+                last_name=person.last_name,
+            ):
+                person.full_clean()
+
+
+class PersonDatabaseTests(TestCase):
+    """Ověření databázových pravidel osoby."""
+
+    def test_people_can_have_identical_names(self) -> None:
+        Person.objects.create(first_name="Jan", last_name="Novák")
+        Person.objects.create(first_name="Jan", last_name="Novák")
+
+        self.assertEqual(
+            Person.objects.filter(
+                first_name="Jan",
+                last_name="Novák",
+            ).count(),
+            2,
+        )
+
+    def test_main_names_are_not_unique(self) -> None:
+        self.assertFalse(Person._meta.get_field("first_name").unique)
+        self.assertFalse(Person._meta.get_field("last_name").unique)
+
+    def test_person_category_is_protected(self) -> None:
+        category = PersonCategory.objects.create(
+            code="protected",
+            name="Chráněná kategorie",
+        )
+        Person.objects.create(
+            category=category,
+            first_name="Jan",
+            last_name="Novák",
+        )
+
+        with self.assertRaises(ProtectedError):
+            category.delete()
+
+
+class PersonAdminTests(SimpleTestCase):
+    """Ověření registrace osoby v Django Adminu."""
+
+    def test_model_is_registered_in_admin(self) -> None:
+        self.assertTrue(admin.site.is_registered(Person))
