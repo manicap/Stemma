@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.4
+**Verze:** 0.5
 **Stav:** schválený technický návrh v implementaci
-**Datum revize:** 16. 7. 2026
+**Datum revize:** 17. 7. 2026
 
 ## 1. Účel
 
@@ -169,16 +169,43 @@ Každý záznam má typ, hodnotu, normalizovanou vyhledávací hodnotu, stav ov�
 
 Místo je opakovaně použitelný geografický nebo fyzický objekt.
 
-Obsahuje zejména:
+Model `Place` dědí společné abstraktní modely `TimestampedModel`,
+`AccessControlledModel`, `VerifiableModel`, `AuthoredModel` a `LifecycleModel`.
+Nedědí `PartialDateModel`.
 
-- hlavní název,
-- normalizovaný název,
-- typ místa,
-- volitelné nadřazené místo,
-- zemi,
-- popis,
-- souřadnice a jejich přesnost,
-- přístupovou úroveň.
+Vlastní pole modelu jsou:
+
+- `place_type` — volitelný `ForeignKey` na `PlaceType`, `null=True`,
+  `blank=True`, `on_delete=models.PROTECT`, `related_name="places"`,
+- `name` — povinný `CharField(max_length=255)`,
+- `normalized_name` — povinný `CharField(max_length=255, db_index=True)`;
+  zatím se zadává explicitně a automatický normalizační algoritmus není
+  součástí tohoto kroku,
+- `parent` — volitelný `ForeignKey` na `self`, `null=True`, `blank=True`,
+  `on_delete=models.SET_NULL`, `related_name="children"`,
+- `country` — `CharField(max_length=100, blank=True)` pro zobrazovanou textovou
+  hodnotu země nebo historického státního útvaru; samostatný model ani
+  číselník zemí se zatím nevytváří,
+- `description` — `TextField(blank=True)`,
+- `latitude` — `DecimalField(max_digits=8, decimal_places=6, null=True,
+  blank=True)`,
+- `longitude` — `DecimalField(max_digits=9, decimal_places=6, null=True,
+  blank=True)`,
+- `coordinate_precision_m` — volitelný `PositiveIntegerField(null=True,
+  blank=True)` vyjadřující odhadovanou přesnost souřadnic v metrech.
+
+Model uplatňuje tato validační pravidla:
+
+- zeměpisná šířka a délka musí být zadány buď obě, nebo ani jedna,
+- zeměpisná šířka musí být v rozsahu −90 až 90,
+- zeměpisná délka musí být v rozsahu −180 až 180,
+- přesnost souřadnic lze vyplnit pouze při zadaných obou souřadnicích,
+- místo nesmí být samo sobě rodičem,
+- hierarchie `parent` nesmí obsahovat přímý ani nepřímý cyklus.
+
+Metadata modelu jsou `verbose_name = "Místo"`,
+`verbose_name_plural = "Místa"` a `ordering = ("name",)`. Textová
+reprezentace vrací `name`.
 
 Hierarchie míst nesmí obsahovat cyklus. Detailní adresní údaje se primárně ukládají u bydliště nebo události. Samostatné místo pro dům nebo budovu vznikne pouze tehdy, pokud se opakovaně používá nebo má vlastní historii a materiály.
 

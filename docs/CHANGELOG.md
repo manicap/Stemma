@@ -1,5 +1,13 @@
 # Historie změn dokumentace
 
+## Verze 0.9 – 17. 7. 2026
+
+- konkretizována implementovatelná struktura modelu `Place`, jeho metadata,
+  hierarchie, souřadnice a validační pravidla,
+- potvrzen textový charakter země nebo historického státního útvaru a
+  explicitní zadávání normalizovaného názvu,
+- nebyla zjištěna potřeba nového ACP.
+
 ## Verze 0.8 – 16. 7. 2026
 
 - dokončen milník M1 – společný základ aplikace `common`,
