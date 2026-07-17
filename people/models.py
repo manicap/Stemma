@@ -7,6 +7,7 @@ from common.models import (
     AuthoredModel,
     LifecycleModel,
     LookupModel,
+    PartialDateModel,
     TimestampedModel,
     VerifiableModel,
 )
@@ -18,6 +19,17 @@ class PersonCategory(LookupModel):
     class Meta(LookupModel.Meta):
         verbose_name = "Kategorie osoby"
         verbose_name_plural = "Kategorie osob"
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class NameType(LookupModel):
+    """Typ historického nebo alternativního jména osoby."""
+
+    class Meta(LookupModel.Meta):
+        verbose_name = "Typ jména"
+        verbose_name_plural = "Typy jmen"
 
     def __str__(self) -> str:
         return self.name
@@ -75,3 +87,52 @@ class Person(
         return " ".join(
             part for part in (self.last_name, self.first_name) if part
         )
+
+
+class PersonName(
+    TimestampedModel,
+    AccessControlledModel,
+    VerifiableModel,
+    AuthoredModel,
+    LifecycleModel,
+    PartialDateModel,
+    models.Model,
+):
+    """Historické nebo alternativní jméno evidované osoby."""
+
+    person = models.ForeignKey(
+        Person,
+        on_delete=models.CASCADE,
+        related_name="names",
+    )
+    name_type = models.ForeignKey(
+        NameType,
+        on_delete=models.PROTECT,
+        related_name="person_names",
+    )
+    value = models.CharField(
+        max_length=255,
+    )
+    normalized_value = models.CharField(
+        max_length=255,
+        db_index=True,
+    )
+    note = models.TextField(
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = "Jméno osoby"
+        verbose_name_plural = "Jména osob"
+        ordering = ("name_type__sort_order", "value")
+
+    def __str__(self) -> str:
+        if not self.name_type_id:
+            return self.value
+        try:
+            type_name = self.name_type.name
+        except NameType.DoesNotExist:
+            return self.value
+        if type_name:
+            return f"{self.value} ({type_name})"
+        return self.value
