@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "accounts.apps.AccountsConfig",
     "common.apps.CommonConfig",
     "people.apps.PeopleConfig",
+    "places.apps.PlacesConfig",
 ]
 
 MIDDLEWARE = [
