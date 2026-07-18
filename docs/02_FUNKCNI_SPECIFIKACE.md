@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.2  
+**Verze:** 0.3
 **Stav:** pracovní návrh  
-**Datum revize:** 15. 7. 2026
+**Datum revize:** 17. 7. 2026
 
 ## 1. Hlavní obrazovka
 
@@ -136,16 +136,16 @@ Podporované typy zahrnují:
 - sňatek,
 - rozvod,
 - stěhování,
-- maturitu,
 - studium,
+- maturitu,
 - vojenskou službu,
 - zaměstnání,
-- úraz,
-- operaci,
-- očkování,
 - úmrtí,
 - pohřeb,
 - jinou vlastní událost.
+
+Úraz, operace, očkování a další zdravotní skutečnosti se ukládají jako
+zdravotní záznamy, nikoli současně jako obecné události.
 
 Událost může obsahovat:
 
@@ -160,9 +160,8 @@ Událost může obsahovat:
 - zdroje,
 - přístupovou úroveň.
 
-Speciální pole události Úmrtí:
-
-- příčina úmrtí.
+Příčina a okolnosti úmrtí se ukládají ve specializovaném detailu
+`DeathDetail` propojeném s událostí úmrtí.
 
 ## 8. Vazby mezi osobami
 

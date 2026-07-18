@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.5
+**Verze:** 0.6
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 17. 7. 2026
 
@@ -215,22 +215,42 @@ Historické, jazykové a alternativní názvy mohou být vedeny v samostatném m
 
 ### 8.1 Typ události
 
-Číselník určuje význam události, podporu období, možnost místa, možnost zobrazení v přehledu a výchozí viditelnost.
+Číselník `EventType` je přímým potomkem `LookupModel`. Vedle zděděných
+polí obsahuje tato povinná pole s `null=False` a `blank=False`:
 
-Základní typy zahrnují:
+- `supports_date_range` — `BooleanField(default=False)`; určuje, zda typ
+  podporuje `DatePrecision.RANGE`,
+- `allows_place` — `BooleanField(default=True)`; určuje, zda událost může
+  mít přiřazené místo,
+- `default_show_in_overview` — `BooleanField(default=False)`; určuje výchozí
+  hodnotu příznaku zobrazení nové události v přehledu osoby,
+- `default_access_level` — `CharField(max_length=20,
+  choices=AccessLevel.choices, default=AccessLevel.PUBLIC)`; určuje výchozí
+  přístupovou úroveň nové události.
 
-- narození,
-- křest,
-- sňatek,
-- rozvod,
-- stěhování,
-- studium,
-- maturitu,
-- vojenskou službu,
-- zaměstnání,
-- úmrtí,
-- pohřeb,
-- jinou událost.
+Změna výchozích hodnot typu nemění již existující události. Metadata
+modelu jsou `verbose_name = "Typ události"`,
+`verbose_name_plural = "Typy událostí"` a zděděné
+`ordering = ("sort_order", "name", "code")`. Textová reprezentace vrací
+`name`.
+
+Systémové hodnoty mají `is_active=True`, `is_system=True` a následující
+konfiguraci:
+
+| Kód | Název | Popis | Pořadí | Rozmezí | Místo | Přehled | Výchozí přístup |
+|---|---|---|---:|:---:|:---:|:---:|---|
+| `birth` | Narození | Narození osoby. | 10 | ne | ano | ano | `AccessLevel.PUBLIC` |
+| `baptism` | Křest | Křest osoby. | 20 | ne | ano | ne | `AccessLevel.PUBLIC` |
+| `marriage` | Sňatek | Uzavření manželství. | 30 | ne | ano | ano | `AccessLevel.PUBLIC` |
+| `divorce` | Rozvod | Ukončení manželství rozvodem. | 40 | ne | ano | ne | `AccessLevel.PUBLIC` |
+| `relocation` | Stěhování | Přestěhování osoby nebo domácnosti. | 50 | ne | ano | ne | `AccessLevel.PUBLIC` |
+| `education` | Studium | Studium na škole nebo v jiném vzdělávacím programu. | 60 | ano | ano | ne | `AccessLevel.PUBLIC` |
+| `graduation` | Maturita | Složení maturity nebo obdobné závěrečné zkoušky. | 70 | ne | ano | ne | `AccessLevel.PUBLIC` |
+| `military_service` | Vojenská služba | Výkon vojenské služby. | 80 | ano | ano | ne | `AccessLevel.PUBLIC` |
+| `employment` | Zaměstnání | Pracovní nebo profesní působení. | 90 | ano | ano | ne | `AccessLevel.PUBLIC` |
+| `death` | Úmrtí | Úmrtí osoby. | 100 | ne | ano | ano | `AccessLevel.PUBLIC` |
+| `funeral` | Pohřeb | Pohřeb nebo jiné rozloučení se zemřelým. | 110 | ne | ano | ne | `AccessLevel.PUBLIC` |
+| `other` | Jiná událost | Jiná životní událost. | 120 | ano | ano | ne | `AccessLevel.PUBLIC` |
 
 Úraz, operace, očkování a další zdravotní skutečnosti se ukládají jako zdravotní záznamy.
 
@@ -558,8 +578,9 @@ accounts.0001_initial
 people.0001_lookup_models
 people.0002_person_and_names
 places.0001_place_models
-events.0001_event_lookups
-events.0002_events_and_participation
+events.0001_event_type
+events.0002_initial_event_types
+events.0003_events_and_participation
 people.0003_relationships
 places.0002_residence_lookups
 places.0003_residences

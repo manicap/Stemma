@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "common.apps.CommonConfig",
     "people.apps.PeopleConfig",
     "places.apps.PlacesConfig",
+    "events.apps.EventsConfig",
 ]
 
 MIDDLEWARE = [

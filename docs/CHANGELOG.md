@@ -1,5 +1,14 @@
 # Historie změn dokumentace
 
+## Verze 0.10 – 17. 7. 2026
+
+- konkretizován model `EventType`, jeho výchozí nastavení a dvanáct
+  systémových typů událostí,
+- oddělena strukturální a datová migrace typů událostí,
+- zdravotní skutečnosti sjednoceny jako zdravotní záznamy a příčina
+  úmrtí přesunuta do specializovaného `DeathDetail`,
+- nebyla zjištěna potřeba nového ACP.
+
 ## Verze 0.9 – 17. 7. 2026
 
 - konkretizována implementovatelná struktura modelu `Place`, jeho metadata,

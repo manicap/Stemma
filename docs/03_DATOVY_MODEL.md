@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.2  
+**Verze:** 0.3
 **Stav:** koncept  
-**Datum revize:** 15. 7. 2026
+**Datum revize:** 17. 7. 2026
 
 ## 1. Základní pilíře
 
@@ -78,6 +78,22 @@ Pravidla:
 
 ## 3. Událost
 
+### 3.1 Typ události
+
+Typ události je uživatelsky rozšiřitelný číselník. Vedle kódu, názvu,
+popisu, pořadí, aktivity a systémového příznaku určuje:
+
+- zda typ podporuje časové rozmezí,
+- zda událost může mít místo,
+- zda se nová událost tohoto typu ve výchozím stavu zobrazuje v přehledu,
+- výchozí přístupovou úroveň nové události.
+
+Systémové typy jsou narození, křest, sňatek, rozvod, stěhování, studium,
+maturita, vojenská služba, zaměstnání, úmrtí, pohřeb a jiná událost.
+Zdravotní skutečnosti se evidují jako zdravotní záznamy.
+
+### 3.2 Záznam události
+
 Pole:
 
 - ID,
@@ -89,9 +105,9 @@ Pole:
 - textová podoba data,
 - ID místa,
 - popis,
-- příčina úmrtí,
 - stav ověření,
 - přístupová úroveň,
+- příznak zobrazení v přehledu,
 - datum vytvoření,
 - datum poslední změny,
 - stav archivace.
@@ -102,6 +118,9 @@ Pravidla:
 - každá osoba může mít nejvýše jednu aktivní událost Úmrtí,
 - sňatek je jedna společná událost propojená s více osobami,
 - neznámé datum se nenahrazuje vymyšleným přesným datem.
+
+Příčina a okolnosti úmrtí patří do samostatného specializovaného detailu
+`DeathDetail` ve vztahu jedna ku jedné k události úmrtí.
 
 ## 4. Účast osoby na události
 
