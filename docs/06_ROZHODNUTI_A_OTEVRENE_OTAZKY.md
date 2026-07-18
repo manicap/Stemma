@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.8
+**Verze:** 0.9
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 16. 7. 2026
+**Datum revize:** 18. 7. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -16,7 +16,7 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 73. Hlavní jméno a příjmení zůstávají přímo na osobě; další, historická a alternativní jména se ukládají samostatně.
 74. Neúplné a nejisté datum používá společný strukturovaný model bez falešných hodnot typu 1. 1. daného roku.
 75. Technický řadicí bod data se může ukládat jako automaticky odvozená hodnota kvůli indexům a řazení.
-76. Typy událostí a role účastníků jsou číselníky; povolené role a jejich minimální a maximální počty se konfigurují pro každý typ události.
+76. Typy událostí a role účastníků jsou spravovatelné číselníky. `AllowedEventRole` konfiguruje pro jedinečnou dvojici typu a role minimální a maximální počet, pořadí, aktivitu a systémový příznak. Neomezené maximum se ukládá jako `NULL`; manželský partner používá jedinou genderově neutrální roli `spouse`.
 77. Událost může být propojena s více přílohami, například se snímkem matriky, a s více zdroji.
 78. Příčina a okolnosti úmrtí se ukládají ve specializovaném detailu události úmrtí.
 79. Jedna osoba smí mít nejvýše jednu aktivní událost narození a jednu aktivní událost úmrtí prostřednictvím systémové role účastníka.

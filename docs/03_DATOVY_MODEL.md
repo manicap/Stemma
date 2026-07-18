@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.3
+**Verze:** 0.4
 **Stav:** koncept  
-**Datum revize:** 17. 7. 2026
+**Datum revize:** 18. 7. 2026
 
 ## 1. Základní pilíře
 
@@ -131,16 +131,18 @@ Spojovací entita:
 - role osoby v události,
 - poznámka.
 
-Příklady rolí:
+Role osoby je spravovatelný číselník. Systémové role jsou hlavní osoba,
+narozená osoba, křtěná osoba, zemřelá osoba, manželský partner, rodič,
+dítě, kmotr nebo kmotra, svědek, účastník a jiná role.
 
-- narozená osoba,
-- zemřelá osoba,
-- manžel,
-- manželka,
-- svědek,
-- účastník,
-- dítě,
-- rodič.
+Manželský partner používá jedinou genderově neutrální technickou roli
+`spouse`. Genderované označení je pouze odvozená zobrazovací logika.
+
+Konfigurační model `AllowedEventRole` spojuje typ události s povolenou rolí
+a určuje její minimální a maximální počet, pořadí a aktivitu. Nulové
+minimum znamená nepovinnou roli, kladné minimum povinný počet a prázdné
+maximum počet bez horního omezení. Každá dvojice typu a role má nejvýše
+jedno konfigurační pravidlo.
 
 ## 5. Vazba mezi osobami
 

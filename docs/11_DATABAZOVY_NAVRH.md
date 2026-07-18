@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.6
+**Verze:** 0.7
 **Stav:** schválený technický návrh v implementaci
-**Datum revize:** 17. 7. 2026
+**Datum revize:** 18. 7. 2026
 
 ## 1. Účel
 
@@ -258,18 +258,87 @@ konfiguraci:
 
 Účast osoby na události je samostatný spojovací model.
 
-Role mohou být například:
+`ParticipantRole` je spravovatelný číselník, který dědí pouze
+`LookupModel` a nepřidává vlastní databázová pole. Metadata jsou
+`verbose_name = "Role účastníka"`,
+`verbose_name_plural = "Role účastníků"` a zděděné
+`ordering = ("sort_order", "name", "code")`. Textová reprezentace vrací
+`name`.
 
-- narozená osoba,
-- zemřelá osoba,
-- křtěná osoba,
-- partner v manželství,
-- rodič,
-- svědek,
-- kmotr,
-- účastník.
+Systémové role mají `is_active=True`, `is_system=True`:
 
-Model `AllowedEventRole` určuje pro každou kombinaci typu události a role minimální a maximální počet, pořadí a aktivitu.
+| Kód | Název | Popis | Pořadí |
+|---|---|---|---:|
+| `subject` | Hlavní osoba | Osoba, které se událost primárně týká. | 10 |
+| `born_person` | Narozená osoba | Osoba, jejíž narození událost eviduje. | 20 |
+| `baptized_person` | Křtěná osoba | Osoba, jejíž křest událost eviduje. | 30 |
+| `deceased_person` | Zemřelá osoba | Osoba, jejíž úmrtí nebo pohřeb událost eviduje. | 40 |
+| `spouse` | Manželský partner | Partner při sňatku nebo rozvodu. | 50 |
+| `parent` | Rodič | Rodič hlavní osoby nebo jiného účastníka. | 60 |
+| `child` | Dítě | Dítě hlavní osoby nebo jiného účastníka. | 70 |
+| `godparent` | Kmotr nebo kmotra | Kmotr nebo kmotra při křtu. | 80 |
+| `witness` | Svědek | Svědek události. | 90 |
+| `participant` | Účastník | Další osoba přímo účastná události. | 100 |
+| `other` | Jiná role | Jiná role osoby v události. | 110 |
+
+Používá se jediná genderově neutrální role `spouse`. Označení
+ženich, nevěsta, manžel nebo manželka je pouze budoucí zobrazovací logika
+odvozená z osoby a kontextu.
+
+`AllowedEventRole` je konfigurační spojovací model bez common mixinů.
+Obsahuje:
+
+- `event_type` — `ForeignKey` na `EventType`, `on_delete=models.PROTECT`,
+  `related_name="allowed_roles"`,
+- `participant_role` — `ForeignKey` na `ParticipantRole`,
+  `on_delete=models.PROTECT`, `related_name="event_type_rules"`,
+- `min_count` — `PositiveSmallIntegerField(default=0)`,
+- `max_count` — `PositiveSmallIntegerField(null=True, blank=True)`,
+- `sort_order` — `PositiveIntegerField(default=0)`,
+- `is_active` — `BooleanField(default=True)`,
+- `is_system` — `BooleanField(default=False, editable=False)`.
+
+Hodnota `min_count=0` znamená nepovinnou roli a vyšší hodnota minimální
+povinný počet. `max_count=None` znamená počet bez horního omezení.
+Maximum nesmí být nižší než minimum. `sort_order` určuje pořadí
+v rozhraní, `is_active=False` pravidlo deaktivuje a `is_system` rozlišuje
+systémovou konfiguraci.
+
+Metadata modelu jsou `verbose_name = "Povolená role události"`,
+`verbose_name_plural = "Povolené role událostí"` a:
+
+```python
+ordering = (
+    "event_type__sort_order",
+    "sort_order",
+    "participant_role__sort_order",
+    "participant_role__code",
+)
+```
+
+Dvojice `event_type` a `participant_role` je jedinečná pomocí constraintu
+`events_unique_allowed_role`. Constraint
+`events_valid_allowed_role_counts` vyžaduje, aby `max_count` bylo `NULL`
+nebo větší či rovné `min_count`. Textová reprezentace vrací
+`"{event_type} – {participant_role}"`.
+
+Systémová matice používá `is_active=True`, `is_system=True`. Zápis
+`minimum..maximum / pořadí` používá `∞` pro neomezené maximum:
+
+| Typ události | Povolené role |
+|---|---|
+| `birth` | `born_person` 1..1 / 10; `parent` 0..2 / 20; `witness` 0..∞ / 30; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
+| `baptism` | `baptized_person` 1..1 / 10; `parent` 0..2 / 20; `godparent` 0..∞ / 30; `witness` 0..∞ / 40; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
+| `marriage` | `spouse` 2..2 / 10; `parent` 0..∞ / 20; `witness` 0..∞ / 30; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
+| `divorce` | `spouse` 1..2 / 10; `witness` 0..∞ / 30; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
+| `relocation` | `subject` 1..∞ / 10; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
+| `education` | `subject` 1..1 / 10; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
+| `graduation` | `subject` 1..1 / 10; `witness` 0..∞ / 30; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
+| `military_service` | `subject` 1..1 / 10; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
+| `employment` | `subject` 1..1 / 10; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
+| `death` | `deceased_person` 1..1 / 10; `witness` 0..∞ / 30; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
+| `funeral` | `deceased_person` 1..1 / 10; `witness` 0..∞ / 30; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
+| `other` | `subject` 1..∞ / 10; `parent` 0..∞ / 20; `child` 0..∞ / 30; `spouse` 0..∞ / 40; `godparent` 0..∞ / 50; `witness` 0..∞ / 60; `participant` 0..∞ / 80; `other` 0..∞ / 90 |
 
 Systémová pravidla jsou současně chráněna aplikační validací:
 
@@ -580,7 +649,10 @@ people.0002_person_and_names
 places.0001_place_models
 events.0001_event_type
 events.0002_initial_event_types
-events.0003_events_and_participation
+events.0003_participant_role_allowed_event_role
+events.0004_initial_participant_roles
+events.0005_initial_allowed_event_roles
+events.0006_events_and_participation
 people.0003_relationships
 places.0002_residence_lookups
 places.0003_residences

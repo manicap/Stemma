@@ -1,5 +1,16 @@
 # Historie změn dokumentace
 
+## Verze 0.11 – 18. 7. 2026
+
+- konkretizován číselník `ParticipantRole` a jedenáct systémových rolí,
+- konkretizován konfigurační model `AllowedEventRole`, jeho integritní
+  omezení a genderově neutrální role `spouse`,
+- schválena matice rolí pro dvanáct systémových typů událostí,
+- implementační krok M2.4b rozdělen na jednu strukturální a dvě datové
+  migrace,
+- implementován krok M2.4b včetně modelů, systémových dat a testů,
+- nebyla zjištěna potřeba nového ACP.
+
 ## Verze 0.10 – 17. 7. 2026
 
 - konkretizován model `EventType`, jeho výchozí nastavení a dvanáct
