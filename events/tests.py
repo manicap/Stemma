@@ -1,18 +1,29 @@
+from datetime import date
 from importlib import import_module
 from inspect import getsource
 
 from django.apps import apps
 from django.conf import settings
 from django.contrib import admin
-from django.db import IntegrityError, models, transaction
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, migrations, models, transaction
 from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 
-from common.choices import AccessLevel
-from common.models import LookupModel
+from common.choices import AccessLevel, DatePrecision, DateQualifier
+from common.models import (
+    AccessControlledModel,
+    AuthoredModel,
+    LifecycleModel,
+    LookupModel,
+    PartialDateModel,
+    TimestampedModel,
+    VerifiableModel,
+)
+from places.models import Place
 
 from .apps import EventsConfig
-from .models import AllowedEventRole, EventType, ParticipantRole
+from .models import AllowedEventRole, Event, EventType, ParticipantRole
 
 
 EXPECTED_EVENT_TYPES = (
@@ -1131,3 +1142,522 @@ class RoleAdminTests(SimpleTestCase):
     def test_role_models_are_registered_in_admin(self) -> None:
         self.assertTrue(admin.site.is_registered(ParticipantRole))
         self.assertTrue(admin.site.is_registered(AllowedEventRole))
+
+
+class EventModelTests(SimpleTestCase):
+    """Ověření struktury a metadat základního modelu události."""
+
+    inherited_field_names = {
+        "created_at",
+        "updated_at",
+        "access_level",
+        "verification_status",
+        "created_by",
+        "archived_at",
+        "archived_by",
+        "archive_reason",
+        "deleted_at",
+        "deleted_by",
+        "deletion_reason",
+        "date_precision",
+        "date_qualifier",
+        "start_year",
+        "start_month",
+        "start_day",
+        "end_year",
+        "end_month",
+        "end_day",
+        "original_date_text",
+        "date_note",
+        "sort_date",
+        "sort_date_end",
+    }
+    own_field_names = {
+        "event_type",
+        "place",
+        "location_detail",
+        "title",
+        "description",
+        "show_in_overview",
+    }
+
+    def test_model_is_concrete_with_exact_approved_bases(self) -> None:
+        self.assertFalse(Event._meta.abstract)
+        self.assertEqual(
+            Event.__bases__,
+            (
+                TimestampedModel,
+                AccessControlledModel,
+                VerifiableModel,
+                AuthoredModel,
+                LifecycleModel,
+                PartialDateModel,
+                models.Model,
+            ),
+        )
+
+    def test_model_has_exact_own_and_inherited_fields(self) -> None:
+        field_names = {
+            field.name for field in Event._meta.local_fields
+        }
+
+        self.assertEqual(
+            field_names,
+            {"id"} | self.inherited_field_names | self.own_field_names,
+        )
+        self.assertTrue(self.inherited_field_names <= field_names)
+        self.assertEqual(
+            field_names - self.inherited_field_names - {"id"},
+            self.own_field_names,
+        )
+
+    def test_model_does_not_contain_forbidden_detail_fields(self) -> None:
+        field_names = {
+            field.name for field in Event._meta.local_fields
+        }
+        forbidden_fields = {
+            "cause",
+            "death_cause",
+            "reason",
+            "notes",
+            "internal_note",
+            "source",
+            "attachment",
+            "sort_order",
+            "is_primary",
+            "status",
+            "participant",
+            "person",
+        }
+
+        self.assertTrue(field_names.isdisjoint(forbidden_fields))
+        with self.assertRaises(LookupError):
+            apps.get_model("events", "EventParticipant")
+
+    def test_event_type_field_options(self) -> None:
+        field = Event._meta.get_field("event_type")
+
+        self.assertIsInstance(field, models.ForeignKey)
+        self.assertIs(field.remote_field.model, EventType)
+        self.assertFalse(field.null)
+        self.assertFalse(field.blank)
+        self.assertIs(field.remote_field.on_delete, models.PROTECT)
+        self.assertEqual(field.remote_field.related_name, "events")
+
+    def test_place_field_options(self) -> None:
+        field = Event._meta.get_field("place")
+
+        self.assertIsInstance(field, models.ForeignKey)
+        self.assertIs(field.remote_field.model, Place)
+        self.assertTrue(field.null)
+        self.assertTrue(field.blank)
+        self.assertIs(field.remote_field.on_delete, models.PROTECT)
+        self.assertEqual(field.remote_field.related_name, "events")
+
+    def test_text_field_options(self) -> None:
+        location_detail = Event._meta.get_field("location_detail")
+        title = Event._meta.get_field("title")
+        description = Event._meta.get_field("description")
+
+        self.assertIsInstance(location_detail, models.CharField)
+        self.assertEqual(location_detail.max_length, 255)
+        self.assertTrue(location_detail.blank)
+        self.assertFalse(location_detail.null)
+        self.assertFalse(location_detail.unique)
+        self.assertIsInstance(title, models.CharField)
+        self.assertEqual(title.max_length, 255)
+        self.assertTrue(title.blank)
+        self.assertFalse(title.null)
+        self.assertFalse(title.unique)
+        self.assertIsInstance(description, models.TextField)
+        self.assertTrue(description.blank)
+        self.assertFalse(description.null)
+
+    def test_show_in_overview_options(self) -> None:
+        field = Event._meta.get_field("show_in_overview")
+
+        self.assertIsInstance(field, models.BooleanField)
+        self.assertIs(field.default, False)
+        self.assertFalse(field.null)
+        self.assertFalse(field.blank)
+
+    def test_partial_date_sort_field_keeps_technical_index(self) -> None:
+        sort_date = Event._meta.get_field("sort_date")
+        sort_date_end = Event._meta.get_field("sort_date_end")
+
+        self.assertTrue(sort_date.db_index)
+        self.assertFalse(sort_date.editable)
+        self.assertFalse(sort_date_end.editable)
+
+    def test_metadata(self) -> None:
+        self.assertEqual(Event._meta.verbose_name, "Událost")
+        self.assertEqual(Event._meta.verbose_name_plural, "Události")
+        self.assertEqual(
+            Event._meta.ordering,
+            ("sort_date", "sort_date_end", "pk"),
+        )
+
+    def test_string_representation_prefers_trimmed_title(self) -> None:
+        event_type = EventType(code="test", name="Testovací typ")
+        event = Event(
+            event_type=event_type,
+            title="  Vlastní název  ",
+        )
+
+        self.assertEqual(str(event), "Vlastní název")
+
+    def test_string_representation_falls_back_to_event_type(self) -> None:
+        event_type = EventType(code="test", name="Testovací typ")
+
+        self.assertEqual(str(Event(event_type=event_type)), "Testovací typ")
+        self.assertEqual(
+            str(Event(event_type=event_type, title="   ")),
+            "Testovací typ",
+        )
+
+    def test_string_representation_without_type_is_safe(self) -> None:
+        self.assertEqual(str(Event()), "Událost")
+
+
+class EventPartialDateIntegrationTests(TestCase):
+    """Ověření integrace události se společným částečným datem."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.event_type = EventType.objects.create(
+            code="event_date_range",
+            name="Událost s rozmezím",
+            supports_date_range=True,
+        )
+
+    def test_exact_date_derives_equal_sort_dates(self) -> None:
+        event = Event(
+            event_type=self.event_type,
+            date_precision=DatePrecision.EXACT,
+            start_year=1900,
+            start_month=2,
+            start_day=3,
+        )
+
+        event.full_clean()
+
+        self.assertEqual(event.sort_date, date(1900, 2, 3))
+        self.assertEqual(event.sort_date_end, date(1900, 2, 3))
+
+    def test_month_derives_month_boundaries(self) -> None:
+        event = Event(
+            event_type=self.event_type,
+            date_precision=DatePrecision.MONTH,
+            start_year=1900,
+            start_month=2,
+        )
+
+        event.full_clean()
+
+        self.assertEqual(event.sort_date, date(1900, 2, 1))
+        self.assertEqual(event.sort_date_end, date(1900, 2, 28))
+
+    def test_year_derives_year_boundaries(self) -> None:
+        event = Event(
+            event_type=self.event_type,
+            date_precision=DatePrecision.YEAR,
+            start_year=1900,
+        )
+
+        event.full_clean()
+
+        self.assertEqual(event.sort_date, date(1900, 1, 1))
+        self.assertEqual(event.sort_date_end, date(1900, 12, 31))
+
+    def test_supported_range_derives_both_boundaries(self) -> None:
+        event = Event(
+            event_type=self.event_type,
+            date_precision=DatePrecision.RANGE,
+            start_year=1900,
+            start_month=2,
+            end_year=1901,
+            end_month=3,
+        )
+
+        event.full_clean()
+
+        self.assertEqual(event.sort_date, date(1900, 2, 1))
+        self.assertEqual(event.sort_date_end, date(1901, 3, 31))
+
+    def test_unknown_date_is_valid_without_sort_dates(self) -> None:
+        event = Event(event_type=self.event_type)
+
+        event.full_clean()
+
+        self.assertEqual(event.date_precision, DatePrecision.UNKNOWN)
+        self.assertIsNone(event.sort_date)
+        self.assertIsNone(event.sort_date_end)
+
+    def test_qualifier_does_not_change_sort_boundaries(self) -> None:
+        event = Event(
+            event_type=self.event_type,
+            date_precision=DatePrecision.YEAR,
+            date_qualifier=DateQualifier.APPROXIMATE,
+            start_year=1900,
+        )
+
+        event.full_clean()
+
+        self.assertEqual(event.sort_date, date(1900, 1, 1))
+        self.assertEqual(event.sort_date_end, date(1900, 12, 31))
+
+
+class EventValidationTests(TestCase):
+    """Ověření pravidel typu události nad datem a místem."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.range_type = EventType.objects.create(
+            code="validation_range",
+            name="Rozmezí a místo",
+            supports_date_range=True,
+            allows_place=True,
+        )
+        cls.single_date_type = EventType.objects.create(
+            code="validation_single",
+            name="Jediné datum",
+            supports_date_range=False,
+            allows_place=True,
+        )
+        cls.no_place_type = EventType.objects.create(
+            code="validation_no_place",
+            name="Bez místa",
+            supports_date_range=True,
+            allows_place=False,
+        )
+        cls.place = Place.objects.create(
+            name="Testovací místo",
+            normalized_name="testovaci misto",
+        )
+
+    def assert_field_error_code(
+        self,
+        event: Event,
+        field_name: str,
+        code: str,
+    ) -> None:
+        with self.assertRaises(ValidationError) as context:
+            event.full_clean()
+
+        self.assertIn(field_name, context.exception.error_dict)
+        self.assertIn(
+            code,
+            {
+                error.code
+                for error in context.exception.error_dict[field_name]
+            },
+        )
+
+    def test_range_is_allowed_for_supporting_type(self) -> None:
+        event = Event(
+            event_type=self.range_type,
+            date_precision=DatePrecision.RANGE,
+            start_year=1900,
+            end_year=1901,
+        )
+
+        event.full_clean()
+
+    def test_range_is_rejected_for_non_supporting_type(self) -> None:
+        event = Event(
+            event_type=self.single_date_type,
+            date_precision=DatePrecision.RANGE,
+            start_year=1900,
+            end_year=1901,
+        )
+
+        self.assert_field_error_code(
+            event,
+            "date_precision",
+            "date_range_not_supported",
+        )
+
+    def test_place_is_allowed_for_supporting_type(self) -> None:
+        event = Event(
+            event_type=self.range_type,
+            place=self.place,
+        )
+
+        event.full_clean()
+
+    def test_place_is_rejected_for_non_supporting_type(self) -> None:
+        event = Event(
+            event_type=self.no_place_type,
+            place=self.place,
+        )
+
+        self.assert_field_error_code(event, "place", "place_not_allowed")
+
+    def test_location_detail_is_allowed_for_supporting_type(self) -> None:
+        event = Event(
+            event_type=self.range_type,
+            location_detail="Dům čp. 12",
+        )
+
+        event.full_clean()
+
+    def test_location_detail_is_rejected_for_non_supporting_type(
+        self,
+    ) -> None:
+        event = Event(
+            event_type=self.no_place_type,
+            location_detail="Dům čp. 12",
+        )
+
+        self.assert_field_error_code(
+            event,
+            "location_detail",
+            "location_detail_not_allowed",
+        )
+
+    def test_whitespace_location_detail_is_treated_as_empty(self) -> None:
+        event = Event(
+            event_type=self.no_place_type,
+            location_detail="  \t ",
+        )
+
+        event.full_clean()
+
+    def test_clean_aggregates_partial_date_and_event_errors(self) -> None:
+        event = Event(
+            event_type=self.no_place_type,
+            place=self.place,
+            date_precision=DatePrecision.RANGE,
+            start_year=1901,
+            end_year=1900,
+        )
+
+        with self.assertRaises(ValidationError) as context:
+            event.full_clean()
+
+        self.assertIn("end_year", context.exception.error_dict)
+        self.assertIn("place", context.exception.error_dict)
+
+    def test_missing_event_type_does_not_raise_related_object_error(
+        self,
+    ) -> None:
+        with self.assertRaises(ValidationError) as context:
+            Event().full_clean()
+
+        self.assertIn("event_type", context.exception.error_dict)
+
+
+class EventDatabaseTests(TestCase):
+    """Ověření databázového chování a modelových defaultů události."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.event_type = EventType.objects.create(
+            code="event_database",
+            name="Databázový typ",
+            default_show_in_overview=True,
+            default_access_level=AccessLevel.RESTRICTED,
+        )
+        cls.place = Place.objects.create(
+            name="Databázové místo",
+            normalized_name="databazove misto",
+        )
+
+    def test_multiple_events_can_share_event_type(self) -> None:
+        Event.objects.create(event_type=self.event_type)
+        Event.objects.create(event_type=self.event_type)
+
+        self.assertEqual(
+            Event.objects.filter(event_type=self.event_type).count(),
+            2,
+        )
+
+    def test_multiple_events_can_share_place(self) -> None:
+        Event.objects.create(event_type=self.event_type, place=self.place)
+        Event.objects.create(event_type=self.event_type, place=self.place)
+
+        self.assertEqual(Event.objects.filter(place=self.place).count(), 2)
+
+    def test_duplicate_titles_are_allowed(self) -> None:
+        Event.objects.create(event_type=self.event_type, title="Stejný název")
+        Event.objects.create(event_type=self.event_type, title="Stejný název")
+
+        self.assertEqual(Event.objects.filter(title="Stejný název").count(), 2)
+
+    def test_used_event_type_is_protected_from_deletion(self) -> None:
+        Event.objects.create(event_type=self.event_type)
+
+        with self.assertRaises(ProtectedError):
+            self.event_type.delete()
+
+    def test_used_place_is_protected_from_deletion(self) -> None:
+        Event.objects.create(event_type=self.event_type, place=self.place)
+
+        with self.assertRaises(ProtectedError):
+            self.place.delete()
+
+    def test_event_type_defaults_are_not_copied_automatically(self) -> None:
+        event = Event(event_type=self.event_type)
+
+        self.assertEqual(event.access_level, AccessLevel.PUBLIC)
+        self.assertFalse(event.show_in_overview)
+
+        event.save()
+        event.refresh_from_db()
+
+        self.assertEqual(event.access_level, AccessLevel.PUBLIC)
+        self.assertFalse(event.show_in_overview)
+
+    def test_event_type_default_changes_do_not_update_existing_event(
+        self,
+    ) -> None:
+        event = Event.objects.create(
+            event_type=self.event_type,
+            access_level=AccessLevel.AUTHENTICATED,
+            show_in_overview=True,
+        )
+        self.event_type.default_access_level = AccessLevel.ADMIN_ONLY
+        self.event_type.default_show_in_overview = False
+        self.event_type.save(
+            update_fields=(
+                "default_access_level",
+                "default_show_in_overview",
+            )
+        )
+
+        event.refresh_from_db()
+
+        self.assertEqual(event.access_level, AccessLevel.AUTHENTICATED)
+        self.assertTrue(event.show_in_overview)
+
+
+class EventMigrationTests(SimpleTestCase):
+    """Ověření rozsahu a závislostí strukturální migrace Event."""
+
+    migration = import_module("events.migrations.0006_event")
+
+    def test_migration_contains_only_event_create_model(self) -> None:
+        operations = self.migration.Migration.operations
+
+        self.assertEqual(len(operations), 1)
+        self.assertIsInstance(operations[0], migrations.CreateModel)
+        self.assertEqual(operations[0].name, "Event")
+
+    def test_migration_has_exact_dependencies(self) -> None:
+        self.assertCountEqual(
+            self.migration.Migration.dependencies,
+            (
+                ("events", "0005_initial_allowed_event_roles"),
+                ("places", "0002_place"),
+                migrations.swappable_dependency(
+                    settings.AUTH_USER_MODEL
+                ),
+            ),
+        )
+
+
+class EventAdminTests(SimpleTestCase):
+    """Ověření jednoduché registrace události v Django Adminu."""
+
+    def test_event_is_registered_in_admin(self) -> None:
+        self.assertTrue(admin.site.is_registered(Event))

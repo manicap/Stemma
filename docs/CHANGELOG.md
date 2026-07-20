@@ -1,5 +1,15 @@
 # Historie změn dokumentace
 
+## Verze 0.12 – 18. 7. 2026
+
+- konkretizován základní model `Event`, jeho společná a vlastní pole,
+- schválena validace podpory rozmezí, strukturovaného místa a lokalizačního
+  detailu,
+- potvrzen snapshotový význam defaultů `EventType` a jejich budoucí použití
+  v doménové službě bez zpětného přepisování existujících událostí,
+- odděleny migrace základního `Event` a budoucího `EventParticipant`,
+- implementován krok M2.4c včetně strukturální migrace a testů.
+
 ## Verze 0.11 – 18. 7. 2026
 
 - konkretizován číselník `ParticipantRole` a jedenáct systémových rolí,

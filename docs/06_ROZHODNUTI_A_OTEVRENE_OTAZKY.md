@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.9
+**Verze:** 0.10
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 18. 7. 2026
 
@@ -60,6 +60,7 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 114. Neúplné datum se validuje společnou čistou logikou; historické části data zůstávají zdrojem pravdy a `sort_date` a `sort_date_end` jsou pouze automaticky odvozené technické meze.
 115. Přímé `save()` nevolá `full_clean()`; validaci zajišťují formuláře, explicitní `full_clean()` nebo doménové služby, zatímco uložení pouze přepočítá technické řadicí hodnoty.
 116. Milník M1 je dokončen bez nové projektové migrace a bez potřeby nového ACP. Následujícím krokem je M2 – jádro Osoba, Místo, Událost a Vazba.
+117. `EventType.default_access_level` a `EventType.default_show_in_overview` jsou snapshotové návrhy pro novou událost. Budoucí doménová služba je při založení zkopíruje, pokud uživatel neuvede vlastní hodnotu; změna typu ani jeho defaultů existující `Event` zpětně nepřepisuje. Model, `clean()` ani `save()` tuto automatizaci neprovádějí.
 
 ## 2. Otevřené otázky
 

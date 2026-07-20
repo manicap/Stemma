@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.4
+**Verze:** 0.5
 **Stav:** koncept  
 **Datum revize:** 18. 7. 2026
 
@@ -94,23 +94,24 @@ Zdravotní skutečnosti se evidují jako zdravotní záznamy.
 
 ### 3.2 Záznam události
 
-Pole:
+`Event` používá společná pole časových razítek, přístupu, ověření, autora,
+životního cyklu a úplnou strukturu `PartialDateModel`. Vlastní pole jsou:
 
-- ID,
-- typ události,
-- název,
-- přesnost data,
-- datum od,
-- datum do,
-- textová podoba data,
-- ID místa,
+- povinný typ události,
+- volitelné strukturované místo,
+- `location_detail` pro dobový adresní nebo lokalizační detail,
+- volitelný vlastní zobrazovaný název `title`,
 - popis,
-- stav ověření,
-- přístupová úroveň,
-- příznak zobrazení v přehledu,
-- datum vytvoření,
-- datum poslední změny,
-- stav archivace.
+- uložený příznak `show_in_overview`.
+
+Neznámé datum je platný stav. Rozmezí lze použít pouze u typu, který je
+podporuje. Typ bez povoleného místa zakazuje strukturované místo i
+neprázdný lokalizační detail.
+
+Výchozí přístup a zobrazení v přehledu jsou snapshotové návrhy typu pro
+novou událost. Budoucí doménová služba je při založení zkopíruje, pokud
+uživatel nezadá vlastní hodnotu. Pozdější změna typu nebo jeho defaultů
+existující událost nepřepisuje.
 
 Pravidla:
 
@@ -124,7 +125,8 @@ Příčina a okolnosti úmrtí patří do samostatného specializovaného detail
 
 ## 4. Účast osoby na události
 
-Spojovací entita:
+`EventParticipant` je samostatná budoucí spojovací entita a není součástí
+základního modelu `Event`. Obsahuje:
 
 - osoba,
 - událost,

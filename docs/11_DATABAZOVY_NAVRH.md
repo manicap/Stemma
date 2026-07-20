@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.7
+**Verze:** 0.8
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 18. 7. 2026
 
@@ -348,18 +348,49 @@ Systémová pravidla jsou současně chráněna aplikační validací:
 
 ### 8.3 Událost
 
-Událost obsahuje:
+`Event` je hlavní historická entita a dědí abstraktní modely
+`TimestampedModel`, `AccessControlledModel`, `VerifiableModel`,
+`AuthoredModel`, `LifecycleModel` a `PartialDateModel`.
 
-- typ,
-- volitelný vlastní název,
-- popis,
-- neúplný časový údaj,
-- volitelné místo a lokalizační detail,
-- stav ověření,
-- přístupovou úroveň,
-- příznak zobrazení v přehledu,
-- účastníky,
-- přílohy a zdroje.
+Vlastní pole modelu jsou:
+
+- `event_type` — povinný `ForeignKey` na `EventType`, `null=False`,
+  `blank=False`, `on_delete=models.PROTECT`, `related_name="events"`,
+- `place` — volitelný `ForeignKey` na `places.Place`, `null=True`,
+  `blank=True`, `on_delete=models.PROTECT`, `related_name="events"`,
+- `location_detail` — `CharField(max_length=255, blank=True)` pro dobový
+  adresní nebo lokalizační detail, který nenahrazuje strukturované místo,
+- `title` — `CharField(max_length=255, blank=True)` pro volitelný vlastní
+  zobrazovaný název bez automatického odvozování z typu,
+- `description` — `TextField(blank=True)`,
+- `show_in_overview` — `BooleanField(default=False)` jako uložené rozhodnutí
+  konkrétní události.
+
+Časový údaj používá úplnou strukturu `PartialDateModel`.
+`DatePrecision.UNKNOWN` je platný stav. Pokud typ nepodporuje rozmezí,
+`DatePrecision.RANGE` je odmítnuto na poli `date_precision` s kódem
+`date_range_not_supported`. Typ s `allows_place=False` odmítne
+strukturované místo s kódem `place_not_allowed` a neprázdný oříznutý
+`location_detail` s kódem `location_detail_not_allowed`. Kalendářní
+validace a odvození technických mezí zůstávají v `PartialDateModel`.
+
+Hodnoty `EventType.default_access_level` a
+`EventType.default_show_in_overview` jsou návrhy pro novou událost.
+Budoucí doménová služba je při založení zkopíruje pouze tehdy, pokud
+uživatel neuvede vlastní hodnotu. Změna typu ani jeho defaultů existující
+události zpětně nemění. M2.4c snapshotovou službu neimplementuje;
+`access_level` proto používá modelový default `AccessLevel.PUBLIC` a
+`show_in_overview` modelový default `False`.
+
+Metadata modelu jsou `verbose_name = "Událost"`,
+`verbose_name_plural = "Události"` a
+`ordering = ("sort_date", "sort_date_end", "pk")`. Textová reprezentace
+vrací neprázdný oříznutý `title`, jinak dostupný název typu a bez
+dostupného typu text `"Událost"`.
+
+Účastníci nejsou přímými poli `Event`; budoucí `EventParticipant` bude
+samostatný spojovací model. Přílohy a zdroje budou používat samostatné
+explicitní spojovací modely.
 
 Příčina a okolnosti úmrtí se ukládají v samostatném modelu `DeathDetail` ve vztahu jedna ku jedné k události úmrtí.
 
@@ -652,7 +683,8 @@ events.0002_initial_event_types
 events.0003_participant_role_allowed_event_role
 events.0004_initial_participant_roles
 events.0005_initial_allowed_event_roles
-events.0006_events_and_participation
+events.0006_event
+events.0007_event_participant
 people.0003_relationships
 places.0002_residence_lookups
 places.0003_residences
