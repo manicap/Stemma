@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.6
+**Verze:** 0.7
 **Stav:** koncept  
 **Datum revize:** 20. 7. 2026
 
@@ -181,6 +181,36 @@ Každý typ vazby definuje:
 - kategorii,
 - zda je vazba symetrická,
 - zda může být časově omezená.
+
+`RelationshipType` je uživatelsky rozšiřitelný číselník odvozený pouze
+z `LookupModel`. Vedle společných polí číselníku obsahuje:
+
+- `forward_label_male`, `forward_label_female` a
+  `forward_label_unknown` — povinné názvy osoby B z pohledu osoby A,
+- `reverse_label_male`, `reverse_label_female` a
+  `reverse_label_unknown` — povinné názvy osoby A z pohledu osoby B,
+- `category` — pevnou kategorii vztahu,
+- `is_symmetric` — zda pořadí osob nemění význam vztahu,
+- `supports_date_range` — zda budoucí konkrétní vazba smí používat
+  `DatePrecision.RANGE`,
+- `is_derivable` — zda lze vztah odvodit z jiných strukturovaných údajů.
+
+Pevné kategorie jsou rodič a dítě (`parent_child`), partnerství
+(`partner`), sourozenectví (`sibling`), kmotrovství (`godparent`), péče
+a poručenství (`care`), sociální vazba (`social`) a jiná vazba (`other`).
+
+Osoba A je výchozí osoba uloženého vztahu a osoba B cílová osoba.
+Genderová varianta názvu A → B se vybírá podle osoby B a varianta názvu
+B → A podle osoby A. Varianta `unknown` se použije při neznámém nebo
+chybějícím genderu. U symetrického typu musí být všechny tři dvojice
+názvů obou směrů shodné.
+
+Systémový katalog obsahuje kódy `biological_parent`, `adoptive_parent`,
+`step_parent`, `foster_parent`, `guardian`, `spouse`, `partner`, `sibling`,
+`adoptive_sibling`, `step_sibling`, `social_sibling`, `godparent`,
+`family_friend` a `other`. Pouze biologické sourozenectví `sibling` je
+v této etapě označeno jako odvoditelné. Samotný algoritmus odvození ani
+konkrétní model `Relationship` nejsou součástí M2.5a.
 
 ## 6. Bydliště
 

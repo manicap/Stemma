@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.10
+**Verze:** 0.11
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 20. 7. 2026
 
@@ -501,17 +501,115 @@ Validační chyby používají `django.core.exceptions.ValidationError`, klíče
 
 ## 9. Vazby mezi osobami
 
-Vazba se ukládá jednou mezi osobami A a B. Typ vazby určuje:
+### 9.1 Kategorie a typ vazby
 
-- význam A → B,
-- význam B → A,
-- genderované zobrazované názvy,
-- symetrii,
-- časový režim,
-- kategorii,
-- zda lze vztah odvodit.
+`RelationshipCategory` je pevný `TextChoices` výčet:
 
-U symetrické vazby se dvojice ukládá v normalizovaném pořadí. U směrové vazby je pořadí významové.
+| Technická hodnota | Český název |
+|---|---|
+| `parent_child` | Rodič a dítě |
+| `partner` | Partnerství |
+| `sibling` | Sourozenectví |
+| `godparent` | Kmotrovství |
+| `care` | Péče a poručenství |
+| `social` | Sociální vazba |
+| `other` | Jiná vazba |
+
+`RelationshipType` je konkrétní uživatelsky rozšiřitelný číselník, který
+dědí pouze z `LookupModel`. Vedle zděděných polí obsahuje:
+
+| Pole | Typ a pravidla |
+|---|---|
+| `forward_label_male` | `CharField(max_length=100)`, povinné |
+| `forward_label_female` | `CharField(max_length=100)`, povinné |
+| `forward_label_unknown` | `CharField(max_length=100)`, povinné |
+| `reverse_label_male` | `CharField(max_length=100)`, povinné |
+| `reverse_label_female` | `CharField(max_length=100)`, povinné |
+| `reverse_label_unknown` | `CharField(max_length=100)`, povinné |
+| `category` | `CharField(max_length=20)`, `RelationshipCategory.choices`, výchozí `other` |
+| `is_symmetric` | `BooleanField`, výchozí `False` |
+| `supports_date_range` | `BooleanField`, výchozí `False` |
+| `is_derivable` | `BooleanField`, výchozí `False` |
+
+Objekt se řadí podle zděděného `("sort_order", "name", "code")`, má
+jednotné číslo „Typ vazby“ a množné číslo „Typy vazeb“.
+
+### 9.2 Směr, genderované názvy a symetrie
+
+Vazba se ukládá jednou mezi osobami A a B. Osoba A je výchozí osoba a osoba
+B cílová osoba. `forward_label_*` popisuje osobu B z pohledu osoby A
+a genderová varianta se vybírá podle genderu osoby B. `reverse_label_*`
+popisuje osobu A z pohledu osoby B a varianta se vybírá podle genderu osoby
+A. Varianta `unknown` se používá při `Gender.UNKNOWN` nebo chybějícím údaji.
+
+U symetrické vazby pořadí osob význam nemění a budoucí konkrétní
+`Relationship` uloží dvojici v normalizovaném pořadí. U směrové vazby je
+pořadí významové. Symetrický typ musí mít shodné dopředné a zpětné názvy
+pro mužskou, ženskou i neznámou variantu. `RelationshipType.clean()` hlásí
+chybu na příslušném zpětném poli s kódem `symmetric_labels_mismatch`.
+Stejné pravidlo vynucuje databázový constraint
+`people_symmetric_relationship_labels_match`.
+
+`supports_date_range=False` znamená, že budoucí konkrétní `Relationship`
+nesmí používat `DatePrecision.RANGE`; hodnota `True` rozmezí povoluje.
+Příznak nevyžaduje vyplnění data a neomezuje ostatní podporované přesnosti.
+`RelationshipType` samo datum neobsahuje.
+
+`is_derivable=True` označuje vztah, který lze odvodit z jiných
+strukturovaných údajů a běžně se nemá ukládat duplicitně, jsou-li zdrojová
+data dostupná. Příznak v M2.5a nic automaticky neodvozuje, nezakazuje
+explicitní záznam a neimplementuje algoritmus odvození.
+
+### 9.3 Systémové typy
+
+Všechny systémové typy mají `is_active=True` a `is_system=True`.
+
+| Kód | Název a popis | Kategorie | Pořadí | Symetrický | Rozmezí | Odvoditelný |
+|---|---|---|---:|---:|---:|---:|
+| `biological_parent` | Biologický rodič — Vztah biologického rodiče a dítěte. | `parent_child` | 10 | ne | ne | ne |
+| `adoptive_parent` | Adoptivní rodič — Vztah adoptivního rodiče a adoptovaného dítěte. | `parent_child` | 20 | ne | ne | ne |
+| `step_parent` | Nevlastní rodič — Vztah nevlastního rodiče a nevlastního dítěte. | `parent_child` | 30 | ne | ano | ne |
+| `foster_parent` | Pěstoun — Vztah pěstouna a dítěte v pěstounské péči. | `parent_child` | 40 | ne | ano | ne |
+| `guardian` | Poručník — Vztah poručníka a osoby v poručenství. | `care` | 50 | ne | ano | ne |
+| `spouse` | Manželství — Manželský vztah mezi dvěma osobami. | `partner` | 60 | ano | ano | ne |
+| `partner` | Partnerství — Partnerský vztah mezi dvěma osobami. | `partner` | 70 | ano | ano | ne |
+| `sibling` | Biologické sourozenectví — Biologické sourozenectví. | `sibling` | 80 | ano | ne | ano |
+| `adoptive_sibling` | Adoptivní sourozenectví — Sourozenectví vzniklé adopcí. | `sibling` | 90 | ano | ne | ne |
+| `step_sibling` | Nevlastní sourozenectví — Nevlastní sourozenectví. | `sibling` | 100 | ano | ano | ne |
+| `social_sibling` | Sourozenecká sociální vazba — Sourozenecká sociální vazba bez biologického nebo právního základu. | `sibling` | 110 | ano | ano | ne |
+| `godparent` | Kmotrovství — Vztah kmotra nebo kmotry a kmotřence. | `godparent` | 120 | ne | ne | ne |
+| `family_friend` | Rodinné přátelství — Blízká přátelská vazba osoby k rodině. | `social` | 130 | ano | ano | ne |
+| `other` | Jiná vazba — Jiná rodinná nebo sociální vazba. | `other` | 140 | ano | ano | ne |
+
+Genderované názvy obou směrů jsou:
+
+| Kód | A → B: muž / žena / neznámé | B → A: muž / žena / neznámé |
+|---|---|---|
+| `biological_parent` | syn / dcera / dítě | otec / matka / rodič |
+| `adoptive_parent` | adoptovaný syn / adoptovaná dcera / adoptované dítě | adoptivní otec / adoptivní matka / adoptivní rodič |
+| `step_parent` | nevlastní syn / nevlastní dcera / nevlastní dítě | nevlastní otec / nevlastní matka / nevlastní rodič |
+| `foster_parent` | pěstounský syn / pěstounská dcera / dítě v pěstounské péči | pěstoun / pěstounka / pěstoun nebo pěstounka |
+| `guardian` | svěřenec / svěřenkyně / osoba v poručenství | poručník / poručnice / poručník nebo poručnice |
+| `spouse` | manžel / manželka / manžel nebo manželka | shodné s A → B |
+| `partner` | partner / partnerka / partner nebo partnerka | shodné s A → B |
+| `sibling` | bratr / sestra / sourozenec | shodné s A → B |
+| `adoptive_sibling` | adoptivní bratr / adoptivní sestra / adoptivní sourozenec | shodné s A → B |
+| `step_sibling` | nevlastní bratr / nevlastní sestra / nevlastní sourozenec | shodné s A → B |
+| `social_sibling` | blízký jako bratr / blízká jako sestra / blízký jako sourozenec | shodné s A → B |
+| `godparent` | kmotřenec / kmotřenka / kmotřenec nebo kmotřenka | kmotr / kmotra / kmotr nebo kmotra |
+| `family_friend` | rodinný přítel / rodinná přítelkyně / rodinný přítel nebo přítelkyně | shodné s A → B |
+| `other` | související osoba / související osoba / související osoba | shodné s A → B |
+
+`family_friend` je v první verzi symetrická vazba mezi dvěma osobami;
+nevyjadřuje vztah osoby k rodině jako samostatnému objektu. Pouze biologické
+sourozenectví `sibling` má `is_derivable=True`.
+
+### 9.4 Budoucí konkrétní vazba
+
+Konkrétní model `Relationship` vznikne až v následujícím kroku M2.5.
+Teprve tento model a jeho doménová logika budou řešit osoby A a B,
+normalizaci symetrických dvojic, duplicity, vztah osoby k sobě, rodičovské
+cykly, časovou validaci a algoritmus odvození sourozenců.
 
 Tvrdé chyby zahrnují:
 
@@ -521,7 +619,9 @@ Tvrdé chyby zahrnují:
 - cyklus přímého rodičovství,
 - konec období před začátkem.
 
-Biologické sourozenectví se primárně odvozuje ze společných biologických rodičů. Explicitní sourozenecká vazba se používá u neznámých rodičů nebo u adoptivního, nevlastního či sociálního sourozenectví.
+Biologické sourozenectví se primárně odvozuje ze společných biologických
+rodičů. Explicitní sourozenecká vazba se používá u neznámých rodičů nebo
+u adoptivního, nevlastního či sociálního sourozenectví.
 
 ## 10. Bydliště a hrobová místa
 
@@ -779,13 +879,17 @@ Počty záznamů, věk, stav osoby, římská číslice a další agregace se za
 
 ## 18. Pořadí migrací
 
-Doporučené pořadí:
+Skutečné pořadí dosavadních a bezprostředně navazujících migrací M2 je:
 
 ```text
 accounts.0001_initial
-people.0001_lookup_models
-people.0002_person_and_names
-places.0001_place_models
+people.0001_person_category
+people.0002_initial_person_categories
+people.0003_person
+people.0004_name_type_person_name
+people.0005_initial_name_types
+places.0001_place_type
+places.0002_place
 events.0001_event_type
 events.0002_initial_event_types
 events.0003_participant_role_allowed_event_role
@@ -793,10 +897,17 @@ events.0004_initial_participant_roles
 events.0005_initial_allowed_event_roles
 events.0006_event
 events.0007_event_participant
-people.0003_relationships
-places.0002_residence_lookups
-places.0003_residences
-places.0004_grave_models
+people.0006_relationship_type
+people.0007_initial_relationship_types
+```
+
+Následující plánované migrace začínají:
+
+```text
+people.0008_relationship              budoucí krok M2.5b
+places.0003_residence_lookups
+places.0004_residences
+places.0005_grave_models
 materials.0001_attachment_lookups
 materials.0002_attachments
 materials.0003_attachment_links

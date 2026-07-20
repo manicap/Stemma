@@ -1,5 +1,17 @@
 # Historie změn dokumentace
 
+## Verze 0.15 – 20. 7. 2026
+
+- konkretizován pevný výčet sedmi kategorií vztahů a uživatelsky
+  rozšiřitelný číselník `RelationshipType`,
+- schválen význam uloženého směru, genderovaných názvů, symetrie, podpory
+  časového rozmezí a odvoditelnosti,
+- schválen katalog čtrnácti systémových typů vztahů,
+- schválena modelová validace a databázový constraint symetrických názvů,
+- opraveno skutečné pořadí migrací aplikace `people`,
+- potvrzeno, že konkrétní `Relationship` vznikne až v následujícím kroku
+  M2.5 a že konkretizace nevyžaduje nové ACP.
+
 ## Verze 0.14 – 20. 7. 2026
 
 - konkretizován veřejný kontrakt služby `replace_event_participants()`,

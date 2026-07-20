@@ -12,6 +12,8 @@ from common.models import (
     VerifiableModel,
 )
 
+from .choices import RelationshipCategory
+
 
 class PersonCategory(LookupModel):
     """Kategorie obecného zařazení osoby v rodinném příběhu."""
@@ -30,6 +32,79 @@ class NameType(LookupModel):
     class Meta(LookupModel.Meta):
         verbose_name = "Typ jména"
         verbose_name_plural = "Typy jmen"
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class RelationshipType(LookupModel):
+    """Uživatelsky spravovaný typ vztahu mezi dvěma osobami."""
+
+    forward_label_male = models.CharField(max_length=100)
+    forward_label_female = models.CharField(max_length=100)
+    forward_label_unknown = models.CharField(max_length=100)
+
+    reverse_label_male = models.CharField(max_length=100)
+    reverse_label_female = models.CharField(max_length=100)
+    reverse_label_unknown = models.CharField(max_length=100)
+
+    category = models.CharField(
+        max_length=20,
+        choices=RelationshipCategory.choices,
+        default=RelationshipCategory.OTHER,
+    )
+    is_symmetric = models.BooleanField(default=False)
+    supports_date_range = models.BooleanField(default=False)
+    is_derivable = models.BooleanField(default=False)
+
+    class Meta(LookupModel.Meta):
+        verbose_name = "Typ vazby"
+        verbose_name_plural = "Typy vazeb"
+        constraints = (
+            models.CheckConstraint(
+                condition=(
+                    models.Q(is_symmetric=False)
+                    | (
+                        models.Q(
+                            forward_label_male=models.F(
+                                "reverse_label_male"
+                            )
+                        )
+                        & models.Q(
+                            forward_label_female=models.F(
+                                "reverse_label_female"
+                            )
+                        )
+                        & models.Q(
+                            forward_label_unknown=models.F(
+                                "reverse_label_unknown"
+                            )
+                        )
+                    )
+                ),
+                name="people_symmetric_relationship_labels_match",
+            ),
+        )
+
+    def clean(self) -> None:
+        super().clean()
+        if not self.is_symmetric:
+            return
+
+        errors = {}
+        for forward_field, reverse_field in (
+            ("forward_label_male", "reverse_label_male"),
+            ("forward_label_female", "reverse_label_female"),
+            ("forward_label_unknown", "reverse_label_unknown"),
+        ):
+            if getattr(self, forward_field) != getattr(self, reverse_field):
+                errors[reverse_field] = ValidationError(
+                    "U symetrického typu se musí názvy obou směrů shodovat.",
+                    code="symmetric_labels_mismatch",
+                )
+
+        if errors:
+            raise ValidationError(errors)
 
     def __str__(self) -> str:
         return self.name

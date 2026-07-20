@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.3
+**Verze:** 0.4
 **Stav:** pracovní návrh  
-**Datum revize:** 17. 7. 2026
+**Datum revize:** 20. 7. 2026
 
 ## 1. Hlavní obrazovka
 
@@ -189,6 +189,24 @@ Příklad:
 - Petr je synem Jana.
 
 Název opačné vazby se přizpůsobí pohlaví osoby, pokud je známé.
+
+Typy vazeb jsou uživatelsky rozšiřitelným číselníkem. Každý typ určuje
+zobrazené názvy obou směrů ve variantě pro muže, ženu a neznámý gender,
+pevnou kategorii, symetrii, podporu časového rozmezí a možnost odvození
+z jiných strukturovaných údajů.
+
+Základní systémový katalog obsahuje biologického, adoptivního, nevlastního
+a pěstounského rodiče, poručníka, manželství, partnerství, biologické,
+adoptivní, nevlastní a sociální sourozenectví, kmotrovství, rodinné
+přátelství a jinou vazbu. Samostatné typy dítě, syn a dcera nevznikají;
+jejich označení poskytuje opačný směr rodičovské vazby.
+
+Uložený směr A → B je významový: osoba A je výchozí a osoba B cílová.
+Název směru A → B popisuje osobu B a vybírá se podle jejího genderu;
+název opačného směru popisuje osobu A a vybírá se podle genderu osoby A.
+Při neznámém nebo chybějícím genderu se použije neutrální varianta.
+U symetrické vazby pořadí osob význam nemění a názvy obou směrů jsou pro
+každou genderovou variantu shodné.
 
 ## 9. Bydliště
 
