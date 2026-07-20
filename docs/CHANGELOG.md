@@ -1,5 +1,17 @@
 # Historie změn dokumentace
 
+## Verze 0.14 – 20. 7. 2026
+
+- konkretizován veřejný kontrakt služby `replace_event_participants()`,
+- implementována atomická náhrada celé sady účastníků události,
+- doplněna validace aktivních rolí a aktuální konfigurace
+  `AllowedEventRole`,
+- oddělena průběžná kontrola `max_count` od kontroly `min_count` při
+  požadavku na úplnost,
+- potvrzeno striktní ověření nové sady bez automatických zpětných změn
+  historických účastí,
+- krok M2.4e nevytvořil databázovou migraci.
+
 ## Verze 0.13 – 20. 7. 2026
 
 - konkretizován minimalistický spojovací model `EventParticipant`,

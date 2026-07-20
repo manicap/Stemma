@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.9
+**Verze:** 0.10
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 20. 7. 2026
 
@@ -445,6 +445,59 @@ Model dynamicky nekontroluje aktuální `AllowedEventRole`. Budoucí
 transakční doménová služba při vytvoření nebo změně účasti ověří aktivní
 konfiguraci, aktivitu role a počty účastníků. Změna konfigurace sama
 nezneplatňuje již uložené historické účasti.
+
+### 8.5 Doménová služba účastníků
+
+Změnu účastníků jedné události zajišťuje služba v `events/services.py`:
+
+```python
+@dataclass(frozen=True, slots=True)
+class EventParticipantInput:
+    person: Person
+    role: ParticipantRole
+    note: str = ""
+
+
+def replace_event_participants(
+    *,
+    event: Event,
+    participants: Iterable[EventParticipantInput],
+    require_complete: bool = False,
+) -> list[EventParticipant]:
+    ...
+```
+
+Služba materializuje vstupní iterable právě jednou a v
+`transaction.atomic()` atomicky nahradí celou sadu účastníků. Událost,
+aktuální účasti, použité osoby, role a relevantní konfiguraci načítá z
+databáze a podle možností databáze zamyká pomocí `select_for_update()`.
+Celý požadovaný výsledný stav ověří před prvním zápisem. Zachované
+trojici událost, osoba a role ponechá primární klíč, případně aktualizuje
+její poznámku; odstraní jen vynechané a vytvoří jen nové účasti. Výsledkem
+je seznam uložených účastí v modelovém pořadí.
+
+Při každé náhradě se ověřuje, že osoby a role jsou uložené, role jsou
+aktivní, pro typ události existuje aktivní `AllowedEventRole`, vstup
+neobsahuje duplicitní dvojici osoby a role a počet nepřekračuje
+`max_count`. Při `require_complete=False` se `min_count` nekontroluje a
+událost může zůstat rozpracovaná. Při `require_complete=True` musí být
+splněna minima všech aktivních pravidel; neaktivní pravidla se do minima
+nezapočítávají. Aktivní povinné pravidlo odkazující na neaktivní roli je
+neplatnou konfigurací.
+
+Samotná změna konfigurace historické účasti automaticky nemění. Při
+pozdějším volání služby však každý záznam zahrnutý do nové výsledné sady
+musí projít aktuální konfigurací. Dnes nepovolenou historickou účast lze
+odstranit jejím vynecháním, ale nelze ji ponechat ani pouze změnit její
+poznámku. Grandfathering se nepoužívá.
+
+Validační chyby používají `django.core.exceptions.ValidationError`, klíče
+`event` a `participants` a stabilní kódy `event_unsaved`,
+`participant_person_unsaved`, `participant_role_unsaved`,
+`participant_role_inactive`, `role_not_allowed_for_event_type`,
+`duplicate_event_person_role`, `participant_count_above_maximum` a
+`participant_count_below_minimum`. Dostupný kontext je předáván v
+`params`. Implementace M2.4e nemění modely a nevytváří migraci.
 
 ## 9. Vazby mezi osobami
 
