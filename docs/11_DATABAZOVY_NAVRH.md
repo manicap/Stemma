@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.8
+**Verze:** 0.9
 **Stav:** schválený technický návrh v implementaci
-**Datum revize:** 18. 7. 2026
+**Datum revize:** 20. 7. 2026
 
 ## 1. Účel
 
@@ -388,13 +388,63 @@ Metadata modelu jsou `verbose_name = "Událost"`,
 vrací neprázdný oříznutý `title`, jinak dostupný název typu a bez
 dostupného typu text `"Událost"`.
 
-Účastníci nejsou přímými poli `Event`; budoucí `EventParticipant` bude
-samostatný spojovací model. Přílohy a zdroje budou používat samostatné
+Účastníci nejsou přímými poli `Event`; `EventParticipant` je samostatný
+spojovací model. Přílohy a zdroje budou používat samostatné
 explicitní spojovací modely.
 
 Příčina a okolnosti úmrtí se ukládají v samostatném modelu `DeathDetail` ve vztahu jedna ku jedné k události úmrtí.
 
 Jedna osoba smí mít nejvýše jednu aktivní účast jako narozená osoba a jednu jako zemřelá osoba.
+
+### 8.4 Účastník události
+
+`EventParticipant` představuje účast konkrétní existující osoby v jedné
+události v jedné konkrétní roli. Jde o spojovací model dědící pouze z
+`models.Model`; přístup, ověření a lifecycle se odvozují z nadřazeného
+`Event`.
+
+Model obsahuje:
+
+- `event` — povinný `ForeignKey` na `Event`, `null=False`, `blank=False`,
+  `on_delete=models.CASCADE`, `related_name="participants"`,
+- `person` — povinný `ForeignKey` na `people.Person`, `null=False`,
+  `blank=False`, `on_delete=models.PROTECT`,
+  `related_name="event_participations"`,
+- `role` — povinný `ForeignKey` na `ParticipantRole`, `null=False`,
+  `blank=False`, `on_delete=models.PROTECT`,
+  `related_name="event_participations"`,
+- `note` — `TextField(blank=True)` pro volitelnou poznámku ke konkrétní
+  účasti; poznámka nemění identitu účasti.
+
+Osoba musí být založeným záznamem `Person`. Prázdná osoba ani samostatný
+textový účastník nejsou součástí současného návrhu. Stejná osoba může mít
+v jedné události více různých rolí, stejnou roli může mít více osob a
+jedna osoba může být účastníkem více událostí.
+
+Trojice `event`, `person` a `role` je jedinečná pomocí constraintu
+`events_unique_participation`. Odlišná poznámka nepovoluje duplicitní
+trojici.
+
+Metadata modelu jsou `verbose_name = "Účastník události"`,
+`verbose_name_plural = "Účastníci událostí"` a:
+
+```python
+ordering = (
+    "role__sort_order",
+    "person__last_name",
+    "person__first_name",
+    "person_id",
+)
+```
+
+Textová reprezentace vrací `"{person} – {role} – {event}"`. Pro
+nedostupnou vazbu používá bezpečné texty `"Neznámá osoba"`,
+`"Neznámá role"` a `"Událost"`.
+
+Model dynamicky nekontroluje aktuální `AllowedEventRole`. Budoucí
+transakční doménová služba při vytvoření nebo změně účasti ověří aktivní
+konfiguraci, aktivitu role a počty účastníků. Změna konfigurace sama
+nezneplatňuje již uložené historické účasti.
 
 ## 9. Vazby mezi osobami
 
@@ -640,6 +690,11 @@ Servisní vrstva řeší pravidla přes více objektů:
 - archivaci a obnovu,
 - oprávnění,
 - audit celé operace.
+
+Pro účastníky události služba ověří aktivní `AllowedEventRole`, aktivitu
+`ParticipantRole`, minimální a maximální počet a úplnost povinných rolí
+nad celou sadou účastníků. Model `EventParticipant` tuto měnitelnou
+konfiguraci dynamicky nekontroluje.
 
 Významné zápisy probíhají v `transaction.atomic()`.
 

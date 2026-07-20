@@ -1,5 +1,14 @@
 # Historie změn dokumentace
 
+## Verze 0.13 – 20. 7. 2026
+
+- konkretizován minimalistický spojovací model `EventParticipant`,
+- potvrzeny povinné vazby na `Event`, `Person` a `ParticipantRole`,
+- schválena jedinečnost trojice událost, osoba a role,
+- oddělena databázová integrita účasti od budoucí servisní validace
+  `AllowedEventRole`, aktivity role a počtů účastníků,
+- implementován krok M2.4d včetně strukturální migrace a testů.
+
 ## Verze 0.12 – 18. 7. 2026
 
 - konkretizován základní model `Event`, jeho společná a vlastní pole,

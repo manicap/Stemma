@@ -11,6 +11,7 @@ from common.models import (
     TimestampedModel,
     VerifiableModel,
 )
+from people.models import Person
 from places.models import Place
 
 
@@ -210,3 +211,58 @@ class Event(
             return self.event_type.name
         except EventType.DoesNotExist:
             return "Událost"
+
+
+class EventParticipant(models.Model):
+    """Účast konkrétní osoby v události v určité roli."""
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name="participants",
+    )
+    person = models.ForeignKey(
+        Person,
+        on_delete=models.PROTECT,
+        related_name="event_participations",
+    )
+    role = models.ForeignKey(
+        ParticipantRole,
+        on_delete=models.PROTECT,
+        related_name="event_participations",
+    )
+    note = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Účastník události"
+        verbose_name_plural = "Účastníci událostí"
+        ordering = (
+            "role__sort_order",
+            "person__last_name",
+            "person__first_name",
+            "person_id",
+        )
+        constraints = (
+            models.UniqueConstraint(
+                fields=("event", "person", "role"),
+                name="events_unique_participation",
+            ),
+        )
+
+    def __str__(self) -> str:
+        try:
+            person_text = str(self.person)
+        except Person.DoesNotExist:
+            person_text = "Neznámá osoba"
+
+        try:
+            role_text = str(self.role)
+        except ParticipantRole.DoesNotExist:
+            role_text = "Neznámá role"
+
+        try:
+            event_text = str(self.event)
+        except Event.DoesNotExist:
+            event_text = "Událost"
+
+        return f"{person_text} – {role_text} – {event_text}"

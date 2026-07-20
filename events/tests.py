@@ -20,10 +20,17 @@ from common.models import (
     TimestampedModel,
     VerifiableModel,
 )
+from people.models import Person
 from places.models import Place
 
 from .apps import EventsConfig
-from .models import AllowedEventRole, Event, EventType, ParticipantRole
+from .models import (
+    AllowedEventRole,
+    Event,
+    EventParticipant,
+    EventType,
+    ParticipantRole,
+)
 
 
 EXPECTED_EVENT_TYPES = (
@@ -1231,8 +1238,6 @@ class EventModelTests(SimpleTestCase):
         }
 
         self.assertTrue(field_names.isdisjoint(forbidden_fields))
-        with self.assertRaises(LookupError):
-            apps.get_model("events", "EventParticipant")
 
     def test_event_type_field_options(self) -> None:
         field = Event._meta.get_field("event_type")
@@ -1661,3 +1666,409 @@ class EventAdminTests(SimpleTestCase):
 
     def test_event_is_registered_in_admin(self) -> None:
         self.assertTrue(admin.site.is_registered(Event))
+
+
+class EventParticipantModelTests(SimpleTestCase):
+    """Ověření struktury a metadat účastníka události."""
+
+    def test_model_is_concrete_direct_model_subclass(self) -> None:
+        self.assertFalse(EventParticipant._meta.abstract)
+        self.assertEqual(EventParticipant.__bases__, (models.Model,))
+
+        for common_model in (
+            TimestampedModel,
+            AccessControlledModel,
+            VerifiableModel,
+            AuthoredModel,
+            LifecycleModel,
+            PartialDateModel,
+            LookupModel,
+        ):
+            with self.subTest(common_model=common_model.__name__):
+                self.assertNotIn(common_model, EventParticipant.__mro__)
+
+    def test_model_has_only_expected_fields(self) -> None:
+        self.assertEqual(
+            {field.name for field in EventParticipant._meta.local_fields},
+            {"id", "event", "person", "role", "note"},
+        )
+
+    def test_event_field_options(self) -> None:
+        field = EventParticipant._meta.get_field("event")
+
+        self.assertIsInstance(field, models.ForeignKey)
+        self.assertIs(field.remote_field.model, Event)
+        self.assertFalse(field.null)
+        self.assertFalse(field.blank)
+        self.assertIs(field.remote_field.on_delete, models.CASCADE)
+        self.assertEqual(field.remote_field.related_name, "participants")
+
+    def test_person_field_options(self) -> None:
+        field = EventParticipant._meta.get_field("person")
+
+        self.assertIsInstance(field, models.ForeignKey)
+        self.assertIs(field.remote_field.model, Person)
+        self.assertFalse(field.null)
+        self.assertFalse(field.blank)
+        self.assertIs(field.remote_field.on_delete, models.PROTECT)
+        self.assertEqual(
+            field.remote_field.related_name,
+            "event_participations",
+        )
+
+    def test_role_field_options(self) -> None:
+        field = EventParticipant._meta.get_field("role")
+
+        self.assertIsInstance(field, models.ForeignKey)
+        self.assertIs(field.remote_field.model, ParticipantRole)
+        self.assertFalse(field.null)
+        self.assertFalse(field.blank)
+        self.assertIs(field.remote_field.on_delete, models.PROTECT)
+        self.assertEqual(
+            field.remote_field.related_name,
+            "event_participations",
+        )
+
+    def test_note_field_options_and_default(self) -> None:
+        field = EventParticipant._meta.get_field("note")
+
+        self.assertIsInstance(field, models.TextField)
+        self.assertTrue(field.blank)
+        self.assertFalse(field.null)
+        self.assertFalse(field.unique)
+        self.assertEqual(EventParticipant().note, "")
+
+    def test_metadata_and_constraint(self) -> None:
+        self.assertEqual(
+            EventParticipant._meta.ordering,
+            (
+                "role__sort_order",
+                "person__last_name",
+                "person__first_name",
+                "person_id",
+            ),
+        )
+        self.assertEqual(
+            EventParticipant._meta.verbose_name,
+            "Účastník události",
+        )
+        self.assertEqual(
+            EventParticipant._meta.verbose_name_plural,
+            "Účastníci událostí",
+        )
+
+        self.assertEqual(len(EventParticipant._meta.constraints), 1)
+        constraint = EventParticipant._meta.constraints[0]
+        self.assertIsInstance(constraint, models.UniqueConstraint)
+        self.assertEqual(constraint.name, "events_unique_participation")
+        self.assertEqual(
+            constraint.fields,
+            ("event", "person", "role"),
+        )
+
+    def test_model_does_not_override_clean_or_save(self) -> None:
+        self.assertIs(EventParticipant.clean, models.Model.clean)
+        self.assertIs(EventParticipant.save, models.Model.save)
+
+    def test_string_representation_with_available_relations(self) -> None:
+        participant = EventParticipant(
+            event=Event(
+                event_type=EventType(code="test", name="Typ"),
+                title="Testovací událost",
+            ),
+            person=Person(first_name="Jan", last_name="Novák"),
+            role=ParticipantRole(code="witness", name="Svědek"),
+        )
+
+        self.assertEqual(
+            str(participant),
+            "Novák Jan – Svědek – Testovací událost",
+        )
+
+    def test_string_representation_falls_back_without_person(self) -> None:
+        participant = EventParticipant(
+            event=Event(title="Testovací událost"),
+            role=ParticipantRole(code="witness", name="Svědek"),
+        )
+
+        self.assertEqual(
+            str(participant),
+            "Neznámá osoba – Svědek – Testovací událost",
+        )
+
+    def test_string_representation_falls_back_without_role(self) -> None:
+        participant = EventParticipant(
+            event=Event(title="Testovací událost"),
+            person=Person(first_name="Jan", last_name="Novák"),
+        )
+
+        self.assertEqual(
+            str(participant),
+            "Novák Jan – Neznámá role – Testovací událost",
+        )
+
+    def test_string_representation_falls_back_without_event(self) -> None:
+        participant = EventParticipant(
+            person=Person(first_name="Jan", last_name="Novák"),
+            role=ParticipantRole(code="witness", name="Svědek"),
+        )
+
+        self.assertEqual(
+            str(participant),
+            "Novák Jan – Svědek – Událost",
+        )
+
+    def test_string_representation_of_empty_instance_is_safe(self) -> None:
+        self.assertEqual(
+            str(EventParticipant()),
+            "Neznámá osoba – Neznámá role – Událost",
+        )
+
+
+class EventParticipantDatabaseTests(TestCase):
+    """Ověření referenční integrity a unikátnosti účastí."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.event_type = EventType.objects.create(
+            code="participant_test",
+            name="Testovací typ účasti",
+        )
+        cls.first_event = Event.objects.create(
+            event_type=cls.event_type,
+            title="První událost",
+        )
+        cls.second_event = Event.objects.create(
+            event_type=cls.event_type,
+            title="Druhá událost",
+        )
+        cls.first_person = Person.objects.create(
+            first_name="Jan",
+            last_name="Novák",
+        )
+        cls.second_person = Person.objects.create(
+            first_name="Petr",
+            last_name="Novák",
+        )
+        cls.first_role = ParticipantRole.objects.create(
+            code="participant_first",
+            name="První role",
+        )
+        cls.second_role = ParticipantRole.objects.create(
+            code="participant_second",
+            name="Druhá role",
+        )
+
+    def test_event_can_have_multiple_participants(self) -> None:
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.first_role,
+        )
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.second_person,
+            role=self.first_role,
+        )
+
+        self.assertEqual(self.first_event.participants.count(), 2)
+
+    def test_deleting_event_cascades_to_participants(self) -> None:
+        participant = EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.first_role,
+        )
+
+        self.first_event.delete()
+
+        self.assertFalse(
+            EventParticipant.objects.filter(pk=participant.pk).exists()
+        )
+
+    def test_used_person_is_protected_from_deletion(self) -> None:
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.first_role,
+        )
+
+        with self.assertRaises(ProtectedError):
+            self.first_person.delete()
+
+    def test_used_role_is_protected_from_deletion(self) -> None:
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.first_role,
+        )
+
+        with self.assertRaises(ProtectedError):
+            self.first_role.delete()
+
+    def test_same_person_can_participate_in_multiple_events(self) -> None:
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.first_role,
+        )
+        EventParticipant.objects.create(
+            event=self.second_event,
+            person=self.first_person,
+            role=self.first_role,
+        )
+
+        self.assertEqual(
+            self.first_person.event_participations.count(),
+            2,
+        )
+
+    def test_same_person_can_have_multiple_roles_in_event(self) -> None:
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.first_role,
+        )
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.second_role,
+        )
+
+        self.assertEqual(
+            EventParticipant.objects.filter(
+                event=self.first_event,
+                person=self.first_person,
+            ).count(),
+            2,
+        )
+
+    def test_same_role_can_be_used_by_multiple_people(self) -> None:
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.first_role,
+        )
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.second_person,
+            role=self.first_role,
+        )
+
+        self.assertEqual(
+            self.first_role.event_participations.count(),
+            2,
+        )
+
+    def test_duplicate_event_person_role_is_rejected(self) -> None:
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.first_role,
+        )
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                EventParticipant.objects.create(
+                    event=self.first_event,
+                    person=self.first_person,
+                    role=self.first_role,
+                )
+
+    def test_different_note_does_not_allow_duplicate(self) -> None:
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.first_role,
+            note="První poznámka",
+        )
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                EventParticipant.objects.create(
+                    event=self.first_event,
+                    person=self.first_person,
+                    role=self.first_role,
+                    note="Druhá poznámka",
+                )
+
+    def test_model_does_not_validate_allowed_event_role(self) -> None:
+        self.assertFalse(
+            AllowedEventRole.objects.filter(
+                event_type=self.event_type,
+                participant_role=self.first_role,
+            ).exists()
+        )
+        participant = EventParticipant(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.first_role,
+        )
+
+        participant.full_clean()
+        participant.save()
+
+        self.assertTrue(
+            EventParticipant.objects.filter(pk=participant.pk).exists()
+        )
+
+    def test_model_does_not_enforce_allowed_role_maximum(self) -> None:
+        AllowedEventRole.objects.create(
+            event_type=self.event_type,
+            participant_role=self.first_role,
+            max_count=1,
+        )
+
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.first_person,
+            role=self.first_role,
+        )
+        EventParticipant.objects.create(
+            event=self.first_event,
+            person=self.second_person,
+            role=self.first_role,
+        )
+
+        self.assertEqual(
+            EventParticipant.objects.filter(
+                event=self.first_event,
+                role=self.first_role,
+            ).count(),
+            2,
+        )
+
+
+class EventParticipantMigrationTests(SimpleTestCase):
+    """Ověření rozsahu strukturální migrace účastníka události."""
+
+    migration = import_module(
+        "events.migrations.0007_event_participant"
+    )
+
+    def test_migration_contains_only_participant_create_model(self) -> None:
+        operations = self.migration.Migration.operations
+
+        self.assertEqual(len(operations), 1)
+        self.assertIsInstance(operations[0], migrations.CreateModel)
+        self.assertEqual(operations[0].name, "EventParticipant")
+        self.assertEqual(
+            len(operations[0].options["constraints"]),
+            1,
+        )
+
+    def test_migration_has_exact_dependencies(self) -> None:
+        self.assertCountEqual(
+            self.migration.Migration.dependencies,
+            (
+                ("events", "0006_event"),
+                ("people", "0003_person"),
+            ),
+        )
+
+
+class EventParticipantAdminTests(SimpleTestCase):
+    """Ověření jednoduché registrace účastníka v Django Adminu."""
+
+    def test_event_participant_is_registered_in_admin(self) -> None:
+        self.assertTrue(admin.site.is_registered(EventParticipant))

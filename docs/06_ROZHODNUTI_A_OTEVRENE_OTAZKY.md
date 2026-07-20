@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.10
+**Verze:** 0.11
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 18. 7. 2026
+**Datum revize:** 20. 7. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -61,6 +61,7 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 115. Přímé `save()` nevolá `full_clean()`; validaci zajišťují formuláře, explicitní `full_clean()` nebo doménové služby, zatímco uložení pouze přepočítá technické řadicí hodnoty.
 116. Milník M1 je dokončen bez nové projektové migrace a bez potřeby nového ACP. Následujícím krokem je M2 – jádro Osoba, Místo, Událost a Vazba.
 117. `EventType.default_access_level` a `EventType.default_show_in_overview` jsou snapshotové návrhy pro novou událost. Budoucí doménová služba je při založení zkopíruje, pokud uživatel neuvede vlastní hodnotu; změna typu ani jeho defaultů existující `Event` zpětně nepřepisuje. Model, `clean()` ani `save()` tuto automatizaci neprovádějí.
+118. `EventParticipant` je minimalistický spojovací model bez common mixinů a s jedinečnou trojicí událost, osoba a role. Aktuální `AllowedEventRole`, aktivita role a minimální či maximální počty se kontrolují při vytvoření nebo změně účasti v budoucí transakční doménové službě; model je dynamicky nekontroluje a změna konfigurace sama zpětně nezneplatňuje historické účasti.
 
 ## 2. Otevřené otázky
 

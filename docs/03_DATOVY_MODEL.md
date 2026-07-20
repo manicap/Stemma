@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.5
+**Verze:** 0.6
 **Stav:** koncept  
-**Datum revize:** 18. 7. 2026
+**Datum revize:** 20. 7. 2026
 
 ## 1. Základní pilíře
 
@@ -125,13 +125,22 @@ Příčina a okolnosti úmrtí patří do samostatného specializovaného detail
 
 ## 4. Účast osoby na události
 
-`EventParticipant` je samostatná budoucí spojovací entita a není součástí
-základního modelu `Event`. Obsahuje:
+`EventParticipant` je samostatná spojovací entita a není součástí
+základního modelu `Event`. Obsahuje povinné vazby na:
 
-- osoba,
+- existující osobu,
 - událost,
-- role osoby v události,
-- poznámka.
+- roli osoby v události,
+- volitelnou poznámku ke konkrétní účasti.
+
+Stejná osoba může mít v jedné události více různých rolí a stejnou roli
+může mít více osob. Trojice událost, osoba a role je jedinečná; rozdílná
+poznámka nepovoluje duplicitní účast.
+
+Databázový constraint hlídá pouze přesnou duplicitu. Povolenost a aktivita
+role, minimální a maximální počty a úplnost celé události budou ověřovány
+budoucí transakční doménovou službou. Změna konfigurace nemá zpětně
+zneplatňovat uložené historické účasti.
 
 Role osoby je spravovatelný číselník. Systémové role jsou hlavní osoba,
 narozená osoba, křtěná osoba, zemřelá osoba, manželský partner, rodič,
