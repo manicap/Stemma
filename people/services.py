@@ -23,6 +23,15 @@ __all__ = (
     "update_relationship",
 )
 
+_PARENT_RELATIONSHIP_TYPE_CODES = frozenset(
+    {
+        "biological_parent",
+        "adoptive_parent",
+        "step_parent",
+        "foster_parent",
+    }
+)
+
 
 @dataclass(frozen=True, slots=True)
 class RelationshipInput:
@@ -142,6 +151,62 @@ def _normalize_people(
     return person_a, person_b
 
 
+def _validate_parent_relationship_cycle(
+    *,
+    relationship_type: RelationshipType,
+    person_a: Person,
+    person_b: Person,
+    exclude_relationship_id: int | None = None,
+) -> None:
+    if (
+        relationship_type.code not in _PARENT_RELATIONSHIP_TYPE_CODES
+        or person_a.pk == person_b.pk
+    ):
+        return
+
+    relationships = Relationship.objects.select_for_update().filter(
+        deleted_at__isnull=True,
+        relationship_type__code__in=_PARENT_RELATIONSHIP_TYPE_CODES,
+    )
+    if exclude_relationship_id is not None:
+        relationships = relationships.exclude(pk=exclude_relationship_id)
+
+    adjacency: dict[int, set[int]] = {}
+    for parent_id, child_id in relationships.values_list(
+        "person_a_id",
+        "person_b_id",
+    ):
+        adjacency.setdefault(parent_id, set()).add(child_id)
+
+    target_id = person_a.pk
+    pending = [person_b.pk]
+    visited: set[int] = set()
+
+    while pending:
+        current_id = pending.pop()
+        if current_id == target_id:
+            raise ValidationError(
+                {
+                    "person_b": ValidationError(
+                        "Tato rodičovská vazba by vytvořila cyklus.",
+                        code="relationship_parent_cycle",
+                        params={
+                            "person_a_id": person_a.pk,
+                            "person_b_id": person_b.pk,
+                            "relationship_type_id": relationship_type.pk,
+                            "relationship_type_code": (
+                                relationship_type.code
+                            ),
+                        },
+                    )
+                }
+            )
+        if current_id in visited:
+            continue
+        visited.add(current_id)
+        pending.extend(adjacency.get(current_id, ()))
+
+
 def _apply_input(
     relationship: Relationship,
     *,
@@ -246,6 +311,11 @@ def create_relationship(
                 person_a,
                 person_b,
             )
+            _validate_parent_relationship_cycle(
+                relationship_type=relationship_type,
+                person_a=person_a,
+                person_b=person_b,
+            )
             candidate = Relationship(created_by=current_created_by)
             _apply_input(
                 candidate,
@@ -331,6 +401,12 @@ def update_relationship(
                 relationship_type,
                 person_a,
                 person_b,
+            )
+            _validate_parent_relationship_cycle(
+                relationship_type=relationship_type,
+                person_a=person_a,
+                person_b=person_b,
+                exclude_relationship_id=relationship_id,
             )
             _apply_input(
                 candidate,

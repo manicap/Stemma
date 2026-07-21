@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.13
+**Verze:** 0.14
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 21. 7. 2026
 
@@ -823,6 +823,88 @@ potvrzený konflikt převede na `ValidationError` s klíčem `__all__` a kódem
 M2.5c nevytváří migraci. Nekontroluje rodičovské cykly, věk,
 genealogickou pravděpodobnost ani překryvy období a nevytváří opačné,
 odvozené či z událostí plynoucí vztahy. `is_derivable` zápis neomezuje.
+
+### 9.10 Genealogická validace rodičovských cyklů
+
+Společný orientovaný rodičovský graf tvoří přesně kódy:
+
+```python
+_PARENT_RELATIONSHIP_TYPE_CODES = frozenset(
+    {
+        "biological_parent",
+        "adoptive_parent",
+        "step_parent",
+        "foster_parent",
+    }
+)
+```
+
+Uzel je `Person.pk` a hrana vede `Relationship.person_a_id →
+Relationship.person_b_id`; osoba A je rodičovská osoba a osoba B dítě.
+Všechny čtyři typy tvoří jeden graf. `guardian`, další systémové typy ani
+budoucí uživatelské typy kategorie `parent_child` se automaticky
+nezahrnují.
+
+Graf obsahuje všechny vztahy s `deleted_at IS NULL` a rodičovským kódem.
+Archivace, neaktivita typu, `UNKNOWN`, jednoduché přesnosti i historicky
+ukončený `RANGE` hranu nevyřazují. Aktuální kalendářní platnost se
+neposuzuje. Měkce odstraněný vztah se nezapočítává.
+
+Neveřejný helper v `people/services.py` má kontrakt:
+
+```python
+def _validate_parent_relationship_cycle(
+    *,
+    relationship_type: RelationshipType,
+    person_a: Person,
+    person_b: Person,
+    exclude_relationship_id: int | None = None,
+) -> None:
+    ...
+```
+
+Pro nerodičovský typ nebo shodné osoby skončí bez grafového dotazu.
+V ostatních případech načte relevantní dvojice jedním querysetem přes
+`select_for_update()`, při update vyloučí aktuální PK, sestaví v Pythonu
+adjacency map `dict[int, set[int]]` a iterativním průchodem s `visited`
+hledá cestu z osoby B do osoby A. Nalezená cesta znamená, že navrhovaná
+hrana A → B uzavírá cyklus.
+
+Create volá helper po načtení aktuálního typu a osob, kontrole aktivity a
+případné normalizaci, ale před `full_clean()` a `save()`. Update postupuje
+stejně nad výsledným navrhovaným stavem a vyloučí svůj současný řádek.
+Změna z rodičovského na nerodičovský typ grafovou kontrolu neprovádí a může
+starší cyklus opravit. Starší nesouvisející cyklus jinde v grafu změnu
+neblokuje a `visited` zabraňuje nekonečnému průchodu.
+
+Cyklus vyvolá:
+
+```python
+ValidationError(
+    {
+        "person_b": ValidationError(
+            "Tato rodičovská vazba by vytvořila cyklus.",
+            code="relationship_parent_cycle",
+            params={
+                "person_a_id": person_a.pk,
+                "person_b_id": person_b.pk,
+                "relationship_type_id": relationship_type.pk,
+                "relationship_type_code": relationship_type.code,
+            },
+        )
+    }
+)
+```
+
+Kontrola běží uvnitř existujícího `transaction.atomic()`. SQLite provádí
+`select_for_update()` prakticky jako no-op. Obecný grafový cyklus nelze
+vynutit běžným `CheckConstraint` a ani řádkové zámky nemusí bez silnější
+izolace zachytit všechny phantom scénáře souběžně vkládaných hran. Pro
+současný malý provoz je servisní transakční kontrola přiměřená.
+
+M2.5d nemění modely, constrainty, systémová data ani migrace. Neřeší věk,
+genealogickou pravděpodobnost, překryvy období, odvozování sourozenců ani
+vztahy z událostí.
 
 ## 10. Bydliště a hrobová místa
 

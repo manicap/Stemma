@@ -1103,3 +1103,510 @@ class RelationshipServiceTests(TestCase):
         create_relationship(data=second)
 
         self.assertEqual(Relationship.objects.count(), 2)
+
+
+class ParentRelationshipCycleTests(TestCase):
+    """Ověření společného grafu genealogických rodičovských vazeb."""
+
+    parent_codes = (
+        "biological_parent",
+        "adoptive_parent",
+        "step_parent",
+        "foster_parent",
+    )
+
+    def setUp(self) -> None:
+        self.people = [
+            Person.objects.create(first_name=f"Osoba {index}")
+            for index in range(1, 8)
+        ]
+        self.types = {
+            code: RelationshipType.objects.get(code=code)
+            for code in (
+                *self.parent_codes,
+                "guardian",
+                "spouse",
+                "partner",
+                "sibling",
+                "godparent",
+                "family_friend",
+                "other",
+            )
+        }
+
+    def data(
+        self,
+        code: str,
+        person_a: Person,
+        person_b: Person,
+        **changes: object,
+    ) -> RelationshipInput:
+        data = RelationshipInput(
+            relationship_type=self.types[code],
+            person_a=person_a,
+            person_b=person_b,
+        )
+        return replace(data, **changes)
+
+    def create_edge(
+        self,
+        code: str,
+        person_a: Person,
+        person_b: Person,
+        **changes: object,
+    ) -> Relationship:
+        return create_relationship(
+            data=self.data(code, person_a, person_b, **changes)
+        )
+
+    def assert_cycle_error(
+        self,
+        context,
+        *,
+        person_a: Person,
+        person_b: Person,
+        relationship_type: RelationshipType,
+    ) -> None:
+        self.assertIn("person_b", context.exception.error_dict)
+        errors = context.exception.error_dict["person_b"]
+        cycle_errors = [
+            error
+            for error in errors
+            if error.code == "relationship_parent_cycle"
+        ]
+        self.assertEqual(len(cycle_errors), 1)
+        self.assertEqual(
+            cycle_errors[0].params,
+            {
+                "person_a_id": person_a.pk,
+                "person_b_id": person_b.pk,
+                "relationship_type_id": relationship_type.pk,
+                "relationship_type_code": relationship_type.code,
+            },
+        )
+
+    def test_parent_type_code_set_is_exact(self) -> None:
+        self.assertEqual(
+            services._PARENT_RELATIONSHIP_TYPE_CODES,
+            frozenset(self.parent_codes),
+        )
+
+    def test_direct_cycle_is_rejected_with_stable_error(self) -> None:
+        person_a, person_b = self.people[:2]
+        self.create_edge("biological_parent", person_a, person_b)
+
+        with self.assertRaises(ValidationError) as context:
+            self.create_edge("biological_parent", person_b, person_a)
+
+        self.assert_cycle_error(
+            context,
+            person_a=person_b,
+            person_b=person_a,
+            relationship_type=self.types["biological_parent"],
+        )
+        self.assertEqual(Relationship.objects.count(), 1)
+
+    def test_three_node_cycle_is_rejected(self) -> None:
+        person_a, person_b, person_c = self.people[:3]
+        self.create_edge("biological_parent", person_a, person_b)
+        self.create_edge("biological_parent", person_b, person_c)
+
+        with self.assertRaises(ValidationError) as context:
+            self.create_edge("biological_parent", person_c, person_a)
+
+        self.assert_cycle_error(
+            context,
+            person_a=person_c,
+            person_b=person_a,
+            relationship_type=self.types["biological_parent"],
+        )
+
+    def test_cycle_longer_than_three_nodes_is_rejected(self) -> None:
+        person_a, person_b, person_c, person_d, person_e = self.people[:5]
+        self.create_edge("biological_parent", person_a, person_b)
+        self.create_edge("biological_parent", person_b, person_c)
+        self.create_edge("adoptive_parent", person_c, person_d)
+        self.create_edge("step_parent", person_d, person_e)
+
+        with self.assertRaises(ValidationError):
+            self.create_edge("foster_parent", person_e, person_a)
+
+        self.assertEqual(Relationship.objects.count(), 4)
+
+    def test_valid_branched_tree_is_allowed(self) -> None:
+        person_a, person_b, person_c, person_d, person_e, person_f = (
+            self.people[:6]
+        )
+        self.create_edge("biological_parent", person_a, person_b)
+        self.create_edge("adoptive_parent", person_a, person_c)
+        self.create_edge("step_parent", person_b, person_d)
+        self.create_edge("foster_parent", person_c, person_e)
+
+        result = self.create_edge("biological_parent", person_d, person_f)
+
+        self.assertEqual(result.person_a_id, person_d.pk)
+        self.assertEqual(result.person_b_id, person_f.pk)
+        self.assertEqual(Relationship.objects.count(), 5)
+
+    def test_mixed_parent_types_share_one_graph(self) -> None:
+        person_a, person_b, person_c, person_d = self.people[:4]
+        self.create_edge("biological_parent", person_a, person_b)
+        self.create_edge("adoptive_parent", person_b, person_c)
+        self.create_edge("step_parent", person_c, person_d)
+
+        with self.assertRaises(ValidationError) as context:
+            self.create_edge("foster_parent", person_d, person_a)
+
+        self.assert_cycle_error(
+            context,
+            person_a=person_d,
+            person_b=person_a,
+            relationship_type=self.types["foster_parent"],
+        )
+
+    def test_non_parent_system_types_do_not_enter_graph(self) -> None:
+        for index, code in enumerate(
+            (
+                "guardian",
+                "spouse",
+                "partner",
+                "sibling",
+                "godparent",
+                "family_friend",
+                "other",
+            )
+        ):
+            with self.subTest(code=code):
+                person_a = Person.objects.create(
+                    first_name=f"Výchozí {index}"
+                )
+                person_b = Person.objects.create(
+                    first_name=f"Cílová {index}"
+                )
+                self.create_edge(code, person_b, person_a)
+
+                result = self.create_edge(
+                    "biological_parent",
+                    person_a,
+                    person_b,
+                )
+
+                self.assertEqual(result.person_a_id, person_a.pk)
+                self.assertEqual(result.person_b_id, person_b.pk)
+
+    def test_custom_parent_child_type_does_not_enter_graph(self) -> None:
+        custom_type = RelationshipType.objects.create(
+            code="service_custom_parent_child",
+            name="Vlastní rodičovský typ",
+            category="parent_child",
+            forward_label_male="dítě",
+            forward_label_female="dítě",
+            forward_label_unknown="dítě",
+            reverse_label_male="rodič",
+            reverse_label_female="rodič",
+            reverse_label_unknown="rodič",
+        )
+        person_a, person_b = self.people[:2]
+        create_relationship(
+            data=RelationshipInput(
+                relationship_type=custom_type,
+                person_a=person_b,
+                person_b=person_a,
+            )
+        )
+
+        result = self.create_edge("biological_parent", person_a, person_b)
+
+        self.assertEqual(result.person_a_id, person_a.pk)
+        self.assertEqual(Relationship.objects.count(), 2)
+
+    def test_update_person_a_that_creates_cycle_is_rejected(self) -> None:
+        person_a, person_b, person_c = self.people[:3]
+        self.create_edge("biological_parent", person_a, person_b)
+        relationship = self.create_edge(
+            "biological_parent",
+            person_c,
+            person_a,
+        )
+
+        with self.assertRaises(ValidationError) as context:
+            update_relationship(
+                relationship=relationship,
+                data=self.data(
+                    "biological_parent",
+                    person_b,
+                    person_a,
+                ),
+            )
+
+        self.assert_cycle_error(
+            context,
+            person_a=person_b,
+            person_b=person_a,
+            relationship_type=self.types["biological_parent"],
+        )
+        relationship.refresh_from_db()
+        self.assertEqual(relationship.person_a_id, person_c.pk)
+
+    def test_update_person_b_that_creates_cycle_is_rejected(self) -> None:
+        person_a, person_b, person_c = self.people[:3]
+        self.create_edge("biological_parent", person_a, person_b)
+        relationship = self.create_edge(
+            "biological_parent",
+            person_b,
+            person_c,
+        )
+
+        with self.assertRaises(ValidationError):
+            update_relationship(
+                relationship=relationship,
+                data=self.data(
+                    "biological_parent",
+                    person_b,
+                    person_a,
+                ),
+            )
+
+        relationship.refresh_from_db()
+        self.assertEqual(relationship.person_b_id, person_c.pk)
+
+    def test_update_to_parent_type_that_creates_cycle_is_rejected(self) -> None:
+        person_a, person_b = self.people[:2]
+        self.create_edge("biological_parent", person_a, person_b)
+        relationship = self.create_edge("guardian", person_b, person_a)
+
+        with self.assertRaises(ValidationError):
+            update_relationship(
+                relationship=relationship,
+                data=self.data(
+                    "adoptive_parent",
+                    person_b,
+                    person_a,
+                ),
+            )
+
+        relationship.refresh_from_db()
+        self.assertEqual(
+            relationship.relationship_type_id,
+            self.types["guardian"].pk,
+        )
+
+    def test_update_parent_to_non_parent_can_remove_old_cycle(self) -> None:
+        person_a, person_b = self.people[:2]
+        self.create_edge("biological_parent", person_a, person_b)
+        relationship = Relationship.objects.create(
+            relationship_type=self.types["adoptive_parent"],
+            person_a=person_b,
+            person_b=person_a,
+        )
+
+        result = update_relationship(
+            relationship=relationship,
+            data=self.data("guardian", person_b, person_a),
+        )
+
+        self.assertEqual(result.pk, relationship.pk)
+        self.assertEqual(
+            result.relationship_type_id,
+            self.types["guardian"].pk,
+        )
+
+    def test_update_excludes_current_relationship_from_graph(self) -> None:
+        person_a, person_b = self.people[:2]
+        relationship = self.create_edge(
+            "biological_parent",
+            person_a,
+            person_b,
+        )
+
+        result = update_relationship(
+            relationship=relationship,
+            data=self.data(
+                "biological_parent",
+                person_b,
+                person_a,
+            ),
+        )
+
+        self.assertEqual(result.pk, relationship.pk)
+        self.assertEqual(result.person_a_id, person_b.pk)
+        self.assertEqual(result.person_b_id, person_a.pk)
+
+    def test_archived_parent_edge_still_blocks_cycle(self) -> None:
+        person_a, person_b = self.people[:2]
+        relationship = self.create_edge(
+            "biological_parent",
+            person_a,
+            person_b,
+        )
+        Relationship.objects.filter(pk=relationship.pk).update(
+            archived_at=timezone.now()
+        )
+
+        with self.assertRaises(ValidationError):
+            self.create_edge("adoptive_parent", person_b, person_a)
+
+    def test_soft_deleted_parent_edge_does_not_block_cycle(self) -> None:
+        person_a, person_b = self.people[:2]
+        relationship = self.create_edge(
+            "biological_parent",
+            person_a,
+            person_b,
+        )
+        Relationship.objects.filter(pk=relationship.pk).update(
+            deleted_at=timezone.now()
+        )
+
+        result = self.create_edge("adoptive_parent", person_b, person_a)
+
+        self.assertEqual(result.person_a_id, person_b.pk)
+
+    def test_unknown_exact_and_historical_range_edges_are_included(self) -> None:
+        cases = (
+            ("unknown", "biological_parent", {}),
+            (
+                "exact",
+                "adoptive_parent",
+                {
+                    "date_precision": DatePrecision.EXACT,
+                    "start_year": 1900,
+                    "start_month": 1,
+                    "start_day": 2,
+                },
+            ),
+            (
+                "range",
+                "step_parent",
+                {
+                    "date_precision": DatePrecision.RANGE,
+                    "start_year": 1900,
+                    "end_year": 1910,
+                },
+            ),
+        )
+        for index, (name, code, values) in enumerate(cases):
+            with self.subTest(precision=name):
+                person_a = Person.objects.create(
+                    first_name=f"Rodič času {index}"
+                )
+                person_b = Person.objects.create(
+                    first_name=f"Dítě času {index}"
+                )
+                self.create_edge(code, person_a, person_b, **values)
+
+                with self.assertRaises(ValidationError):
+                    self.create_edge(
+                        "foster_parent",
+                        person_b,
+                        person_a,
+                    )
+
+    def test_inactive_type_does_not_remove_existing_edge(self) -> None:
+        person_a, person_b = self.people[:2]
+        self.create_edge("biological_parent", person_a, person_b)
+        RelationshipType.objects.filter(
+            pk=self.types["biological_parent"].pk
+        ).update(is_active=False)
+
+        with self.assertRaises(ValidationError):
+            self.create_edge("adoptive_parent", person_b, person_a)
+
+    def test_older_unrelated_cycle_does_not_block_new_edge(self) -> None:
+        person_a, person_b, person_c, person_d = self.people[:4]
+        Relationship.objects.create(
+            relationship_type=self.types["biological_parent"],
+            person_a=person_a,
+            person_b=person_b,
+        )
+        Relationship.objects.create(
+            relationship_type=self.types["adoptive_parent"],
+            person_a=person_b,
+            person_b=person_a,
+        )
+
+        result = self.create_edge(
+            "biological_parent",
+            person_c,
+            person_d,
+        )
+
+        self.assertEqual(result.person_a_id, person_c.pk)
+
+    def test_visited_handles_old_cycle_reached_by_valid_candidate(self) -> None:
+        person_a, person_b, person_c = self.people[:3]
+        Relationship.objects.create(
+            relationship_type=self.types["biological_parent"],
+            person_a=person_a,
+            person_b=person_b,
+        )
+        Relationship.objects.create(
+            relationship_type=self.types["adoptive_parent"],
+            person_a=person_b,
+            person_b=person_a,
+        )
+
+        result = self.create_edge(
+            "foster_parent",
+            person_c,
+            person_a,
+        )
+
+        self.assertEqual(result.person_a_id, person_c.pk)
+        self.assertEqual(result.person_b_id, person_a.pk)
+
+    def test_candidate_closing_path_in_old_graph_is_rejected(self) -> None:
+        person_a, person_b, person_c = self.people[:3]
+        Relationship.objects.create(
+            relationship_type=self.types["biological_parent"],
+            person_a=person_a,
+            person_b=person_b,
+        )
+        Relationship.objects.create(
+            relationship_type=self.types["adoptive_parent"],
+            person_a=person_b,
+            person_b=person_a,
+        )
+        self.create_edge("step_parent", person_c, person_a)
+
+        with self.assertRaises(ValidationError):
+            self.create_edge("foster_parent", person_b, person_c)
+
+    def test_parent_self_relationship_keeps_model_error(self) -> None:
+        person = self.people[0]
+
+        with self.assertRaises(ValidationError) as context:
+            self.create_edge("biological_parent", person, person)
+
+        errors = context.exception.error_dict["person_b"]
+        self.assertIn(
+            "relationship_to_self",
+            [error.code for error in errors],
+        )
+        self.assertNotIn(
+            "relationship_parent_cycle",
+            [error.code for error in errors],
+        )
+
+    def test_cycle_validation_loads_graph_with_one_queryset(self) -> None:
+        person_a, person_b = self.people[:2]
+
+        with patch.object(
+            Relationship.objects,
+            "select_for_update",
+            wraps=Relationship.objects.select_for_update,
+        ) as graph_lock:
+            self.create_edge("biological_parent", person_a, person_b)
+
+        graph_lock.assert_called_once_with()
+
+    def test_non_parent_type_skips_graph_query(self) -> None:
+        person_a, person_b = self.people[:2]
+
+        with patch.object(
+            Relationship.objects,
+            "select_for_update",
+            wraps=Relationship.objects.select_for_update,
+        ) as graph_lock:
+            self.create_edge("guardian", person_a, person_b)
+
+        graph_lock.assert_not_called()

@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.9
+**Verze:** 0.10
 **Stav:** koncept  
 **Datum revize:** 21. 7. 2026
 
@@ -282,6 +282,32 @@ se po rollbacku převede na `duplicate_relationship` pouze tehdy, pokud
 databázový dotaz potvrdí konflikt stejné schválené časové identity. Jiná
 integritní chyba se nemaskuje. M2.5c nevytváří migraci a neřeší rodičovské
 cykly, věk, překryvy období ani automaticky odvozené nebo opačné vztahy.
+
+### 5.3 Rodičovský graf
+
+Genealogický rodičovský graf tvoří pouze typy `biological_parent`,
+`adoptive_parent`, `step_parent` a `foster_parent`. `person_a` je
+rodičovská osoba, `person_b` dítě a orientovaná hrana proto vede
+`person_a → person_b`. Všechny čtyři typy se vyhodnocují společně a cyklus
+může být smíšený. `guardian` ani jiné systémové či uživatelské typy do
+grafu automaticky nevstupují.
+
+Do grafu se započítávají všechny měkce neodstraněné vztahy uvedených typů.
+Archivace, neaktivita typu ani přesnost, stáří nebo ukončení časového údaje
+rodičovský fakt nevyřazují. Měkce odstraněný vztah se nezapočítává.
+
+Nová hrana `A → B` je odmítnuta, právě když v existujícím grafu vede cesta
+`B → … → A`. Create validuje nový vztah; update vyloučí vlastní současný
+řádek a ověří navrhovaný výsledný stav. Změna na nerodičovský typ může
+starší cyklus odstranit. Nesouvisející starší nekonzistence jinde v grafu
+změnu neblokuje. Stabilní chyba má klíč `person_b` a kód
+`relationship_parent_cycle`.
+
+Kontrola probíhá transakčně v doménové službě a načítá graf jedním
+querysetem. Obecný grafový cyklus nelze vyjádřit běžným databázovým
+constraintem. SQLite neposkytuje skutečné řádkové zámky a ani databáze se
+zámky bez silnější izolace nemusí pokrýt všechny souběžné phantom scénáře.
+M2.5d nemění model ani migrace a neřeší věk nebo překryvy období.
 
 ## 6. Bydliště
 

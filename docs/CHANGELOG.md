@@ -1,5 +1,19 @@
 # Historie změn dokumentace
 
+## Verze 0.18 – 21. 7. 2026
+
+- konkretizován a implementován společný rodičovský graf typů
+  `biological_parent`, `adoptive_parent`, `step_parent` a `foster_parent`,
+- doplněna transakční kontrola přímých i nepřímých cyklů při create a
+  update vztahu,
+- určeno zahrnutí archivovaných a historických vztahů a vyloučení měkce
+  odstraněných vztahů,
+- potvrzeno, že `guardian` ani uživatelské typy nejsou automatickou
+  součástí genealogického grafu,
+- zdokumentován kód `relationship_parent_cycle` a omezení databázových
+  zámků,
+- krok M2.5d nevytvořil modelovou změnu, migraci ani nové ACP.
+
 ## Verze 0.17 – 21. 7. 2026
 
 - konkretizováno veřejné create/update API doménové služby vazeb,

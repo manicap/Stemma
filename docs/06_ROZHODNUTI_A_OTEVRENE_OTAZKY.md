@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.15
+**Verze:** 0.16
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 21. 7. 2026
 
@@ -66,6 +66,7 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 120. `RelationshipType` je uživatelsky rozšiřitelný číselník odvozený pouze z `LookupModel`; kategorie vztahů jsou pevný doménový výčet. Uložený směr A → B popisuje osobu B podle jejího genderu a opačný směr osobu A podle jejího genderu. Symetrický typ vyžaduje shodu všech genderových názvů obou směrů. `supports_date_range` pouze povoluje přesnost `RANGE` budoucí konkrétní vazby a `is_derivable` samo nic neodvozuje. V první sadě čtrnácti systémových typů je odvoditelné pouze biologické sourozenectví. Konkrétní `Relationship`, normalizace dvojice osob a algoritmus odvození vzniknou v dalších krocích M2.5. Tato konkretizace nevyžaduje nové ACP.
 121. Jeden `Relationship` představuje jedno souvislé období vztahu a používá úplný `PartialDateModel`. Stejné osoby mohou mít více období stejného typu. U symetrického typu je kanonické pořadí podle PK `person_a_id < person_b_id`; model je pouze validuje a budoucí služba bude vstup normalizovat. Vztah osoby k sobě zakazuje model i databáze. Aktivní unikátnost znamená `deleted_at IS NULL`: archivovaný záznam zůstává součástí unikátnosti, měkce odstraněný nikoli. Zvláštní podmíněné constrainty rozlišují neznámý a známý čas. Odvoditelný typ lze explicitně uložit. M2.5b neřeší grafové cykly, překryvy období ani automatické vztahy z událostí a nevyžaduje nové ACP.
 122. Veřejné vytvoření a změnu jednotlivého `Relationship` zajišťují `create_relationship()` a `update_relationship()` v `people/services.py` nad frozen dataclass `RelationshipInput`. Služba používá aktuální databázový stav, `transaction.atomic()`, při update `select_for_update()`, normalizaci symetrických osob podle PK a `full_clean()`. Create může nastavit `created_by`, update autora ani lifecycle pole nemění. Neaktivní typ nelze použít pro nový vztah ani na něj přejít; stávající neaktivní typ lze zachovat. Archivovaný vztah lze upravit, měkce odstraněný nikoli. Potvrzený souběžný konflikt se převádí na `duplicate_relationship`, ostatní `IntegrityError` se nemaskují. M2.5c nevytváří migraci ani nové ACP a neřeší cykly, překryvy či odvozování vztahů.
+123. Rodičovský graf M2.5d tvoří společně kódy `biological_parent`, `adoptive_parent`, `step_parent` a `foster_parent`; `guardian` patří do péče a poručenství a do grafu nevstupuje. Hrana vede od `person_a` k `person_b`. Zahrnují se všechny vztahy s `deleted_at IS NULL` bez ohledu na archivaci, aktivitu typu a časové vymezení. Navrhovaná hrana A → B je neplatná pouze při existující cestě B → A. Update vylučuje vlastní řádek a validuje výsledný stav, takže může starší cyklus odstranit a nesouvisející nekonzistence jinde změnu neblokuje. Chyba používá `person_b` a kód `relationship_parent_cycle`. Kontrola je transakční servisní pravidlo bez modelové změny, migrace nebo nového ACP; zámky SQLite ani běžné řádkové zámky neposkytují absolutní ochranu proti všem souběžným phantom scénářům.
 
 ## 2. Otevřené otázky
 
