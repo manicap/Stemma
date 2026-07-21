@@ -1,5 +1,19 @@
 # Historie změn dokumentace
 
+## Verze 0.19 – 21. 7. 2026
+
+- konkretizována definice biologického sourozence alespoň jedním společným
+  biologickým rodičem bez rozlišení plného a polovičního sourozenectví,
+- určeno použití pouze měkce neodstraněných vztahů `biological_parent` a
+  lifecycle pravidla vztahů, vstupní osoby a výsledných osob,
+- schválen veřejný lazy selector `get_biological_siblings(*, person)` s
+  návratem `QuerySet[Person]`, standardním řazením a chybou
+  `person_unsaved`,
+- oddělen nízkoúrovňový doménový dotaz od povinné aplikační kontroly
+  oprávnění a viditelnosti,
+- explicitní sourozenecké vztahy se do odvozeného výsledku neslučují,
+- krok M2.5e nic neukládá a nevytváří modelovou změnu, migraci ani ACP.
+
 ## Verze 0.18 – 21. 7. 2026
 
 - konkretizován a implementován společný rodičovský graf typů

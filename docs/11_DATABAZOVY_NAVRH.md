@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.14
+**Verze:** 0.15
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 21. 7. 2026
 
@@ -905,6 +905,61 @@ současný malý provoz je servisní transakční kontrola přiměřená.
 M2.5d nemění modely, constrainty, systémová data ani migrace. Neřeší věk,
 genealogickou pravděpodobnost, překryvy období, odvozování sourozenců ani
 vztahy z událostí.
+
+### 9.11 Čtecí odvození biologických sourozenců
+
+Modul `people/selectors.py` vystavuje přesně:
+
+```python
+__all__ = ("get_biological_siblings",)
+
+
+def get_biological_siblings(
+    *,
+    person: Person,
+) -> QuerySet[Person]:
+    ...
+```
+
+Pro různé osoby X a Y platí biologické sourozenectví právě tehdy, existuje-li
+alespoň jedna osoba P a měkce neodstraněné vztahy `biological_parent` P → X
+a P → Y. Jeden společný biologický rodič stačí. Plní a poloviční sourozenci
+se v M2.5e nerozlišují a počet společných rodičů se nevrací. Jiné
+rodičovské typy a explicitní vztahy `sibling`, `adoptive_sibling`,
+`step_sibling` nebo `social_sibling` výsledek nevytvářejí ani nerozšiřují.
+
+Oba rodičovské vztahy musí mít `deleted_at IS NULL`. Archivace, neaktivita
+typu, `UNKNOWN`, jednoduchá přesnost i historicky ukončený `RANGE` se
+započítávají a aktuální kalendářní platnost se neposuzuje. Výsledná osoba
+musí mít `deleted_at IS NULL`, ale archivace ji nevylučuje. Vstupní osoba
+musí mít PK a odpovídající databázový řádek; může být archivovaná i měkce
+odstraněná. Chybějící řádek nebo PK vyvolá:
+
+```python
+ValidationError(
+    {
+        "person": ValidationError(
+            "Osoba musí být před vyhledáním sourozenců uložena.",
+            code="person_unsaved",
+        )
+    }
+)
+```
+
+Po jednom `exists()` dotazu selector sestaví lazy ORM dotaz: subquery ID
+biologických rodičů vstupu, subquery ID ostatních dětí těchto rodičů a
+databázově deduplikovaný queryset osob. Vstupní a měkce odstraněné osoby
+jsou vyloučeny. Nevzniká dotaz pro každého rodiče ani Pythonový průchod
+grafem. Výsledek používá standardní `Person.Meta.ordering` podle příjmení a
+jména.
+
+Jde o nízkoúrovňový doménový selector bez parametru `actor`; nefiltruje
+`Relationship.access_level` ani `Person.access_level` podle konkrétního
+uživatele. Vyšší aplikační vrstva musí před zveřejněním ve view, API,
+šabloně nebo exportu uplatnit pravidla viditelnosti. Toto rozdělení není
+obecným povolením obcházet serverová oprávnění. Selector nic nemění ani
+neukládá, nevytváří `Relationship` typu `sibling` a M2.5e nevytváří
+migraci.
 
 ## 10. Bydliště a hrobová místa
 

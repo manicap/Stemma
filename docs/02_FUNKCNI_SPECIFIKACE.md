@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.5
+**Verze:** 0.6
 **Stav:** pracovní návrh  
-**Datum revize:** 20. 7. 2026
+**Datum revize:** 21. 7. 2026
 
 ## 1. Hlavní obrazovka
 
@@ -224,6 +224,24 @@ etapě nezakazují.
 Technická horní mez u přesného data, měsíce nebo roku neznamená konec
 vztahu; slouží pouze k řazení a porovnání. Rozmezí je možné jen u typu
 vztahu, který je podporuje.
+
+Biologické sourozenectví se odvozuje čtecím doménovým selectorem
+`get_biological_siblings(*, person)` v `people/selectors.py`. Dvě různé
+osoby jsou biologickými sourozenci, sdílejí-li alespoň jednoho biologického
+rodiče prostřednictvím měkce neodstraněných vztahů typu
+`biological_parent`. Plní a poloviční biologičtí sourozenci se zatím
+nerozlišují a počet společných rodičů se nevrací.
+
+Archivace, neaktivita typu ani časové vymezení rodičovského vztahu odvození
+neovlivňují; měkce odstraněný vztah se nezapočítává. Výsledek může obsahovat
+archivovanou, nikoli však měkce odstraněnou osobu. Vstupní osoba může být
+archivovaná i měkce odstraněná, pokud její databázový řádek existuje.
+Explicitně uložené sourozenecké vztahy se s výsledkem neslučují.
+
+Selector vrací lazy `QuerySet[Person]` ve standardním pořadí osoby a nic
+neukládá. Jde o nízkoúrovňový doménový dotaz bez uživatelského kontextu;
+před zveřejněním ve view, API, šabloně nebo exportu musí vyšší aplikační
+vrstva uplatnit přístupovou úroveň a pravidla viditelnosti.
 
 ## 9. Bydliště
 

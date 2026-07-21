@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.10
+**Verze:** 0.11
 **Stav:** koncept  
 **Datum revize:** 21. 7. 2026
 
@@ -308,6 +308,41 @@ querysetem. Obecný grafový cyklus nelze vyjádřit běžným databázovým
 constraintem. SQLite neposkytuje skutečné řádkové zámky a ani databáze se
 zámky bez silnější izolace nemusí pokrýt všechny souběžné phantom scénáře.
 M2.5d nemění model ani migrace a neřeší věk nebo překryvy období.
+
+### 5.4 Odvození biologických sourozenců
+
+Nízkoúrovňový doménový selector v `people/selectors.py` poskytuje veřejné
+API:
+
+```python
+def get_biological_siblings(
+    *,
+    person: Person,
+) -> QuerySet[Person]:
+    ...
+```
+
+Osoba Y je biologickým sourozencem osoby X, pokud jsou různé a existuje
+alespoň jedna osoba P, která je prostřednictvím měkce neodstraněného
+`Relationship` typu `biological_parent` rodičem X i Y. Jeden společný rodič
+stačí; plní a poloviční sourozenci se nerozlišují. Jiné rodičovské typy ani
+explicitní `sibling`, `adoptive_sibling`, `step_sibling` nebo
+`social_sibling` se do výsledku neslučují.
+
+Rodičovský fakt přebírá lifecycle význam z M2.5d: započítává se při
+`Relationship.deleted_at IS NULL` bez ohledu na archivaci, aktivitu typu,
+přesnost nebo historické ukončení data. Výsledná `Person` musí mít
+`deleted_at IS NULL`, ale může být archivovaná. Vstupní osoba musí mít PK a
+existující databázový řádek; archivace ani měkké odstranění vstupu dotaz
+neblokují. Neuložená nebo fyzicky chybějící osoba vyvolá `ValidationError`
+s klíčem `person` a kódem `person_unsaved`.
+
+Selector vrací lazy, databázově deduplikovaný `QuerySet[Person]` se
+standardním `Person.Meta.ordering = ("last_name", "first_name")`. Nic
+neukládá a nevytváří explicitní vztah. Nemá uživatelský kontext ani
+nefiltruje `access_level`; vyšší aplikační vrstva musí před zveřejněním
+výsledku uplatnit oprávnění a viditelnost. Toto oddělení není povolením
+obejít serverovou kontrolu ve view nebo API. M2.5e nemění model ani migrace.
 
 ## 6. Bydliště
 
