@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.12
+**Verze:** 0.13
 **Stav:** schválený technický návrh v implementaci
-**Datum revize:** 20. 7. 2026
+**Datum revize:** 21. 7. 2026
 
 ## 1. Účel
 
@@ -747,6 +747,82 @@ Tvrdé chyby zahrnují:
 Biologické sourozenectví se primárně odvozuje ze společných biologických
 rodičů. Explicitní sourozenecká vazba se používá u neznámých rodičů nebo
 u adoptivního, nevlastního či sociálního sourozenectví.
+
+### 9.9 Doménová služba vazeb
+
+Veřejné zápisové rozhraní je v `people/services.py`:
+
+```python
+@dataclass(frozen=True, slots=True)
+class RelationshipInput:
+    relationship_type: RelationshipType
+    person_a: Person
+    person_b: Person
+    note: str = ""
+    access_level: str = AccessLevel.PUBLIC
+    verification_status: str = VerificationStatus.UNCONFIRMED
+    date_precision: str = DatePrecision.UNKNOWN
+    date_qualifier: str = DateQualifier.NONE
+    start_year: int | None = None
+    start_month: int | None = None
+    start_day: int | None = None
+    end_year: int | None = None
+    end_month: int | None = None
+    end_day: int | None = None
+    original_date_text: str = ""
+    date_note: str = ""
+
+
+def create_relationship(
+    *,
+    data: RelationshipInput,
+    created_by: AbstractBaseUser | None = None,
+) -> Relationship:
+    ...
+
+
+def update_relationship(
+    *,
+    relationship: Relationship,
+    data: RelationshipInput,
+) -> Relationship:
+    ...
+```
+
+`created_by` není součástí dataclass. Create jej může nastavit po ověření
+existence v aktuálním uživatelském modelu. Update mění typ, obě osoby,
+poznámku, přístup, ověření a všechny historické části `PartialDateModel`,
+ale nemění `created_by`, `created_at` ani lifecycle pole. Technická pole
+`sort_date` a `sort_date_end` nejsou vstupem; odvozuje je modelové `save()`.
+
+Create i update běží v `transaction.atomic()` a znovu načítají typ a osoby
+z databáze. Update navíc načítá aktuální `Relationship` přes
+`select_for_update()` a pracuje s touto uzamčenou instancí. Symetrický typ
+normalizuje různé osoby podle PK před `full_clean()`; shodné osoby ponechá
+modelové chybě `relationship_to_self`. Nesymetrická orientace se nemění.
+
+Archivovaná ani měkce odstraněná osoba není v M2.5c zakázána, pokud její
+řádek existuje. Neaktivní `RelationshipType` nelze použít při create ani
+na něj změnit typ při update. Existující vztah se stejným neaktivním typem
+lze aktualizovat a na aktivní typ lze přejít. Archivovaný `Relationship`
+lze aktualizovat; měkce odstraněný nikoli. Služba lifecycle pole nemění.
+
+Neuložené nebo fyzicky chybějící instance používají servisní kódy
+`relationship_unsaved`, `relationship_type_unsaved`,
+`relationship_person_a_unsaved`, `relationship_person_b_unsaved` a
+`relationship_created_by_unsaved`. Neaktivní typ používá
+`relationship_type_inactive` a měkce odstraněný vztah
+`relationship_deleted`. Modelové chyby se zachovávají.
+
+Běžnou přesnou duplicitu zjistí `full_clean()`. Pokud souběžný zápis přesto
+vyvolá `IntegrityError`, služba jej zachytí vně vnitřního atomického bloku
+a po rollbacku ověří konflikt podle normalizované časové identity. Pouze
+potvrzený konflikt převede na `ValidationError` s klíčem `__all__` a kódem
+`duplicate_relationship`; jinou integritní chybu znovu vyvolá.
+
+M2.5c nevytváří migraci. Nekontroluje rodičovské cykly, věk,
+genealogickou pravděpodobnost ani překryvy období a nevytváří opačné,
+odvozené či z událostí plynoucí vztahy. `is_derivable` zápis neomezuje.
 
 ## 10. Bydliště a hrobová místa
 

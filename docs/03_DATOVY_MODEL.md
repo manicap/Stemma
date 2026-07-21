@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.8
+**Verze:** 0.9
 **Stav:** koncept  
-**Datum revize:** 20. 7. 2026
+**Datum revize:** 21. 7. 2026
 
 ## 1. Základní pilíře
 
@@ -231,7 +231,7 @@ Vlastní pole jsou:
 `person_a` je výchozí osoba a `person_b` cílová osoba. Opačný zobrazovaný
 směr se odvozuje z typu a nevytváří druhý databázový řádek. U symetrického
 typu je kanonické pořadí `person_a_id < person_b_id`; model pořadí pouze
-validuje a budoucí doménová služba je před zápisem normalizuje.
+validuje a doménová služba je před zápisem normalizuje.
 
 Jeden řádek představuje jedno souvislé období. `UNKNOWN` znamená neznámý
 čas, `EXACT`, `MONTH` a `YEAR` známý vznik vztahu a `RANGE` období platnosti
@@ -254,6 +254,34 @@ Metadata jsou `verbose_name = "Vazba"`, `verbose_name_plural = "Vazby"`
 a řazení podle typu, technických časových mezí, obou osob a primárního
 klíče. Textová reprezentace používá formát
 `"{person_a} – {relationship_type} – {person_b}"` s bezpečnými fallbacky.
+
+### 5.2 Doménová služba vazeb
+
+Veřejné zápisové rozhraní je v `people/services.py`. Používá frozen
+dataclass se slots `RelationshipInput` a keyword-only funkce
+`create_relationship(*, data, created_by=None)` a
+`update_relationship(*, relationship, data)`. Vstup obsahuje typ, obě
+osoby, poznámku, přístup, stav ověření a historické části
+`PartialDateModel`; technické `sort_date` a `sort_date_end` se nepředávají.
+
+Create nastavuje také volitelné `created_by`. Update může měnit typ, osoby,
+poznámku, přístup, ověření a časový údaj, ale nemění autora, čas vytvoření
+ani lifecycle pole. `updated_at` a technické meze zachovávají standardní
+modelové chování.
+
+Služba pracuje v `transaction.atomic()` s aktuálním databázovým stavem.
+Update načítá vztah přes `select_for_update()`. Symetrické dvojice před
+`full_clean()` normalizuje podle PK; nesymetrickou orientaci zachovává.
+Archivované i měkce odstraněné osoby jsou povoleny, pokud jejich řádky
+existují. Neaktivní typ nelze použít při create ani na něj přejít při
+update; existující vztah může svůj neaktivní typ zachovat. Archivovaný
+vztah lze upravit, měkce odstraněný nikoli.
+
+Přesné duplicity běžně zachytí `full_clean()`. Souběžný `IntegrityError`
+se po rollbacku převede na `duplicate_relationship` pouze tehdy, pokud
+databázový dotaz potvrdí konflikt stejné schválené časové identity. Jiná
+integritní chyba se nemaskuje. M2.5c nevytváří migraci a neřeší rodičovské
+cykly, věk, překryvy období ani automaticky odvozené nebo opačné vztahy.
 
 ## 6. Bydliště
 

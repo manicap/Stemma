@@ -1,5 +1,17 @@
 # Historie změn dokumentace
 
+## Verze 0.17 – 21. 7. 2026
+
+- konkretizováno veřejné create/update API doménové služby vazeb,
+- schválen frozen vstup `RelationshipInput` s výchozím
+  `DateQualifier.NONE`,
+- určena editovatelná pole, práce s `created_by` a aktuálním databázovým
+  stavem,
+- schválena normalizace symetrických dvojic a lifecycle pravidla,
+- konkretizováno bezpečné rozlišení duplicitního a neočekávaného
+  `IntegrityError`,
+- implementován krok M2.5c bez změny modelů, migrace nebo nového ACP.
+
 ## Verze 0.16 – 20. 7. 2026
 
 - konkretizován a implementován historický model `Relationship`,
