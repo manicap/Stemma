@@ -18,7 +18,11 @@ class RelationshipSelectorApiTests(SimpleTestCase):
     def test_module_exports_only_approved_public_api(self) -> None:
         self.assertEqual(
             selectors.__all__,
-            ("get_biological_siblings",),
+            (
+                "SiblingOverviewItem",
+                "get_biological_siblings",
+                "get_sibling_overview",
+            ),
         )
         self.assertIs(
             selectors.get_biological_siblings,

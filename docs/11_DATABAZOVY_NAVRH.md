@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.15
+**Verze:** 0.16
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 21. 7. 2026
 
@@ -960,6 +960,71 @@ uživatele. Vyšší aplikační vrstva musí před zveřejněním ve view, API,
 obecným povolením obcházet serverová oprávnění. Selector nic nemění ani
 neukládá, nevytváří `Relationship` typu `sibling` a M2.5e nevytváří
 migraci.
+
+### 9.12 Agregovaný čtecí přehled sourozeneckých vazeb
+
+Veřejné API `people/selectors.py` je rozšířeno na:
+
+```python
+__all__ = (
+    "SiblingOverviewItem",
+    "get_biological_siblings",
+    "get_sibling_overview",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class SiblingOverviewItem:
+    person: Person
+    relationship_codes: tuple[str, ...]
+
+
+def get_sibling_overview(
+    *,
+    person: Person,
+) -> tuple[SiblingOverviewItem, ...]:
+    ...
+```
+
+Stabilní pořadí důvodů určuje neveřejná konstanta:
+
+```python
+_SIBLING_REASON_ORDER = (
+    "biological",
+    "sibling",
+    "adoptive_sibling",
+    "step_sibling",
+    "social_sibling",
+)
+```
+
+`biological` označuje výsledek existujícího
+`get_biological_siblings()` a není `RelationshipType.code`. Zbývající kódy
+jsou jediné explicitní typy zahrnuté do přehledu. Každá osoba se seskupí
+podle PK, objeví se jednou a zachová všechny skutečně zjištěné důvody bez
+duplicit ve stabilním pořadí. Více historických období stejného typu důvod
+neopakuje.
+
+Explicitní vztahy se filtrují přes `Q(person_a=person) |
+Q(person_b=person)` a druhá osoba se určí podle skutečné strany vztahu.
+Selector nespoléhá na kanonické pořadí ani na aktuální hodnotu
+`is_symmetric`. Vztah musí mít `deleted_at IS NULL`; archivace, aktivita typu
+a časové vymezení se neposuzují. Výsledná osoba musí mít
+`deleted_at IS NULL`, ale archivace ji nevylučuje. Vstupní osoba a chyba
+`person_unsaved` zachovávají kontrakt M2.5e.
+
+Agregace nejprve vyhodnotí biologický queryset a poté jedním querysetem se
+`select_related("relationship_type", "person_a", "person_b")` načte
+explicitní vztahy. Spolu s existence dotazem jde očekávaně o tři konstantní
+dotazy bez N+1. Výsledné položky se řadí v Pythonu přesně podle
+`(person.last_name, person.first_name, person.pk)`; PK je deterministický
+fallback nad `Person.Meta.ordering`.
+
+Selector nic neukládá, nepoužívá zápisové služby a nemá parametr `actor`.
+Vyšší aplikační vrstva musí před zveřejněním ověřit viditelnost výsledné
+osoby i každého explicitního vztahu a případně odstranit nepovolené důvody.
+Permissionless přehled nesmí být přímo zveřejněn ve view, API nebo exportu.
+M2.5f nevytváří modelovou změnu ani migraci.
 
 ## 10. Bydliště a hrobová místa
 

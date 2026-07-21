@@ -1,5 +1,19 @@
 # Historie změn dokumentace
 
+## Verze 0.20 – 21. 7. 2026
+
+- konkretizován agregovaný sourozenecký přehled nad biologicky odvozenými a
+  čtyřmi explicitními typy sourozenectví,
+- schválen frozen slotted `SiblingOverviewItem` a veřejné API
+  `get_sibling_overview(*, person)`,
+- určeno seskupení podle osoby, zachování všech důvodů a jejich stabilní
+  pořadí,
+- doplněno oboustranné vyhodnocení explicitních vazeb, lifecycle a řazení
+  výsledku podle příjmení, jména a PK,
+- potvrzena konstantní tří-dotazová strategie bez N+1 a povinná aplikační
+  kontrola viditelnosti osob i explicitních důvodů,
+- krok M2.5f nic neukládá a nevytváří modelovou změnu, migraci ani ACP.
+
 ## Verze 0.19 – 21. 7. 2026
 
 - konkretizována definice biologického sourozence alespoň jedním společným

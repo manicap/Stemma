@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.17
+**Verze:** 0.18
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 21. 7. 2026
 
@@ -68,6 +68,7 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 122. Veřejné vytvoření a změnu jednotlivého `Relationship` zajišťují `create_relationship()` a `update_relationship()` v `people/services.py` nad frozen dataclass `RelationshipInput`. Služba používá aktuální databázový stav, `transaction.atomic()`, při update `select_for_update()`, normalizaci symetrických osob podle PK a `full_clean()`. Create může nastavit `created_by`, update autora ani lifecycle pole nemění. Neaktivní typ nelze použít pro nový vztah ani na něj přejít; stávající neaktivní typ lze zachovat. Archivovaný vztah lze upravit, měkce odstraněný nikoli. Potvrzený souběžný konflikt se převádí na `duplicate_relationship`, ostatní `IntegrityError` se nemaskují. M2.5c nevytváří migraci ani nové ACP a neřeší cykly, překryvy či odvozování vztahů.
 123. Rodičovský graf M2.5d tvoří společně kódy `biological_parent`, `adoptive_parent`, `step_parent` a `foster_parent`; `guardian` patří do péče a poručenství a do grafu nevstupuje. Hrana vede od `person_a` k `person_b`. Zahrnují se všechny vztahy s `deleted_at IS NULL` bez ohledu na archivaci, aktivitu typu a časové vymezení. Navrhovaná hrana A → B je neplatná pouze při existující cestě B → A. Update vylučuje vlastní řádek a validuje výsledný stav, takže může starší cyklus odstranit a nesouvisející nekonzistence jinde změnu neblokuje. Chyba používá `person_b` a kód `relationship_parent_cycle`. Kontrola je transakční servisní pravidlo bez modelové změny, migrace nebo nového ACP; zámky SQLite ani běžné řádkové zámky neposkytují absolutní ochranu proti všem souběžným phantom scénářům.
 124. `get_biological_siblings(*, person)` v `people/selectors.py` odvozuje lazy `QuerySet[Person]` pouze z měkce neodstraněných vztahů `biological_parent` ke společnému rodiči; jeden společný rodič stačí a plní či poloviční sourozenci se nerozlišují. Archivace, aktivita typu ani čas rodičovského vztahu se neposuzují. Archivovaná výsledná osoba se zahrne, měkce odstraněná nikoli; vstup může být archivovaný i měkce odstraněný, ale musí mít existující řádek, jinak vznikne `person_unsaved`. Explicitní sourozenecké vztahy se neslučují. Selector nic nezapisuje, zachovává pořadí `Person` a neřeší oprávnění; vyšší aplikační vrstva musí před zveřejněním výsledku vynutit `access_level` a viditelnost. M2.5e nemění modely, migrace ani ACP.
+125. `get_sibling_overview(*, person)` vrací tuple frozen slotted položek `SiblingOverviewItem(person, relationship_codes)` a seskupuje každou osobu podle PK. Zachovává všechny důvody v pořadí `biological`, `sibling`, `adoptive_sibling`, `step_sibling`, `social_sibling`; první kód je odvozený, ostatní jsou explicitní typy vztahů vyhodnocené na obou stranách. Zahrnují se měkce neodstraněné vztahy bez ohledu na archivaci, aktivitu typu a čas a měkce neodstraněné výsledné osoby bez ohledu na archivaci. Výsledek se řadí podle příjmení, jména a PK a vzniká třemi konstantními dotazy bez N+1. Selector nic neukládá ani neřeší oprávnění; vyšší vrstva musí filtrovat osoby i explicitní důvody. M2.5f nemění modely, migrace ani ACP.
 
 ## 2. Otevřené otázky
 

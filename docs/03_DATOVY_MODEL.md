@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.11
+**Verze:** 0.12
 **Stav:** koncept  
 **Datum revize:** 21. 7. 2026
 
@@ -343,6 +343,48 @@ neukládá a nevytváří explicitní vztah. Nemá uživatelský kontext ani
 nefiltruje `access_level`; vyšší aplikační vrstva musí před zveřejněním
 výsledku uplatnit oprávnění a viditelnost. Toto oddělení není povolením
 obejít serverovou kontrolu ve view nebo API. M2.5e nemění model ani migrace.
+
+### 5.5 Agregovaný přehled sourozeneckých vazeb
+
+`people/selectors.py` dále vystavuje neměnný dataclass a keyword-only
+funkci:
+
+```python
+@dataclass(frozen=True, slots=True)
+class SiblingOverviewItem:
+    person: Person
+    relationship_codes: tuple[str, ...]
+
+
+def get_sibling_overview(
+    *,
+    person: Person,
+) -> tuple[SiblingOverviewItem, ...]:
+    ...
+```
+
+Přehled znovu používá `get_biological_siblings()` pro odvozený důvod
+`biological` a přidává pouze explicitní typy `sibling`,
+`adoptive_sibling`, `step_sibling` a `social_sibling`. Každou osobu seskupí
+podle PK a zachová všechny důvody bez duplicit v uvedeném stabilním pořadí.
+Kód `biological` není `RelationshipType.code` a nepředstavuje uložený
+objekt.
+
+Explicitní vztahy se hledají s osobou na straně A i B a nespoléhají na
+kanonické pořadí ani na aktuální `is_symmetric`. Započítávají se při
+`deleted_at IS NULL`; archivace, aktivita typu ani časové vymezení se
+neposuzují. Výsledná osoba musí mít `deleted_at IS NULL`, ale může být
+archivovaná. Vstupní lifecycle a chyba `person_unsaved` zůstávají shodné s
+M2.5e.
+
+Výsledný tuple se řadí podle `last_name`, `first_name` a PK jako
+deterministického fallbacku. Implementace používá jeden existence dotaz,
+jeden SELECT biologických sourozenců a jeden SELECT explicitních vztahů se
+`select_related()`, tedy konstantní tři dotazy bez N+1.
+
+Selector nic neukládá a nemá uživatelský kontext. Vyšší aplikační vrstva
+musí před zveřejněním filtrovat viditelnost výsledných osob i jednotlivých
+explicitních důvodů. M2.5f nemění model ani migrace.
 
 ## 6. Bydliště
 

@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.6
+**Verze:** 0.7
 **Stav:** pracovní návrh  
 **Datum revize:** 21. 7. 2026
 
@@ -242,6 +242,24 @@ Selector vrací lazy `QuerySet[Person]` ve standardním pořadí osoby a nic
 neukládá. Jde o nízkoúrovňový doménový dotaz bez uživatelského kontextu;
 před zveřejněním ve view, API, šabloně nebo exportu musí vyšší aplikační
 vrstva uplatnit přístupovou úroveň a pravidla viditelnosti.
+
+Agregovaný přehled `get_sibling_overview(*, person)` spojuje biologicky
+odvozené sourozence s explicitními vztahy `sibling`, `adoptive_sibling`,
+`step_sibling` a `social_sibling`. Každou osobu vrací jednou a zachovává
+všechny zjištěné důvody ve stabilním pořadí: `biological`, `sibling`,
+`adoptive_sibling`, `step_sibling`, `social_sibling`. Odvozený kód
+`biological` není typem uloženého vztahu.
+
+Výsledkem je tuple neměnných položek `SiblingOverviewItem`, které obsahují
+osobu a tuple kódů důvodů. Explicitní vztah se vyhodnocuje na obou stranách,
+musí být měkce neodstraněný a může být archivovaný, neaktivního typu nebo
+historicky ukončený. Výsledná osoba může být archivovaná, ale nesmí být
+měkce odstraněná. Položky se řadí podle příjmení, jména a PK.
+
+Agregovaný selector nic neukládá a pracuje bez uživatelského kontextu.
+Vyšší aplikační vrstva musí před zveřejněním ověřit viditelnost osoby i
+jednotlivých explicitních důvodů; permissionless výsledek nesmí přímo
+obcházet oprávnění ve view, API ani exportu.
 
 ## 9. Bydliště
 
