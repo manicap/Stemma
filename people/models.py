@@ -1,7 +1,7 @@
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import models
 
-from common.choices import Gender
+from common.choices import DatePrecision, Gender
 from common.models import (
     AccessControlledModel,
     AuthoredModel,
@@ -211,3 +211,168 @@ class PersonName(
         if type_name:
             return f"{self.value} ({type_name})"
         return self.value
+
+
+class Relationship(
+    TimestampedModel,
+    AccessControlledModel,
+    VerifiableModel,
+    AuthoredModel,
+    LifecycleModel,
+    PartialDateModel,
+    models.Model,
+):
+    """Historická vazba mezi dvěma evidovanými osobami."""
+
+    relationship_type = models.ForeignKey(
+        RelationshipType,
+        on_delete=models.PROTECT,
+        related_name="relationships",
+    )
+    person_a = models.ForeignKey(
+        Person,
+        on_delete=models.PROTECT,
+        related_name="relationships_as_a",
+    )
+    person_b = models.ForeignKey(
+        Person,
+        on_delete=models.PROTECT,
+        related_name="relationships_as_b",
+    )
+    note = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Vazba"
+        verbose_name_plural = "Vazby"
+        ordering = (
+            "relationship_type__sort_order",
+            "sort_date",
+            "sort_date_end",
+            "person_a_id",
+            "person_b_id",
+            "pk",
+        )
+        constraints = (
+            models.CheckConstraint(
+                condition=~models.Q(person_a=models.F("person_b")),
+                name="people_relationship_distinct_persons",
+            ),
+            models.UniqueConstraint(
+                fields=("person_a", "person_b", "relationship_type"),
+                condition=models.Q(
+                    deleted_at__isnull=True,
+                    date_precision=DatePrecision.UNKNOWN,
+                ),
+                name="people_unique_active_unknown_relationship",
+                violation_error_code="duplicate_relationship",
+            ),
+            models.UniqueConstraint(
+                fields=(
+                    "person_a",
+                    "person_b",
+                    "relationship_type",
+                    "date_precision",
+                    "sort_date",
+                    "sort_date_end",
+                ),
+                condition=(
+                    models.Q(deleted_at__isnull=True)
+                    & ~models.Q(date_precision=DatePrecision.UNKNOWN)
+                ),
+                name="people_unique_active_dated_relationship",
+                violation_error_code="duplicate_relationship",
+            ),
+        )
+
+    def clean(self) -> None:
+        errors: dict[str, list[ValidationError]] = {}
+
+        try:
+            super().clean()
+        except ValidationError as exc:
+            if hasattr(exc, "error_dict"):
+                for field_name, field_errors in exc.error_dict.items():
+                    errors.setdefault(field_name, []).extend(field_errors)
+            else:
+                errors.setdefault(NON_FIELD_ERRORS, []).extend(
+                    exc.error_list
+                )
+
+        def add_error(
+            field_name: str,
+            message: str,
+            code: str,
+        ) -> None:
+            errors.setdefault(field_name, []).append(
+                ValidationError(message, code=code)
+            )
+
+        person_a_id = self.person_a_id
+        person_b_id = self.person_b_id
+        persons_are_available = (
+            person_a_id is not None and person_b_id is not None
+        )
+        relationship_to_self = (
+            persons_are_available and person_a_id == person_b_id
+        )
+
+        if relationship_to_self:
+            add_error(
+                "person_b",
+                "Vazba nesmí spojovat osobu samu se sebou.",
+                "relationship_to_self",
+            )
+
+        try:
+            relationship_type = self.relationship_type
+        except RelationshipType.DoesNotExist:
+            relationship_type = None
+
+        if relationship_type is not None:
+            if (
+                not relationship_type.supports_date_range
+                and self.date_precision == DatePrecision.RANGE
+            ):
+                add_error(
+                    "date_precision",
+                    "Tento typ vazby nepodporuje časové rozmezí.",
+                    "date_range_not_supported",
+                )
+
+            if (
+                relationship_type.is_symmetric
+                and persons_are_available
+                and not relationship_to_self
+                and person_a_id > person_b_id
+            ):
+                add_error(
+                    "person_b",
+                    "Symetrická vazba nemá kanonické pořadí osob.",
+                    "symmetric_relationship_not_normalized",
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self) -> str:
+        try:
+            person_a_text = str(self.person_a) or "Neznámá osoba A"
+        except Person.DoesNotExist:
+            person_a_text = "Neznámá osoba A"
+
+        try:
+            relationship_type_text = (
+                str(self.relationship_type) or "Vazba"
+            )
+        except RelationshipType.DoesNotExist:
+            relationship_type_text = "Vazba"
+
+        try:
+            person_b_text = str(self.person_b) or "Neznámá osoba B"
+        except Person.DoesNotExist:
+            person_b_text = "Neznámá osoba B"
+
+        return (
+            f"{person_a_text} – {relationship_type_text} – "
+            f"{person_b_text}"
+        )

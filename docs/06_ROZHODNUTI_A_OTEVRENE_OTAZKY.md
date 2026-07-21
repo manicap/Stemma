@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.13
+**Verze:** 0.14
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 20. 7. 2026
 
@@ -64,6 +64,7 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 118. `EventParticipant` je minimalistický spojovací model bez common mixinů a s jedinečnou trojicí událost, osoba a role. Aktuální `AllowedEventRole`, aktivita role a minimální či maximální počty se kontrolují při vytvoření nebo změně účasti v budoucí transakční doménové službě; model je dynamicky nekontroluje a změna konfigurace sama zpětně nezneplatňuje historické účasti.
 119. Účastníci jedné události se mění atomickou náhradou celé sady pomocí `replace_event_participants()`. Aktivita a povolenost rolí, duplicity a `max_count` se kontrolují při každé změně; `min_count` pouze při `require_complete=True`. Nová výsledná sada se striktně ověřuje proti aktuální konfiguraci bez grandfatheringu, ale samotná změna konfigurace existující historické účasti automaticky nemění ani nemaže.
 120. `RelationshipType` je uživatelsky rozšiřitelný číselník odvozený pouze z `LookupModel`; kategorie vztahů jsou pevný doménový výčet. Uložený směr A → B popisuje osobu B podle jejího genderu a opačný směr osobu A podle jejího genderu. Symetrický typ vyžaduje shodu všech genderových názvů obou směrů. `supports_date_range` pouze povoluje přesnost `RANGE` budoucí konkrétní vazby a `is_derivable` samo nic neodvozuje. V první sadě čtrnácti systémových typů je odvoditelné pouze biologické sourozenectví. Konkrétní `Relationship`, normalizace dvojice osob a algoritmus odvození vzniknou v dalších krocích M2.5. Tato konkretizace nevyžaduje nové ACP.
+121. Jeden `Relationship` představuje jedno souvislé období vztahu a používá úplný `PartialDateModel`. Stejné osoby mohou mít více období stejného typu. U symetrického typu je kanonické pořadí podle PK `person_a_id < person_b_id`; model je pouze validuje a budoucí služba bude vstup normalizovat. Vztah osoby k sobě zakazuje model i databáze. Aktivní unikátnost znamená `deleted_at IS NULL`: archivovaný záznam zůstává součástí unikátnosti, měkce odstraněný nikoli. Zvláštní podmíněné constrainty rozlišují neznámý a známý čas. Odvoditelný typ lze explicitně uložit. M2.5b neřeší grafové cykly, překryvy období ani automatické vztahy z událostí a nevyžaduje nové ACP.
 
 ## 2. Otevřené otázky
 

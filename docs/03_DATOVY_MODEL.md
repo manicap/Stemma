@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.7
+**Verze:** 0.8
 **Stav:** koncept  
 **Datum revize:** 20. 7. 2026
 
@@ -211,6 +211,49 @@ Systémový katalog obsahuje kódy `biological_parent`, `adoptive_parent`,
 `family_friend` a `other`. Pouze biologické sourozenectví `sibling` je
 v této etapě označeno jako odvoditelné. Samotný algoritmus odvození ani
 konkrétní model `Relationship` nejsou součástí M2.5a.
+
+### 5.1 Konkrétní vazba
+
+`Relationship` je samostatná historická doménová entita. Dědí
+`TimestampedModel`, `AccessControlledModel`, `VerifiableModel`,
+`AuthoredModel`, `LifecycleModel`, `PartialDateModel` a `models.Model`.
+
+Vlastní pole jsou:
+
+- `relationship_type` — povinný `ForeignKey` na `RelationshipType`,
+  `on_delete=PROTECT`, `related_name="relationships"`,
+- `person_a` — povinný `ForeignKey` na `Person`, `on_delete=PROTECT`,
+  `related_name="relationships_as_a"`,
+- `person_b` — povinný `ForeignKey` na `Person`, `on_delete=PROTECT`,
+  `related_name="relationships_as_b"`,
+- `note` — `TextField(blank=True)` pro běžnou doménovou poznámku.
+
+`person_a` je výchozí osoba a `person_b` cílová osoba. Opačný zobrazovaný
+směr se odvozuje z typu a nevytváří druhý databázový řádek. U symetrického
+typu je kanonické pořadí `person_a_id < person_b_id`; model pořadí pouze
+validuje a budoucí doménová služba je před zápisem normalizuje.
+
+Jeden řádek představuje jedno souvislé období. `UNKNOWN` znamená neznámý
+čas, `EXACT`, `MONTH` a `YEAR` známý vznik vztahu a `RANGE` období platnosti
+se začátkem a koncem. Technické `sort_date_end` u jednoduché přesnosti není
+koncem vztahu. Rozmezí je povoleno pouze typem s
+`supports_date_range=True`.
+
+Stejná orientovaná trojice může mít více odlišných známých období, ale jen
+jeden měkce neodstraněný záznam s neznámým časem. Archivované záznamy se do
+unikátnosti nadále započítávají; měkce odstraněné nikoli. Rozdílná poznámka,
+přístupová úroveň, stav ověření ani původní text data nemění identitu
+období.
+
+Model zakazuje vztah osoby k sobě. Pro známý čas a neznámý čas používá dva
+samostatné podmíněné unikátní constrainty. Obrácená nesymetrická vazba je
+jiné tvrzení. Odvoditelný typ lze explicitně uložit; M2.5b nic automaticky
+neodvozuje a neřeší rodičovské cykly ani překryvy období.
+
+Metadata jsou `verbose_name = "Vazba"`, `verbose_name_plural = "Vazby"`
+a řazení podle typu, technických časových mezí, obou osob a primárního
+klíče. Textová reprezentace používá formát
+`"{person_a} – {relationship_type} – {person_b}"` s bezpečnými fallbacky.
 
 ## 6. Bydliště
 

@@ -1,5 +1,17 @@
 # Historie změn dokumentace
 
+## Verze 0.16 – 20. 7. 2026
+
+- konkretizován a implementován historický model `Relationship`,
+- potvrzen význam osob A a B a použití úplného `PartialDateModel`,
+- povoleno více samostatných období stejného typu mezi stejnými osobami,
+- schválena normalizace symetrických dvojic podle PK v budoucí službě
+  a modelová kontrola kanonického pořadí,
+- doplněn zákaz vztahu osoby k sobě a dva podmíněné unikátní constrainty,
+- rozlišeno započítání archivace a měkkého odstranění do unikátnosti,
+- vytvořena strukturální migrace `people.0008_relationship` a integrační
+  testy bez potřeby nového ACP.
+
 ## Verze 0.15 – 20. 7. 2026
 
 - konkretizován pevný výčet sedmi kategorií vztahů a uživatelsky

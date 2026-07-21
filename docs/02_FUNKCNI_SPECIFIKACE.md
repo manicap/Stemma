@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.4
+**Verze:** 0.5
 **Stav:** pracovní návrh  
 **Datum revize:** 20. 7. 2026
 
@@ -207,6 +207,23 @@ název opačného směru popisuje osobu A a vybírá se podle genderu osoby A.
 Při neznámém nebo chybějícím genderu se použije neutrální varianta.
 U symetrické vazby pořadí osob význam nemění a názvy obou směrů jsou pro
 každou genderovou variantu shodné.
+
+Jeden záznam vazby představuje jedno souvislé období vztahu. Stejné osoby
+mohou mít více záznamů stejného typu s odlišným časovým vymezením, například
+dvě samostatná manželství. Překrývající se, ale neidentická období se v této
+etapě nezakazují.
+
+Čas vztahu používá společný model neúplného data:
+
+- `UNKNOWN` znamená neznámý čas vztahu,
+- `EXACT` přesné datum vzniku vztahu,
+- `MONTH` měsíc vzniku vztahu,
+- `YEAR` rok vzniku vztahu,
+- `RANGE` známé období platnosti se začátkem a koncem.
+
+Technická horní mez u přesného data, měsíce nebo roku neznamená konec
+vztahu; slouží pouze k řazení a porovnání. Rozmezí je možné jen u typu
+vztahu, který je podporuje.
 
 ## 9. Bydliště
 

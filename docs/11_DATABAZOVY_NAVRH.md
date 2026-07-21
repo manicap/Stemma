@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.11
+**Verze:** 0.12
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 20. 7. 2026
 
@@ -606,10 +606,135 @@ sourozenectví `sibling` má `is_derivable=True`.
 
 ### 9.4 Budoucí konkrétní vazba
 
-Konkrétní model `Relationship` vznikne až v následujícím kroku M2.5.
-Teprve tento model a jeho doménová logika budou řešit osoby A a B,
-normalizaci symetrických dvojic, duplicity, vztah osoby k sobě, rodičovské
-cykly, časovou validaci a algoritmus odvození sourozenců.
+`Relationship` je samostatná historická doménová entita a dědí v tomto
+pořadí:
+
+```python
+TimestampedModel,
+AccessControlledModel,
+VerifiableModel,
+AuthoredModel,
+LifecycleModel,
+PartialDateModel,
+models.Model,
+```
+
+Vlastní pole jsou:
+
+| Pole | Typ a pravidla |
+|---|---|
+| `relationship_type` | povinný `ForeignKey` na `RelationshipType`, `on_delete=PROTECT`, `related_name="relationships"` |
+| `person_a` | povinný `ForeignKey` na `Person`, `on_delete=PROTECT`, `related_name="relationships_as_a"` |
+| `person_b` | povinný `ForeignKey` na `Person`, `on_delete=PROTECT`, `related_name="relationships_as_b"` |
+| `note` | `TextField(blank=True)`, běžná doménová poznámka |
+
+Poznámka se řídí přístupovou úrovní celé vazby. Zděděné `date_note` je
+vyhrazené poznámce k časovému údaji. Model nepřidává vlastní `save()`;
+technické meze nadále přepočítává zděděný `PartialDateModel`.
+
+### 9.5 Časový význam a opakovaná období
+
+Jeden `Relationship` představuje jedno souvislé období vztahu:
+
+- `UNKNOWN` znamená neznámý čas vztahu,
+- `EXACT` přesné datum vzniku vztahu,
+- `MONTH` měsíc vzniku vztahu,
+- `YEAR` rok vzniku vztahu,
+- `RANGE` známé období platnosti se začátkem a koncem.
+
+U `EXACT`, `MONTH` a `YEAR` technické `sort_date_end` neznamená konec
+vztahu. Je pouze horní technickou mezí přesnosti pro řazení a porovnání.
+`RANGE` je povoleno pouze při
+`relationship_type.supports_date_range=True`; `UNKNOWN` je vždy platné.
+
+Stejné osoby mohou mít více záznamů stejného typu s odlišným časovým
+vymezením. Překrývající se, ale neidentická období se v M2.5b nezakazují.
+Poznámka, přístupová úroveň, stav ověření ani původní text data nemění
+identitu období.
+
+### 9.6 Modelová validace
+
+`Relationship.clean()` zachová a agreguje chyby `PartialDateModel` a dále
+kontroluje:
+
+- `person_a == person_b` — chyba na `person_b` s kódem
+  `relationship_to_self`,
+- nepodporované `DatePrecision.RANGE` — chyba na `date_precision` s kódem
+  `date_range_not_supported`,
+- symetrický typ s `person_a_id > person_b_id` — chyba na `person_b`
+  s kódem `symmetric_relationship_not_normalized`.
+
+U symetrického typu je kanonické pořadí `person_a_id < person_b_id`.
+Model osoby nepřehazuje. Budoucí veřejný zápis bude před vytvořením
+normalizovat doménová služba podle PK. Kontrola pořadí proběhne jen při
+bezpečně dostupném typu a uložených různých osobách.
+
+Databáze nemůže podmínit constraint hodnotou `is_symmetric` z jiné tabulky.
+Přímý ORM zápis bez `full_clean()` proto může uložit nenormalizovanou
+symetrickou dvojici. Toto omezení je přijatelné pouze do zavedení veřejné
+doménové služby; `clean()` ani `save()` data automaticky nemění.
+
+`RelationshipType.is_derivable=True` explicitní uložení nezakazuje a nic
+automaticky neodvozuje.
+
+### 9.7 Databázové constrainty
+
+Vztah osoby k sobě zakazuje:
+
+```text
+people_relationship_distinct_persons
+```
+
+Unikátnost používá dva podmíněné constrainty. Pro jejich účely znamená
+„active“ `deleted_at IS NULL`. Archivovaný záznam zůstává historicky
+existující a započítává se; měkce odstraněný záznam se nezapočítává.
+
+`people_unique_active_unknown_relationship` povoluje pro orientovanou
+trojici `person_a`, `person_b` a `relationship_type` nejvýše jeden měkce
+neodstraněný záznam s `DatePrecision.UNKNOWN`.
+
+`people_unique_active_dated_relationship` zajišťuje u známého času
+jedinečnost polí:
+
+```text
+person_a,
+person_b,
+relationship_type,
+date_precision,
+sort_date,
+sort_date_end
+```
+
+Oba unikátní constrainty používají při modelové validaci kód
+`duplicate_relationship`. Odlišné technické časové vymezení nebo jiná
+přesnost mohou vytvořit další období. Po měkkém odstranění lze vytvořit
+náhradu; obnovení původního záznamu může narazit na novější aktivní záznam.
+
+### 9.8 Metadata a hranice M2.5b
+
+Metadata jsou:
+
+```python
+verbose_name = "Vazba"
+verbose_name_plural = "Vazby"
+ordering = (
+    "relationship_type__sort_order",
+    "sort_date",
+    "sort_date_end",
+    "person_a_id",
+    "person_b_id",
+    "pk",
+)
+```
+
+Textová reprezentace vrací
+`"{person_a} – {relationship_type} – {person_b}"` a používá fallbacky
+`"Neznámá osoba A"`, `"Vazba"` a `"Neznámá osoba B"`.
+
+M2.5b neřeší rodičovské cykly, kontrolu věku, genealogickou
+pravděpodobnost, překryvy období, automatický opačný řádek, automatické
+vazby z událostí ani algoritmus odvození sourozenců. Tato pravidla patří
+do budoucí doménové služby.
 
 Tvrdé chyby zahrnují:
 
@@ -899,12 +1024,12 @@ events.0006_event
 events.0007_event_participant
 people.0006_relationship_type
 people.0007_initial_relationship_types
+people.0008_relationship
 ```
 
 Následující plánované migrace začínají:
 
 ```text
-people.0008_relationship              budoucí krok M2.5b
 places.0003_residence_lookups
 places.0004_residences
 places.0005_grave_models
