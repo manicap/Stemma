@@ -19,8 +19,11 @@ class RelationshipSelectorApiTests(SimpleTestCase):
         self.assertEqual(
             selectors.__all__,
             (
+                "RelationshipOverviewItem",
+                "RelationshipOverviewReason",
                 "SiblingOverviewItem",
                 "get_biological_siblings",
+                "get_relationship_overview",
                 "get_sibling_overview",
             ),
         )

@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.12
+**Verze:** 0.13
 **Stav:** koncept  
-**Datum revize:** 21. 7. 2026
+**Datum revize:** 22. 7. 2026
 
 ## 1. Základní pilíře
 
@@ -385,6 +385,68 @@ jeden SELECT biologických sourozenců a jeden SELECT explicitních vztahů se
 Selector nic neukládá a nemá uživatelský kontext. Vyšší aplikační vrstva
 musí před zveřejněním filtrovat viditelnost výsledných osob i jednotlivých
 explicitních důvodů. M2.5f nemění model ani migrace.
+
+### 5.6 Celkový agregovaný přehled vztahů
+
+Celkový nízkoúrovňový read model v `people/selectors.py` vystavuje:
+
+```python
+@dataclass(frozen=True, slots=True)
+class RelationshipOverviewReason:
+    category: str
+    relationship_code: str
+    label: str
+    relationship_ids: tuple[int, ...]
+    is_derived: bool
+
+
+@dataclass(frozen=True, slots=True)
+class RelationshipOverviewItem:
+    person: Person
+    reasons: tuple[RelationshipOverviewReason, ...]
+
+
+def get_relationship_overview(
+    *,
+    person: Person,
+) -> tuple[RelationshipOverviewItem, ...]:
+    ...
+```
+
+Jedna položka představuje jednu druhou osobu a jeden důvod je deduplikován
+podle trojice kategorie, kód a zobrazený název. Explicitní důvod zachovává
+všechna odpovídající `Relationship.pk` bez duplicit ve vzestupném pořadí a
+má `is_derived=False`. Biologicky odvozený důvod má kategorii `sibling`,
+kód `biological`, prázdné `relationship_ids` a `is_derived=True`.
+
+Přehled znovu používá `get_sibling_overview()` a jeho veřejný kontrakt
+nemění. Provenance čtyř explicitních sourozeneckých typů načítá samostatným
+optimalizovaným dotazem. Ostatní explicitní typy, včetně uživatelských,
+načítá druhým dotazem přes obě strany vztahu. Oba dotazy používají
+`select_related()` a nevytvářejí N+1.
+
+Směrový název popisuje druhou osobu: při vstupu na straně A se použije
+`forward_label_*` podle genderu osoby B, při vstupu na straně B
+`reverse_label_*` podle genderu osoby A. Neznámý nebo nerozpoznaný gender
+používá variantu `unknown`. Odvozené biologické názvy jsou „Biologický
+bratr“, „Biologická sestra“ a „Biologický sourozenec“.
+
+Kategorie se řadí v pořadí `parent_child`, `partner`, `sibling`,
+`godparent`, `care`, `social`, `other`; neznámá hodnota následuje až za
+známými kategoriemi. Uvnitř kategorie je biologický důvod před explicitními
+sourozeneckými důvody, poté rozhoduje `RelationshipType.sort_order`, kód a
+název. Osoby se řadí podle příjmení, jména a PK.
+
+Započítávají se explicitní vztahy s `deleted_at IS NULL` bez ohledu na
+archivaci, aktivitu typu nebo časovou platnost. Výsledná osoba nesmí být
+měkce odstraněná, ale může být archivovaná. Existující vstup lze zpracovat
+bez ohledu na jeho lifecycle; neuložený nebo fyzicky chybějící vstup
+zachovává chybu `person_unsaved`.
+
+Selector nic neukládá, nemá parametr `actor` a nefiltruje přístupová práva.
+Vyšší vrstva používá `relationship_ids` pro kontrolu konkrétních
+explicitních záznamů a samostatně posuzuje viditelnost biologického důvodu.
+M2.5g nemění modely, systémová data ani migrace.
 
 ## 6. Bydliště
 

@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.7
+**Verze:** 0.8
 **Stav:** pracovní návrh  
-**Datum revize:** 21. 7. 2026
+**Datum revize:** 22. 7. 2026
 
 ## 1. Hlavní obrazovka
 
@@ -260,6 +260,38 @@ Agregovaný selector nic neukládá a pracuje bez uživatelského kontextu.
 Vyšší aplikační vrstva musí před zveřejněním ověřit viditelnost osoby i
 jednotlivých explicitních důvodů; permissionless výsledek nesmí přímo
 obcházet oprávnění ve view, API ani exportu.
+
+Celkový čtecí přehled `get_relationship_overview(*, person)` sjednocuje
+všechny explicitní vazby osoby s biologicky odvozenými sourozenci. Každou
+druhou osobu vrací jednou a její vztahy popisuje tuple neměnných položek
+`RelationshipOverviewReason`. Jeden důvod obsahuje kategorii, technický kód,
+směrový genderovaný název, ID všech odpovídajících explicitních vazeb a
+příznak odvození.
+
+Explicitní vztahy používají aktuální kategorii, pořadí a názvy svého
+`RelationshipType`, včetně uživatelsky vytvořených typů. Název se vybírá
+podle skutečné strany vztahu a genderu druhé osoby. Biologicky odvozený
+sourozenec používá kategorii `sibling`, kód `biological`, nemá přímé ID
+`Relationship` a zobrazuje se jako „Biologický bratr“, „Biologická sestra“
+nebo „Biologický sourozenec“ podle genderu druhé osoby.
+
+Více historických řádků stejného typu a stejného směrového názvu se sloučí
+do jednoho důvodu; všechna jejich ID zůstanou zachována ve vzestupném
+pořadí. Důvody se stabilně řadí podle kategorie, odvozený biologický důvod
+před ostatními sourozeneckými důvody a dále podle pořadí typu, kódu a
+názvu. Osoby se řadí podle příjmení, jména a PK.
+
+Přehled zahrnuje archivované, neaktivní a historické explicitní vztahy,
+nikoli měkce odstraněné. Archivovaná výsledná osoba se zahrne, měkce
+odstraněná nikoli. Archivovaný nebo měkce odstraněný vstup lze zpracovat,
+pokud jeho databázový řádek existuje. Selector má konstantní dotazový
+profil bez N+1, nic neukládá a nevytváří migraci.
+
+`relationship_ids` zachovávají provenance pro následnou aplikační kontrolu
+přístupu, ověření a historických údajů. Selector sám nemá uživatelský
+kontext a nefiltruje oprávnění. Vyšší vrstva musí před zveřejněním ověřit
+výslednou osobu, všechny explicitní vztahy i viditelnost biologicky
+odvozeného důvodu a odstranit položky bez viditelného důvodu.
 
 ## 9. Bydliště
 

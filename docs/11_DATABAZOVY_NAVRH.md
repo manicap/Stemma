@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.16
+**Verze:** 0.17
 **Stav:** schválený technický návrh v implementaci
-**Datum revize:** 21. 7. 2026
+**Datum revize:** 22. 7. 2026
 
 ## 1. Účel
 
@@ -1025,6 +1025,97 @@ Vyšší aplikační vrstva musí před zveřejněním ověřit viditelnost výs
 osoby i každého explicitního vztahu a případně odstranit nepovolené důvody.
 Permissionless přehled nesmí být přímo zveřejněn ve view, API nebo exportu.
 M2.5f nevytváří modelovou změnu ani migraci.
+
+### 9.13 Celkový agregovaný čtecí přehled vztahů
+
+Veřejné API `people/selectors.py` je rozšířeno na:
+
+```python
+__all__ = (
+    "RelationshipOverviewItem",
+    "RelationshipOverviewReason",
+    "SiblingOverviewItem",
+    "get_biological_siblings",
+    "get_relationship_overview",
+    "get_sibling_overview",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class RelationshipOverviewReason:
+    category: str
+    relationship_code: str
+    label: str
+    relationship_ids: tuple[int, ...]
+    is_derived: bool
+
+
+@dataclass(frozen=True, slots=True)
+class RelationshipOverviewItem:
+    person: Person
+    reasons: tuple[RelationshipOverviewReason, ...]
+
+
+def get_relationship_overview(
+    *,
+    person: Person,
+) -> tuple[RelationshipOverviewItem, ...]:
+    ...
+```
+
+Přehled seskupuje podle PK druhé osoby. Důvod identifikuje trojice
+`category`, `relationship_code` a `label`. Více historických explicitních
+řádků stejné identity vytváří jeden důvod a všechna jejich PK zůstávají
+deduplikovaná a vzestupně seřazená v `relationship_ids`. Explicitní důvod
+má `is_derived=False`. Biologický důvod nemá přímý řádek, proto používá
+`relationship_ids=()` a `is_derived=True`.
+
+Přehled volá `get_sibling_overview()` a nemění jeho veřejný kontrakt.
+Pro provenance načte jedním querysetem explicitní typy `sibling`,
+`adoptive_sibling`, `step_sibling` a `social_sibling`. Druhým querysetem
+načte všechny ostatní explicitní systémové i uživatelské typy. Oba dotazy
+hledají vstupní osobu na straně A nebo B a používají
+`select_related("relationship_type", "person_a", "person_b")`. Spolu s
+existence dotazem a dvěma dotazy M2.5f jde o pět konstantních dotazů bez
+N+1.
+
+Při vstupu na straně A popisuje druhou osobu `forward_label_*` zvolený
+podle genderu osoby B. Při vstupu na straně B se použije `reverse_label_*`
+podle genderu osoby A. `Gender.UNKNOWN` i nerozpoznaná hodnota používají
+variantu `unknown`. Biologický důvod používá názvy „Biologický bratr“,
+„Biologická sestra“ a „Biologický sourozenec“.
+
+Stabilní pořadí kategorií určuje:
+
+```python
+_RELATIONSHIP_CATEGORY_ORDER = (
+    "parent_child",
+    "partner",
+    "sibling",
+    "godparent",
+    "care",
+    "social",
+    "other",
+)
+```
+
+Neznámá kategorie se řadí až za známé podle své hodnoty. V kategorii
+`sibling` je biologický důvod před explicitními důvody; dále rozhoduje
+`RelationshipType.sort_order`, kód a label. Výsledné osoby se řadí podle
+`last_name`, `first_name` a PK.
+
+Explicitní vztah musí mít `deleted_at IS NULL`; archivace, aktivita typu a
+časová platnost se neposuzují. Výsledná osoba musí mít
+`deleted_at IS NULL`, ale může být archivovaná. Vstupní osoba může být
+archivovaná i měkce odstraněná, musí však mít existující databázový řádek.
+Neplatný vstup zachovává chybu `person_unsaved`.
+
+Selector nemá parametr `actor`, nefiltruje `access_level`, nic neukládá a
+nevytváří odvozené řádky. Vyšší aplikační vrstva musí před zveřejněním
+filtrovat výsledné osoby, znovu načíst a posoudit explicitní vztahy podle
+`relationship_ids`, samostatně rozhodnout o viditelnosti biologického
+důvodu a odstranit položky bez viditelného důvodu. M2.5g nevytváří
+modelovou změnu, systémová data, migraci ani ACP.
 
 ## 10. Bydliště a hrobová místa
 

@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 0.21 – 22. 7. 2026
+
+- schválen celkový agregovaný čtecí přehled vztahů osoby
+  `get_relationship_overview(*, person)`,
+- zavedeny frozen slotted položky `RelationshipOverviewItem` a
+  `RelationshipOverviewReason` s důvodově orientovaným kontraktem,
+- určeno seskupení podle druhé osoby, deduplikace důvodů a zachování
+  provenance explicitních období přes vzestupně seřazená `relationship_ids`,
+- doplněny směrové a genderované názvy včetně biologického sourozence a
+  zahrnutí uživatelských typů vztahů,
+- stanoveno stabilní pořadí kategorií, důvodů a osob, lifecycle a konstantní
+  pětidotazový profil bez N+1,
+- potvrzena permissionless hranice a povinnost vyšší vrstvy filtrovat osoby,
+  explicitní vztahy i biologicky odvozený důvod,
+- krok M2.5g nic neukládá a nevytváří modelovou změnu, systémová data,
+  migraci ani ACP.
+
 ## Verze 0.20 – 21. 7. 2026
 
 - konkretizován agregovaný sourozenecký přehled nad biologicky odvozenými a
