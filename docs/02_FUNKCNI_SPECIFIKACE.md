@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.8
+**Verze:** 0.9
 **Stav:** pracovní návrh  
 **Datum revize:** 22. 7. 2026
 
@@ -404,6 +404,27 @@ Pokud uživatel nemá oprávnění:
 - aplikace může zobrazit, že sekce nebo záznam existuje,
 - nezobrazí jeho obsah,
 - zobrazí vysvětlení a případně výzvu k přihlášení.
+
+Přesný obecný význam přístupových úrovní je:
+
+- `public` vidí každý včetně anonymního a neaktivního uživatele,
+- `authenticated` vidí pouze uložený, existující a aktivní přihlášený
+  uživatel,
+- `restricted` vidí aktivní uživatel s oprávněním
+  `accounts.view_restricted_content` nebo aktivní superuser,
+- `admin_only` vidí aktivní uživatel s oprávněním
+  `accounts.view_admin_only_content` nebo aktivní superuser.
+
+Příznak `is_staff` sám obsahový přístup nerozšiřuje. Neaktivní uživatel,
+včetně neaktivního superusera, se pro přístupovou úroveň posuzuje jako
+anonymní návštěvník. Obecné vyhodnocení poskytuje keyword-only helper
+`can_view_access_level(*, actor, access_level)` v `common/permissions.py`.
+
+Zobrazení archivované osoby vyžaduje oprávnění
+`people.view_archived_person` a zobrazení měkce odstraněné osoby oprávnění
+`people.view_deleted_person`. Tato lifecycle oprávnění nenahrazují kontrolu
+`access_level` a jejich použití v autorizovaném přehledu vztahů vznikne až
+v M2.5h-2.
 
 ## 15. Historie změn
 

@@ -1,5 +1,19 @@
 # Historie změn dokumentace
 
+## Verze 0.22 – 22. 7. 2026
+
+- konkretizována obecná policy pro všechny čtyři hodnoty `AccessLevel`,
+- doplněna globální obsahová oprávnění pro omezený a administrátorský obsah
+  a lifecycle oprávnění archivovaných a měkce odstraněných osob,
+- zaveden keyword-only helper `can_view_access_level()` s kontrolou
+  aktuálního databázového stavu actora a stabilními chybovými kódy,
+- určeno, že `is_staff` není obsahová role, aktivní superuser má úplný
+  přístup a neaktivní uživatel se posuzuje jako anonymní,
+- založeny systémové skupiny Čtenář, Editor a Správce; pouze Správce dostává
+  čtyři nová zvýšená oprávnění,
+- migrační základ M2.5h-1 nemění modelová pole a autorizovaný relationship
+  selector zůstává vyhrazen pro M2.5h-2.
+
 ## Verze 0.21 – 22. 7. 2026
 
 - schválen celkový agregovaný čtecí přehled vztahů osoby

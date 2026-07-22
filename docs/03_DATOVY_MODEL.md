@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.13
+**Verze:** 0.14
 **Stav:** koncept  
 **Datum revize:** 22. 7. 2026
 
@@ -573,6 +573,23 @@ Pole:
 - stav účtu,
 - datum posledního přihlášení,
 - datum vytvoření.
+
+Vlastní `accounts.User` používá standardní Django Groups a Permissions.
+Globální obsahová oprávnění jsou `accounts.view_restricted_content` a
+`accounts.view_admin_only_content`. Model `Person` přidává lifecycle
+oprávnění `people.view_archived_person` a `people.view_deleted_person`.
+Jde o modelová metadata bez nových polí.
+
+Datová migrace udržuje systémové skupiny Čtenář, Editor a Správce. Čtenář
+ani Editor automaticky nezískávají žádné ze čtyř zvýšených oprávnění.
+Správce získává právě tato čtyři oprávnění, nikoli automaticky všechna
+modelová práva ani příznaky `is_staff` nebo `is_superuser`.
+
+`common.permissions.can_view_access_level()` ověřuje aktuální databázový
+stav autentizovaného uživatele. Anonymní a neaktivní actor vidí pouze
+`public`; aktivní superuser vidí všechny úrovně. Neznámá úroveň a neplatný
+nebo neexistující autentizovaný actor používají stabilní validační chyby.
+Lifecycle a autorizovaný přehled vztahů nejsou součástí obecného helperu.
 
 ## 13. Změna
 

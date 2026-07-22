@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.17
+**Verze:** 0.18
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 22. 7. 2026
 
@@ -1271,6 +1271,43 @@ Django Groups a Permissions budou doplněny zvláštními oprávněními napří
 Volitelné propojení účtu s evidovanou osobou vznikne v samostatném profilu až po vytvoření modelu Osoba.
 
 Výsledný přístup se posuzuje podle nejpřísnějšího omezení objektu, propojení, přílohy nebo zdroje a zvláštních oprávnění uživatele.
+
+Permission základ M2.5h-1 přidává modelová oprávnění:
+
+- `accounts.view_restricted_content`,
+- `accounts.view_admin_only_content`,
+- `people.view_archived_person`,
+- `people.view_deleted_person`.
+
+Skupiny Čtenář a Editor nezískávají žádné z těchto zvýšených oprávnění
+automaticky. Skupina Správce získává všechna čtyři, ale nikoli automaticky
+ostatní modelová oprávnění, `is_staff` nebo `is_superuser`.
+
+Obecné API je:
+
+```python
+def can_view_access_level(
+    *,
+    actor: AbstractBaseUser | AnonymousUser,
+    access_level: str,
+) -> bool:
+    ...
+```
+
+Helper ověřuje aktuální databázový stav autentizovaného actora. `public`
+vidí každý; `authenticated` aktivní existující přihlášený uživatel;
+`restricted` a `admin_only` vyžadují příslušnou permission nebo aktivního
+superusera. Neaktivní actor se posuzuje jako anonymní a `is_staff` přístup
+nerozšiřuje. Neplatný actor používá `actor_invalid`, chybějící autentizovaný
+actor `actor_unsaved` a neznámá úroveň `invalid_access_level`.
+
+Migrační graf obsahuje nezávislé strukturální migrace `accounts.0002` a
+`people.0009` a následnou datovou `accounts.0003` závislou na obou; pořadí
+obou strukturálních větví proto není významové. Datová migrace sama
+bezpečně vytváří potřebné `Permission` a `Group` řádky a
+přiřazuje zvýšená oprávnění pouze Správci. Reverse pouze odebere tato čtyři
+oprávnění ze tří systémových skupin; skupiny, permissions ani členství
+uživatelů nemaže. Autorizovaný relationship selector vznikne až v M2.5h-2.
 
 ## 15. Audit
 

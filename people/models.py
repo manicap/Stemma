@@ -148,6 +148,16 @@ class Person(
         verbose_name = "Osoba"
         verbose_name_plural = "Osoby"
         ordering = ("last_name", "first_name")
+        permissions = (
+            (
+                "view_archived_person",
+                "Může zobrazit archivované osoby",
+            ),
+            (
+                "view_deleted_person",
+                "Může zobrazit měkce odstraněné osoby",
+            ),
+        )
 
     def clean(self) -> None:
         super().clean()
