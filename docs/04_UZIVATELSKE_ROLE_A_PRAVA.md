@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.2
+**Verze:** 0.3
 **Stav:** pracovní návrh  
 **Datum revize:** 22. 7. 2026
 
@@ -103,7 +103,27 @@ schválené skupině přidělit samostatně.
 Lifecycle osoby se posuzuje odděleně od její přístupové úrovně. Zobrazení
 archivované osoby vyžaduje `people.view_archived_person`; zobrazení měkce
 odstraněné osoby vyžaduje `people.view_deleted_person`. Aplikační použití
-těchto oprávnění vznikne v M2.5h-2.
+těchto oprávnění zajišťuje autorizovaný přehled vztahů M2.5h-2.
+
+## 5.2 Autorizovaný přehled vztahů
+
+`get_visible_relationship_overview(*, person, actor)` je bezpečná veřejná
+čtecí vrstva nad permissionless `get_relationship_overview(*, person)`.
+Neviditelnou vstupní osobu odmítne jednotnou zprávou bez prozrazení, zda
+důvodem byla přístupová úroveň, archivace nebo měkké odstranění.
+
+Výsledné osoby i explicitní vztahy musí být viditelné podle své vlastní
+přístupové úrovně. Archivovaná výsledná osoba vyžaduje
+`people.view_archived_person`; měkce odstraněná výsledná osoba se nevrací
+ani superuserovi. Explicitní důvod zachová pouze ID viditelných,
+měkce neodstraněných vztahů.
+
+Biologické sourozenectví se zveřejní pouze přes jednoho stejného
+viditelného společného rodiče a dvě viditelné hrany
+`biological_parent`. Archivovaný rodič vyžaduje oprávnění, měkce odstraněný
+rodič se jako autorizační cesta nepoužije. Neaktivní actor se i při členství
+ve Správci nebo s příznakem superusera posuzuje jako anonymní; `is_staff`
+sám žádné z uvedených oprávnění neposkytuje.
 
 ## 6. Zamčený obsah
 

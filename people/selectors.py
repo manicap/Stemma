@@ -2,10 +2,14 @@
 
 from dataclasses import dataclass
 
-from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q, QuerySet, Subquery
 
-from common.choices import Gender
+from common.choices import AccessLevel, Gender
+from common.permissions import can_view_access_level
 
 from .models import Person, Relationship
 
@@ -16,6 +20,7 @@ __all__ = (
     "get_biological_siblings",
     "get_relationship_overview",
     "get_sibling_overview",
+    "get_visible_relationship_overview",
 )
 
 _SIBLING_REASON_ORDER = (
@@ -39,6 +44,14 @@ _RELATIONSHIP_CATEGORY_RANK = {
     category: rank
     for rank, category in enumerate(_RELATIONSHIP_CATEGORY_ORDER)
 }
+_ACCESS_LEVELS = (
+    AccessLevel.PUBLIC,
+    AccessLevel.AUTHENTICATED,
+    AccessLevel.RESTRICTED,
+    AccessLevel.ADMIN_ONLY,
+)
+_VIEW_ARCHIVED_PERSON_PERMISSION = "people.view_archived_person"
+_VIEW_DELETED_PERSON_PERMISSION = "people.view_deleted_person"
 
 
 @dataclass(frozen=True, slots=True)
@@ -377,3 +390,233 @@ def get_relationship_overview(
             ),
         )
     )
+
+
+def _raise_person_unsaved() -> None:
+    raise ValidationError(
+        {
+            "person": ValidationError(
+                "Osoba musí být před vyhledáním sourozenců uložena.",
+                code="person_unsaved",
+            )
+        }
+    )
+
+
+def _load_current_person(person: Person) -> Person:
+    person_id = getattr(person, "pk", None)
+    if person_id is None:
+        _raise_person_unsaved()
+    try:
+        return Person.objects.get(pk=person_id)
+    except Person.DoesNotExist:
+        _raise_person_unsaved()
+
+
+def _get_lifecycle_permissions(
+    actor: AbstractBaseUser | AnonymousUser,
+) -> tuple[bool, bool]:
+    if not actor.is_authenticated:
+        return False, False
+
+    user_model = get_user_model()
+    current_actor = user_model._default_manager.get(pk=actor.pk)
+    if not current_actor.is_active:
+        return False, False
+    if current_actor.is_superuser:
+        return True, True
+    return (
+        current_actor.has_perm(_VIEW_ARCHIVED_PERSON_PERMISSION),
+        current_actor.has_perm(_VIEW_DELETED_PERSON_PERMISSION),
+    )
+
+
+def _is_person_visible(
+    person: Person,
+    *,
+    visibility_by_access_level: dict[str, bool],
+    can_view_archived_person: bool,
+    can_view_deleted_person: bool,
+) -> bool:
+    return (
+        visibility_by_access_level.get(person.access_level, False)
+        and (
+            person.archived_at is None
+            or can_view_archived_person
+        )
+        and (
+            person.deleted_at is None
+            or can_view_deleted_person
+        )
+    )
+
+
+def _visible_biological_sibling_ids(
+    *,
+    person: Person,
+    sibling_ids: set[int],
+    visibility_by_access_level: dict[str, bool],
+    can_view_archived_person: bool,
+) -> set[int]:
+    if not sibling_ids:
+        return set()
+
+    child_ids = sibling_ids | {person.pk}
+    visible_parent_ids_by_child: dict[int, set[int]] = {}
+    parent_relationships = Relationship.objects.filter(
+        deleted_at__isnull=True,
+        relationship_type__code="biological_parent",
+        person_b_id__in=child_ids,
+    ).select_related(
+        "relationship_type",
+        "person_a",
+        "person_b",
+    )
+    for relationship in parent_relationships:
+        parent = relationship.person_a
+        if (
+            not visibility_by_access_level.get(
+                relationship.access_level,
+                False,
+            )
+            or parent.deleted_at is not None
+            or not _is_person_visible(
+                parent,
+                visibility_by_access_level=visibility_by_access_level,
+                can_view_archived_person=can_view_archived_person,
+                can_view_deleted_person=False,
+            )
+        ):
+            continue
+        visible_parent_ids_by_child.setdefault(
+            relationship.person_b_id,
+            set(),
+        ).add(parent.pk)
+
+    input_parent_ids = visible_parent_ids_by_child.get(person.pk, set())
+    return {
+        sibling_id
+        for sibling_id in sibling_ids
+        if input_parent_ids
+        & visible_parent_ids_by_child.get(sibling_id, set())
+    }
+
+
+def get_visible_relationship_overview(
+    *,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> tuple[RelationshipOverviewItem, ...]:
+    """Vrať přehled vztahů bezpečně filtrovaný pro aktuálního actora."""
+
+    visibility_by_access_level = {
+        access_level: can_view_access_level(
+            actor=actor,
+            access_level=access_level,
+        )
+        for access_level in _ACCESS_LEVELS
+    }
+    (
+        can_view_archived_person,
+        can_view_deleted_person,
+    ) = _get_lifecycle_permissions(actor)
+
+    current_person = _load_current_person(person)
+    if not _is_person_visible(
+        current_person,
+        visibility_by_access_level=visibility_by_access_level,
+        can_view_archived_person=can_view_archived_person,
+        can_view_deleted_person=can_view_deleted_person,
+    ):
+        raise PermissionDenied(
+            "Nemáte oprávnění zobrazit tuto osobu."
+        )
+
+    permissionless_items = get_relationship_overview(person=current_person)
+    relationship_ids = {
+        relationship_id
+        for item in permissionless_items
+        for reason in item.reasons
+        for relationship_id in reason.relationship_ids
+    }
+    visible_relationship_ids = set(
+        Relationship.objects.filter(
+            pk__in=relationship_ids,
+            deleted_at__isnull=True,
+            access_level__in=(
+                access_level
+                for access_level, is_visible
+                in visibility_by_access_level.items()
+                if is_visible
+            ),
+        ).values_list("pk", flat=True)
+    )
+
+    visible_items = tuple(
+        item
+        for item in permissionless_items
+        if item.person.deleted_at is None
+        and _is_person_visible(
+            item.person,
+            visibility_by_access_level=visibility_by_access_level,
+            can_view_archived_person=can_view_archived_person,
+            can_view_deleted_person=False,
+        )
+    )
+    biological_sibling_ids = {
+        item.person.pk
+        for item in visible_items
+        if any(
+            reason.is_derived
+            and reason.category == "sibling"
+            and reason.relationship_code == "biological"
+            for reason in item.reasons
+        )
+    }
+    visible_biological_sibling_ids = _visible_biological_sibling_ids(
+        person=current_person,
+        sibling_ids=biological_sibling_ids,
+        visibility_by_access_level=visibility_by_access_level,
+        can_view_archived_person=can_view_archived_person,
+    )
+
+    result = []
+    for item in visible_items:
+        reasons = []
+        for reason in item.reasons:
+            if reason.is_derived:
+                if (
+                    reason.category == "sibling"
+                    and reason.relationship_code == "biological"
+                    and item.person.pk
+                    in visible_biological_sibling_ids
+                ):
+                    reasons.append(reason)
+                continue
+
+            filtered_relationship_ids = tuple(
+                relationship_id
+                for relationship_id in reason.relationship_ids
+                if relationship_id in visible_relationship_ids
+            )
+            if not filtered_relationship_ids:
+                continue
+            reasons.append(
+                RelationshipOverviewReason(
+                    category=reason.category,
+                    relationship_code=reason.relationship_code,
+                    label=reason.label,
+                    relationship_ids=filtered_relationship_ids,
+                    is_derived=False,
+                )
+            )
+
+        if reasons:
+            result.append(
+                RelationshipOverviewItem(
+                    person=item.person,
+                    reasons=tuple(reasons),
+                )
+            )
+
+    return tuple(result)

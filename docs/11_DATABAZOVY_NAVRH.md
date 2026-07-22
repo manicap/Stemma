@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.18
+**Verze:** 0.19
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 22. 7. 2026
 
@@ -1117,6 +1117,37 @@ filtrovat výsledné osoby, znovu načíst a posoudit explicitní vztahy podle
 důvodu a odstranit položky bez viditelného důvodu. M2.5g nevytváří
 modelovou změnu, systémová data, migraci ani ACP.
 
+### 9.14 Autorizovaný agregovaný přehled vztahů
+
+Veřejné keyword-only API
+`get_visible_relationship_overview(*, person, actor)` vrací stejné
+`RelationshipOverviewItem` a `RelationshipOverviewReason` jako M2.5g.
+Nejprve přes `can_view_access_level()` jednou vyhodnotí každou známou
+úroveň, načte aktuálního actora pro lifecycle permissions a aktuální
+databázový stav vstupní osoby. Neuložená nebo fyzicky chybějící osoba
+používá `person_unsaved`; neviditelný vstup jednotnou `PermissionDenied`.
+
+Vstupní osoba kombinuje `access_level`, `view_archived_person` a případně
+`view_deleted_person`. Výsledná osoba musí být přístupná, archivovaná
+vyžaduje `view_archived_person` a měkce odstraněná se vždy vyloučí.
+Explicitní `relationship_ids` se jedním querysetem znovu načtou s
+`deleted_at IS NULL` a filtrují podle `access_level`. Archivace vztahu,
+aktivita typu a časová platnost nemění viditelnost.
+
+Pro všechny biologické kandidáty se jedním querysetem se
+`select_related("relationship_type", "person_a", "person_b")` načtou
+orientované hrany `biological_parent` rodič → dítě. Důvod zůstane pouze
+tehdy, když průnik viditelných rodičů vstupu a sourozence obsahuje alespoň
+jedno stejné PK. Rodič musí být přístupný, při archivaci oprávněný a nesmí
+být měkce odstraněný; obě hrany musí být přístupné a měkce neodstraněné.
+Archivované hrany jsou platné. Hrany různých rodičů se nekombinují.
+
+Po filtraci se vytvoří nové tuple, položky a změněné explicitní důvody bez
+mutace permissionless frozen objektů. Prázdné důvody a položky se odstraní
+a původní pořadí se nepřepočítává. Dotazový profil je konstantní vzhledem k
+počtu osob, důvodů, ID i rodičů. M2.5h-2 nemění modely, systémová data ani
+migrace.
+
 ## 10. Bydliště a hrobová místa
 
 ### 10.1 Bydliště
@@ -1307,7 +1338,8 @@ obou strukturálních větví proto není významové. Datová migrace sama
 bezpečně vytváří potřebné `Permission` a `Group` řádky a
 přiřazuje zvýšená oprávnění pouze Správci. Reverse pouze odebere tato čtyři
 oprávnění ze tří systémových skupin; skupiny, permissions ani členství
-uživatelů nemaže. Autorizovaný relationship selector vznikne až v M2.5h-2.
+uživatelů nemaže. Autorizovaný relationship selector M2.5h-2 tato
+oprávnění používá bez další změny permission katalogu.
 
 ## 15. Audit
 

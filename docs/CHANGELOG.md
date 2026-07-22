@@ -1,5 +1,21 @@
 # Historie změn dokumentace
 
+## Verze 0.23 – 22. 7. 2026
+
+- přidán autorizovaný selector
+  `get_visible_relationship_overview(*, person, actor)` nad nezměněným
+  permissionless přehledem M2.5g,
+- doplněna kontrola aktuálního actora a vstupní osoby včetně stabilních
+  validačních chyb a jednotné `PermissionDenied`,
+- zavedeno společné vyhodnocení přístupové úrovně a lifecycle pro vstupní,
+  výsledné a rodičovské osoby,
+- explicitní důvody nově zachovávají pouze viditelná měkce neodstraněná
+  `relationship_ids` ve stávajícím pořadí,
+- biologický důvod je autorizován pouze kompletní viditelnou cestou přes
+  jednoho stejného společného rodiče a dvě hrany `biological_parent`,
+- potvrzeno zachování pořadí a neměnnost frozen permissionless objektů,
+  dávkové dotazy bez N+1 a absence zápisů, modelových změn a migrací.
+
 ## Verze 0.22 – 22. 7. 2026
 
 - konkretizována obecná policy pro všechny čtyři hodnoty `AccessLevel`,

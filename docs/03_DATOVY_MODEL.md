@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.14
+**Verze:** 0.15
 **Stav:** koncept  
 **Datum revize:** 22. 7. 2026
 
@@ -447,6 +447,46 @@ Selector nic neukládá, nemá parametr `actor` a nefiltruje přístupová práv
 Vyšší vrstva používá `relationship_ids` pro kontrolu konkrétních
 explicitních záznamů a samostatně posuzuje viditelnost biologického důvodu.
 M2.5g nemění modely, systémová data ani migrace.
+
+### 5.7 Autorizovaný celkový přehled vztahů
+
+Vyšší čtecí selector vystavuje keyword-only API:
+
+```python
+def get_visible_relationship_overview(
+    *,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> tuple[RelationshipOverviewItem, ...]:
+    ...
+```
+
+Používá stejné frozen dataclassy jako M2.5g. Vstupní osobu znovu načte z
+databáze a před spuštěním permissionless přehledu ověří její přístupovou
+úroveň i lifecycle. Neviditelný vstup vyvolá obecnou `PermissionDenied`;
+neuložená nebo fyzicky chybějící osoba používá `person_unsaved`. Actor
+zachovává chyby `actor_invalid` a `actor_unsaved` z obecné permission
+policy.
+
+Výsledná osoba musí mít viditelný `access_level`, nesmí být měkce
+odstraněná a při archivaci vyžaduje `people.view_archived_person`.
+Explicitní důvody se filtrují podle aktuálních měkce neodstraněných
+`Relationship` a jejich `access_level`; z agregované provenance zůstanou
+jen viditelná ID ve stávajícím vzestupném pořadí. Archivace vztahu,
+neaktivita typu a historický čas se neposuzují.
+
+Biologický důvod zůstane jen při kompletní viditelné cestě přes jednoho
+společného rodiče: rodič i obě osoby jsou viditelné a obě orientované hrany
+`biological_parent` rodič → dítě jsou měkce neodstraněné a přístupné.
+Měkce odstraněný rodič cestu nikdy nevytváří a archivovaný vyžaduje
+`people.view_archived_person`. Viditelné hrany různých rodičů se neslučují.
+
+Čtyři hodnoty `AccessLevel` se vyhodnotí přes
+`can_view_access_level()` nejvýše jednou za volání. Explicitní provenance i
+biologické cesty se načítají dávkově a počet dotazů neroste s počtem osob,
+důvodů, ID nebo rodičů. Nové položky zachovávají pořadí M2.5g a původní
+permissionless frozen objekty se nemění. M2.5h-2 nic nezapisuje a nevytváří
+modelovou změnu ani migraci.
 
 ## 6. Bydliště
 

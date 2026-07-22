@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.9
+**Verze:** 0.10
 **Stav:** pracovní návrh  
 **Datum revize:** 22. 7. 2026
 
@@ -293,6 +293,30 @@ kontext a nefiltruje oprávnění. Vyšší vrstva musí před zveřejněním ov
 výslednou osobu, všechny explicitní vztahy i viditelnost biologicky
 odvozeného důvodu a odstranit položky bez viditelného důvodu.
 
+Autorizovaný přehled poskytuje
+`get_visible_relationship_overview(*, person, actor)`. Nejprve ověří
+actora a aktuální databázový stav vstupní osoby. Neviditelný vstup odmítne
+obecnou `PermissionDenied`, zatímco neuložená nebo fyzicky chybějící osoba
+zachová `person_unsaved`. Viditelnost osoby vždy kombinuje její
+`access_level` s lifecycle pravidly; archivovaná osoba vyžaduje
+`people.view_archived_person` a měkce odstraněný vstup
+`people.view_deleted_person`.
+
+Selector filtruje permissionless výsledek bez jeho změny. Neviditelné nebo
+měkce odstraněné výsledné osoby odstraní; archivované výsledné osoby
+zobrazí jen s oprávněním. U explicitního důvodu ponechá pouze viditelná,
+měkce neodstraněná `relationship_ids`; prázdný důvod a následně i položku
+bez důvodu odstraní. Archivace vztahu, časová platnost ani aktivita typu
+viditelnost nemění.
+
+Biologický důvod vyžaduje alespoň jednoho stejného společného rodiče,
+který je actorovi viditelný a má k oběma osobám viditelnou, měkce
+neodstraněnou hranu `biological_parent`. Hrany od různých rodičů nelze
+kombinovat. Měkce odstraněný rodič cestu nikdy neautorizuje; archivovaný
+rodič vyžaduje lifecycle oprávnění. Pořadí osob, důvodů i ID zůstává podle
+permissionless přehledu. Dávkové dotazy zajišťují konstantní profil bez
+N+1 a selector nic nezapisuje ani nevytváří migraci.
+
 ## 9. Bydliště
 
 Osoba může mít libovolný počet záznamů bydliště.
@@ -423,8 +447,9 @@ anonymní návštěvník. Obecné vyhodnocení poskytuje keyword-only helper
 Zobrazení archivované osoby vyžaduje oprávnění
 `people.view_archived_person` a zobrazení měkce odstraněné osoby oprávnění
 `people.view_deleted_person`. Tato lifecycle oprávnění nenahrazují kontrolu
-`access_level` a jejich použití v autorizovaném přehledu vztahů vznikne až
-v M2.5h-2.
+`access_level`. Autorizovaný přehled vztahů je používá pro vstupní osobu,
+výsledné osoby a společné biologické rodiče; měkce odstraněné výsledné
+osoby ani rodiče nezveřejňuje.
 
 ## 15. Historie změn
 
