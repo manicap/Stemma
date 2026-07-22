@@ -1,5 +1,20 @@
 # Historie změn dokumentace
 
+## Verze 0.24 – 22. 7. 2026
+
+- zahájen blok M2.6 číselníkem `places.ResidenceType`, který přímo dědí z
+  `LookupModel`, nepřidává vlastní pole a umožňuje uživatelské typy,
+- schválen katalog hlavního, dočasného, úředního, institucionálního a jiného
+  bydliště včetně stabilních kódů, popisů a pořadí,
+- odděleno faktické hlavní bydliště od administrativně evidované úřední
+  adresy a odmítnuty nejednoznačné kódy odkazující na trvalý pobyt,
+- přidány strukturální `places.0003_residence_type` a datová
+  `places.0004_initial_residence_types`,
+- datová migrace před zápisem odmítá kolizi s uživatelským kódem, je
+  idempotentní a reverse maže pouze schválené stále systémové hodnoty,
+- doplněna lokální admin konfigurace a testy; konkrétní model `Residence`
+  zatím nebyl implementován.
+
 ## Verze 0.23 – 22. 7. 2026
 
 - přidán autorizovaný selector

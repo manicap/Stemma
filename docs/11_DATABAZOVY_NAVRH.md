@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.19
+**Verze:** 0.20
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 22. 7. 2026
 
@@ -1154,6 +1154,34 @@ migrace.
 
 Bydliště spojuje právě jednu osobu s volitelným strukturovaným místem a časovým údajem.
 
+M2.6a zavádí jeho typ jako samostatný model `ResidenceType`, který přímo
+dědí z `LookupModel`, nepřidává vlastní databázová pole a zůstává
+uživatelsky rozšiřitelný. Metadata jsou `verbose_name = "Typ bydliště"`,
+`verbose_name_plural = "Typy bydliště"` a zděděné pořadí
+`("sort_order", "name", "code")`.
+
+Systémový katalog je:
+
+| Kód | Název | Popis | Pořadí |
+|---|---|---|---:|
+| `primary_residence` | Hlavní bydliště | Obvyklé nebo hlavní bydliště osoby v daném období. | 10 |
+| `temporary_residence` | Dočasné bydliště | Časově omezené bydliště nebo pobyt mimo hlavní bydliště. | 20 |
+| `official_residence` | Úřední bydliště | Administrativně nebo úředně evidovaná adresa, která nemusí odpovídat skutečnému pobytu. | 30 |
+| `institutional_residence` | Institucionální pobyt | Pobyt v instituci, například internátu, kasárnách, nemocnici, ústavu nebo domově. | 40 |
+| `other` | Jiné bydliště | Jiný druh bydliště nebo pobytu nezařaditelný do předchozích typů. | 90 |
+
+Hlavní bydliště je faktické nebo obvyklé bydliště. Úřední bydliště je
+administrativně evidovaná adresa a nemusí mu odpovídat. Kódy `permanent` a
+`permanent_residence` se nepoužívají, aby nebyly zaměněny s českým právním
+pojmem trvalého pobytu.
+
+Datová migrace nejprve prověří všech pět kódů. Uživatelský nesystémový
+záznam se schváleným kódem nepřepíše ani nepřevede, ale vyvolá chybu před
+první změnou katalogu. Forward je idempotentní a opravuje existující
+systémové hodnoty. Reverse odstraní jen schválené kódy s aktuálním
+`is_system=True`; uživatelské hodnoty zachová. Konkrétní `Residence` v
+M2.6a ještě není implementován.
+
 Obsahuje:
 
 - typ pobytu,
@@ -1463,14 +1491,18 @@ events.0007_event_participant
 people.0006_relationship_type
 people.0007_initial_relationship_types
 people.0008_relationship
+people.0009_alter_person_options
+accounts.0002_alter_user_options
+accounts.0003_initial_permission_groups
+places.0003_residence_type
+places.0004_initial_residence_types
 ```
 
 Následující plánované migrace začínají:
 
 ```text
-places.0003_residence_lookups
-places.0004_residences
-places.0005_grave_models
+places.0005_residences
+places.0006_grave_models
 materials.0001_attachment_lookups
 materials.0002_attachments
 materials.0003_attachment_links
@@ -1480,7 +1512,7 @@ materials.0006_source_links
 health.0001_health_models
 health.0002_material_links
 audit.0001_initial
-accounts.0002_user_profile_person_link
+accounts.0004_user_profile_person_link
 ```
 
 Datové migrace základních číselníků budou malé a rozdělené podle aplikací.

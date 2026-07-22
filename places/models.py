@@ -22,6 +22,17 @@ class PlaceType(LookupModel):
         return self.name
 
 
+class ResidenceType(LookupModel):
+    """Druh faktického nebo evidovaného bydliště či pobytu."""
+
+    class Meta(LookupModel.Meta):
+        verbose_name = "Typ bydliště"
+        verbose_name_plural = "Typy bydliště"
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Place(
     TimestampedModel,
     AccessControlledModel,

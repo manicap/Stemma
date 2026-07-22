@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.15
+**Verze:** 0.16
 **Stav:** koncept  
 **Datum revize:** 22. 7. 2026
 
@@ -489,6 +489,30 @@ permissionless frozen objekty se nemění. M2.5h-2 nic nezapisuje a nevytváří
 modelovou změnu ani migraci.
 
 ## 6. Bydliště
+
+`ResidenceType` je konkrétní uživatelsky rozšiřitelný číselník v aplikaci
+`places`, který přímo dědí pouze z `LookupModel`. Nepřidává vlastní pole a
+používá `code`, `name`, `description`, `sort_order`, `is_active` a
+`is_system` s pořadím `sort_order`, `name`, `code`.
+
+Systémové hodnoty jsou:
+
+| Kód | Název | Pořadí | Význam |
+|---|---|---:|---|
+| `primary_residence` | Hlavní bydliště | 10 | Obvyklé nebo hlavní bydliště osoby v daném období. |
+| `temporary_residence` | Dočasné bydliště | 20 | Časově omezené bydliště nebo pobyt mimo hlavní bydliště. |
+| `official_residence` | Úřední bydliště | 30 | Administrativně nebo úředně evidovaná adresa, která nemusí odpovídat skutečnému pobytu. |
+| `institutional_residence` | Institucionální pobyt | 40 | Pobyt v instituci, například internátu, kasárnách, nemocnici, ústavu nebo domově. |
+| `other` | Jiné bydliště | 90 | Jiný druh bydliště nebo pobytu nezařaditelný do předchozích typů. |
+
+Všechny systémové hodnoty jsou aktivní a systémové; uživatelské typy jsou
+povolené. Hlavní bydliště je faktický údaj, kdežto úřední bydliště může být
+jen administrativně evidovanou adresou. Kódy `permanent` a
+`permanent_residence` se kvůli právnímu významu trvalého pobytu nepoužívají.
+
+Strukturální migrace `places.0003_residence_type` vytváří pouze číselník a
+datová `places.0004_initial_residence_types` jeho systémový katalog. Model
+`Residence` v M2.6a ještě nevzniká.
 
 Pole:
 

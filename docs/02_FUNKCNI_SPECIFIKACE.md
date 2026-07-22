@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.10
+**Verze:** 0.11
 **Stav:** pracovní návrh  
 **Datum revize:** 22. 7. 2026
 
@@ -320,6 +320,18 @@ N+1 a selector nic nezapisuje ani nevytváří migraci.
 ## 9. Bydliště
 
 Osoba může mít libovolný počet záznamů bydliště.
+
+Typ bydliště je uživatelsky rozšiřitelný číselník `ResidenceType`.
+Systémový katalog rozlišuje hlavní, dočasné, úřední, institucionální a jiné
+bydliště. `primary_residence` označuje faktické hlavní nebo obvyklé
+bydliště, zatímco `official_residence` administrativně evidovanou adresu;
+tyto významy nejsou zaměnitelné. Kódy `permanent` a
+`permanent_residence` se nepoužívají, aby se katalog nezaměňoval s českým
+právním pojmem trvalého pobytu.
+
+M2.6a zavádí pouze číselník typů. Konkrétní model bydliště, propojení osoby
+s místem, adresní data, časové údaje a přístupová pravidla zatím nejsou
+implementované.
 
 Každý záznam může obsahovat:
 
