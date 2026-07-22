@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.13
+**Verze:** 0.14
 **Stav:** pracovní návrh  
 **Datum revize:** 22. 7. 2026
 
@@ -365,8 +365,22 @@ Okrajové mezery se odstraňují z `address_text`, `note`,
 `original_date_text` a `date_note`. Každý zápis probíhá v
 `transaction.atomic()`, používá `full_clean()` před `save()` a update zamyká
 aktuální Residence pomocí `select_for_update()`. Služba nededuplikuje a
-obecný `IntegrityError` nepřevádí. Selectory a oprávněné čtení bydlišť
-zůstávají pro další krok.
+obecný `IntegrityError` nepřevádí.
+
+M2.6d přidává permissionless selector
+`get_person_residences(*, person)` vracející lazy `QuerySet[Residence]` s
+úplnou historií jedné osoby. Zahrnuje neznámé, historické, budoucí a
+přibližné údaje, archivované Residence, neaktivní i uživatelské typy a
+všechny přístupové úrovně. Vylučuje pouze měkce odstraněné Residence.
+Archivovanou i měkce odstraněnou vstupní osobu lze zpracovat, pokud její
+řádek stále existuje.
+
+Výsledek se řadí podle `sort_date`, `sort_date_end`, pořadí a názvu typu a
+PK. Selector používá `select_related()` pro osobu, typ, místo a autora;
+provedení tvoří jeden validační `exists()` dotaz a jeden SELECT při
+vyhodnocení QuerySet bez N+1. Nevyhodnocuje dnešní datum, aktuální nebo
+hlavní bydliště, přístup ani oprávnění. Výsledek proto nesmí být přímo
+zveřejněn ve view, API nebo exportu. Autorizovaný selector vznikne v M2.6e.
 
 ## 10. Fotografie
 

@@ -1,5 +1,20 @@
 # Historie změn dokumentace
 
+## Verze 0.27 – 22. 7. 2026
+
+- přidán permissionless `get_person_residences(*, person)` vracející lazy
+  `QuerySet[Residence]` úplné historie jedné osoby,
+- selector přijímá běžnou, archivovanou i měkce odstraněnou existující
+  vstupní osobu a používá stabilní chybu `person_unsaved`,
+- vrací archivované, neveřejné, historické a budoucí Residence i neaktivní
+  a uživatelské typy, ale vylučuje měkce odstraněné Residence,
+- schváleno deterministické řazení podle obou technických mezí data,
+  pořadí a názvu typu a PK bez zvláštního NULL pravidla,
+- `select_related()` pro osobu, typ, místo a autora zajišťuje po validačním
+  `exists()` jeden lazy SELECT bez N+1,
+- M2.6d nemění modely, služby ani migrace; autorizovaný selector bydlišť
+  zůstává pro navazující M2.6e.
+
 ## Verze 0.26 – 22. 7. 2026
 
 - přidán frozen slotted úplný snapshot `places.services.ResidenceInput` a

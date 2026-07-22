@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.18
+**Verze:** 0.19
 **Stav:** koncept  
 **Datum revize:** 22. 7. 2026
 
@@ -558,8 +558,27 @@ zachovat, přechod na jiný neaktivní typ je zakázán a přechod na aktivní t
 je povolen; porovnává se PK aktuálního databázového typu. Měkce odstraněný
 Residence nelze upravit, archivovaný ano. Lifecycle osoby a místa tato
 služba nefiltruje. Služba nemá deduplikační pravidlo ani mapování obecného
-`IntegrityError`. M2.6c nemění model ani migrace a selectory bydlišť zatím
-nejsou implementované.
+`IntegrityError`. Samotný krok M2.6c nezměnil model ani migrace a selector
+bydlišť v něm ještě nebyl implementovaný.
+
+M2.6d zavádí `get_person_residences(*, person)` v `places/selectors.py`.
+Vrací lazy `QuerySet[Residence]` omezený na zadanou osobu a
+`deleted_at IS NULL`. Archivace Residence, lifecycle vstupní osoby,
+`access_level`, `verification_status`, aktivita či systémovost typu,
+lifecycle místa a časová platnost se nefiltrují. Jde o úplnou interní
+historii, nikoli výběr současného nebo hlavního bydliště.
+
+Řazení je `sort_date`, `sort_date_end`, `residence_type__sort_order`,
+`residence_type__name`, `pk`. Hodnoty `UNKNOWN` zůstávají na přirozeném
+databázovém NULL pořadí bez Python řazení. Selector načítá `person`,
+`residence_type`, `place` a `created_by` pomocí `select_related()`. Po
+jednom `exists()` dotazu pro ověření vstupní osoby zůstává výsledný SELECT
+lazy a jeho počet neroste s počtem Residence. Neuložená nebo fyzicky
+chybějící osoba používá `person_unsaved`.
+
+Selector je permissionless a může vracet omezený, administrátorský nebo
+archivovaný obsah. Není určen k přímému veřejnému použití; autorizovaná
+vrstva bude následovat v M2.6e. M2.6d nemění modely ani migrace.
 
 ## 7. Hrobové místo
 

@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.22
+**Verze:** 0.23
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 22. 7. 2026
 
@@ -1246,7 +1246,44 @@ přiřazením stripují bez změny vnitřních mezer. Následuje úplný
 `full_clean()` a běžný `save()`. Update zachovává `created_by`, `created_at`
 a lifecycle metadata. Obecný `IntegrityError` se nemaskuje, protože model
 nemá schválenou deduplikaci. M2.6c nevytváří migraci; selectory a oprávněné
-čtení bydlišť budou řešeny v dalším kroku.
+čtení bydlišť v tomto kroku ještě nebyly řešeny.
+
+M2.6d přidává nízkoúrovňový interní selector:
+
+```python
+get_person_residences(*, person: Person) -> QuerySet[Residence]
+```
+
+Vstup musí mít PK a stále existující databázový řádek, jinak selector vrací
+`ValidationError` na `person` s kódem `person_unsaved`. Lifecycle ani
+přístupovou úroveň vstupní osoby neposuzuje, takže přijímá také archivovaný
+nebo měkce odstraněný existující řádek.
+
+QuerySet filtruje `person_id` a `deleted_at__isnull=True`. Vrací úplnou
+historii včetně archivovaných Residence, všech `AccessLevel` a stavů
+ověření, neaktivních i uživatelských typů, volitelného místa a všech
+časových variant. Nevyhodnocuje současné datum, aktuálnost, překryvy,
+hlavní bydliště ani starší modelovou validitu lokalizace.
+
+Deterministické databázové pořadí je:
+
+```python
+(
+    "sort_date",
+    "sort_date_end",
+    "residence_type__sort_order",
+    "residence_type__name",
+    "pk",
+)
+```
+
+`UNKNOWN` používá přirozené NULL pořadí databáze. Selector neprovádí
+Python řazení. `select_related("person", "residence_type", "place",
+"created_by")` umožňuje běžný přístup ke všem čtyřem vazbám bez N+1.
+Volání provede jeden `exists()` dotaz; SELECT Residence zůstává lazy až do
+vyhodnocení a jeho počet je konstantní. Selector nemá actor parametr,
+nevolá permission policy a může vracet omezený nebo administrátorský
+obsah. Autorizovaný selector vznikne v M2.6e. M2.6d nevytváří migraci.
 
 ### 10.2 Hrobové místo
 
