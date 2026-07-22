@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.20
+**Verze:** 0.21
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 22. 7. 2026
 
@@ -1179,22 +1179,37 @@ Datová migrace nejprve prověří všech pět kódů. Uživatelský nesystémov
 záznam se schváleným kódem nepřepíše ani nepřevede, ale vyvolá chybu před
 první změnou katalogu. Forward je idempotentní a opravuje existující
 systémové hodnoty. Reverse odstraní jen schválené kódy s aktuálním
-`is_system=True`; uživatelské hodnoty zachová. Konkrétní `Residence` v
-M2.6a ještě není implementován.
+`is_system=True`; uživatelské hodnoty zachová.
 
-Obsahuje:
+M2.6b přidává strukturální migrací `places.0005_residence` konkrétní model
+`Residence`. Jeden řádek představuje jeden souvislý pobyt jedné osoby a v
+přesném pořadí dědí `TimestampedModel`, `AccessControlledModel`,
+`VerifiableModel`, `AuthoredModel`, `LifecycleModel` a `PartialDateModel`.
+Lifecycle data archivace a měkkého odstranění nejsou historickým začátkem
+ani koncem pobytu.
 
-- typ pobytu,
-- místo,
-- adresní text,
-- ulici a čísla domu,
-- lokalizační doplněk,
-- poznámku,
-- stav ověření,
-- přístupovou úroveň,
-- přílohy a zdroje.
+Vlastní pole modelu jsou:
 
-Musí existovat strukturované místo nebo alespoň neprázdný lokalizační text. Překrývající se pobyty jsou povoleny.
+- povinné `person` s `PROTECT` a reverzní vazbou `residences`,
+- povinné `residence_type` s `PROTECT` a reverzní vazbou `residences`,
+- volitelné `place` s `PROTECT`, `null=True`, `blank=True` a reverzní
+  vazbou `residences`,
+- `address_text` jako `CharField(max_length=500, blank=True)`,
+- `note` jako `TextField(blank=True)`.
+
+Musí existovat strukturované místo nebo text obsahující po `strip()` alespoň
+jeden znak. Obě lokalizace mohou být vyplněny současně; `Place` pak
+reprezentuje strukturovanou lokalitu a `address_text` konkrétní nebo
+historický detail. Text se při `save()` automaticky nestripuje. Pravidlo je
+modelové a nemá databázový `CheckConstraint`.
+
+Překrývající se pobyty, více samostatných období stejného typu i zdánlivě
+duplicitní tvrzení jsou povoleny. Model nemá vlastní unikátní constraint ani
+dodatečný explicitní index; používá automatické FK indexy a index zděděného
+`sort_date`. Uživatelské i neaktivní existující typy jsou na modelové vrstvě
+přípustné. Pořadí je `person_id`, `sort_date`, `sort_date_end`,
+`residence_type__sort_order`, `pk`. Služby, selectory, oprávněné čtení a
+propojení s přílohami a zdroji zatím nejsou implementovány.
 
 ### 10.2 Hrobové místo
 
@@ -1496,12 +1511,12 @@ accounts.0002_alter_user_options
 accounts.0003_initial_permission_groups
 places.0003_residence_type
 places.0004_initial_residence_types
+places.0005_residence
 ```
 
 Následující plánované migrace začínají:
 
 ```text
-places.0005_residences
 places.0006_grave_models
 materials.0001_attachment_lookups
 materials.0002_attachments

@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.22
+**Verze:** 0.23
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 22. 7. 2026
 
@@ -73,6 +73,7 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 127. Permission základ M2.5h-1 určuje přesný význam čtyř `AccessLevel` a zavádí obecný helper `can_view_access_level(*, actor, access_level)`. `public` vidí každý, `authenticated` pouze aktivní existující přihlášený uživatel, `restricted` vyžaduje `accounts.view_restricted_content` a `admin_only` `accounts.view_admin_only_content`; aktivní superuser má plný přístup a `is_staff` sám nestačí. Neaktivní actor se posuzuje jako anonymní. Model `Person` deklaruje `people.view_archived_person` a `people.view_deleted_person`. Datová migrace vytváří skupiny Čtenář, Editor a Správce; pouze Správce získává všechna čtyři nová zvýšená oprávnění, nikoli ostatní modelová práva nebo uživatelské příznaky. M2.5h-1 nemění pole modelů ani neimplementuje autorizovaný přehled vztahů; ten následuje v M2.5h-2. Konkretizace používá schválené Django Groups a Permissions a nevyžaduje ACP.
 128. `get_visible_relationship_overview(*, person, actor)` je autorizovaná čtecí vrstva nad nezměněným permissionless M2.5g. Ověřuje aktuálního actora a vstupní osobu, kombinuje `access_level` s lifecycle oprávněními, tiše odstraňuje neviditelné výsledné osoby a z explicitních důvodů zachovává pouze viditelná měkce neodstraněná `relationship_ids`. Biologický důvod vyžaduje kompletní viditelnou cestu přes jednoho stejného společného rodiče a dvě orientované hrany `biological_parent`; měkce odstraněný rodič ani hrana se nepoužijí. Pořadí a frozen read model M2.5g se nemění, dotazy jsou dávkové bez N+1 a krok nic nezapisuje, nemění modely, systémová data ani migrace a nevyžaduje ACP.
 129. Blok M2.6 začíná rozšiřitelným číselníkem `places.ResidenceType`, který přímo dědí z `LookupModel` a nepřidává vlastní pole. Systémové kódy jsou `primary_residence`, `temporary_residence`, `official_residence`, `institutional_residence` a `other`; uživatelské typy jsou povolené. Hlavní bydliště znamená faktické obvyklé bydliště, úřední bydliště administrativně evidovanou adresu a kódy `permanent` ani `permanent_residence` se nepoužívají. Při kolizi systémového kódu s uživatelským záznamem datová migrace selže před prvním zápisem; reverse odstraní pouze schválené kódy, které jsou stále systémové. M2.6a používá oddělené migrace `places.0003` a `places.0004`, neimplementuje `Residence` a nevyžaduje ACP.
+130. Jeden `places.Residence` představuje jeden souvislý pobyt povinné osoby a povinného uživatelsky rozšiřitelného typu. Volitelné strukturované místo a textový detail `address_text` délky 500 lze použít samostatně i současně, ale alespoň jedna lokalizace musí být neprázdná. Všechny tři vazby používají `PROTECT`. Historický čas poskytuje úplný `PartialDateModel`; lifecycle časy jej nenahrazují. Model dále dědí timestamp, access, verification a author metadata, toleruje neaktivní typ, nemá vlastní unikátnost ani dodatečné indexy a řadí podle osoby, technických mezí data, pořadí typu a PK. M2.6b vytváří pouze strukturální `places.0005_residence`; služby, selectory a oprávněné čtení následují později a konkretizace nevyžaduje ACP.
 
 ## 2. Otevřené otázky
 

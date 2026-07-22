@@ -1,5 +1,21 @@
 # Historie změn dokumentace
 
+## Verze 0.25 – 22. 7. 2026
+
+- implementován `places.Residence` pro jeden souvislý pobyt povinné osoby
+  a povinného typu s volitelným strukturovaným místem,
+- schválen `address_text` délky 500, poznámka a modelová podmínka alespoň
+  jednoho z `Place` nebo neprázdného lokalizačního textu; obojí lze
+  kombinovat a text se při uložení automaticky nenormalizuje,
+- zapojen úplný `PartialDateModel` a společná access, verification, author,
+  lifecycle a timestamp metadata; všechny doménové FK používají `PROTECT`,
+- potvrzena tolerance uživatelských i neaktivních typů, povolené překryvy a
+  absence vlastní unikátnosti, lokalizačního check constraintu a dalších
+  explicitních indexů,
+- přidána lokální administrace, strukturální migrace
+  `places.0005_residence` a testy struktury, validace i databázového chování;
+  služby a selectory zůstávají pro navazující M2.6c.
+
 ## Verze 0.24 – 22. 7. 2026
 
 - zahájen blok M2.6 číselníkem `places.ResidenceType`, který přímo dědí z

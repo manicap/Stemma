@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.16
+**Verze:** 0.17
 **Stav:** koncept  
 **Datum revize:** 22. 7. 2026
 
@@ -510,25 +510,33 @@ povolené. Hlavní bydliště je faktický údaj, kdežto úřední bydliště m
 jen administrativně evidovanou adresou. Kódy `permanent` a
 `permanent_residence` se kvůli právnímu významu trvalého pobytu nepoužívají.
 
-Strukturální migrace `places.0003_residence_type` vytváří pouze číselník a
-datová `places.0004_initial_residence_types` jeho systémový katalog. Model
-`Residence` v M2.6a ještě nevzniká.
+Strukturální migrace `places.0003_residence_type` vytváří číselník a datová
+`places.0004_initial_residence_types` jeho systémový katalog. Strukturální
+`places.0005_residence` přidává konkrétní `Residence` pro jeden souvislý
+pobyt jedné osoby.
 
-Pole:
+Model v přesném pořadí dědí `TimestampedModel`, `AccessControlledModel`,
+`VerifiableModel`, `AuthoredModel`, `LifecycleModel` a `PartialDateModel`.
+Jeho vlastní pole jsou:
 
-- ID,
-- osoba,
-- datum nebo období,
-- obec,
-- ulice,
-- číslo domu,
-- úplná adresa,
-- ID místa,
-- poznámka,
-- stav ověření,
-- přístupová úroveň.
+- povinné `person` → `Person` s `PROTECT` a `related_name="residences"`,
+- povinné `residence_type` → `ResidenceType` s `PROTECT` a
+  `related_name="residences"`,
+- volitelné `place` → `Place` s `PROTECT`, `null=True`, `blank=True` a
+  `related_name="residences"`,
+- `address_text` jako nepovinný `CharField(max_length=500)`,
+- `note` jako nepovinný `TextField`.
 
-Bydliště může mít zdroje a přílohy.
+Musí být uvedeno místo nebo lokalizační text obsahující po `strip()` alespoň
+jeden znak; strukturované místo a textový detail lze kombinovat. Text se při
+uložení automaticky nenormalizuje. Model toleruje uživatelský i neaktivní
+existující typ. Nemá vlastní unikátní constraint ani dodatečný explicitní
+index, takže dovoluje více období i zdánlivě duplicitní tvrzení. Řazení je
+`person_id`, `sort_date`, `sort_date_end`, `residence_type__sort_order`,
+`pk`.
+
+Služby a selectory bydlišť zatím nejsou implementované. Budoucí propojení
+se zdroji a přílohami zůstává součástí navazujících milníků.
 
 ## 7. Hrobové místo
 

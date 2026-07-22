@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.11
+**Verze:** 0.12
 **Stav:** pracovní návrh  
 **Datum revize:** 22. 7. 2026
 
@@ -329,20 +329,23 @@ tyto významy nejsou zaměnitelné. Kódy `permanent` a
 `permanent_residence` se nepoužívají, aby se katalog nezaměňoval s českým
 právním pojmem trvalého pobytu.
 
-M2.6a zavádí pouze číselník typů. Konkrétní model bydliště, propojení osoby
-s místem, adresní data, časové údaje a přístupová pravidla zatím nejsou
-implementované.
+M2.6b zavádí konkrétní model `Residence` pro jeden souvislý pobyt jedné
+osoby. Povinně odkazuje na `Person` a `ResidenceType`; volitelně na
+strukturované `Place`. Adresní nebo historický lokalizační detail ukládá do
+`address_text` o délce nejvýše 500 znaků a poznámku do `note`. Musí být
+vyplněno alespoň `Place` nebo neprázdný `address_text`, přičemž obě hodnoty
+mohou být použity současně.
 
-Každý záznam může obsahovat:
+Období používá společný `PartialDateModel` a podporuje neznámý, přesný,
+částečný i rozsahový údaj podle aktuálních projektových voleb. Residence
+rovněž přebírá přístupovou úroveň, stav ověření, autora, lifecycle a časová
+razítka. Vazby na osobu, typ i místo používají `PROTECT`. Překryvy i více
+samostatných nebo zdánlivě duplicitních pobytů jsou povoleny; model nemá
+vlastní unikátní constraint ani dodatečný explicitní index.
 
-- rok nebo období,
-- obec,
-- ulici,
-- číslo domu,
-- úplnou adresu,
-- poznámku,
-- zdroj,
-- přílohy.
+Neaktivní existující typ je na modelové vrstvě přípustný. Pravidla zápisu,
+služby, selectory, oprávněné čtení, zdroje, přílohy a uživatelské rozhraní
+zatím nejsou implementovány.
 
 ## 10. Fotografie
 
