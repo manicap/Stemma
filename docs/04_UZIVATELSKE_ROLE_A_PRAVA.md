@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.3
+**Verze:** 0.4
 **Stav:** pracovní návrh  
 **Datum revize:** 22. 7. 2026
 
@@ -72,6 +72,7 @@ oprávnění neposkytuje. Aktivní superuser má úplný obsahový přístup.
 Přístupová úroveň může být nastavena pro:
 
 - osobu,
+- bydliště,
 - událost,
 - vazbu,
 - fotografii,
@@ -124,6 +125,25 @@ viditelného společného rodiče a dvě viditelné hrany
 rodič se jako autorizační cesta nepoužije. Neaktivní actor se i při členství
 ve Správci nebo s příznakem superusera posuzuje jako anonymní; `is_staff`
 sám žádné z uvedených oprávnění neposkytuje.
+
+## 5.3 Autorizovaný přehled bydlišť
+
+`get_visible_person_residences(*, person, actor)` je veřejná čtecí vrstva
+nad permissionless `get_person_residences(*, person)`. Actor i vstupní
+osoba se posuzují podle aktuálního databázového stavu. Vstupní osoba musí
+mít viditelný `access_level`; archivovaná navíc vyžaduje
+`people.view_archived_person`, měkce odstraněná
+`people.view_deleted_person` a osoba v obou stavech obě oprávnění.
+Neviditelný vstup se vždy odmítne stejnou obecnou zprávou.
+
+Po autorizaci osoby se jednotlivá bydliště tiše filtrují podle svého
+`access_level`. Archivované Residence se vracejí bez zvláštní lifecycle
+permission, protože takové oprávnění projekt nezavádí; měkce odstraněné se
+nevracejí ani superuserovi. Aktivita nebo systémovost typu, místo, stav
+ověření a časová platnost přístup nemění. Neaktivní actor vidí pouze
+veřejná bydliště veřejně viditelné běžné osoby, `is_staff` samo přístup
+nerozšiřuje a aktivní superuser má plný obsahový i lifecycle přístup ke
+vstupní osobě.
 
 ## 6. Zamčený obsah
 

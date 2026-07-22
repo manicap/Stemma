@@ -1,5 +1,24 @@
 # Historie změn dokumentace
 
+## Verze 0.28 – 22. 7. 2026
+
+- přidán autorizovaný lazy selector
+  `get_visible_person_residences(*, person, actor)` nad nezměněným
+  permissionless přehledem M2.6d,
+- actor a vstupní osoba se ověřují podle aktuálního databázového stavu;
+  lifecycle osoby používá `people.view_archived_person` a
+  `people.view_deleted_person` a neviditelný vstup obecnou
+  `PermissionDenied`,
+- Residence se databázově filtrují přes povolené `AccessLevel`; archivované
+  zůstávají zahrnuté a měkce odstraněné vyloučené bez zavedení nových
+  lifecycle oprávnění,
+- zachována úplná historie, neaktivní a uživatelské typy, původní ordering,
+  `select_related()`, lazy vyhodnocení a konstantní dotazový profil bez
+  N+1,
+- doplněny stabilní chyby actora a osoby a testy permission matice,
+  zastaralých instancí, laziness, řazení, vedlejších zápisů a query profilu;
+  M2.6e nemění modely, služby ani migrace a nevyžaduje ACP.
+
 ## Verze 0.27 – 22. 7. 2026
 
 - přidán permissionless `get_person_residences(*, person)` vracející lazy

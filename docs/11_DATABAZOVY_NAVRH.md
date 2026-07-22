@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.23
+**Verze:** 0.24
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 22. 7. 2026
 
@@ -1284,6 +1284,37 @@ Volání provede jeden `exists()` dotaz; SELECT Residence zůstává lazy až do
 vyhodnocení a jeho počet je konstantní. Selector nemá actor parametr,
 nevolá permission policy a může vracet omezený nebo administrátorský
 obsah. Autorizovaný selector vznikne v M2.6e. M2.6d nevytváří migraci.
+
+M2.6e přidává vyšší veřejný selector:
+
+```python
+get_visible_person_residences(
+    *,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[Residence]
+```
+
+Každý `AccessLevel` vyhodnotí nejvýše jednou přes
+`can_view_access_level()`. Actor musí splnit společný kontrakt
+`actor_invalid` / `actor_unsaved` a rozhoduje jeho aktuální databázový stav.
+Selector načte čerstvou vstupní osobu; neuložená nebo fyzicky chybějící
+používá `person_unsaved`. Její `access_level` musí být viditelný a
+archivovaný či měkce odstraněný stav navíc vyžaduje odpovídající
+`people.view_archived_person` nebo `people.view_deleted_person`. Při obou
+stavech jsou nutná obě oprávnění. Neviditelná osoba vyvolá
+`PermissionDenied("Nemáte oprávnění zobrazit tuto osobu.")`.
+
+Po autorizaci selector volá permissionless
+`get_person_residences(person=fresh_person)` a přidá
+`filter(access_level__in=visible_access_levels)`. Residence SELECT proto
+zůstává lazy a filtrování probíhá v databázi. Zachová se původní ordering,
+`select_related()`, vyloučení `deleted_at IS NOT NULL`, archivované
+Residence, historická i budoucí období a neaktivní nebo uživatelské typy.
+Residence nemá samostatné lifecycle oprávnění a Place ani ResidenceType se
+zvlášť neautorizují. Počet validačních a permission dotazů i výsledných
+SELECTů je konstantní vzhledem k počtu Residence, bez N+1. M2.6e nevytváří
+migraci.
 
 ### 10.2 Hrobové místo
 

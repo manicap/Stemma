@@ -16,17 +16,24 @@ from people.models import Person
 
 from . import selectors
 from .models import Place, Residence, ResidenceType
-from .selectors import get_person_residences
+from .selectors import get_person_residences, get_visible_person_residences
 
 
 class ResidenceSelectorApiTests(SimpleTestCase):
     """Ověření veřejného kontraktu selectoru bydlišť."""
 
     def test_module_exports_only_approved_public_api(self) -> None:
-        self.assertEqual(selectors.__all__, ("get_person_residences",))
+        self.assertEqual(
+            selectors.__all__,
+            ("get_person_residences", "get_visible_person_residences"),
+        )
         self.assertIs(
             selectors.get_person_residences,
             get_person_residences,
+        )
+        self.assertIs(
+            selectors.get_visible_person_residences,
+            get_visible_person_residences,
         )
 
     def test_person_is_the_only_keyword_only_parameter(self) -> None:

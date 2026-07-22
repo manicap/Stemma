@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.19
+**Verze:** 0.20
 **Stav:** koncept  
 **Datum revize:** 22. 7. 2026
 
@@ -579,6 +579,25 @@ chybějící osoba používá `person_unsaved`.
 Selector je permissionless a může vracet omezený, administrátorský nebo
 archivovaný obsah. Není určen k přímému veřejnému použití; autorizovaná
 vrstva bude následovat v M2.6e. M2.6d nemění modely ani migrace.
+
+M2.6e přidává nad tímto interním querysetem
+`get_visible_person_residences(*, person, actor)`. Selector používá
+`can_view_access_level()` pro každou známou úroveň nejvýše jednou, čerstvý
+databázový stav actora a čerstvou vstupní osobu. Viditelnost vstupní osoby
+kombinuje její `access_level` s `people.view_archived_person` a
+`people.view_deleted_person`; aktivní superuser má plný přístup, samotné
+`is_staff` nikoli a neaktivní uživatel se posuzuje jako anonymní.
+
+Po úspěšné autorizaci selector volá
+`get_person_residences(person=fresh_person)` a přidává pouze databázový
+filtr `access_level__in`. Tím zachovává vyloučení měkce odstraněných
+Residence, zahrnutí archivovaných Residence bez nové lifecycle permission,
+úplnou historii, neaktivní a uživatelské typy, původní řazení i
+`select_related()`. Výsledek je stále lazy `QuerySet[Residence]` a počet
+dotazů neroste s počtem řádků. Neplatný actor používá `actor_invalid`,
+neuložený nebo chybějící autentizovaný actor `actor_unsaved`, neplatná osoba
+`person_unsaved` a neviditelná osoba obecnou `PermissionDenied`. M2.6e
+nemění modely ani migrace.
 
 ## 7. Hrobové místo
 

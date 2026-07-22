@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.14
+**Verze:** 0.15
 **Stav:** pracovní návrh  
 **Datum revize:** 22. 7. 2026
 
@@ -381,6 +381,25 @@ provedení tvoří jeden validační `exists()` dotaz a jeden SELECT při
 vyhodnocení QuerySet bez N+1. Nevyhodnocuje dnešní datum, aktuální nebo
 hlavní bydliště, přístup ani oprávnění. Výsledek proto nesmí být přímo
 zveřejněn ve view, API nebo exportu. Autorizovaný selector vznikne v M2.6e.
+
+M2.6e přidává veřejný autorizovaný selector
+`get_visible_person_residences(*, person, actor)`. Vrací lazy
+`QuerySet[Residence]` odvozený z permissionless selectoru. Actor se ověřuje
+podle společné `AccessLevel` policy a vstupní osoba podle svého aktuálního
+databázového stavu. Archivovaná osoba vyžaduje
+`people.view_archived_person`, měkce odstraněná
+`people.view_deleted_person` a osoba v obou stavech obě oprávnění.
+Neviditelný vstup vyvolá obecnou `PermissionDenied`; neuložená nebo fyzicky
+chybějící osoba zachovává `person_unsaved`.
+
+Po autorizaci osoby se Residence databázově filtrují pouze přes
+`access_level__in`. Archivované Residence zůstávají zahrnuté bez
+samostatného lifecycle oprávnění, měkce odstraněné zůstávají vyloučené.
+Typ, místo, stav ověření ani historická či budoucí platnost viditelnost
+nemění. Pořadí a `select_related()` z M2.6d se zachovávají; SELECT Residence
+zůstává lazy a počet validačních, permission i výsledných dotazů je
+konstantní vzhledem k počtu pobytů. M2.6e nevytváří migraci, UI, API ani
+export.
 
 ## 10. Fotografie
 
