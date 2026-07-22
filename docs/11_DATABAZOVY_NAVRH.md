@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.21
+**Verze:** 0.22
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 22. 7. 2026
 
@@ -1208,8 +1208,45 @@ duplicitní tvrzení jsou povoleny. Model nemá vlastní unikátní constraint a
 dodatečný explicitní index; používá automatické FK indexy a index zděděného
 `sort_date`. Uživatelské i neaktivní existující typy jsou na modelové vrstvě
 přípustné. Pořadí je `person_id`, `sort_date`, `sort_date_end`,
-`residence_type__sort_order`, `pk`. Služby, selectory, oprávněné čtení a
-propojení s přílohami a zdroji zatím nejsou implementovány.
+`residence_type__sort_order`, `pk`. Samotný krok M2.6b ještě
+neimplementoval služby, selectory, oprávněné čtení ani propojení s přílohami
+a zdroji.
+
+M2.6c zavádí transakční zápisovou vrstvu v `places/services.py`:
+
+```python
+create_residence(*, data: ResidenceInput, created_by=None) -> Residence
+update_residence(*, residence: Residence, data: ResidenceInput) -> Residence
+```
+
+Frozen slotted `ResidenceInput` je úplný snapshot všech editovatelných
+doménových polí Residence. Používá skutečná pole částečného data
+`start_year`, `start_month`, `start_day`, `end_year`, `end_month` a
+`end_day`; neobsahuje PK, timestampy, autora ani lifecycle. Update nahrazuje
+celý editovatelný stav a může změnit osobu, typ i místo. Hodnota `place=None`
+odstraní strukturované místo, pokud zůstane platná textová lokalizace.
+
+Před zápisem se podle PK načte čerstvá osoba, typ, volitelné místo a při
+create také volitelný autor. Update uvnitř `transaction.atomic()` zamkne a
+načte čerstvý Residence přes `select_for_update()`, takže zastaralá vstupní
+instance nepřepisuje novější typ, lifecycle ani autora. Neuložené nebo
+fyzicky chybějící objekty používají stabilní kódy
+`residence_unsaved`, `residence_person_unsaved`, `residence_type_unsaved`,
+`residence_place_unsaved` a `residence_created_by_unsaved`.
+
+Create odmítá neaktivní typ kódem `residence_type_inactive`. Update dovolí
+zachovat aktuální neaktivní typ podle PK nebo přejít na aktivní typ, ale
+zakáže přechod na jiný neaktivní typ stejným kódem. Měkce odstraněný
+Residence odmítá `residence_deleted`; archivovaný lze upravit. Stále
+existující archivované nebo měkce odstraněné osoby a místa jsou povoleny,
+protože služba neřeší viditelnost ani oprávnění.
+
+`address_text`, `note`, `original_date_text` a `date_note` se před
+přiřazením stripují bez změny vnitřních mezer. Následuje úplný
+`full_clean()` a běžný `save()`. Update zachovává `created_by`, `created_at`
+a lifecycle metadata. Obecný `IntegrityError` se nemaskuje, protože model
+nemá schválenou deduplikaci. M2.6c nevytváří migraci; selectory a oprávněné
+čtení bydlišť budou řešeny v dalším kroku.
 
 ### 10.2 Hrobové místo
 

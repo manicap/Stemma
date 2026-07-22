@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.12
+**Verze:** 0.13
 **Stav:** pracovní návrh  
 **Datum revize:** 22. 7. 2026
 
@@ -343,9 +343,30 @@ razítka. Vazby na osobu, typ i místo používají `PROTECT`. Překryvy i více
 samostatných nebo zdánlivě duplicitních pobytů jsou povoleny; model nemá
 vlastní unikátní constraint ani dodatečný explicitní index.
 
-Neaktivní existující typ je na modelové vrstvě přípustný. Pravidla zápisu,
-služby, selectory, oprávněné čtení, zdroje, přílohy a uživatelské rozhraní
-zatím nejsou implementovány.
+Neaktivní existující typ je na modelové vrstvě přípustný. Samotný krok
+M2.6b ještě neimplementoval pravidla zápisu, služby, selectory, oprávněné
+čtení, zdroje, přílohy ani uživatelské rozhraní.
+
+M2.6c zavádí v `places.services` transakční zápisové API
+`create_residence()` a `update_residence()` nad frozen slotted
+`ResidenceInput`. Vstup je úplný snapshot editovatelných údajů, nikoli
+částečný patch. Při aktualizaci lze opravit osobu, typ, místo, texty,
+přístup, ověření i historické datum; `place=None` strukturované místo
+odstraní. Autor vytvoření a lifecycle metadata se nemění.
+
+Služby načítají aktuální databázový stav osoby, typu, volitelného místa,
+autora a při update samotného Residence. Nový záznam ani přechod nesmí
+použít neaktivní typ, ale existující neaktivní typ lze zachovat. Archivované
+i měkce odstraněné stále existující osoby a místa jsou na této zápisové
+vrstvě přípustné; oprávnění se zde neposuzují. Archivovaný Residence lze
+upravit, měkce odstraněný nikoli.
+
+Okrajové mezery se odstraňují z `address_text`, `note`,
+`original_date_text` a `date_note`. Každý zápis probíhá v
+`transaction.atomic()`, používá `full_clean()` před `save()` a update zamyká
+aktuální Residence pomocí `select_for_update()`. Služba nededuplikuje a
+obecný `IntegrityError` nepřevádí. Selectory a oprávněné čtení bydlišť
+zůstávají pro další krok.
 
 ## 10. Fotografie
 

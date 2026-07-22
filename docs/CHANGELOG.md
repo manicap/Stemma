@@ -1,5 +1,21 @@
 # Historie změn dokumentace
 
+## Verze 0.26 – 22. 7. 2026
+
+- přidán frozen slotted úplný snapshot `places.services.ResidenceInput` a
+  keyword-only služby `create_residence()` a `update_residence()`,
+- služby načítají čerstvý databázový stav všech FK, normalizují okrajové
+  mezery textů a atomicky volají `full_clean()` před `save()`,
+- update používá `select_for_update()`, může změnit osobu, typ i místo, ale
+  zachovává `created_by`, vytvoření a lifecycle metadata,
+- nový záznam ani přechod nesmí použít neaktivní typ; existující neaktivní
+  typ lze podle PK zachovat, archivovaný Residence lze upravit a měkce
+  odstraněný nikoli,
+- služba nededuplikuje ani nemapuje obecný `IntegrityError`; doplněny testy
+  validace, stale instancí, rollbacků a absence vedlejších zápisů,
+- M2.6c nemění modely ani migrace; selectory a oprávněné čtení bydlišť
+  zůstávají pro navazující krok.
+
 ## Verze 0.25 – 22. 7. 2026
 
 - implementován `places.Residence` pro jeden souvislý pobyt povinné osoby

@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.17
+**Verze:** 0.18
 **Stav:** koncept  
 **Datum revize:** 22. 7. 2026
 
@@ -535,8 +535,31 @@ index, takže dovoluje více období i zdánlivě duplicitní tvrzení. Řazení
 `person_id`, `sort_date`, `sort_date_end`, `residence_type__sort_order`,
 `pk`.
 
-Služby a selectory bydlišť zatím nejsou implementované. Budoucí propojení
-se zdroji a přílohami zůstává součástí navazujících milníků.
+Samotný krok M2.6b ještě neimplementoval služby ani selectory bydlišť.
+Budoucí propojení se zdroji a přílohami zůstává součástí navazujících
+milníků.
+
+M2.6c přidává `places.services.ResidenceInput` jako úplný frozen slotted
+snapshot polí `person`, `residence_type`, `place`, `address_text`, `note`,
+`access_level`, `verification_status`, všech zdrojových polí
+`PartialDateModel`, `original_date_text` a `date_note`. Technická, autorská
+a lifecycle pole ve vstupu nejsou.
+
+`create_residence(*, data, created_by=None)` a
+`update_residence(*, residence, data)` jsou keyword-only transakční služby.
+Obě používají čerstvé databázové FK, normalizují okrajové mezery čtyř
+textových polí a před uložením volají `full_clean()`. Update je úplná náhrada
+editovatelných hodnot, smí změnit osobu i typ a `place=None` odstraní místo,
+ale zachovává `created_by`, vytvoření a lifecycle. Aktuální Residence se při
+update načítá přes `select_for_update()`.
+
+Nový Residence vyžaduje aktivní typ. Stejný neaktivní typ lze při update
+zachovat, přechod na jiný neaktivní typ je zakázán a přechod na aktivní typ
+je povolen; porovnává se PK aktuálního databázového typu. Měkce odstraněný
+Residence nelze upravit, archivovaný ano. Lifecycle osoby a místa tato
+služba nefiltruje. Služba nemá deduplikační pravidlo ani mapování obecného
+`IntegrityError`. M2.6c nemění model ani migrace a selectory bydlišť zatím
+nejsou implementované.
 
 ## 7. Hrobové místo
 
