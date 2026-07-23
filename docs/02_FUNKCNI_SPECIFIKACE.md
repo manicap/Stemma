@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.20
+**Verze:** 0.21
 **Stav:** pracovní návrh  
 **Datum revize:** 23. 7. 2026
 
@@ -571,6 +571,20 @@ jsou přípustné a status místa možnost propojení neomezuje.
 Služby nekontrolují kompatibilitu typu místa s rolí, nepárují směrové role,
 nededuplikují a nemapují obecný `IntegrityError`. Selectory, autorizované
 čtení, lifecycle služby a události zůstávají pro další kroky.
+
+M2.7e-1 přidává bezparametrový `get_grave_sites()` jako nízkoúrovňový
+interní permissionless selector. Vrací lazy `QuerySet[GraveSite]` všech
+záznamů s `deleted_at IS NULL`, včetně archivovaných, zaniklých,
+neověřených, neveřejných a záznamů s neaktivním nebo uživatelským typem.
+Selector nemá actor, nevolá permission policy a nesmí být přímo použit
+jako veřejný HTTP, API nebo exportní výstup.
+
+Výsledek zachovává modelové řazení podle hřbitova, oddílu, řady, čísla a
+PK. Pomocí `select_related()` načítá typ, volitelné `Place` a autora v
+jednom konstantním dotazovém profilu. Nevaliduje historické řádky,
+neprefetchuje `PersonGraveSite`, nepočítá osoby a nic nezapisuje.
+Permissionless selectory vazeb vzniknou v M2.7e-2 a autorizované selectory
+později.
 
 ## 14. Viditelnost a zamčený obsah
 

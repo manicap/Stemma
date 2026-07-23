@@ -25,7 +25,11 @@ class ResidenceSelectorApiTests(SimpleTestCase):
     def test_module_exports_only_approved_public_api(self) -> None:
         self.assertEqual(
             selectors.__all__,
-            ("get_person_residences", "get_visible_person_residences"),
+            (
+                "get_grave_sites",
+                "get_person_residences",
+                "get_visible_person_residences",
+            ),
         )
         self.assertIs(
             selectors.get_person_residences,

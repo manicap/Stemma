@@ -10,9 +10,13 @@ from common.choices import AccessLevel
 from common.permissions import can_view_access_level
 from people.models import Person
 
-from .models import Residence
+from .models import GraveSite, Residence
 
-__all__ = ("get_person_residences", "get_visible_person_residences")
+__all__ = (
+    "get_grave_sites",
+    "get_person_residences",
+    "get_visible_person_residences",
+)
 
 _ACCESS_LEVELS = (
     AccessLevel.PUBLIC,
@@ -74,6 +78,18 @@ def _is_person_visible(
         access_visibility[person.access_level]
         and (person.archived_at is None or can_view_archived)
         and (person.deleted_at is None or can_view_deleted)
+    )
+
+
+def get_grave_sites() -> QuerySet[GraveSite]:
+    """Vrať úplný permissionless katalog nesmazaných hrobových míst."""
+
+    return GraveSite.objects.filter(
+        deleted_at__isnull=True,
+    ).select_related(
+        "grave_site_type",
+        "place",
+        "created_by",
     )
 
 

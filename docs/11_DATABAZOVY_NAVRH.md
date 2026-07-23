@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.29
+**Verze:** 0.30
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 23. 7. 2026
 
@@ -1590,6 +1590,36 @@ Služby nevytvářejí kompatibilitní matici role a typu, automatické párová
 `remains_relocated_from` a `remains_relocated_to`, unikátnost, deduplikaci
 ani mapování obecného `IntegrityError`. Nevzniká migrace, selector,
 autorizované čtení, lifecycle služba ani permission policy.
+
+M2.7e-1 přidává nízkoúrovňový globální selector:
+
+```python
+def get_grave_sites() -> QuerySet[GraveSite]:
+    return GraveSite.objects.filter(
+        deleted_at__isnull=True,
+    ).select_related(
+        "grave_site_type",
+        "place",
+        "created_by",
+    )
+```
+
+Selector nemá vstupní objekt ani actor a vrací lazy `QuerySet`. Jediným
+filtrem je vyloučení soft-deleted řádků. Archivované `GraveSite`, statusy
+`existing`, `destroyed` a `unknown`, všechny access a verification hodnoty
+a aktivní, neaktivní, systémové i uživatelské typy jsou součástí
+výsledku. Jde o interní permissionless vrstvu, která nesmí být bez vyšší
+autorizace použita jako veřejný HTTP, API nebo exportní výstup.
+
+Řazení přebírá `GraveSite.Meta.ordering`: `cemetery_name`, `section`,
+`row`, `grave_number`, `pk`. `select_related()` načítá povinný typ,
+volitelné `Place` a autora v jediném SELECTu; profil je konstantní pro
+jeden i více výsledků. Samotné sestavení QuerySetu databázi nevyhodnotí.
+
+Selector znovu nevolá modelovou validaci a vrací i historicky nevalidní,
+ale nesmazaný řádek. Nepoužívá `prefetch_related()`, nenačítá
+`person_links`, nepočítá osoby a nemění žádný objekt. Nevzniká migrace,
+selector vazeb, autorizované čtení ani permission policy.
 
 ## 11. Přílohy
 

@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.25
+**Verze:** 0.26
 **Stav:** koncept  
 **Datum revize:** 23. 7. 2026
 
@@ -771,6 +771,20 @@ měkce odstraněná osoba a `GraveSite` jsou povolené a fyzický status místa
 se nefiltruje. Služby nemají compatibility matici role a typu, automatické
 párování přesunových rolí, deduplikaci ani mapování obecného
 `IntegrityError`. Selectory a autorizované čtení vzniknou později.
+
+M2.7e-1 přidává `get_grave_sites() -> QuerySet[GraveSite]` bez parametrů.
+Jde o lazy interní permissionless katalog filtrovaný pouze podmínkou
+`deleted_at IS NULL`. Archivované záznamy, všechny `GraveSiteStatus`,
+`AccessLevel`, `VerificationStatus` a aktivní, neaktivní, systémové i
+uživatelské `GraveSiteType` zůstávají zahrnuté.
+
+Selector spoléhá na modelové ordering `cemetery_name`, `section`, `row`,
+`grave_number`, `pk` a používá `select_related("grave_site_type", "place",
+"created_by")`. Samotné zavolání neprovádí SELECT a materializace má jeden
+dotaz bez N+1 bez ohledu na počet míst. Selector neprovádí `full_clean()`,
+takže vrací i historicky nevalidní nesmazaný řádek, a nenačítá
+`person_links`. Nemění modely ani migrace; selectory `PersonGraveSite` a
+autorizované čtení následují později.
 
 ## 8. Příloha
 

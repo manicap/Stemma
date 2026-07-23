@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 0.34 – 23. 7. 2026
+
+- přidán bezparametrový permissionless `get_grave_sites()` vracející lazy
+  `QuerySet[GraveSite]`,
+- selector vylučuje pouze `deleted_at IS NOT NULL` a zahrnuje archivované,
+  zaniklé, neveřejné a neověřené záznamy i aktivní, neaktivní, systémové a
+  uživatelské typy,
+- zachováno modelové řazení podle hřbitova, oddílu, řady, čísla a PK,
+- `select_related()` pro typ, `Place` a autora zajišťuje jeden konstantní
+  SELECT bez N+1; samotné zavolání zůstává lazy,
+- selector nevaliduje historické řádky, neprefetchuje vazby osob, nevolá
+  permission policy a nic nezapisuje,
+- doplněny testy API, lifecycle, statusů, access, verification, typů,
+  lokalizací, řazení, laziness, query profilu a neměnnosti,
+- nevznikla migrace, selector `PersonGraveSite`, autorizované čtení ani
+  ACP.
+
 ## Verze 0.33 – 23. 7. 2026
 
 - přidán frozen slotted úplný snapshot `PersonGraveSiteInput` a
