@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.16
+**Verze:** 0.17
 **Stav:** pracovní návrh  
 **Datum revize:** 22. 7. 2026
 
@@ -504,6 +504,26 @@ Systémové role propojení osoby jsou `buried`, `urn_placed`,
 zatímco role `commemorated` vztah konkrétní osoby k němu. Směrové role
 přemístění rozlišují původní a cílové místo; samotné propojení konkrétního
 přesunu v M2.7a nevzniká.
+
+M2.7b implementuje `GraveSite` jako jeden konkrétní fyzický nebo pamětní
+objekt. Není obecným `Place`, pohřební událostí ani vazbou osoby. Povinně
+odkazuje na `GraveSiteType` a používá fyzický `GraveSiteStatus`; volitelný
+`Place` představuje širší strukturovanou lokalitu.
+
+Objekt může současně obsahovat textovou lokalitu, název hřbitova, oddíl,
+řadu, číslo hrobu, přepis nápisu, přesné souřadnice a poznámku. Alespoň
+jedna lokalizace musí být určena pomocí `Place`, neprázdného
+`location_text`, neprázdného `cemetery_name` nebo úplné dvojice souřadnic.
+Textové hodnoty tvořené jen whitespace se nepovažují za lokalizaci.
+Zeměpisná šířka a délka musí být zadány společně a respektovat rozsahy
+-90 až 90 a -180 až 180.
+
+`GraveSite` používá přístup, ověření, autora, timestamp a lifecycle, ale
+nemá vlastní `PartialDateModel`. Datum pohřbu, vzniku památníku nebo přesunu
+není vlastností tohoto objektu. Fyzický status se nemění automaticky s
+archivací nebo měkkým odstraněním. Model nepoužívá unikátnost lokalizačních
+údajů ani deduplikaci; typ a `Place` jsou chráněny přes `PROTECT`.
+`PersonGraveSite`, služby a selectory vzniknou až v dalších krocích.
 
 ## 14. Viditelnost a zamčený obsah
 

@@ -1,5 +1,25 @@
 # Historie změn dokumentace
 
+## Verze 0.30 – 23. 7. 2026
+
+- přidán konkrétní `places.GraveSite` pro jeden fyzický nebo pamětní
+  objekt, oddělený od obecného `Place`, událostí a budoucí vazby osoby,
+- model dědí timestamp, access, verification, author a lifecycle metadata,
+  ale záměrně nepoužívá `PartialDateModel`,
+- přidán povinný chráněný typ, fyzický status, volitelný chráněný `Place`,
+  textová lokalita, hřbitov, oddíl, řada, číslo, nápis, souřadnice a
+  poznámka,
+- lokalizační validace vyžaduje alespoň strukturovanou či textovou
+  lokalitu nebo úplnou dvojici souřadnic; souřadnice se kontrolují na
+  úplnost a zeměpisné rozsahy,
+- model dovoluje neaktivní i uživatelský typ, nemá unikátnost, deduplikaci
+  ani explicitní index a zachovává nezávislost statusu, ověření a
+  lifecycle,
+- přidána lokální admin konfigurace, strukturální migrace
+  `places.0008_gravesite` a testy struktury, validace, `PROTECT`, duplicit,
+  lifecycle a obranného textového výstupu; `PersonGraveSite`, služby,
+  selectory a permissions zůstávají pro navazující kroky.
+
 ## Verze 0.29 – 22. 7. 2026
 
 - zahájen M2.7 potvrzením budoucích modelů `GraveSite` a

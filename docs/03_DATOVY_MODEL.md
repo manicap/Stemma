@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.21
+**Verze:** 0.22
 **Stav:** koncept  
 **Datum revize:** 22. 7. 2026
 
@@ -664,6 +664,38 @@ výchozí a cílové místo bez automatického párování. Strukturální migra
 `places.0006_grave_site_lookups` vytváří oba číselníky a datová
 `places.0007_initial_grave_site_lookups` plní systémové hodnoty po společné
 kontrole kolizí.
+
+M2.7b vytváří konkrétní model `GraveSite` v tomto pořadí dědičnosti:
+`TimestampedModel`, `AccessControlledModel`, `VerifiableModel`,
+`AuthoredModel`, `LifecycleModel`, `models.Model`. `PartialDateModel`
+záměrně nepoužívá, protože datum pohřbu, přesunu nebo vzniku památníku
+patří do budoucí vazby či události.
+
+Vlastní pole modelu jsou:
+
+- povinné `grave_site_type` → `GraveSiteType` s `PROTECT` a
+  `related_name="grave_sites"`,
+- `status` jako `GraveSiteStatus` s výchozí hodnotou `unknown`,
+- volitelné `place` → `Place` s `PROTECT`,
+  `related_name="grave_sites"`, `null=True` a `blank=True`,
+- `location_text` délky 500,
+- `cemetery_name` délky 255,
+- `section`, `row` a `grave_number` délky 100,
+- `inscription` a `note` jako nepovinné texty,
+- volitelné `latitude` a `longitude` jako desetinná čísla se šesti
+  desetinnými místy.
+
+Validní záznam vyžaduje alespoň `place`, neprázdný `location_text`,
+neprázdný `cemetery_name` nebo úplnou dvojici souřadnic. Neúplná dvojice
+souřadnic je neplatná; šířka musí být mezi -90 a 90 a délka mezi -180 a
+180. Strukturované a textové lokalizační údaje se mohou kombinovat a
+model při uložení text automaticky nestripuje.
+
+Model nemá vlastní `UniqueConstraint`, explicitní index ani deduplikaci.
+Řadí se podle `cemetery_name`, `section`, `row`, `grave_number`, `pk`.
+Fyzický `status`, důvěryhodnost a lifecycle zůstávají nezávislé.
+Strukturální migrace je `places.0008_gravesite`; `PersonGraveSite`,
+služby, selectory a oprávnění M2.7b nevytváří.
 
 ## 8. Příloha
 

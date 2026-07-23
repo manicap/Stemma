@@ -12,6 +12,8 @@ from common.models import (
 )
 from people.models import Person
 
+from .choices import GraveSiteStatus
+
 
 class PlaceType(LookupModel):
     """Typ geografického nebo fyzického místa."""
@@ -202,6 +204,193 @@ class Place(
 
     def __str__(self) -> str:
         return self.name
+
+
+class GraveSite(
+    TimestampedModel,
+    AccessControlledModel,
+    VerifiableModel,
+    AuthoredModel,
+    LifecycleModel,
+    models.Model,
+):
+    """Jedno konkrétní hrobové, pohřební nebo pamětní místo."""
+
+    grave_site_type = models.ForeignKey(
+        GraveSiteType,
+        on_delete=models.PROTECT,
+        related_name="grave_sites",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=GraveSiteStatus.choices,
+        default=GraveSiteStatus.UNKNOWN,
+    )
+    place = models.ForeignKey(
+        Place,
+        on_delete=models.PROTECT,
+        related_name="grave_sites",
+        null=True,
+        blank=True,
+    )
+    location_text = models.CharField(
+        max_length=500,
+        blank=True,
+    )
+    cemetery_name = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+    section = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+    row = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+    grave_number = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+    inscription = models.TextField(
+        blank=True,
+    )
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+    note = models.TextField(
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = "Hrobové nebo pamětní místo"
+        verbose_name_plural = "Hrobová a pamětní místa"
+        ordering = (
+            "cemetery_name",
+            "section",
+            "row",
+            "grave_number",
+            "pk",
+        )
+
+    def clean(self) -> None:
+        errors: dict[str, list[ValidationError]] = {}
+
+        try:
+            super().clean()
+        except ValidationError as exc:
+            if hasattr(exc, "error_dict"):
+                for field_name, field_errors in exc.error_dict.items():
+                    errors.setdefault(field_name, []).extend(field_errors)
+            else:
+                errors.setdefault(NON_FIELD_ERRORS, []).extend(
+                    exc.error_list
+                )
+
+        def add_error(
+            field_name: str,
+            message: str,
+            code: str,
+        ) -> None:
+            errors.setdefault(field_name, []).append(
+                ValidationError(message, code=code)
+            )
+
+        has_latitude = self.latitude is not None
+        has_longitude = self.longitude is not None
+        has_coordinates = has_latitude and has_longitude
+        has_text_location = any(
+            (value or "").strip()
+            for value in (self.location_text, self.cemetery_name)
+        )
+
+        if (
+            self.place_id is None
+            and not has_text_location
+            and not has_coordinates
+        ):
+            add_error(
+                "location_text",
+                "Hrobové nebo pamětní místo musí mít uvedenou lokalitu.",
+                "grave_site_location_required",
+            )
+
+        if has_latitude != has_longitude:
+            missing_field = "longitude" if has_latitude else "latitude"
+            add_error(
+                missing_field,
+                "Zeměpisná šířka a délka musí být zadány společně.",
+                "grave_site_coordinates_incomplete",
+            )
+
+        if has_latitude and not -90 <= self.latitude <= 90:
+            add_error(
+                "latitude",
+                "Zeměpisná šířka musí být v rozsahu -90 až 90.",
+                "grave_site_latitude_out_of_range",
+            )
+
+        if has_longitude and not -180 <= self.longitude <= 180:
+            add_error(
+                "longitude",
+                "Zeměpisná délka musí být v rozsahu -180 až 180.",
+                "grave_site_longitude_out_of_range",
+            )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self) -> str:
+        location = (self.cemetery_name or "").strip()
+        if not location:
+            location = (self.location_text or "").strip()
+        if not location:
+            try:
+                location = (
+                    str(self.place).strip()
+                    if self.place is not None
+                    else ""
+                )
+            except Place.DoesNotExist:
+                location = ""
+        if (
+            not location
+            and self.latitude is not None
+            and self.longitude is not None
+        ):
+            location = f"{self.latitude}, {self.longitude}"
+        if not location:
+            location = "Hrobové nebo pamětní místo"
+
+        identifiers = []
+        for label, value in (
+            ("oddíl", self.section),
+            ("řada", self.row),
+            ("hrob", self.grave_number),
+        ):
+            clean_value = (value or "").strip()
+            if clean_value:
+                identifiers.append(f"{label} {clean_value}")
+        if identifiers:
+            location = f"{location} – {', '.join(identifiers)}"
+
+        try:
+            grave_site_type = str(self.grave_site_type).strip()
+        except GraveSiteType.DoesNotExist:
+            grave_site_type = ""
+        if grave_site_type:
+            return f"{location} – {grave_site_type}"
+        return location
 
 
 class Residence(

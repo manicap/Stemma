@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.25
+**Verze:** 0.26
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 22. 7. 2026
 
@@ -1388,6 +1388,70 @@ kolize schválených kódů v obou tabulkách. Po úspěchu idempotentně vytvo�
 nebo opraví systémové hodnoty. Reverse odstraní jen schválené kódy, které
 jsou stále `is_system=True`.
 
+M2.7b přidává hlavní model:
+
+```python
+class GraveSite(
+    TimestampedModel,
+    AccessControlledModel,
+    VerifiableModel,
+    AuthoredModel,
+    LifecycleModel,
+    models.Model,
+):
+    ...
+```
+
+Jeden řádek představuje jeden konkrétní fyzický nebo pamětní objekt.
+`GraveSite` není obecné geografické `Place`, událost ani vazba osoby a
+nepoužívá `PartialDateModel`. Datum pohřbu, přemístění ostatků nebo vzniku
+památníku patří do budoucího spojení či události.
+
+Povinné `grave_site_type` používá `PROTECT` a
+`related_name="grave_sites"`. `status` je `CharField(max_length=20)` s
+`GraveSiteStatus.choices` a defaultem `unknown`. Volitelné `place` také
+používá `PROTECT`, `related_name="grave_sites"`, `null=True` a
+`blank=True`.
+
+Lokalizační a popisná pole jsou:
+
+| Pole | Typ | Význam |
+|---|---|---|
+| `location_text` | `CharField(500, blank=True)` | Historická nebo neformální textová lokalita. |
+| `cemetery_name` | `CharField(255, blank=True)` | Název hřbitova nebo areálu. |
+| `section` | `CharField(100, blank=True)` | Oddíl včetně alfanumerického značení. |
+| `row` | `CharField(100, blank=True)` | Řada včetně alfanumerického značení. |
+| `grave_number` | `CharField(100, blank=True)` | Číslo nebo jiné označení místa. |
+| `inscription` | `TextField(blank=True)` | Přepis nápisu. |
+| `latitude` | `DecimalField(9, 6, null=True, blank=True)` | Přesná šířka objektu. |
+| `longitude` | `DecimalField(9, 6, null=True, blank=True)` | Přesná délka objektu. |
+| `note` | `TextField(blank=True)` | Interní nebo doplňující poznámka. |
+
+Alespoň jeden z údajů `place`, neprázdný `location_text`, neprázdný
+`cemetery_name` nebo úplná dvojice souřadnic musí být přítomen. Whitespace
+se při validaci nepovažuje za lokalizaci, ale `save()` text automaticky
+nestripuje. Chybějící lokalizace používá `location_text` a kód
+`grave_site_location_required`.
+
+Souřadnice musí být vyplněny společně. Neúplnost používá chybějící pole a
+kód `grave_site_coordinates_incomplete`; šířka respektuje -90 až 90 a
+délka -180 až 180. Souřadnice GraveSite mohou být přesnější než
+souřadnice nadřazeného `Place`.
+
+Model dovoluje neaktivní i uživatelský typ. Nevytváří unikátnost kombinace
+hřbitova, oddílu, řady a čísla, žádný jiný `UniqueConstraint`, deduplikaci
+ani explicitní index. Řazení je `cemetery_name`, `section`, `row`,
+`grave_number`, `pk`. `__str__` používá v pořadí hřbitov, textovou
+lokalitu, `Place`, souřadnice a neutrální fallback, doplněné identifikátory
+a čitelným typem.
+
+`status` popisuje fyzický stav. `verification_status`, `archived_at` a
+`deleted_at` zůstávají samostatné dimenze a navzájem se automaticky
+nemění. Model vzniká jedinou strukturální migrací
+`places.0008_gravesite`, která kvůli zděděným uživatelským FK používá
+swappable dependency na User. M2.7b nevytváří datovou migraci,
+`PersonGraveSite`, služby, selectory ani permissions.
+
 Propojení osoby s hrobovým místem je samostatný model a určuje například:
 
 - pohřbena,
@@ -1682,6 +1746,7 @@ Následující plánované migrace začínají:
 ```text
 places.0006_grave_site_lookups
 places.0007_initial_grave_site_lookups
+places.0008_gravesite
 materials.0001_attachment_lookups
 materials.0002_attachments
 materials.0003_attachment_links
@@ -1695,8 +1760,8 @@ accounts.0004_user_profile_person_link
 ```
 
 Datové migrace základních číselníků budou malé a rozdělené podle aplikací.
-Budoucí `GraveSite` a `PersonGraveSite` vzniknou v dalších samostatných
-migracích po katalogovém kroku M2.7a.
+Budoucí `PersonGraveSite` vznikne v další samostatné migraci po hlavním
+objektu M2.7b.
 
 ## 19. Hlavní technická rizika
 

@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    GraveSite,
     GraveSiteType,
     PersonGraveSiteRole,
     Place,
@@ -64,6 +65,41 @@ class PersonGraveSiteRoleAdmin(admin.ModelAdmin):
     list_filter = (
         "is_active",
         "is_system",
+    )
+
+
+@admin.register(GraveSite)
+class GraveSiteAdmin(admin.ModelAdmin):
+    list_display = (
+        "grave_site_type",
+        "cemetery_name",
+        "place",
+        "section",
+        "row",
+        "grave_number",
+        "status",
+        "access_level",
+        "verification_status",
+        "archived_at",
+        "deleted_at",
+    )
+    list_filter = (
+        "grave_site_type",
+        "status",
+        "access_level",
+        "verification_status",
+        "archived_at",
+        "deleted_at",
+    )
+    search_fields = (
+        "cemetery_name",
+        "location_text",
+        "place__name",
+        "section",
+        "row",
+        "grave_number",
+        "inscription",
+        "note",
     )
 
 
