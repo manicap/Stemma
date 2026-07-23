@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.21
+**Verze:** 0.22
 **Stav:** pracovní návrh  
 **Datum revize:** 23. 7. 2026
 
@@ -583,8 +583,32 @@ Výsledek zachovává modelové řazení podle hřbitova, oddílu, řady, čísl
 PK. Pomocí `select_related()` načítá typ, volitelné `Place` a autora v
 jednom konstantním dotazovém profilu. Nevaliduje historické řádky,
 neprefetchuje `PersonGraveSite`, nepočítá osoby a nic nezapisuje.
-Permissionless selectory vazeb vzniknou v M2.7e-2 a autorizované selectory
-později.
+Permissionless selectory vazeb doplňuje M2.7e-2 a autorizované selectory
+vzniknou později.
+
+M2.7e-2 přidává keyword-only
+`get_person_grave_site_links(*, person)` a
+`get_grave_site_person_links(*, grave_site)`. Oba vracejí lazy
+`QuerySet[PersonGraveSite]` úplné interní historie nesmazaných vazeb
+zadané osoby nebo místa. Vstup musí mít PK a existující databázový řádek;
+jinak vznikne `person_unsaved` nebo `grave_site_unsaved`. Archivace,
+měkké odstranění ani fyzický status existujícího vstupu nejsou důvodem k
+odmítnutí.
+
+Vazby se filtrují pouze přes `deleted_at IS NULL`. Archivované vazby,
+vazby na archivovanou či měkce odstraněnou protistranu, všechny access a
+verification hodnoty, aktivní, neaktivní, systémové i uživatelské role,
+více rolí i duplicitní tvrzení zůstávají zahrnuté. Selectory nevolají
+modelovou validaci ani permission policy a nesmějí být přímo veřejným
+HTTP, API nebo exportním výstupem.
+
+Přehled osoby se řadí podle hřbitova, oddílu, řady, čísla, ID místa,
+pořadí a názvu role a PK vazby. Přehled místa se řadí podle ID osoby,
+pořadí a názvu role a PK vazby. `select_related()` načítá osobu, místo,
+typ místa, volitelné `Place`, roli a autora. Každé volání má jeden
+validační `exists()` dotaz a jeden lazy SELECT při materializaci bez N+1.
+Nevzniká deduplikace, zápis ani migrace; autorizované varianty následují
+v M2.7f.
 
 ## 14. Viditelnost a zamčený obsah
 

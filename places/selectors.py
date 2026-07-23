@@ -10,10 +10,12 @@ from common.choices import AccessLevel
 from common.permissions import can_view_access_level
 from people.models import Person
 
-from .models import GraveSite, Residence
+from .models import GraveSite, PersonGraveSite, Residence
 
 __all__ = (
+    "get_grave_site_person_links",
     "get_grave_sites",
+    "get_person_grave_site_links",
     "get_person_residences",
     "get_visible_person_residences",
 )
@@ -34,6 +36,18 @@ def _person_unsaved_error() -> ValidationError:
             "person": ValidationError(
                 "Osoba musí být uložená a existovat v databázi.",
                 code="person_unsaved",
+            )
+        }
+    )
+
+
+def _grave_site_unsaved_error() -> ValidationError:
+    return ValidationError(
+        {
+            "grave_site": ValidationError(
+                "Hrobové nebo pamětní místo musí být uložené a existovat "
+                "v databázi.",
+                code="grave_site_unsaved",
             )
         }
     )
@@ -90,6 +104,75 @@ def get_grave_sites() -> QuerySet[GraveSite]:
         "grave_site_type",
         "place",
         "created_by",
+    )
+
+
+def get_person_grave_site_links(
+    *,
+    person: Person,
+) -> QuerySet[PersonGraveSite]:
+    """Vrať úplnou permissionless historii vazeb osoby na hrobová místa."""
+
+    if person.pk is None or not Person.objects.filter(pk=person.pk).exists():
+        raise _person_unsaved_error()
+
+    return (
+        PersonGraveSite.objects.filter(
+            person_id=person.pk,
+            deleted_at__isnull=True,
+        )
+        .select_related(
+            "person",
+            "grave_site",
+            "grave_site__grave_site_type",
+            "grave_site__place",
+            "role",
+            "created_by",
+        )
+        .order_by(
+            "grave_site__cemetery_name",
+            "grave_site__section",
+            "grave_site__row",
+            "grave_site__grave_number",
+            "grave_site_id",
+            "role__sort_order",
+            "role__name",
+            "pk",
+        )
+    )
+
+
+def get_grave_site_person_links(
+    *,
+    grave_site: GraveSite,
+) -> QuerySet[PersonGraveSite]:
+    """Vrať úplnou permissionless historii osob jednoho hrobového místa."""
+
+    if (
+        grave_site.pk is None
+        or not GraveSite.objects.filter(pk=grave_site.pk).exists()
+    ):
+        raise _grave_site_unsaved_error()
+
+    return (
+        PersonGraveSite.objects.filter(
+            grave_site_id=grave_site.pk,
+            deleted_at__isnull=True,
+        )
+        .select_related(
+            "person",
+            "grave_site",
+            "grave_site__grave_site_type",
+            "grave_site__place",
+            "role",
+            "created_by",
+        )
+        .order_by(
+            "person_id",
+            "role__sort_order",
+            "role__name",
+            "pk",
+        )
     )
 
 

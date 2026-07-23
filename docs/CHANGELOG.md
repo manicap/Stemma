@@ -1,5 +1,28 @@
 # Historie změn dokumentace
 
+## Verze 0.35 – 23. 7. 2026
+
+- přidány keyword-only permissionless selectory
+  `get_person_grave_site_links(*, person)` a
+  `get_grave_site_person_links(*, grave_site)` vracející lazy
+  `QuerySet[PersonGraveSite]`,
+- vstupní osoba nebo hrobové místo musí mít PK a existující databázový
+  řádek; chyby používají `person_unsaved` a `grave_site_unsaved`,
+- lifecycle a status existujícího vstupu ani protistrany se nefiltrují;
+  z výsledku se vylučují pouze měkce odstraněné vazby,
+- zahrnuty archivované vazby, všechny access a verification hodnoty,
+  aktivní, neaktivní, systémové i uživatelské role, více rolí a duplicitní
+  tvrzení,
+- doplněno deterministické řazení podle místa nebo osoby, role a PK,
+- `select_related()` pro osobu, místo, typ místa, `Place`, roli a autora
+  zachovává po validačním `exists()` jeden lazy SELECT bez N+1,
+- selectory nemají actor, nevolají permission policy ani modelovou
+  revalidaci, nededuplikují a nic nezapisují,
+- doplněny testy API, vstupních chyb, lifecycle, access, verification,
+  rolí, typů, statusů, řazení, laziness, query profilu a neměnnosti,
+- nevznikla migrace, autorizovaný selector ani ACP; autorizované varianty
+  následují v M2.7f.
+
 ## Verze 0.34 – 23. 7. 2026
 
 - přidán bezparametrový permissionless `get_grave_sites()` vracející lazy

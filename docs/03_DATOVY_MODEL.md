@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.26
+**Verze:** 0.27
 **Stav:** koncept  
 **Datum revize:** 23. 7. 2026
 
@@ -783,8 +783,33 @@ Selector spoléhá na modelové ordering `cemetery_name`, `section`, `row`,
 "created_by")`. Samotné zavolání neprovádí SELECT a materializace má jeden
 dotaz bez N+1 bez ohledu na počet míst. Selector neprovádí `full_clean()`,
 takže vrací i historicky nevalidní nesmazaný řádek, a nenačítá
-`person_links`. Nemění modely ani migrace; selectory `PersonGraveSite` a
-autorizované čtení následují později.
+`person_links`. Nemění modely ani migrace; selectory `PersonGraveSite`
+doplňuje M2.7e-2 a autorizované čtení následuje později.
+
+M2.7e-2 zavádí dva interní permissionless selectory:
+`get_person_grave_site_links(*, person)` a
+`get_grave_site_person_links(*, grave_site)`. Oba vracejí lazy
+`QuerySet[PersonGraveSite]`, který omezuje vazby na zadaný FK a
+`deleted_at IS NULL`. Vstupní objekt se ověřuje jedním `exists()` dotazem;
+chybějící PK nebo fyzicky neexistující řádek používá `person_unsaved`,
+respektive `grave_site_unsaved`.
+
+Lifecycle existujícího vstupu ani protistrany se nefiltruje. Výsledek tak
+zahrnuje archivované vazby a vazby na archivované nebo měkce odstraněné
+osoby či `GraveSite`, ale nikoli měkce odstraněnou samotnou vazbu. Status
+místa, aktivita nebo systémovost typu a role, `AccessLevel` a
+`VerificationStatus` výběr nemění. Duplicitní tvrzení a více rolí se
+vracejí samostatně bez `distinct()` a bez modelové revalidace.
+
+Přehled osoby používá ordering `grave_site__cemetery_name`,
+`grave_site__section`, `grave_site__row`, `grave_site__grave_number`,
+`grave_site_id`, `role__sort_order`, `role__name`, `pk`. Přehled místa
+používá `person_id`, `role__sort_order`, `role__name`, `pk`; nevytváří
+join přes `PersonName`. Oba selectory načítají `person`, `grave_site`,
+`grave_site__grave_site_type`, `grave_site__place`, `role` a `created_by`
+přes `select_related()`. Výsledný SELECT zůstává lazy a po validačním
+dotazu se provede jednou bez N+1. Selectory nemají actor, nic nezapisují,
+nemění modely ani migrace a autorizované varianty vzniknou v M2.7f.
 
 ## 8. Příloha
 

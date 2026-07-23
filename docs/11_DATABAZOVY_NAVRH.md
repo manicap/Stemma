@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.30
+**Verze:** 0.31
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 23. 7. 2026
 
@@ -1619,7 +1619,71 @@ jeden i více výsledků. Samotné sestavení QuerySetu databázi nevyhodnotí.
 Selector znovu nevolá modelovou validaci a vrací i historicky nevalidní,
 ale nesmazaný řádek. Nepoužívá `prefetch_related()`, nenačítá
 `person_links`, nepočítá osoby a nemění žádný objekt. Nevzniká migrace,
-selector vazeb, autorizované čtení ani permission policy.
+autorizované čtení ani permission policy.
+
+M2.7e-2 doplňuje dva nízkoúrovňové selectory vazeb:
+
+```python
+def get_person_grave_site_links(
+    *,
+    person: Person,
+) -> QuerySet[PersonGraveSite]:
+    ...
+
+
+def get_grave_site_person_links(
+    *,
+    grave_site: GraveSite,
+) -> QuerySet[PersonGraveSite]:
+    ...
+```
+
+Oba vstupy jsou keyword-only. Chybějící PK nebo fyzicky neexistující
+databázový řádek vyvolá `ValidationError` s klíčem `person` a kódem
+`person_unsaved`, respektive klíčem `grave_site` a kódem
+`grave_site_unsaved`. Každé úspěšné volání provede právě jeden
+`exists()` dotaz. Archivovaný nebo měkce odstraněný vstup se přijímá;
+u `GraveSite` se nefiltruje ani `status`.
+
+Výsledný `QuerySet[PersonGraveSite]` filtruje pouze zadaný FK a
+`deleted_at IS NULL`. Archivované vazby, vazby na archivovanou nebo měkce
+odstraněnou protistranu, všechny access a verification hodnoty a aktivní,
+neaktivní, systémové i uživatelské role zůstávají zahrnuté. Více rolí a
+zcela shodná tvrzení se vracejí samostatně. Selectory nepoužívají
+`distinct()`, nevolají `full_clean()` a nekontrolují kompatibilitu role s
+typem místa.
+
+Přehled osoby používá:
+
+```python
+.order_by(
+    "grave_site__cemetery_name",
+    "grave_site__section",
+    "grave_site__row",
+    "grave_site__grave_number",
+    "grave_site_id",
+    "role__sort_order",
+    "role__name",
+    "pk",
+)
+```
+
+Přehled jednoho místa používá:
+
+```python
+.order_by(
+    "person_id",
+    "role__sort_order",
+    "role__name",
+    "pk",
+)
+```
+
+Oba QuerySety přes `select_related()` načítají `person`, `grave_site`,
+`grave_site__grave_site_type`, `grave_site__place`, `role` a
+`created_by`. Samotný SELECT vazeb se provede až při materializaci a jeho
+počet neroste s počtem výsledků. Nevzniká prefetch, agregace, zápis,
+migrace ani autorizovaná varianta; ta následuje v M2.7f.
 
 ## 11. Přílohy
 
