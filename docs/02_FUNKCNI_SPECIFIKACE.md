@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.19
+**Verze:** 0.20
 **Stav:** pracovní návrh  
 **Datum revize:** 23. 7. 2026
 
@@ -553,6 +553,24 @@ Create i update probíhají v `transaction.atomic()` a update používá
 `select_for_update()` nad čerstvým řádkem. Služby nededuplikují ani
 nemapují obecný `IntegrityError`. Služby `PersonGraveSite`, selectory a
 autorizované čtení zůstávají pro další kroky.
+
+M2.7d-2 přidává keyword-only `create_person_grave_site()` a
+`update_person_grave_site()` nad frozen slotted úplným snapshotem
+`PersonGraveSiteInput`. Snapshot obsahuje osobu, hrobové místo, roli,
+poznámku, přístup a ověření; update smí opravit osobu, místo i roli, ale
+nemění autora, čas vytvoření ani lifecycle metadata.
+
+Služby v `transaction.atomic()` načítají čerstvou osobu, `GraveSite`,
+`PersonGraveSiteRole`, volitelného autora a při update také zamčenou vazbu.
+Poznámku normalizují pouze pomocí `strip()` a před uložením volají
+`full_clean()`. Nová vazba ani přechod nesmí použít neaktivní roli, stejnou
+neaktivní roli však lze zachovat. Archivovanou vazbu lze upravit, měkce
+odstraněnou nikoli. Archivovaná nebo měkce odstraněná osoba a `GraveSite`
+jsou přípustné a status místa možnost propojení neomezuje.
+
+Služby nekontrolují kompatibilitu typu místa s rolí, nepárují směrové role,
+nededuplikují a nemapují obecný `IntegrityError`. Selectory, autorizované
+čtení, lifecycle služby a události zůstávají pro další kroky.
 
 ## 14. Viditelnost a zamčený obsah
 

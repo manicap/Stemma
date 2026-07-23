@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.28
+**Verze:** 0.29
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 23. 7. 2026
 
@@ -1552,6 +1552,44 @@ kódy validace se nemapují. Služba nevytváří doménovou unikátnost,
 deduplikaci ani `duplicate_grave_site` a obecný `IntegrityError`
 nepřevádí. Nevzniká migrace, služba `PersonGraveSite`, selector,
 autorizované čtení ani permission policy.
+
+M2.7d-2 doplňuje zápisovou vrstvu explicitní vazby bez změny modelů a
+migrací:
+
+```python
+@dataclass(frozen=True, slots=True)
+class PersonGraveSiteInput:
+    person: Person
+    grave_site: GraveSite
+    role: PersonGraveSiteRole
+    note: str = ""
+    access_level: str = AccessLevel.PUBLIC
+    verification_status: str = VerificationStatus.UNCONFIRMED
+```
+
+Jde o úplný snapshot editovatelných údajů. Keyword-only
+`create_person_grave_site(*, data, created_by=None)` vytvoří novou vazbu a
+`update_person_grave_site(*, link, data)` může opravit osobu, hrobové místo,
+roli, poznámku, access i verification. PK, autorství, technické časy a
+lifecycle nejsou součástí vstupu.
+
+Obě služby v `transaction.atomic()` načtou čerstvou osobu, `GraveSite` a
+`PersonGraveSiteRole`; create navíc čerstvého volitelného autora. Poznámku
+stripují pouze na okrajích a před každým `save()` volají `full_clean()`.
+Update zamkne aktuální `PersonGraveSite` přes `select_for_update()`,
+odmítne fyzicky chybějící nebo měkce odstraněný řádek, ale dovolí změnit
+archivovanou vazbu.
+
+Nová vazba vyžaduje aktivní roli. Při update lze zachovat stejnou
+neaktivní roli nebo přejít na aktivní, nikoli na jinou neaktivní roli.
+Archivovaná nebo měkce odstraněná osoba i `GraveSite` zůstávají použitelná
+a `GraveSite.status` zápis neomezuje. Update pracuje s čerstvou vazbou a
+zachovává `created_by`, `created_at` a všechna lifecycle metadata.
+
+Služby nevytvářejí kompatibilitní matici role a typu, automatické párování
+`remains_relocated_from` a `remains_relocated_to`, unikátnost, deduplikaci
+ani mapování obecného `IntegrityError`. Nevzniká migrace, selector,
+autorizované čtení, lifecycle služba ani permission policy.
 
 ## 11. Přílohy
 

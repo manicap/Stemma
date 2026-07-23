@@ -1,5 +1,26 @@
 # Historie změn dokumentace
 
+## Verze 0.33 – 23. 7. 2026
+
+- přidán frozen slotted úplný snapshot `PersonGraveSiteInput` a
+  keyword-only služby `create_person_grave_site()` a
+  `update_person_grave_site()`,
+- update může opravit osobu, hrobové místo, roli, poznámku, access i
+  verification; autorství, vytvoření a lifecycle nejsou editovatelné,
+- služby čerstvě načítají všechny FK a autora, používají
+  `transaction.atomic()`, při update `select_for_update()` a vždy
+  `full_clean()` před `save()`,
+- poznámka se stripuje pouze na servisní hranici; create vyžaduje aktivní
+  roli a update dovoluje zachovat stejnou neaktivní nebo přejít na aktivní,
+- archivovanou vazbu lze upravit, soft-deleted nikoli; archivovaná nebo
+  soft-deleted osoba a `GraveSite` i zaniklý fyzický stav jsou povoleny,
+- služby nemají compatibility matici, párování přesunových rolí,
+  deduplikaci ani mapování obecného `IntegrityError`,
+- doplněny testy veřejného API, rolí, fresh-state FK, normalizace,
+  lifecycle, duplicit, kardinality, rollbacku, locking a absence
+  vedlejších zápisů,
+- nevznikla migrace, selector, autorizované čtení ani ACP.
+
 ## Verze 0.32 – 23. 7. 2026
 
 - přidán frozen slotted úplný snapshot `GraveSiteInput` a keyword-only

@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.24
+**Verze:** 0.25
 **Stav:** koncept  
 **Datum revize:** 23. 7. 2026
 
@@ -749,6 +749,28 @@ stejný neaktivní typ lze ponechat. Existující archivovaný nebo měkce
 odstraněný `Place` lze použít bez permission filtru. Služby nepřidávají
 unikátnost, deduplikaci ani mapování obecného `IntegrityError`.
 `PersonGraveSite` služby a selectory vzniknou později.
+
+M2.7d-2 nemění modely ani migrace. Frozen slotted
+`PersonGraveSiteInput` je úplný snapshot polí `person`, `grave_site`,
+`role`, `note`, `access_level` a `verification_status`. Keyword-only
+`create_person_grave_site(*, data, created_by=None)` a
+`update_person_grave_site(*, link, data)` dovolují při update opravit
+všechny tři FK i ostatní editovatelná pole.
+
+Obě služby používají `transaction.atomic()`, načítají čerstvou osobu,
+hrobové místo a roli a před `save()` volají `full_clean()`. Create navíc
+ověří čerstvého volitelného autora. Update načte aktuální
+`PersonGraveSite` přes `select_for_update()`, zachová `created_by`,
+`created_at` a lifecycle metadata a odmítne měkce odstraněnou, nikoli
+archivovanou vazbu. `note` se na servisní hranici stripuje, přímé modelové
+`save()` jej nemění.
+
+Create vyžaduje aktivní roli. Update dovoluje zachovat stejnou neaktivní
+roli nebo přejít na aktivní, ale ne na jinou neaktivní. Archivovaná nebo
+měkce odstraněná osoba a `GraveSite` jsou povolené a fyzický status místa
+se nefiltruje. Služby nemají compatibility matici role a typu, automatické
+párování přesunových rolí, deduplikaci ani mapování obecného
+`IntegrityError`. Selectory a autorizované čtení vzniknou později.
 
 ## 8. Příloha
 

@@ -35,10 +35,13 @@ class ResidenceServiceApiTests(SimpleTestCase):
             services.__all__,
             (
                 "GraveSiteInput",
+                "PersonGraveSiteInput",
                 "ResidenceInput",
                 "create_grave_site",
+                "create_person_grave_site",
                 "create_residence",
                 "update_grave_site",
+                "update_person_grave_site",
                 "update_residence",
             ),
         )

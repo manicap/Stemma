@@ -21,6 +21,8 @@ from .choices import GraveSiteStatus
 from .models import (
     GraveSite,
     GraveSiteType,
+    PersonGraveSite,
+    PersonGraveSiteRole,
     Place,
     Residence,
     ResidenceType,
@@ -28,10 +30,13 @@ from .models import (
 
 __all__ = (
     "GraveSiteInput",
+    "PersonGraveSiteInput",
     "ResidenceInput",
     "create_grave_site",
+    "create_person_grave_site",
     "create_residence",
     "update_grave_site",
+    "update_person_grave_site",
     "update_residence",
 )
 
@@ -51,6 +56,18 @@ class GraveSiteInput:
     inscription: str = ""
     latitude: Decimal | None = None
     longitude: Decimal | None = None
+    note: str = ""
+    access_level: str = AccessLevel.PUBLIC
+    verification_status: str = VerificationStatus.UNCONFIRMED
+
+
+@dataclass(frozen=True, slots=True)
+class PersonGraveSiteInput:
+    """Úplný snapshot editovatelných údajů propojení osoby a místa."""
+
+    person: Person
+    grave_site: GraveSite
+    role: PersonGraveSiteRole
     note: str = ""
     access_level: str = AccessLevel.PUBLIC
     verification_status: str = VerificationStatus.UNCONFIRMED
@@ -276,6 +293,207 @@ def update_grave_site(
         candidate.full_clean()
         candidate.save()
         return _reload_grave_site(candidate.pk)
+
+
+def _load_person_grave_site_person(person: Person) -> Person:
+    if person.pk is None:
+        _raise_service_error(
+            "person",
+            "Osoba musí být uložená v databázi.",
+            "person_grave_site_person_unsaved",
+        )
+
+    try:
+        return Person.objects.select_for_update().get(pk=person.pk)
+    except Person.DoesNotExist:
+        _raise_service_error(
+            "person",
+            "Osoba musí být uložená v databázi.",
+            "person_grave_site_person_unsaved",
+        )
+
+
+def _load_person_grave_site_grave_site(
+    grave_site: GraveSite,
+) -> GraveSite:
+    if grave_site.pk is None:
+        _raise_service_error(
+            "grave_site",
+            "Hrobové místo musí být uložené v databázi.",
+            "person_grave_site_grave_site_unsaved",
+        )
+
+    try:
+        return GraveSite.objects.select_for_update().get(pk=grave_site.pk)
+    except GraveSite.DoesNotExist:
+        _raise_service_error(
+            "grave_site",
+            "Hrobové místo musí být uložené v databázi.",
+            "person_grave_site_grave_site_unsaved",
+        )
+
+
+def _load_person_grave_site_role(
+    role: PersonGraveSiteRole,
+) -> PersonGraveSiteRole:
+    if role.pk is None:
+        _raise_service_error(
+            "role",
+            "Role musí být uložená v databázi.",
+            "person_grave_site_role_unsaved",
+        )
+
+    try:
+        return PersonGraveSiteRole.objects.select_for_update().get(
+            pk=role.pk
+        )
+    except PersonGraveSiteRole.DoesNotExist:
+        _raise_service_error(
+            "role",
+            "Role musí být uložená v databázi.",
+            "person_grave_site_role_unsaved",
+        )
+
+
+def _load_person_grave_site_created_by(
+    created_by: AbstractBaseUser | None,
+) -> AbstractBaseUser | None:
+    if created_by is None:
+        return None
+    if created_by.pk is None:
+        _raise_service_error(
+            "created_by",
+            "Autor musí být uložený v databázi.",
+            "person_grave_site_created_by_unsaved",
+        )
+
+    user_model = get_user_model()
+    try:
+        return user_model._default_manager.select_for_update().get(
+            pk=created_by.pk
+        )
+    except user_model.DoesNotExist:
+        _raise_service_error(
+            "created_by",
+            "Autor musí být uložený v databázi.",
+            "person_grave_site_created_by_unsaved",
+        )
+
+
+def _apply_person_grave_site_input(
+    link: PersonGraveSite,
+    *,
+    data: PersonGraveSiteInput,
+    person: Person,
+    grave_site: GraveSite,
+    role: PersonGraveSiteRole,
+) -> None:
+    link.person = person
+    link.grave_site = grave_site
+    link.role = role
+    link.note = data.note.strip()
+    link.access_level = data.access_level
+    link.verification_status = data.verification_status
+
+
+def _reload_person_grave_site(link_id: int) -> PersonGraveSite:
+    return PersonGraveSite.objects.select_related(
+        "person",
+        "grave_site",
+        "role",
+        "created_by",
+    ).get(pk=link_id)
+
+
+def create_person_grave_site(
+    *,
+    data: PersonGraveSiteInput,
+    created_by: AbstractBaseUser | None = None,
+) -> PersonGraveSite:
+    """Atomicky vytvoř a vrať čerstvě načtené propojení osoby a místa."""
+
+    with transaction.atomic():
+        person = _load_person_grave_site_person(data.person)
+        grave_site = _load_person_grave_site_grave_site(data.grave_site)
+        role = _load_person_grave_site_role(data.role)
+        current_created_by = _load_person_grave_site_created_by(created_by)
+
+        if not role.is_active:
+            _raise_service_error(
+                "role",
+                "Neaktivní roli nelze použít pro nové propojení.",
+                "person_grave_site_role_inactive",
+            )
+
+        candidate = PersonGraveSite(created_by=current_created_by)
+        _apply_person_grave_site_input(
+            candidate,
+            data=data,
+            person=person,
+            grave_site=grave_site,
+            role=role,
+        )
+        candidate.full_clean()
+        candidate.save()
+        return _reload_person_grave_site(candidate.pk)
+
+
+def update_person_grave_site(
+    *,
+    link: PersonGraveSite,
+    data: PersonGraveSiteInput,
+) -> PersonGraveSite:
+    """Atomicky změň a vrať čerstvě načtené propojení osoby a místa."""
+
+    if link.pk is None:
+        _raise_service_error(
+            "link",
+            "Propojení musí být uložené v databázi.",
+            "person_grave_site_unsaved",
+        )
+
+    link_id = link.pk
+    with transaction.atomic():
+        try:
+            candidate = PersonGraveSite.objects.select_for_update().get(
+                pk=link_id
+            )
+        except PersonGraveSite.DoesNotExist:
+            _raise_service_error(
+                "link",
+                "Propojení musí být uložené v databázi.",
+                "person_grave_site_unsaved",
+            )
+
+        if candidate.deleted_at is not None:
+            _raise_service_error(
+                "link",
+                "Měkce odstraněné propojení nelze upravit.",
+                "person_grave_site_deleted",
+            )
+
+        original_role_id = candidate.role_id
+        person = _load_person_grave_site_person(data.person)
+        grave_site = _load_person_grave_site_grave_site(data.grave_site)
+        role = _load_person_grave_site_role(data.role)
+
+        if not role.is_active and role.pk != original_role_id:
+            _raise_service_error(
+                "role",
+                "Na jinou neaktivní roli nelze přejít.",
+                "person_grave_site_role_inactive",
+            )
+
+        _apply_person_grave_site_input(
+            candidate,
+            data=data,
+            person=person,
+            grave_site=grave_site,
+            role=role,
+        )
+        candidate.full_clean()
+        candidate.save()
+        return _reload_person_grave_site(candidate.pk)
 
 
 def _load_person(person: Person) -> Person:
