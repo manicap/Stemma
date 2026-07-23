@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.27
+**Verze:** 0.28
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 23. 7. 2026
 
@@ -1503,6 +1503,55 @@ model a závisí na `places.0008_gravesite`,
 `people.0009_alter_person_options` a swappable User. M2.7c nevytváří
 služby, selectory, autorizované čtení, události ani automatické párování
 přesunových rolí.
+
+M2.7d-1 přidává zápisovou doménovou vrstvu bez změny modelů a migrací:
+
+```python
+@dataclass(frozen=True, slots=True)
+class GraveSiteInput:
+    grave_site_type: GraveSiteType
+    status: str = GraveSiteStatus.UNKNOWN
+    place: Place | None = None
+    location_text: str = ""
+    cemetery_name: str = ""
+    section: str = ""
+    row: str = ""
+    grave_number: str = ""
+    inscription: str = ""
+    latitude: Decimal | None = None
+    longitude: Decimal | None = None
+    note: str = ""
+    access_level: str = AccessLevel.PUBLIC
+    verification_status: str = VerificationStatus.UNCONFIRMED
+```
+
+`GraveSiteInput` je úplný snapshot všech editovatelných údajů. Veřejné
+keyword-only funkce jsou `create_grave_site(*, data, created_by=None)` a
+`update_grave_site(*, grave_site, data)`. Snapshot nemůže nastavit PK,
+časová pole, autora při update ani lifecycle metadata.
+
+Obě služby používají `transaction.atomic()`, čerstvě načtou
+`GraveSiteType` a volitelný `Place`; create navíc validuje čerstvého
+volitelného autora. Texty `location_text`, `cemetery_name`, `section`,
+`row`, `grave_number`, `inscription` a `note` stripují pouze na okrajích.
+Souřadnice přijímají jako `Decimal | None` a jejich dvojici, rozsah i
+desetinný kontrakt kontroluje nezměněný model přes `full_clean()` před
+každým `save()`.
+
+Create vyžaduje aktivní typ a nový výchozí lifecycle. Update načte
+čerstvý `GraveSite` přes `select_for_update()`, odmítne fyzicky chybějící
+nebo měkce odstraněný řádek, ale dovolí upravit archivovaný. Může změnit
+typ, status, `Place`, souřadnice, texty, access i verification a může
+`Place` nebo obě souřadnice odebrat. Stejný neaktivní typ lze zachovat,
+přechod na jiný neaktivní typ je zakázán a přechod na aktivní povolen.
+Archivovaný nebo měkce odstraněný, ale existující `Place` je přípustný.
+
+Update pracuje s čerstvým řádkem a zachovává `created_by`, `created_at`,
+archivní i mazací metadata; mění se běžné `updated_at`. Modelové klíče a
+kódy validace se nemapují. Služba nevytváří doménovou unikátnost,
+deduplikaci ani `duplicate_grave_site` a obecný `IntegrityError`
+nepřevádí. Nevzniká migrace, služba `PersonGraveSite`, selector,
+autorizované čtení ani permission policy.
 
 ## 11. Přílohy
 

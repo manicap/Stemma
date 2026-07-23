@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.18
+**Verze:** 0.19
 **Stav:** pracovní návrh  
 **Datum revize:** 23. 7. 2026
 
@@ -536,6 +536,23 @@ samostatných tvrzení stejné role. Model proto nemá unikátnost ani
 deduplikaci a neověřuje kompatibilitu role s typem místa; dovoluje také
 neaktivní a uživatelskou roli. Služby, selectory, autorizované čtení,
 časové události a párování přesunových rolí vzniknou až v dalších krocích.
+
+M2.7d-1 přidává keyword-only zápisové služby `create_grave_site()` a
+`update_grave_site()` nad frozen slotted úplným snapshotem
+`GraveSiteInput`. Snapshot obsahuje všechna editovatelná pole místa,
+souřadnice přijímá jako `Decimal` nebo `None` a neumožňuje měnit autora,
+čas vytvoření ani lifecycle metadata.
+
+Služby načítají čerstvý databázový stav typu, volitelného `Place`, autora
+a při změně také samotného `GraveSite`. Textová pole normalizují pouze
+pomocí `strip()`, změna dovoluje nahradit nebo odebrat `Place` i
+souřadnice a před uložením vždy volá modelové `full_clean()`. Nový záznam
+ani přechod nesmí použít neaktivní typ, ale existující stejný neaktivní
+typ lze zachovat. Archivované místo lze upravit, měkce odstraněné nikoli.
+Create i update probíhají v `transaction.atomic()` a update používá
+`select_for_update()` nad čerstvým řádkem. Služby nededuplikují ani
+nemapují obecný `IntegrityError`. Služby `PersonGraveSite`, selectory a
+autorizované čtení zůstávají pro další kroky.
 
 ## 14. Viditelnost a zamčený obsah
 

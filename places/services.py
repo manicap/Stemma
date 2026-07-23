@@ -1,6 +1,7 @@
 """Doménové služby aplikace places."""
 
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import NoReturn
 
 from django.contrib.auth import get_user_model
@@ -16,13 +17,43 @@ from common.choices import (
 )
 from people.models import Person
 
-from .models import Place, Residence, ResidenceType
+from .choices import GraveSiteStatus
+from .models import (
+    GraveSite,
+    GraveSiteType,
+    Place,
+    Residence,
+    ResidenceType,
+)
 
 __all__ = (
+    "GraveSiteInput",
     "ResidenceInput",
+    "create_grave_site",
     "create_residence",
+    "update_grave_site",
     "update_residence",
 )
+
+
+@dataclass(frozen=True, slots=True)
+class GraveSiteInput:
+    """Úplný snapshot editovatelných údajů jednoho hrobového místa."""
+
+    grave_site_type: GraveSiteType
+    status: str = GraveSiteStatus.UNKNOWN
+    place: Place | None = None
+    location_text: str = ""
+    cemetery_name: str = ""
+    section: str = ""
+    row: str = ""
+    grave_number: str = ""
+    inscription: str = ""
+    latitude: Decimal | None = None
+    longitude: Decimal | None = None
+    note: str = ""
+    access_level: str = AccessLevel.PUBLIC
+    verification_status: str = VerificationStatus.UNCONFIRMED
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,6 +88,194 @@ def _raise_service_error(key: str, message: str, code: str) -> NoReturn:
     raise ValidationError(
         {key: ValidationError(message, code=code)}
     )
+
+
+def _load_grave_site_type(
+    grave_site_type: GraveSiteType,
+) -> GraveSiteType:
+    if grave_site_type.pk is None:
+        _raise_service_error(
+            "grave_site_type",
+            "Typ hrobového místa musí být uložený v databázi.",
+            "grave_site_type_unsaved",
+        )
+
+    try:
+        return GraveSiteType.objects.select_for_update().get(
+            pk=grave_site_type.pk
+        )
+    except GraveSiteType.DoesNotExist:
+        _raise_service_error(
+            "grave_site_type",
+            "Typ hrobového místa musí být uložený v databázi.",
+            "grave_site_type_unsaved",
+        )
+
+
+def _load_grave_site_place(place: Place | None) -> Place | None:
+    if place is None:
+        return None
+    if place.pk is None:
+        _raise_service_error(
+            "place",
+            "Místo musí být uložené v databázi.",
+            "grave_site_place_unsaved",
+        )
+
+    try:
+        return Place.objects.select_for_update().get(pk=place.pk)
+    except Place.DoesNotExist:
+        _raise_service_error(
+            "place",
+            "Místo musí být uložené v databázi.",
+            "grave_site_place_unsaved",
+        )
+
+
+def _load_grave_site_created_by(
+    created_by: AbstractBaseUser | None,
+) -> AbstractBaseUser | None:
+    if created_by is None:
+        return None
+    if created_by.pk is None:
+        _raise_service_error(
+            "created_by",
+            "Autor musí být uložený v databázi.",
+            "grave_site_created_by_unsaved",
+        )
+
+    user_model = get_user_model()
+    try:
+        return user_model._default_manager.select_for_update().get(
+            pk=created_by.pk
+        )
+    except user_model.DoesNotExist:
+        _raise_service_error(
+            "created_by",
+            "Autor musí být uložený v databázi.",
+            "grave_site_created_by_unsaved",
+        )
+
+
+def _apply_grave_site_input(
+    grave_site: GraveSite,
+    *,
+    data: GraveSiteInput,
+    grave_site_type: GraveSiteType,
+    place: Place | None,
+) -> None:
+    grave_site.grave_site_type = grave_site_type
+    grave_site.status = data.status
+    grave_site.place = place
+    grave_site.location_text = data.location_text.strip()
+    grave_site.cemetery_name = data.cemetery_name.strip()
+    grave_site.section = data.section.strip()
+    grave_site.row = data.row.strip()
+    grave_site.grave_number = data.grave_number.strip()
+    grave_site.inscription = data.inscription.strip()
+    grave_site.latitude = data.latitude
+    grave_site.longitude = data.longitude
+    grave_site.note = data.note.strip()
+    grave_site.access_level = data.access_level
+    grave_site.verification_status = data.verification_status
+
+
+def _reload_grave_site(grave_site_id: int) -> GraveSite:
+    return GraveSite.objects.select_related(
+        "grave_site_type",
+        "place",
+        "created_by",
+    ).get(pk=grave_site_id)
+
+
+def create_grave_site(
+    *,
+    data: GraveSiteInput,
+    created_by: AbstractBaseUser | None = None,
+) -> GraveSite:
+    """Atomicky vytvoř a vrať čerstvě načtené hrobové místo."""
+
+    with transaction.atomic():
+        grave_site_type = _load_grave_site_type(data.grave_site_type)
+        place = _load_grave_site_place(data.place)
+        current_created_by = _load_grave_site_created_by(created_by)
+
+        if not grave_site_type.is_active:
+            _raise_service_error(
+                "grave_site_type",
+                "Neaktivní typ nelze použít pro nové hrobové místo.",
+                "grave_site_type_inactive",
+            )
+
+        candidate = GraveSite(created_by=current_created_by)
+        _apply_grave_site_input(
+            candidate,
+            data=data,
+            grave_site_type=grave_site_type,
+            place=place,
+        )
+        candidate.full_clean()
+        candidate.save()
+        return _reload_grave_site(candidate.pk)
+
+
+def update_grave_site(
+    *,
+    grave_site: GraveSite,
+    data: GraveSiteInput,
+) -> GraveSite:
+    """Atomicky změň a vrať čerstvě načtené hrobové místo."""
+
+    if grave_site.pk is None:
+        _raise_service_error(
+            "grave_site",
+            "Hrobové místo musí být uložené v databázi.",
+            "grave_site_unsaved",
+        )
+
+    grave_site_id = grave_site.pk
+    with transaction.atomic():
+        try:
+            candidate = GraveSite.objects.select_for_update().get(
+                pk=grave_site_id
+            )
+        except GraveSite.DoesNotExist:
+            _raise_service_error(
+                "grave_site",
+                "Hrobové místo musí být uložené v databázi.",
+                "grave_site_unsaved",
+            )
+
+        if candidate.deleted_at is not None:
+            _raise_service_error(
+                "grave_site",
+                "Měkce odstraněné hrobové místo nelze upravit.",
+                "grave_site_deleted",
+            )
+
+        original_grave_site_type_id = candidate.grave_site_type_id
+        grave_site_type = _load_grave_site_type(data.grave_site_type)
+        place = _load_grave_site_place(data.place)
+
+        if (
+            not grave_site_type.is_active
+            and grave_site_type.pk != original_grave_site_type_id
+        ):
+            _raise_service_error(
+                "grave_site_type",
+                "Na jiný neaktivní typ hrobového místa nelze přejít.",
+                "grave_site_type_inactive",
+            )
+
+        _apply_grave_site_input(
+            candidate,
+            data=data,
+            grave_site_type=grave_site_type,
+            place=place,
+        )
+        candidate.full_clean()
+        candidate.save()
+        return _reload_grave_site(candidate.pk)
 
 
 def _load_person(person: Person) -> Person:

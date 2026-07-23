@@ -1,5 +1,26 @@
 # Historie změn dokumentace
 
+## Verze 0.32 – 23. 7. 2026
+
+- přidán frozen slotted úplný snapshot `GraveSiteInput` a keyword-only
+  služby `create_grave_site()` a `update_grave_site()`,
+- služby čerstvě načítají typ, volitelné místo, autora a aktualizovaný
+  `GraveSite`, používají `transaction.atomic()`, při update
+  `select_for_update()` a vždy `full_clean()` před `save()`,
+- všech sedm textových polí se stripuje pouze na servisní hranici;
+  souřadnice zůstávají `Decimal | None` a jejich validaci zachovává model,
+- create vyžaduje aktivní typ; update dovoluje zachovat stejný neaktivní
+  typ, přejít na aktivní, změnit nebo odebrat `Place` a souřadnice a
+  upravit archivovaný záznam, ale odmítá jiný neaktivní typ a
+  soft-deleted `GraveSite`,
+- update zachovává čerstvé autorství a lifecycle metadata; existující
+  archivovaný nebo soft-deleted `Place` je povolen,
+- služby nededuplikují ani nemapují obecný `IntegrityError`; přidány testy
+  veřejného API, fresh-state validace, normalizace, lokalizace, souřadnic,
+  lifecycle, rollbacku, locking a absence vedlejších zápisů,
+- nevznikla migrace, služba `PersonGraveSite`, selector, autorizované
+  čtení ani ACP.
+
 ## Verze 0.31 – 23. 7. 2026
 
 - přidán explicitní `places.PersonGraveSite` jako jedno samostatné tvrzení

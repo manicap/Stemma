@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.23
+**Verze:** 0.24
 **Stav:** koncept  
 **Datum revize:** 23. 7. 2026
 
@@ -724,6 +724,31 @@ Model vzniká strukturální migrací `places.0009_persongravesite` se
 závislostmi na `places.0008_gravesite`, aktuální migraci `Person` a
 swappable User. M2.7c nevytváří služby, selectory, autorizované čtení,
 události ani automatické párování přesunových rolí.
+
+M2.7d-1 nemění modely ani migrace. Veřejné zápisové API `GraveSite`
+tvoří frozen slotted `GraveSiteInput` jako úplný snapshot polí
+`grave_site_type`, `status`, `place`, všech textových údajů, souřadnic,
+`access_level` a `verification_status` a keyword-only služby
+`create_grave_site()` a `update_grave_site()`.
+
+Textová pole `location_text`, `cemetery_name`, `section`, `row`,
+`grave_number`, `inscription` a `note` se na servisní hranici stripují;
+vnitřní obsah a přímé modelové `save()` se nemění. Souřadnice zůstávají
+`Decimal | None` a jejich úplnost a rozsahy nadále validuje model.
+
+Obě služby používají `transaction.atomic()`, načítají čerstvý stav
+`GraveSiteType`, volitelného `Place` a při create volitelného autora a
+volají `full_clean()` před `save()`. Update načítá čerstvý `GraveSite`
+přes `select_for_update()`, dovoluje změnit typ, status, `Place`,
+souřadnice i ostatní editovatelná pole, ale zachovává `created_by`,
+`created_at` a všechna lifecycle metadata. Archivovaný záznam je
+editovatelný, měkce odstraněný nikoli.
+
+Nový záznam a přechod na jiný typ vyžadují aktivní `GraveSiteType`;
+stejný neaktivní typ lze ponechat. Existující archivovaný nebo měkce
+odstraněný `Place` lze použít bez permission filtru. Služby nepřidávají
+unikátnost, deduplikaci ani mapování obecného `IntegrityError`.
+`PersonGraveSite` služby a selectory vzniknou později.
 
 ## 8. Příloha
 

@@ -34,8 +34,11 @@ class ResidenceServiceApiTests(SimpleTestCase):
         self.assertEqual(
             services.__all__,
             (
+                "GraveSiteInput",
                 "ResidenceInput",
+                "create_grave_site",
                 "create_residence",
+                "update_grave_site",
                 "update_residence",
             ),
         )
