@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.15
+**Verze:** 0.16
 **Stav:** pracovní návrh  
 **Datum revize:** 22. 7. 2026
 
@@ -482,6 +482,28 @@ Může obsahovat:
 - odkazy na externí databáze.
 
 Jedno hrobové místo může být propojeno s více osobami.
+
+M2.7a potvrzuje budoucí hlavní model `GraveSite` a samostatné propojení
+`PersonGraveSite`, ale zatím je neimplementuje. Zavádí pouze rozšiřitelné
+číselníky `GraveSiteType`, `PersonGraveSiteRole` a pevný výčet
+`GraveSiteStatus`.
+
+Systémové typy hrobového místa jsou `grave`, `tomb`, `urn_site`, `ossuary`,
+`scattering_place`, `memorial`, `cenotaph` a `other`. Rodinné nebo společné
+užití se vyjádří propojením více osob; celé kolumbárium může být později
+samostatné `Place`, zatímco konkrétní schránka je `urn_site`.
+
+Pevný fyzický stav místa má právě hodnoty `existing`, `destroyed` a
+`unknown`. Přemístění ostatků není stav místa a důvěryhodnost záznamu řeší
+společný `VerificationStatus`. Stav `destroyed` automaticky nearchivuje,
+měkce neodstraňuje ani nemění ověření záznamu.
+
+Systémové role propojení osoby jsou `buried`, `urn_placed`,
+`ashes_scattered`, `commemorated`, `remains_relocated_from`,
+`remains_relocated_to` a `other`. Typ `cenotaph` označuje povahu objektu,
+zatímco role `commemorated` vztah konkrétní osoby k němu. Směrové role
+přemístění rozlišují původní a cílové místo; samotné propojení konkrétního
+přesunu v M2.7a nevzniká.
 
 ## 14. Viditelnost a zamčený obsah
 

@@ -1,5 +1,26 @@
 # Historie změn dokumentace
 
+## Verze 0.29 – 22. 7. 2026
+
+- zahájen M2.7 potvrzením budoucích modelů `GraveSite` a
+  `PersonGraveSite`, které v tomto kroku ještě nevznikají,
+- přidán pevný `GraveSiteStatus` s fyzickými stavy `existing`,
+  `destroyed` a `unknown`, oddělenými od ověření, archivace a měkkého
+  odstranění,
+- přidány rozšiřitelné katalogy `GraveSiteType` s osmi systémovými typy a
+  `PersonGraveSiteRole` se sedmi systémovými rolemi,
+- symbolický hrob je typ `cenotaph`, zatímco vztah osoby vyjadřuje
+  `commemorated`; přemístění ostatků používá oddělené směrové role pro
+  původní a cílové místo,
+- strukturální migrace `places.0006_grave_site_lookups` a datová
+  `places.0007_initial_grave_site_lookups` oddělují schéma od systémových
+  dat; společná kontrola kolizí proběhne před prvním zápisem a reverse
+  zachová uživatelské i odsystemizované hodnoty,
+- doplněna lokální admin konfigurace a testy choices, modelů, systémových
+  katalogů, idempotence, kolizí a reverse; M2.7a neimplementuje hlavní
+  hrobové místo, vazbu osoby, služby, selectory ani permissions a
+  nevyžaduje ACP.
+
 ## Verze 0.28 – 22. 7. 2026
 
 - přidán autorizovaný lazy selector

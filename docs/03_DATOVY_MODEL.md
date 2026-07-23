@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.20
+**Verze:** 0.21
 **Stav:** koncept  
 **Datum revize:** 22. 7. 2026
 
@@ -619,6 +619,51 @@ Pole:
 - datum poslední změny.
 
 Spojení osoba–hrobové místo je samostatná vazba, aby jedno místo mohlo patřit více osobám.
+
+Budoucí hlavní model se jmenuje `GraveSite` a budoucí spojovací model
+`PersonGraveSite`. M2.7a ani jeden ještě nevytváří.
+
+`GraveSiteType` přímo dědí z `LookupModel`, nepřidává vlastní pole a
+umožňuje uživatelské hodnoty. Systémový katalog v pořadí tvoří:
+
+| Kód | Název | Pořadí |
+|---|---|---:|
+| `grave` | Hrob | 10 |
+| `tomb` | Hrobka | 20 |
+| `urn_site` | Urnové místo | 30 |
+| `ossuary` | Kostnice | 40 |
+| `scattering_place` | Místo rozptylu | 50 |
+| `memorial` | Pamětní místo | 60 |
+| `cenotaph` | Symbolický hrob | 70 |
+| `other` | Jiné místo | 90 |
+
+`PersonGraveSiteRole` je druhý přímý `LookupModel` bez vlastních polí.
+Jeho systémové hodnoty jsou:
+
+| Kód | Název | Pořadí |
+|---|---|---:|
+| `buried` | Pohřbena | 10 |
+| `urn_placed` | Uložena urna | 20 |
+| `ashes_scattered` | Rozptýlena | 30 |
+| `commemorated` | Připomenuta | 40 |
+| `remains_relocated_from` | Ostatky přemístěny z místa | 50 |
+| `remains_relocated_to` | Ostatky přemístěny na místo | 60 |
+| `other` | Jiné propojení | 90 |
+
+`GraveSiteStatus` je pevný `TextChoices` v `places/choices.py` s hodnotami
+`existing`, `destroyed` a `unknown`. Popisuje fyzický stav, nikoli
+důvěryhodnost nebo lifecycle záznamu. `VerificationStatus` zůstává
+samostatnou dimenzí; například doložené zaniklé místo kombinuje
+`destroyed` s `verified`, pravděpodobně existující místo `existing` s
+`probable` a spolehlivě doložené historické místo neznámého současného
+stavu `unknown` s `verified`.
+
+Kenotaf je typ objektu `cenotaph`; osoba k němu typicky používá roli
+`commemorated`. Přemístění ostatků není status a dvojice rolí rozlišuje
+výchozí a cílové místo bez automatického párování. Strukturální migrace
+`places.0006_grave_site_lookups` vytváří oba číselníky a datová
+`places.0007_initial_grave_site_lookups` plní systémové hodnoty po společné
+kontrole kolizí.
 
 ## 8. Příloha
 

@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.24
+**Verze:** 0.25
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 22. 7. 2026
 
@@ -1321,14 +1321,72 @@ migraci.
 Hrobové místo je samostatný fyzický nebo pamětní objekt. Obsahuje například:
 
 - typ,
-- stav existující/zaniklé/přemístěné/neověřené,
+- fyzický stav existující/zaniklé/existence neznámá,
 - místo nebo textovou lokalitu,
 - oddíl, řadu a číslo,
 - přepis nápisu,
 - souřadnice,
 - přílohy a zdroje.
 
-Stav `zaniklé` není archivace.
+Budoucí hlavní model se jmenuje `GraveSite` a budoucí explicitní propojení
+osoby `PersonGraveSite`. M2.7a tyto modely ještě neimplementuje.
+
+Pevný `places.choices.GraveSiteStatus` používá:
+
+```python
+class GraveSiteStatus(models.TextChoices):
+    EXISTING = "existing", "Existující"
+    DESTROYED = "destroyed", "Zaniklé"
+    UNKNOWN = "unknown", "Existence neznámá"
+```
+
+Status popisuje současný nebo evidovaný fyzický stav místa. `destroyed`
+není archivace ani měkké odstranění. `unknown` znamená neznámou současnou
+existenci, nikoli neověřený zdroj. Přemístění ostatků není status.
+`VerificationStatus` samostatně popisuje důvěryhodnost záznamu; příklady
+M2.7a používají `verified`, `probable` a `unconfirmed`. Změna statusu nesmí
+automaticky měnit `verification_status`, `archived_at` ani `deleted_at`.
+
+`GraveSiteType` přímo dědí z `LookupModel` a obsahuje tento systémový
+katalog:
+
+| Kód | Název | Popis | Pořadí |
+|---|---|---|---:|
+| `grave` | Hrob | Hrobové místo určené k uložení tělesných ostatků; může být individuální i společné. | 10 |
+| `tomb` | Hrobka | Stavebně vymezené hrobové místo nebo podzemní či nadzemní hrobka. | 20 |
+| `urn_site` | Urnové místo | Místo určené k uložení urny, včetně urnového hrobu nebo jednotlivé kolumbární schránky. | 30 |
+| `ossuary` | Kostnice | Místo společného uložení kosterních ostatků. | 40 |
+| `scattering_place` | Místo rozptylu | Vymezené místo, na kterém byl proveden rozptyl popela. | 50 |
+| `memorial` | Pamětní místo | Památník, deska nebo jiné místo připomínky bez tvrzení o uložení ostatků. | 60 |
+| `cenotaph` | Symbolický hrob | Hrob nebo památník připomínající osobu, jejíž ostatky zde nejsou uloženy. | 70 |
+| `other` | Jiné místo | Jiný druh hrobového, pohřebního nebo pamětního místa. | 90 |
+
+Rodinné nebo společné užití není zvláštní typ; vyjádří je více vazeb osob.
+Celé kolumbárium může být `Place`, konkrétní schránka používá `urn_site`.
+
+`PersonGraveSiteRole` je druhý přímý `LookupModel`:
+
+| Kód | Název | Popis | Pořadí |
+|---|---|---|---:|
+| `buried` | Pohřbena | Na místě byly uloženy tělesné ostatky osoby. | 10 |
+| `urn_placed` | Uložena urna | Na místě byla uložena urna s popelem osoby. | 20 |
+| `ashes_scattered` | Rozptýlena | Na místě byl rozptýlen popel osoby. | 30 |
+| `commemorated` | Připomenuta | Osoba je na místě připomenuta nápisem, památníkem nebo symbolicky, bez tvrzení o uložení ostatků. | 40 |
+| `remains_relocated_from` | Ostatky přemístěny z místa | Místo je doloženým výchozím místem přemístění ostatků. | 50 |
+| `remains_relocated_to` | Ostatky přemístěny na místo | Místo je doloženým cílem přemístění ostatků. | 60 |
+| `other` | Jiné propojení | Jiný význam propojení osoby s místem. | 90 |
+
+`cenotaph` popisuje povahu objektu; konkrétní osoba má k němu typicky roli
+`commemorated`. Tato role platí také pro památník nebo pamětní desku.
+Směrové role přemístění rozlišují původní a cílové místo, ale M2.7a
+nevytváří přesunovou událost, datum ani automatické párování.
+
+Oba katalogy umožňují uživatelské hodnoty a vznikají strukturální migrací
+`places.0006_grave_site_lookups`. Datová migrace
+`places.0007_initial_grave_site_lookups` před prvním zápisem zkontroluje
+kolize schválených kódů v obou tabulkách. Po úspěchu idempotentně vytvoří
+nebo opraví systémové hodnoty. Reverse odstraní jen schválené kódy, které
+jsou stále `is_system=True`.
 
 Propojení osoby s hrobovým místem je samostatný model a určuje například:
 
@@ -1336,8 +1394,8 @@ Propojení osoby s hrobovým místem je samostatný model a určuje například:
 - uložena urna,
 - rozptýlena,
 - připomenuta nápisem,
-- symbolický hrob,
-- ostatky přemístěny.
+- ostatky přemístěny z tohoto místa,
+- ostatky přemístěny na toto místo.
 
 Jedna osoba může mít více propojení a jedno hrobové místo může být spojeno s více osobami.
 
@@ -1622,7 +1680,8 @@ places.0005_residence
 Následující plánované migrace začínají:
 
 ```text
-places.0006_grave_models
+places.0006_grave_site_lookups
+places.0007_initial_grave_site_lookups
 materials.0001_attachment_lookups
 materials.0002_attachments
 materials.0003_attachment_links
@@ -1636,6 +1695,8 @@ accounts.0004_user_profile_person_link
 ```
 
 Datové migrace základních číselníků budou malé a rozdělené podle aplikací.
+Budoucí `GraveSite` a `PersonGraveSite` vzniknou v dalších samostatných
+migracích po katalogovém kroku M2.7a.
 
 ## 19. Hlavní technická rizika
 

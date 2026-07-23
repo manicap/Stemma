@@ -35,6 +35,28 @@ class ResidenceType(LookupModel):
         return self.name
 
 
+class GraveSiteType(LookupModel):
+    """Druh hrobového, pohřebního nebo pamětního místa."""
+
+    class Meta(LookupModel.Meta):
+        verbose_name = "Typ hrobového místa"
+        verbose_name_plural = "Typy hrobových míst"
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class PersonGraveSiteRole(LookupModel):
+    """Význam propojení osoby s hrobovým nebo pamětním místem."""
+
+    class Meta(LookupModel.Meta):
+        verbose_name = "Role osoby u hrobového místa"
+        verbose_name_plural = "Role osob u hrobových míst"
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Place(
     TimestampedModel,
     AccessControlledModel,
