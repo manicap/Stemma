@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.17
+**Verze:** 0.18
 **Stav:** pracovní návrh  
-**Datum revize:** 22. 7. 2026
+**Datum revize:** 23. 7. 2026
 
 ## 1. Hlavní obrazovka
 
@@ -523,7 +523,19 @@ nemá vlastní `PartialDateModel`. Datum pohřbu, vzniku památníku nebo přesu
 není vlastností tohoto objektu. Fyzický status se nemění automaticky s
 archivací nebo měkkým odstraněním. Model nepoužívá unikátnost lokalizačních
 údajů ani deduplikaci; typ a `Place` jsou chráněny přes `PROTECT`.
-`PersonGraveSite`, služby a selectory vzniknou až v dalších krocích.
+M2.7c implementuje `PersonGraveSite` jako samostatné tvrzení o konkrétní
+osobě, konkrétním hrobovém místě a významu propojení určeném povinnou
+rozšiřitelnou rolí. Osoba, hrobové místo i role jsou chráněny přes
+`PROTECT`; reverzní relace jsou `grave_site_links`, `person_links` a
+`person_grave_site_links`.
+
+Vazba má vlastní přístup, ověření, autora, timestamp a lifecycle, ale
+nepoužívá `PartialDateModel`. Datum pohřbu, rozptylu nebo přemístění patří
+do události. Jedna osoba může mít u jednoho místa více různých rolí i více
+samostatných tvrzení stejné role. Model proto nemá unikátnost ani
+deduplikaci a neověřuje kompatibilitu role s typem místa; dovoluje také
+neaktivní a uživatelskou roli. Služby, selectory, autorizované čtení,
+časové události a párování přesunových rolí vzniknou až v dalších krocích.
 
 ## 14. Viditelnost a zamčený obsah
 

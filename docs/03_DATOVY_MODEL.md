@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.22
+**Verze:** 0.23
 **Stav:** koncept  
-**Datum revize:** 22. 7. 2026
+**Datum revize:** 23. 7. 2026
 
 ## 1. Základní pilíře
 
@@ -620,8 +620,8 @@ Pole:
 
 Spojení osoba–hrobové místo je samostatná vazba, aby jedno místo mohlo patřit více osobám.
 
-Budoucí hlavní model se jmenuje `GraveSite` a budoucí spojovací model
-`PersonGraveSite`. M2.7a ani jeden ještě nevytváří.
+Hlavní model se jmenuje `GraveSite` a explicitní spojovací model
+`PersonGraveSite`. Vznikají samostatně v M2.7b a M2.7c.
 
 `GraveSiteType` přímo dědí z `LookupModel`, nepřidává vlastní pole a
 umožňuje uživatelské hodnoty. Systémový katalog v pořadí tvoří:
@@ -669,7 +669,7 @@ M2.7b vytváří konkrétní model `GraveSite` v tomto pořadí dědičnosti:
 `TimestampedModel`, `AccessControlledModel`, `VerifiableModel`,
 `AuthoredModel`, `LifecycleModel`, `models.Model`. `PartialDateModel`
 záměrně nepoužívá, protože datum pohřbu, přesunu nebo vzniku památníku
-patří do budoucí vazby či události.
+patří do události.
 
 Vlastní pole modelu jsou:
 
@@ -694,8 +694,36 @@ model při uložení text automaticky nestripuje.
 Model nemá vlastní `UniqueConstraint`, explicitní index ani deduplikaci.
 Řadí se podle `cemetery_name`, `section`, `row`, `grave_number`, `pk`.
 Fyzický `status`, důvěryhodnost a lifecycle zůstávají nezávislé.
-Strukturální migrace je `places.0008_gravesite`; `PersonGraveSite`,
-služby, selectory a oprávnění M2.7b nevytváří.
+Strukturální migrace je `places.0008_gravesite`.
+
+M2.7c přidává explicitní spojovací model `PersonGraveSite` v pořadí
+dědičnosti `TimestampedModel`, `AccessControlledModel`, `VerifiableModel`,
+`AuthoredModel`, `LifecycleModel`, `models.Model`. Jeden řádek je jedno
+samostatné tvrzení o osobě, hrobovém místě a roli propojení; není událostí
+ani časovým intervalem a nepoužívá `PartialDateModel`.
+
+Vlastní pole modelu jsou pouze:
+
+- povinné `person` → `Person` s `PROTECT` a
+  `related_name="grave_site_links"`,
+- povinné `grave_site` → `GraveSite` s `PROTECT` a
+  `related_name="person_links"`,
+- povinné `role` → `PersonGraveSiteRole` s `PROTECT` a
+  `related_name="person_grave_site_links"`,
+- `note` jako `TextField(blank=True)`.
+
+Vazba má vlastní access, verification, author, timestamp a lifecycle
+metadata nezávislá na osobě a místě. Model dovoluje systémovou,
+uživatelskou i neaktivní roli a nevaliduje kompatibilitu role s
+`GraveSiteType`. U stejné osoby a místa lze evidovat různé role i více
+stejných tvrzení; nevzniká `UniqueConstraint`, deduplikace ani explicitní
+index. Řazení je `person_id`, `grave_site_id`, `role__sort_order`,
+`role__name`, `pk`.
+
+Model vzniká strukturální migrací `places.0009_persongravesite` se
+závislostmi na `places.0008_gravesite`, aktuální migraci `Person` a
+swappable User. M2.7c nevytváří služby, selectory, autorizované čtení,
+události ani automatické párování přesunových rolí.
 
 ## 8. Příloha
 

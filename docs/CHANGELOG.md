@@ -1,5 +1,24 @@
 # Historie změn dokumentace
 
+## Verze 0.31 – 23. 7. 2026
+
+- přidán explicitní `places.PersonGraveSite` jako jedno samostatné tvrzení
+  o osobě, hrobovém místě a rozšiřitelné roli propojení,
+- model dědí timestamp, access, verification, author a lifecycle metadata,
+  ale nepoužívá `PartialDateModel`; čas pohřbu, rozptylu a přesunu patří do
+  událostí,
+- povinné FK na `Person`, `GraveSite` a `PersonGraveSiteRole` používají
+  `PROTECT` a reverzní relace `grave_site_links`, `person_links` a
+  `person_grave_site_links`,
+- model dovoluje neaktivní i uživatelskou roli, více rolí stejné osoby u
+  jednoho místa a více shodných tvrzení; nemá unikátnost, deduplikaci,
+  compatibility validaci ani explicitní index,
+- přidána poznámka, obranný textový výstup, lokální admin konfigurace a
+  strukturální migrace `places.0009_persongravesite`,
+- doplněny testy struktury, mixinů, rolí, kardinality, duplicit,
+  lifecycle, nezávislého access/verification, `PROTECT`, textu a adminu;
+  služby, selectory a autorizované čtení zůstávají pro další krok.
+
 ## Verze 0.30 – 23. 7. 2026
 
 - přidán konkrétní `places.GraveSite` pro jeden fyzický nebo pamětní

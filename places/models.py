@@ -393,6 +393,67 @@ class GraveSite(
         return location
 
 
+class PersonGraveSite(
+    TimestampedModel,
+    AccessControlledModel,
+    VerifiableModel,
+    AuthoredModel,
+    LifecycleModel,
+    models.Model,
+):
+    """Jedno tvrzení o propojení osoby s hrobovým místem v dané roli."""
+
+    person = models.ForeignKey(
+        Person,
+        on_delete=models.PROTECT,
+        related_name="grave_site_links",
+    )
+    grave_site = models.ForeignKey(
+        GraveSite,
+        on_delete=models.PROTECT,
+        related_name="person_links",
+    )
+    role = models.ForeignKey(
+        PersonGraveSiteRole,
+        on_delete=models.PROTECT,
+        related_name="person_grave_site_links",
+    )
+    note = models.TextField(
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = "Propojení osoby s hrobovým místem"
+        verbose_name_plural = "Propojení osob s hrobovými místy"
+        ordering = (
+            "person_id",
+            "grave_site_id",
+            "role__sort_order",
+            "role__name",
+            "pk",
+        )
+
+    def __str__(self) -> str:
+        try:
+            person_text = str(self.person).strip() or "Neznámá osoba"
+        except Person.DoesNotExist:
+            person_text = "Neznámá osoba"
+
+        try:
+            role_text = str(self.role).strip() or "Neznámá role"
+        except PersonGraveSiteRole.DoesNotExist:
+            role_text = "Neznámá role"
+
+        try:
+            grave_site_text = (
+                str(self.grave_site).strip() or "Hrobové místo"
+            )
+        except GraveSite.DoesNotExist:
+            grave_site_text = "Hrobové místo"
+
+        return f"{person_text} – {role_text} – {grave_site_text}"
+
+
 class Residence(
     TimestampedModel,
     AccessControlledModel,

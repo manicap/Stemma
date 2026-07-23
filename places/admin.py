@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import (
     GraveSite,
     GraveSiteType,
+    PersonGraveSite,
     PersonGraveSiteRole,
     Place,
     PlaceType,
@@ -100,6 +101,40 @@ class GraveSiteAdmin(admin.ModelAdmin):
         "grave_number",
         "inscription",
         "note",
+    )
+
+
+@admin.register(PersonGraveSite)
+class PersonGraveSiteAdmin(admin.ModelAdmin):
+    list_display = (
+        "person",
+        "grave_site",
+        "role",
+        "access_level",
+        "verification_status",
+        "archived_at",
+        "deleted_at",
+    )
+    list_filter = (
+        "role",
+        "access_level",
+        "verification_status",
+        "archived_at",
+        "deleted_at",
+    )
+    search_fields = (
+        "person__first_name",
+        "person__last_name",
+        "grave_site__cemetery_name",
+        "grave_site__location_text",
+        "grave_site__grave_number",
+        "role__name",
+        "note",
+    )
+    list_select_related = (
+        "person",
+        "grave_site",
+        "role",
     )
 
 

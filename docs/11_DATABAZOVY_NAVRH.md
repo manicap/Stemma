@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.26
+**Verze:** 0.27
 **Stav:** schválený technický návrh v implementaci
-**Datum revize:** 22. 7. 2026
+**Datum revize:** 23. 7. 2026
 
 ## 1. Účel
 
@@ -1328,8 +1328,8 @@ Hrobové místo je samostatný fyzický nebo pamětní objekt. Obsahuje napřík
 - souřadnice,
 - přílohy a zdroje.
 
-Budoucí hlavní model se jmenuje `GraveSite` a budoucí explicitní propojení
-osoby `PersonGraveSite`. M2.7a tyto modely ještě neimplementuje.
+Hlavní model se jmenuje `GraveSite` a explicitní propojení osoby
+`PersonGraveSite`. Vznikají samostatně v M2.7b a M2.7c.
 
 Pevný `places.choices.GraveSiteStatus` používá:
 
@@ -1405,7 +1405,7 @@ class GraveSite(
 Jeden řádek představuje jeden konkrétní fyzický nebo pamětní objekt.
 `GraveSite` není obecné geografické `Place`, událost ani vazba osoby a
 nepoužívá `PartialDateModel`. Datum pohřbu, přemístění ostatků nebo vzniku
-památníku patří do budoucího spojení či události.
+památníku patří do události.
 
 Povinné `grave_site_type` používá `PROTECT` a
 `related_name="grave_sites"`. `status` je `CharField(max_length=20)` s
@@ -1449,10 +1449,24 @@ a čitelným typem.
 `deleted_at` zůstávají samostatné dimenze a navzájem se automaticky
 nemění. Model vzniká jedinou strukturální migrací
 `places.0008_gravesite`, která kvůli zděděným uživatelským FK používá
-swappable dependency na User. M2.7b nevytváří datovou migraci,
-`PersonGraveSite`, služby, selectory ani permissions.
+swappable dependency na User. M2.7b nevytváří datovou migraci.
 
-Propojení osoby s hrobovým místem je samostatný model a určuje například:
+M2.7c přidává samostatné explicitní propojení osoby:
+
+```python
+class PersonGraveSite(
+    TimestampedModel,
+    AccessControlledModel,
+    VerifiableModel,
+    AuthoredModel,
+    LifecycleModel,
+    models.Model,
+):
+    ...
+```
+
+Jeden řádek je jedno tvrzení o konkrétní osobě, konkrétním hrobovém místě
+a významu propojení. Model určuje například:
 
 - pohřbena,
 - uložena urna,
@@ -1461,7 +1475,34 @@ Propojení osoby s hrobovým místem je samostatný model a určuje například:
 - ostatky přemístěny z tohoto místa,
 - ostatky přemístěny na toto místo.
 
-Jedna osoba může mít více propojení a jedno hrobové místo může být spojeno s více osobami.
+Vlastní pole jsou pouze:
+
+| Pole | Typ a integrita | Reverzní relace |
+|---|---|---|
+| `person` | povinný `ForeignKey(Person, PROTECT)` | `grave_site_links` |
+| `grave_site` | povinný `ForeignKey(GraveSite, PROTECT)` | `person_links` |
+| `role` | povinný `ForeignKey(PersonGraveSiteRole, PROTECT)` | `person_grave_site_links` |
+| `note` | `TextField(blank=True)` | — |
+
+Model používá timestamp, access, verification, author a lifecycle metadata
+nezávislá na osobě a místě. Není událostí ani časovým intervalem a
+nepoužívá `PartialDateModel`; datum pohřbu, rozptylu nebo přemístění patří
+do události.
+
+Jedna osoba může mít více propojení a jedno hrobové místo může být spojeno
+s více osobami. U stejné osoby a místa lze uložit více rolí i více
+samostatných tvrzení stejné role. Model proto nemá jednoduchou ani
+složenou unikátnost, deduplikaci, vlastní constraint nebo explicitní
+index. Modelová vrstva dovoluje neaktivní a uživatelskou roli a neověřuje
+kompatibilitu role s typem hrobového místa.
+
+Řazení je `person_id`, `grave_site_id`, `role__sort_order`, `role__name`,
+`pk`. Obranný textový výstup má podobu osoba – role – hrobové místo.
+Strukturální migrace `places.0009_persongravesite` vytváří pouze tento
+model a závisí na `places.0008_gravesite`,
+`people.0009_alter_person_options` a swappable User. M2.7c nevytváří
+služby, selectory, autorizované čtení, události ani automatické párování
+přesunových rolí.
 
 ## 11. Přílohy
 
@@ -1739,14 +1780,15 @@ accounts.0003_initial_permission_groups
 places.0003_residence_type
 places.0004_initial_residence_types
 places.0005_residence
+places.0006_grave_site_lookups
+places.0007_initial_grave_site_lookups
+places.0008_gravesite
+places.0009_persongravesite
 ```
 
 Následující plánované migrace začínají:
 
 ```text
-places.0006_grave_site_lookups
-places.0007_initial_grave_site_lookups
-places.0008_gravesite
 materials.0001_attachment_lookups
 materials.0002_attachments
 materials.0003_attachment_links
@@ -1760,7 +1802,7 @@ accounts.0004_user_profile_person_link
 ```
 
 Datové migrace základních číselníků budou malé a rozdělené podle aplikací.
-Budoucí `PersonGraveSite` vznikne v další samostatné migraci po hlavním
+`PersonGraveSite` vzniká v samostatné strukturální migraci po hlavním
 objektu M2.7b.
 
 ## 19. Hlavní technická rizika
