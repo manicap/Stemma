@@ -1,5 +1,29 @@
 # Historie změn dokumentace
 
+## Verze 0.36 – 23. 7. 2026
+
+- přidán keyword-only autorizovaný selector
+  `get_visible_grave_sites(*, actor)` vracející lazy
+  `QuerySet[GraveSite]`,
+- selector používá centrální `can_view_access_level()` nejvýše jednou pro
+  každou známou úroveň a databázový filtr `access_level__in`,
+- zachován společný actor kontrakt `actor_invalid` a `actor_unsaved` i
+  rozhodování podle čerstvého databázového stavu uloženého actora,
+- AnonymousUser a neaktivní uživatel vidí pouze `public`, `is_staff`
+  přístup nerozšiřuje, vyšší úrovně mají oddělená oprávnění a aktivní
+  superuser vidí všechny,
+- selector navazuje na `get_grave_sites()`, tiše filtruje neviditelné
+  záznamy a zachovává zahrnutí archivovaných i vyloučení soft-deleted
+  míst,
+- status, ověření, typ a připojené `Place` se samostatně neautorizují,
+- zachováno modelové ordering, `select_related()` a lazy konstantní
+  dotazový profil bez N+1,
+- doplněny testy API, actor chyb, access matice, fresh-state chování,
+  lifecycle, statusů, typů, lokalizace, Place policy, řazení, laziness,
+  dotazů a neměnnosti,
+- nevznikla migrace, permission codename, změna centrální policy ani ACP;
+  autorizované selectory `PersonGraveSite` následují v M2.7f-2.
+
 ## Verze 0.35 – 23. 7. 2026
 
 - přidány keyword-only permissionless selectory

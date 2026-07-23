@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.31
+**Verze:** 0.32
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 23. 7. 2026
 
@@ -1684,6 +1684,48 @@ Oba QuerySety přes `select_related()` načítají `person`, `grave_site`,
 `created_by`. Samotný SELECT vazeb se provede až při materializaci a jeho
 počet neroste s počtem výsledků. Nevzniká prefetch, agregace, zápis,
 migrace ani autorizovaná varianta; ta následuje v M2.7f.
+
+M2.7f-1 přidává autorizovaný katalog:
+
+```python
+def get_visible_grave_sites(
+    *,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[GraveSite]:
+    visible_access_levels = tuple(
+        access_level
+        for access_level in _ACCESS_LEVELS
+        if can_view_access_level(
+            actor=actor,
+            access_level=access_level,
+        )
+    )
+    return get_grave_sites().filter(
+        access_level__in=visible_access_levels,
+    )
+```
+
+Každá známá hodnota `AccessLevel` se vyhodnotí nejvýše jednou. Centrální
+policy validuje `actor_invalid` a `actor_unsaved` a pro uloženého
+autentizovaného actora vždy načte čerstvý databázový stav. AnonymousUser
+a neaktivní uživatel vidí pouze `public`, běžný aktivní uživatel také
+`authenticated`, `restricted` a `admin_only` používají oddělené
+permissions, `is_staff` samo přístup nerozšiřuje a aktivní superuser vidí
+všechny úrovně.
+
+Selector nevytváří vlastní základní dotaz. Filtr navazuje na
+`get_grave_sites()`, takže zachovává `deleted_at IS NULL`, archivované
+záznamy, `GraveSite.Meta.ordering` a
+`select_related("grave_site_type", "place", "created_by")`. Neviditelné
+access úrovně se tiše odfiltrují; nevyvolává se `PermissionDenied`.
+
+Status `existing`, `destroyed` ani `unknown`, stav ověření, aktivita nebo
+systémovost typu a lifecycle či access připojeného `Place` výběr dále
+nemění. GraveSite nemá vlastní lifecycle permissions a soft-deleted řádek
+se nevrací ani superuserovi. Výsledný QuerySet zůstává lazy a počet actor,
+permission i výsledných dotazů je konstantní vzhledem k počtu míst.
+Nevzniká migrace, změna centrální policy ani autorizace
+`PersonGraveSite`; ta následuje v M2.7f-2.
 
 ## 11. Přílohy
 

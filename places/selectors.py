@@ -17,6 +17,7 @@ __all__ = (
     "get_grave_sites",
     "get_person_grave_site_links",
     "get_person_residences",
+    "get_visible_grave_sites",
     "get_visible_person_residences",
 )
 
@@ -104,6 +105,25 @@ def get_grave_sites() -> QuerySet[GraveSite]:
         "grave_site_type",
         "place",
         "created_by",
+    )
+
+
+def get_visible_grave_sites(
+    *,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[GraveSite]:
+    """Vrať hrobová místa viditelná pro aktuálního actora."""
+
+    visible_access_levels = tuple(
+        access_level
+        for access_level in _ACCESS_LEVELS
+        if can_view_access_level(
+            actor=actor,
+            access_level=access_level,
+        )
+    )
+    return get_grave_sites().filter(
+        access_level__in=visible_access_levels,
     )
 
 

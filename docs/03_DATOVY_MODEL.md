@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.27
+**Verze:** 0.28
 **Stav:** koncept  
 **Datum revize:** 23. 7. 2026
 
@@ -810,6 +810,23 @@ join přes `PersonName`. Oba selectory načítají `person`, `grave_site`,
 přes `select_related()`. Výsledný SELECT zůstává lazy a po validačním
 dotazu se provede jednou bez N+1. Selectory nemají actor, nic nezapisují,
 nemění modely ani migrace a autorizované varianty vzniknou v M2.7f.
+
+M2.7f-1 přidává
+`get_visible_grave_sites(*, actor) -> QuerySet[GraveSite]`. Pro všechny
+čtyři známé `AccessLevel` nejvýše jednou zavolá centrální
+`can_view_access_level()` a z povolených hodnot vytvoří databázový
+`access_level__in` filtr nad `get_grave_sites()`. Actor tím zachovává
+chyby `actor_invalid` a `actor_unsaved` i rozhodování podle čerstvého
+databázového stavu.
+
+Výsledek je stále lazy, řazený podle `GraveSite.Meta.ordering` a používá
+původní `select_related("grave_site_type", "place", "created_by")`.
+Archivované záznamy zůstávají zahrnuté a soft-deleted vyloučené i pro
+superusera. Status, `verification_status`, typ místa a připojené `Place`
+se samostatně nefiltrují ani neautorizují. Neviditelné access úrovně se
+tiše odfiltrují a počet dotazů je konstantní vzhledem k počtu záznamů.
+M2.7f-1 nemění modely, permission policy ani migrace; autorizace vazeb
+`PersonGraveSite` následuje v M2.7f-2.
 
 ## 8. Příloha
 

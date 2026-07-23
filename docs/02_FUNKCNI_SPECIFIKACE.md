@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.22
+**Verze:** 0.23
 **Stav:** pracovní návrh  
 **Datum revize:** 23. 7. 2026
 
@@ -609,6 +609,29 @@ typ místa, volitelné `Place`, roli a autora. Každé volání má jeden
 validační `exists()` dotaz a jeden lazy SELECT při materializaci bez N+1.
 Nevzniká deduplikace, zápis ani migrace; autorizované varianty následují
 v M2.7f.
+
+M2.7f-1 přidává veřejně bezpečnější
+`get_visible_grave_sites(*, actor)`. Selector používá společný actor
+kontrakt a `can_view_access_level()` pro každou známou úroveň nejvýše
+jednou. Neplatný actor používá `actor_invalid`, neuložený nebo fyzicky
+chybějící autentizovaný actor `actor_unsaved`. Uložený actor se vždy
+posuzuje podle čerstvého databázového stavu; neaktivní uživatel se chová
+jako anonymní, `is_staff` přístup nerozšiřuje a aktivní superuser vidí
+všechny úrovně.
+
+Viditelné hodnoty se přidají jako databázový filtr `access_level__in` nad
+`get_grave_sites()`. Anonymní actor tak vidí pouze `public`, běžný aktivní
+uživatel také `authenticated` a `restricted` či `admin_only` vyžadují
+oddělená oprávnění. Neviditelná místa se tiše odfiltrují bez výjimky.
+
+Permissionless lifecycle, ordering a optimalizace zůstávají zachovány:
+archivovaná místa se vracejí, měkce odstraněná nikoli, a status, ověření
+ani aktivita či systémovost typu výběr nemění. Připojené `Place` se
+samostatně neautorizuje. Výsledný `QuerySet[GraveSite]` zůstává lazy a
+zachovává `select_related()` pro typ, `Place` a autora; počet actor,
+permission a výsledných dotazů neroste s počtem míst. Nevzniká lifecycle
+permission, migrace ani změna centrální policy. Autorizované selectory
+`PersonGraveSite` následují v M2.7f-2.
 
 ## 14. Viditelnost a zamčený obsah
 

@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.4
+**Verze:** 0.5
 **Stav:** pracovní návrh  
-**Datum revize:** 22. 7. 2026
+**Datum revize:** 23. 7. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -144,6 +144,28 @@ ověření a časová platnost přístup nemění. Neaktivní actor vidí pouze
 veřejná bydliště veřejně viditelné běžné osoby, `is_staff` samo přístup
 nerozšiřuje a aktivní superuser má plný obsahový i lifecycle přístup ke
 vstupní osobě.
+
+## 5.4 Autorizovaný katalog hrobových míst
+
+`get_visible_grave_sites(*, actor)` je veřejně bezpečnější čtecí vrstva
+nad permissionless `get_grave_sites()`. Každou známou přístupovou úroveň
+vyhodnotí nejvýše jednou přes `can_view_access_level()` a výsledný lazy
+`QuerySet[GraveSite]` databázově filtruje přes `access_level__in`.
+
+AnonymousUser vidí pouze `public`. Aktivní běžný uživatel vidí navíc
+`authenticated`; `restricted` a `admin_only` vyžadují svá oddělená
+oprávnění. Samotné `is_staff` přístup nerozšiřuje, aktivní superuser vidí
+všechny úrovně a neaktivní uživatel se i s oprávněními, skupinami,
+`is_staff` nebo `is_superuser` posuzuje jako anonymní. Uložený actor se
+vždy rozhoduje podle aktuálního databázového stavu. Neplatný actor používá
+`actor_invalid`, neuložený nebo chybějící autentizovaný actor
+`actor_unsaved`.
+
+Archivovaná hrobová místa se vracejí bez zvláštní lifecycle permission,
+měkce odstraněná se nevracejí ani superuserovi. Fyzický status, stav
+ověření a aktivita či systémovost typu viditelnost nemění. Připojené
+`Place` se v tomto kroku samostatně neautorizuje. Neviditelné záznamy se
+tiše odfiltrují; autorizace vazeb osob na místa následuje samostatně.
 
 ## 6. Zamčený obsah
 
