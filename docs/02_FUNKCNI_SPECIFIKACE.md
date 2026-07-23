@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.23
+**Verze:** 0.24
 **Stav:** pracovní návrh  
 **Datum revize:** 23. 7. 2026
 
@@ -632,6 +632,31 @@ zachovává `select_related()` pro typ, `Place` a autora; počet actor,
 permission a výsledných dotazů neroste s počtem míst. Nevzniká lifecycle
 permission, migrace ani změna centrální policy. Autorizované selectory
 `PersonGraveSite` následují v M2.7f-2.
+
+M2.7f-2 přidává veřejné keyword-only selectory
+`get_visible_person_grave_site_links(*, person, actor)` a
+`get_visible_grave_site_person_links(*, grave_site, actor)`. Konkrétní
+vstupní osoba nebo hrobové místo je chráněný cílový objekt: neuložený či
+fyzicky chybějící vstup zachovává `person_unsaved`, respektive
+`grave_site_unsaved`, ale existující neviditelný vstup vyvolá
+`PermissionDenied`, nikoli prázdný výsledek. U osoby se posuzuje čerstvý
+`access_level` a oprávnění `people.view_archived_person` a
+`people.view_deleted_person`. U hrobového místa se posuzuje čerstvý
+`access_level`; archivace ani fyzický status jej neskrývají, soft-delete
+jej odmítne i superuserovi.
+
+Po autorizaci vstupu se jednotlivé řádky tiše filtrují v databázi.
+Viditelný musí být současně `access_level` vazby, osoby i hrobového místa.
+Archivovaná vazba a archivované či zaniklé hrobové místo zůstávají
+zahrnuté, měkce odstraněná vazba nebo místo nikoli. Archivovaná a měkce
+odstraněná výsledná osoba vyžadují příslušná existující lifecycle
+oprávnění. Status, ověření, aktivita či systémovost typu a role výběr
+nemění a připojené `Place` se samostatně neautorizuje.
+
+Oba selectory navazují na permissionless vrstvu, a proto zachovávají její
+přesné ordering, `select_related()`, legitimní duplicity a lazy
+`QuerySet[PersonGraveSite]`. Nevzniká Python filtrování, N+1, zápis,
+migrace, nový permission codename ani ACP.
 
 ## 14. Viditelnost a zamčený obsah
 

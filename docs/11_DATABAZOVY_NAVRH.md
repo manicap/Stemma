@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.32
+**Verze:** 0.33
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 23. 7. 2026
 
@@ -1726,6 +1726,62 @@ se nevrací ani superuserovi. Výsledný QuerySet zůstává lazy a počet actor
 permission i výsledných dotazů je konstantní vzhledem k počtu míst.
 Nevzniká migrace, změna centrální policy ani autorizace
 `PersonGraveSite`; ta následuje v M2.7f-2.
+
+M2.7f-2 doplňuje autorizované kolekční selectory:
+
+```python
+def get_visible_person_grave_site_links(
+    *,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[PersonGraveSite]:
+    ...
+
+
+def get_visible_grave_site_person_links(
+    *,
+    grave_site: GraveSite,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[PersonGraveSite]:
+    ...
+```
+
+Oba vstupy jsou keyword-only a představují chráněný cílový objekt.
+Chybějící PK nebo fyzicky neexistující řádek zachovává klíč, kód i zprávu
+permissionless `person_unsaved`, respektive `grave_site_unsaved`.
+Existující vstup, který actor nesmí zobrazit, vyvolá `PermissionDenied`;
+prázdný QuerySet se pro tento případ nepoužije.
+
+Každou známou hodnotu `AccessLevel` selector vyhodnotí nejvýše jednou
+centrálním `can_view_access_level()`. U vstupní osoby se nad čerstvým
+stavem současně kontrolují `people.view_archived_person` a
+`people.view_deleted_person`. U vstupního `GraveSite` archivace ani status
+`existing`, `destroyed` nebo `unknown` přístup neomezují, ale soft-delete
+jej odmítá i aktivnímu superuserovi. Actor kontrakt zachovává čerstvý stav,
+`actor_invalid`, `actor_unsaved`, anonymní policy neaktivního uživatele a
+oddělené `restricted` a `admin_only` permissions.
+
+Po autorizaci vstupu se naváže na
+`get_person_grave_site_links(person=current_person)`, respektive
+`get_grave_site_person_links(grave_site=current_grave_site)`. Výsledný
+ORM filtr vyžaduje `access_level__in` současně pro vazbu, osobu a hrobové
+místo. Person lifecycle se přidává databázovou `Q` podmínkou podle obou
+existujících oprávnění. `GraveSite.deleted_at IS NULL` je povinné;
+permissionless základ už vylučuje měkce odstraněné `PersonGraveSite`.
+Archivované vazby a místa zůstávají zahrnuté. Neviditelný
+jednotlivý řádek nebo protistrana se na rozdíl od vstupu tiše odfiltrují.
+
+Status, verification, aktivita či systémovost `GraveSiteType` a
+`PersonGraveSiteRole` výběr nemění. `Place` se neautorizuje samostatně.
+Nepoužívá se Python filtrování, prefetch ani `distinct()`, takže legitimní
+duplicitní tvrzení zůstávají samostatnými řádky.
+
+Oba QuerySety zachovávají přesné ordering a `select_related()` M2.7e-2
+pro `person`, `grave_site`, `grave_site__grave_site_type`,
+`grave_site__place`, `role` a `created_by`. Samotný SELECT vazeb zůstává
+lazy a actor, permission a vstupní dotazy mají konstantní počet bez
+ohledu na množství výsledků. Krok nic nezapisuje a nevytváří modelovou
+změnu, migraci, nový permission codename ani ACP.
 
 ## 11. Přílohy
 

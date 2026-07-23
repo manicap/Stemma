@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.28
+**Verze:** 0.29
 **Stav:** koncept  
 **Datum revize:** 23. 7. 2026
 
@@ -827,6 +827,31 @@ se samostatně nefiltrují ani neautorizují. Neviditelné access úrovně se
 tiše odfiltrují a počet dotazů je konstantní vzhledem k počtu záznamů.
 M2.7f-1 nemění modely, permission policy ani migrace; autorizace vazeb
 `PersonGraveSite` následuje v M2.7f-2.
+
+M2.7f-2 doplňuje dvě autorizované lazy vrstvy:
+`get_visible_person_grave_site_links(*, person, actor)` a
+`get_visible_grave_site_person_links(*, grave_site, actor)`. Vstup je
+chráněný cíl. Jeho chybějící PK nebo fyzická neexistence zachovává
+permissionless `ValidationError`, zatímco existující, ale neviditelný
+vstup vyvolá `PermissionDenied`. Čerstvá vstupní osoba musí splnit
+`access_level` a obě nezávislé person lifecycle policy; archivované
+hrobové místo je přípustné, soft-deleted nikoli a status `existing`,
+`destroyed` ani `unknown` autorizaci vstupu nemění.
+
+Výsledný databázový filtr vyžaduje viditelný `access_level` současně na
+`PersonGraveSite`, `Person` a `GraveSite`. Person lifecycle se skládá
+podmíněnou `Q` podle `people.view_archived_person` a
+`people.view_deleted_person`; archivované `GraveSite` se zahrnuje a
+soft-deleted vylučuje. Permissionless základ nadále vylučuje soft-deleted
+vazbu a ponechává archivovanou. Jednotlivý neviditelný řádek nebo
+protistrana se tiše odfiltrují, na rozdíl od neviditelného vstupu.
+
+Filtr neomezuje fyzický status, verification, aktivitu nebo systémovost
+typu a role a samostatně neautorizuje `Place`. Zachovává přesné ordering,
+`select_related()` pro osobu, hrobové místo, typ, `Place`, roli a autora,
+lazy materializaci i duplicity bez `distinct()`. Profil actor, permission
+a vstupních dotazů je konstantní a výsledky se nefiltrují v Pythonu.
+M2.7f-2 nemění modely ani migrace.
 
 ## 8. Příloha
 

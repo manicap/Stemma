@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.5
+**Verze:** 0.6
 **Stav:** pracovní návrh  
 **Datum revize:** 23. 7. 2026
 
@@ -166,6 +166,34 @@ měkce odstraněná se nevracejí ani superuserovi. Fyzický status, stav
 ověření a aktivita či systémovost typu viditelnost nemění. Připojené
 `Place` se v tomto kroku samostatně neautorizuje. Neviditelné záznamy se
 tiše odfiltrují; autorizace vazeb osob na místa následuje samostatně.
+
+## 5.5 Autorizované vazby osob a hrobových míst
+
+`get_visible_person_grave_site_links(*, person, actor)` a
+`get_visible_grave_site_person_links(*, grave_site, actor)` považují
+konkrétní vstup za chráněný cíl. Existující neviditelný vstup proto
+odmítnou obecnou `PermissionDenied`; prázdný QuerySet nevracejí. Chybějící
+PK nebo fyzicky neexistující řádek používá stabilní `person_unsaved`,
+respektive `grave_site_unsaved`.
+
+Vstupní osoba vyžaduje viditelný `access_level`; archivovaná navíc
+`people.view_archived_person`, měkce odstraněná
+`people.view_deleted_person` a osoba v obou stavech obě oprávnění.
+Vstupní hrobové místo vyžaduje viditelný `access_level`, může být
+archivované i zaniklé, ale nesmí být měkce odstraněné. Pro `GraveSite`
+nevzniká lifecycle permission.
+
+Po ověření vstupu se každý řádek tiše odfiltruje, pokud není viditelná
+vazba, související osoba nebo hrobové místo. Výsledná archivovaná či
+měkce odstraněná osoba používá stejná nezávislá person lifecycle
+oprávnění. Archivované vazby a místa se vracejí, soft-deleted vazby a
+místa nikoli. Aktivní superuser vidí všechny access úrovně a oba person
+lifecycle stavy, ne však soft-deleted hrobové místo; neaktivní
+privilegovaný uživatel se posuzuje jako anonymní.
+
+Status a ověření, aktivita či systémovost typu a role a připojené `Place`
+se samostatně neautorizují. Oba selectory zachovávají lazy vyhodnocení,
+ordering a `select_related()` permissionless vrstvy.
 
 ## 6. Zamčený obsah
 

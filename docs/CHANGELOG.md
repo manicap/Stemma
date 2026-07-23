@@ -1,5 +1,33 @@
 # Historie změn dokumentace
 
+## Verze 0.37 – 23. 7. 2026
+
+- přidány keyword-only autorizované selectory
+  `get_visible_person_grave_site_links(*, person, actor)` a
+  `get_visible_grave_site_person_links(*, grave_site, actor)` vracející
+  lazy `QuerySet[PersonGraveSite]`,
+- vstupní osoba nebo hrobové místo je chráněný cíl: fyzická neexistence
+  zachovává `person_unsaved` či `grave_site_unsaved`, zatímco neviditelný
+  existující vstup vyvolá `PermissionDenied`,
+- vstupní osoba používá čerstvý access a existující lifecycle permissions;
+  vstupní hrobové místo dovoluje archivaci i všechny statusy, ale odmítá
+  soft-delete,
+- každý výsledný řádek databázově vyžaduje viditelnou access úroveň vazby,
+  osoby i hrobového místa; neviditelné řádky a protistrany se tiše
+  odfiltrují,
+- výsledné osoby respektují `people.view_archived_person` a
+  `people.view_deleted_person`, archivované vazby a místa se vracejí a
+  soft-deleted vazby či místa nikoli,
+- status, verification, typ, role ani připojené `Place` se samostatně
+  neautorizují,
+- zachováno přesné ordering, `select_related()`, lazy vyhodnocení,
+  legitimní duplicity a konstantní dotazový profil bez N+1,
+- přidáno 37 cílených testů API, actor a vstupních chyb, fresh-state,
+  tří access vrstev, lifecycle, filtrování, řazení, duplicit, dotazů,
+  neměnnosti a permissionless regresí,
+- nevznikla migrace, nový permission codename, obecný permission framework
+  ani ACP.
+
 ## Verze 0.36 – 23. 7. 2026
 
 - přidán keyword-only autorizovaný selector

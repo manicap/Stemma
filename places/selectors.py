@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 
 from common.choices import AccessLevel
 from common.permissions import can_view_access_level
@@ -17,7 +17,9 @@ __all__ = (
     "get_grave_sites",
     "get_person_grave_site_links",
     "get_person_residences",
+    "get_visible_grave_site_person_links",
     "get_visible_grave_sites",
+    "get_visible_person_grave_site_links",
     "get_visible_person_residences",
 )
 
@@ -64,6 +66,28 @@ def _load_current_person(person: Person) -> Person:
         raise _person_unsaved_error() from error
 
 
+def _load_current_grave_site(grave_site: GraveSite) -> GraveSite:
+    if grave_site.pk is None:
+        raise _grave_site_unsaved_error()
+
+    try:
+        return GraveSite.objects.get(pk=grave_site.pk)
+    except GraveSite.DoesNotExist as error:
+        raise _grave_site_unsaved_error() from error
+
+
+def _get_access_visibility(
+    actor: AbstractBaseUser | AnonymousUser,
+) -> dict[str, bool]:
+    return {
+        access_level: can_view_access_level(
+            actor=actor,
+            access_level=access_level,
+        )
+        for access_level in _ACCESS_LEVELS
+    }
+
+
 def _get_lifecycle_permissions(
     actor: AbstractBaseUser | AnonymousUser,
 ) -> tuple[bool, bool]:
@@ -94,6 +118,19 @@ def _is_person_visible(
         and (person.archived_at is None or can_view_archived)
         and (person.deleted_at is None or can_view_deleted)
     )
+
+
+def _get_person_lifecycle_filter(
+    *,
+    can_view_archived: bool,
+    can_view_deleted: bool,
+) -> Q:
+    person_lifecycle_filter = Q()
+    if not can_view_archived:
+        person_lifecycle_filter &= Q(person__archived_at__isnull=True)
+    if not can_view_deleted:
+        person_lifecycle_filter &= Q(person__deleted_at__isnull=True)
+    return person_lifecycle_filter
 
 
 def get_grave_sites() -> QuerySet[GraveSite]:
@@ -196,6 +233,80 @@ def get_grave_site_person_links(
     )
 
 
+def get_visible_person_grave_site_links(
+    *,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[PersonGraveSite]:
+    """Vrať hrobová místa osoby viditelná pro aktuálního actora."""
+
+    access_visibility = _get_access_visibility(actor)
+    can_view_archived, can_view_deleted = _get_lifecycle_permissions(actor)
+    current_person = _load_current_person(person)
+
+    if not _is_person_visible(
+        current_person,
+        access_visibility=access_visibility,
+        can_view_archived=can_view_archived,
+        can_view_deleted=can_view_deleted,
+    ):
+        raise PermissionDenied("Nemáte oprávnění zobrazit tuto osobu.")
+
+    visible_access_levels = tuple(
+        access_level
+        for access_level, is_visible in access_visibility.items()
+        if is_visible
+    )
+    return get_person_grave_site_links(person=current_person).filter(
+        _get_person_lifecycle_filter(
+            can_view_archived=can_view_archived,
+            can_view_deleted=can_view_deleted,
+        ),
+        access_level__in=visible_access_levels,
+        person__access_level__in=visible_access_levels,
+        grave_site__access_level__in=visible_access_levels,
+        grave_site__deleted_at__isnull=True,
+    )
+
+
+def get_visible_grave_site_person_links(
+    *,
+    grave_site: GraveSite,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[PersonGraveSite]:
+    """Vrať osoby hrobového místa viditelné pro aktuálního actora."""
+
+    access_visibility = _get_access_visibility(actor)
+    can_view_archived, can_view_deleted = _get_lifecycle_permissions(actor)
+    current_grave_site = _load_current_grave_site(grave_site)
+
+    if (
+        not access_visibility[current_grave_site.access_level]
+        or current_grave_site.deleted_at is not None
+    ):
+        raise PermissionDenied(
+            "Nemáte oprávnění zobrazit toto hrobové nebo pamětní místo."
+        )
+
+    visible_access_levels = tuple(
+        access_level
+        for access_level, is_visible in access_visibility.items()
+        if is_visible
+    )
+    return get_grave_site_person_links(
+        grave_site=current_grave_site,
+    ).filter(
+        _get_person_lifecycle_filter(
+            can_view_archived=can_view_archived,
+            can_view_deleted=can_view_deleted,
+        ),
+        access_level__in=visible_access_levels,
+        person__access_level__in=visible_access_levels,
+        grave_site__access_level__in=visible_access_levels,
+        grave_site__deleted_at__isnull=True,
+    )
+
+
 def get_person_residences(
     *,
     person: Person,
@@ -233,13 +344,7 @@ def get_visible_person_residences(
 ) -> QuerySet[Residence]:
     """Vrať historii bydlišť osoby viditelnou pro aktuálního actora."""
 
-    access_visibility = {
-        access_level: can_view_access_level(
-            actor=actor,
-            access_level=access_level,
-        )
-        for access_level in _ACCESS_LEVELS
-    }
+    access_visibility = _get_access_visibility(actor)
     can_view_archived, can_view_deleted = _get_lifecycle_permissions(actor)
     current_person = _load_current_person(person)
 

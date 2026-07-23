@@ -30,7 +30,9 @@ class VisibleGraveSiteSelectorApiTests(SimpleTestCase):
                 "get_grave_sites",
                 "get_person_grave_site_links",
                 "get_person_residences",
+                "get_visible_grave_site_person_links",
                 "get_visible_grave_sites",
+                "get_visible_person_grave_site_links",
                 "get_visible_person_residences",
             ),
         )
