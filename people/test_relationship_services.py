@@ -5,8 +5,9 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from django.test import SimpleTestCase, TestCase
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from common.choices import (
@@ -230,6 +231,117 @@ class RelationshipServiceTests(TestCase):
         self.assertEqual(result.person_b_id, self.person_b.pk)
         self.assertIs(data.person_a, self.person_b)
         self.assertIs(data.person_b, self.person_a)
+
+    def test_create_uses_single_ordered_people_query(self) -> None:
+        with CaptureQueriesContext(connection) as queries:
+            create_relationship(
+                data=self.make_data(
+                    relationship_type=self.symmetric_type,
+                    person_a=self.person_b,
+                    person_b=self.person_a,
+                )
+            )
+
+        person_lock_queries = [
+            query["sql"]
+            for query in queries.captured_queries
+            if 'FROM "people_person"' in query["sql"]
+            and ' IN ' in query["sql"]
+        ]
+        self.assertEqual(len(person_lock_queries), 1)
+        self.assertIn(
+            'ORDER BY "people_person"."id" ASC',
+            person_lock_queries[0],
+        )
+
+    def test_update_uses_single_ordered_people_query(self) -> None:
+        relationship = self.create_base_relationship()
+
+        with CaptureQueriesContext(connection) as queries:
+            update_relationship(
+                relationship=relationship,
+                data=self.make_data(
+                    person_a=self.person_b,
+                    person_b=self.person_a,
+                ),
+            )
+
+        person_queries = [
+            query["sql"]
+            for query in queries.captured_queries
+            if 'FROM "people_person"' in query["sql"]
+            and ' IN ' in query["sql"]
+        ]
+        self.assertEqual(len(person_queries), 1)
+        self.assertIn(
+            'ORDER BY "people_person"."id" ASC',
+            person_queries[0],
+        )
+
+    def test_relationship_mutation_mutex_precedes_other_domain_rows(
+        self,
+    ) -> None:
+        relationship = self.create_base_relationship()
+
+        with CaptureQueriesContext(connection) as queries:
+            update_relationship(
+                relationship=relationship,
+                data=self.make_data(),
+            )
+
+        domain_queries = [
+            query["sql"]
+            for query in queries.captured_queries
+            if 'FROM "people_' in query["sql"]
+        ]
+        self.assertIn('"code" IN', domain_queries[0])
+        self.assertIn('LIMIT 1', domain_queries[0])
+        relationship_index = next(
+            index
+            for index, sql in enumerate(domain_queries)
+            if 'FROM "people_relationship"' in sql
+            and f'= {relationship.pk}' in sql
+        )
+        people_index = next(
+            index
+            for index, sql in enumerate(domain_queries)
+            if 'FROM "people_person"' in sql and ' IN ' in sql
+        )
+        self.assertLess(0, relationship_index)
+        self.assertLess(0, people_index)
+
+    def test_create_mutation_mutex_is_first_domain_query(self) -> None:
+        with CaptureQueriesContext(connection) as queries:
+            create_relationship(data=self.make_data())
+
+        domain_queries = [
+            query["sql"]
+            for query in queries.captured_queries
+            if 'FROM "people_' in query["sql"]
+        ]
+        self.assertIn('"code" IN', domain_queries[0])
+        self.assertIn('"is_system"', domain_queries[0])
+        self.assertIn('LIMIT 1', domain_queries[0])
+
+    def test_missing_system_mutex_configuration_fails_closed(self) -> None:
+        RelationshipType.objects.filter(
+            code__in=(
+                "biological_parent",
+                "adoptive_parent",
+                "step_parent",
+                "foster_parent",
+            )
+        ).update(is_system=False)
+
+        with self.assertRaises(ValidationError) as context:
+            create_relationship(data=self.make_data())
+
+        self.assert_error(
+            context,
+            key="relationship_type",
+            code="relationship_configuration_invalid",
+        )
+        self.assertFalse(Relationship.objects.exists())
 
     def test_create_preserves_directional_orientation(self) -> None:
         result = create_relationship(

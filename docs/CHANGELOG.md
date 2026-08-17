@@ -1,5 +1,16 @@
 # Historie změn dokumentace
 
+## Verze 0.49 – 17. 8. 2026
+
+- všechny vztahové mutace nově začínají společným coarse-grained mutexem a
+  poté načítají obě osoby jedním dotazem v rostoucím pořadí primárních klíčů,
+- jednotný protokol omezuje deadlocky z rozdílného pořadí zámků na databázích
+  s řádkovými zámky; SQLite zůstává bez skutečného `select_for_update()`,
+- chybějící systémový rodičovský sentinel nyní selže uzavřeně místo tichého
+  pokračování bez mutexu,
+- doplněny regresní důkazy pořadí SQL protokolu pro create i update;
+  validace, modely ani migrace se nemění.
+
 ## Verze 0.48 – 17. 8. 2026
 
 - uzavřen neautorizovaný zapisovací i čtecí bypass v Django adminu pro

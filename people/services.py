@@ -239,27 +239,73 @@ def _load_relationship_type(
         )
 
 
-def _load_person(
-    person: Person,
-    *,
-    key: str,
-    code: str,
-) -> Person:
-    if person.pk is None:
+def _lock_relationship_mutations() -> None:
+    """Serializuj vztahové zápisy společným prvním řádkovým zámkem."""
+
+    sentinel_ids = list(
+        RelationshipType.objects.select_for_update()
+        .filter(
+            code__in=_PARENT_RELATIONSHIP_TYPE_CODES,
+            is_system=True,
+        )
+        .order_by("pk")
+        .values_list("pk", flat=True)[:1]
+    )
+    if not sentinel_ids:
         _raise_service_error(
-            key,
-            "Osoba musí být uložená v databázi.",
-            code,
+            "relationship_type",
+            "Chybí systémová konfigurace pro bezpečný zápis vazby.",
+            "relationship_configuration_invalid",
         )
 
-    try:
-        return Person.objects.select_for_update().get(pk=person.pk)
-    except Person.DoesNotExist:
+
+def _load_relationship_people(
+    person_a: Person,
+    person_b: Person,
+) -> tuple[Person, Person]:
+    """Načti a zamkni obě osoby vždy ve stejném pořadí primárních klíčů."""
+
+    specifications = (
+        (
+            "person_a",
+            "relationship_person_a_unsaved",
+            person_a,
+        ),
+        (
+            "person_b",
+            "relationship_person_b_unsaved",
+            person_b,
+        ),
+    )
+    if person_a.pk is None:
         _raise_service_error(
-            key,
+            "person_a",
             "Osoba musí být uložená v databázi.",
-            code,
+            "relationship_person_a_unsaved",
         )
+
+    person_ids = sorted(
+        {
+            person.pk
+            for person in (person_a, person_b)
+            if person.pk is not None
+        }
+    )
+    people_by_id = {
+        person.pk: person
+        for person in Person.objects.select_for_update()
+        .filter(pk__in=person_ids)
+        .order_by("pk")
+    }
+    for key, code, person in specifications:
+        if person.pk is None or person.pk not in people_by_id:
+            _raise_service_error(
+                key,
+                "Osoba musí být uložená v databázi.",
+                code,
+            )
+
+    return people_by_id[person_a.pk], people_by_id[person_b.pk]
 
 
 def _load_created_by(
@@ -434,18 +480,13 @@ def create_relationship(
     candidate: Relationship | None = None
     try:
         with transaction.atomic():
+            _lock_relationship_mutations()
             relationship_type = _load_relationship_type(
                 data.relationship_type
             )
-            person_a = _load_person(
+            person_a, person_b = _load_relationship_people(
                 data.person_a,
-                key="person_a",
-                code="relationship_person_a_unsaved",
-            )
-            person_b = _load_person(
                 data.person_b,
-                key="person_b",
-                code="relationship_person_b_unsaved",
             )
             current_created_by = _load_created_by(created_by)
 
@@ -504,6 +545,7 @@ def update_relationship(
     relationship_id = relationship.pk
     try:
         with transaction.atomic():
+            _lock_relationship_mutations()
             try:
                 candidate = Relationship.objects.select_for_update().get(
                     pk=relationship_id
@@ -526,15 +568,9 @@ def update_relationship(
             relationship_type = _load_relationship_type(
                 data.relationship_type
             )
-            person_a = _load_person(
+            person_a, person_b = _load_relationship_people(
                 data.person_a,
-                key="person_a",
-                code="relationship_person_a_unsaved",
-            )
-            person_b = _load_person(
                 data.person_b,
-                key="person_b",
-                code="relationship_person_b_unsaved",
             )
 
             if (

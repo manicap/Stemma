@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.39
+**Verze:** 0.40
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 17. 8. 2026
 
@@ -839,10 +839,17 @@ ale nemění `created_by`, `created_at` ani lifecycle pole. Technická pole
 `sort_date` a `sort_date_end` nejsou vstupem; odvozuje je modelové `save()`.
 
 Create i update běží v `transaction.atomic()` a znovu načítají typ a osoby
-z databáze. Update navíc načítá aktuální `Relationship` přes
-`select_for_update()` a pracuje s touto uzamčenou instancí. Symetrický typ
+z databáze. Každá mutace jako svůj první doménový zámek získá stejný
+coarse-grained mutex nad prvním systémovým rodičovským `RelationshipType`.
+Poté obě osoby zamyká jedním `select_for_update()` dotazem v rostoucím pořadí
+PK bez ohledu na vstupní orientaci. Update mezi těmito kroky načítá aktuální
+`Relationship` přes `select_for_update()` a pracuje s touto uzamčenou
+instancí. Symetrický typ
 normalizuje různé osoby podle PK před `full_clean()`; shodné osoby ponechá
 modelové chybě `relationship_to_self`. Nesymetrická orientace se nemění.
+Pokud žádný schválený rodičovský kód současně nemá `is_system=True`, služba
+selže před dalším doménovým dotazem kódem
+`relationship_configuration_invalid` a nezapisuje bez mutexu.
 
 Archivovaná ani měkce odstraněná osoba není v M2.5c zakázána, pokud její
 řádek existuje. Neaktivní `RelationshipType` nelze použít při create ani
@@ -940,7 +947,9 @@ ValidationError(
 ```
 
 Kontrola běží uvnitř existujícího `transaction.atomic()`. SQLite provádí
-`select_for_update()` prakticky jako no-op. Obecný grafový cyklus nelze
+`select_for_update()` prakticky jako no-op, včetně relationship mutation
+mutexu; testy proto dokazují pořadí SQL protokolu, nikoli skutečné čekání
+zámků. Obecný grafový cyklus nelze
 vynutit běžným `CheckConstraint` a ani řádkové zámky nemusí bez silnější
 izolace zachytit všechny phantom scénáře souběžně vkládaných hran. Pro
 současný malý provoz je servisní transakční kontrola přiměřená.

@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.31
+**Verze:** 0.32
 **Stav:** koncept  
 **Datum revize:** 17. 8. 2026
 
@@ -284,12 +284,20 @@ ani lifecycle pole. `updated_at` a technické meze zachovávají standardní
 modelové chování.
 
 Služba pracuje v `transaction.atomic()` s aktuálním databázovým stavem.
-Update načítá vztah přes `select_for_update()`. Symetrické dvojice před
+Každý create i update nejprve získá stejný coarse-grained relationship
+mutation mutex nad prvním systémovým rodičovským typem. Teprve poté zamyká
+konkrétní vztah a obě dotčené osoby, které načte jediným
+`select_for_update()` v rostoucím pořadí PK. Update načítá vztah přes
+`select_for_update()`. Symetrické dvojice před
 `full_clean()` normalizuje podle PK; nesymetrickou orientaci zachovává.
 Archivované i měkce odstraněné osoby jsou povoleny, pokud jejich řádky
 existují. Neaktivní typ nelze použít při create ani na něj přejít při
 update; existující vztah může svůj neaktivní typ zachovat. Archivovaný
 vztah lze upravit, měkce odstraněný nikoli.
+
+Chybí-li všechny schválené systémové rodičovské typy nebo ztratí-li
+`is_system=True`, zápis selže uzavřeně kódem
+`relationship_configuration_invalid` místo tichého pokračování bez mutexu.
 
 Přesné duplicity běžně zachytí `full_clean()`. Souběžný `IntegrityError`
 se po rollbacku převede na `duplicate_relationship` pouze tehdy, pokud
@@ -321,6 +329,9 @@ Kontrola probíhá transakčně v doménové službě a načítá graf jedním
 querysetem. Obecný grafový cyklus nelze vyjádřit běžným databázovým
 constraintem. SQLite neposkytuje skutečné řádkové zámky a ani databáze se
 zámky bez silnější izolace nemusí pokrýt všechny souběžné phantom scénáře.
+Na SQLite je i relationship mutation mutex pouze no-op; protokol tedy
+připravuje jednotné pořadí pro databázi se skutečnými řádkovými zámky, ale
+na schváleném SQLite baseline sám negarantuje serializaci grafových zápisů.
 M2.5d nemění model ani migrace a neřeší věk nebo překryvy období.
 
 ### 5.4 Odvození biologických sourozenců
