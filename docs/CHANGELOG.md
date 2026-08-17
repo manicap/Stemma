@@ -1,5 +1,17 @@
 # Historie změn dokumentace
 
+## Verze 0.45 – 17. 8. 2026
+
+- dokončen skutečný RC browser průchod anonymní návštěvník → Editor →
+  validace → HTMX uložení → logout → Čtenář → zakázaná přímá editace,
+- ověřeny actor-specific kohorty a odvozené údaje, desktop 1280×720,
+  mobil 390×844 bez horizontálního overflow, mobilní panel a oba motivy,
+- závěrečná brána prošla 1012 testy, `manage.py check`, kontrolou migrací,
+  cílenými testy, nezávislým QA a security review a kontrolou diffu,
+- oblasti RC 0.1 A–H jsou označeny za splněné; nejde o produkční nasazení,
+  merge do `feature/mvp` nebo `main` ani dokončení pozdější roadmapy,
+- aktualizovány dokumenty 00 a 07; kód, modely ani migrace se nemění.
+
 ## Verze 0.44 – 17. 8. 2026
 
 - schválen ACP-007: žádný odvozený prezentační údaj nesmí vycházet ze zdroje,

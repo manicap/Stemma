@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.13
-**Stav:** realizace MVP + experimentální RC 0.1
+**Verze:** 0.14
+**Stav:** RC 0.1 připraven na větvi `agent/rc-0.1`
 **Datum revize:** 17. 8. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -229,8 +229,9 @@ Oblast D má implementovaný autentizační a rolový základ:
 - lokální tester může všechny tři role reprodukovatelně vytvořit nebo jim
   resetovat přihlašovací údaje bez commitnutého či vypsaného hesla.
 
-Oblast D zůstává jako celek otevřená do propojení editační akce v E a
-skutečného browser průchodu login–edit–logout.
+Oblast D je pro RC 0.1 splněna. Skutečný browser průchod ověřil
+přihlášení Editora i Čtenáře, změnu viditelné kohorty podle role, POST
+odhlášení a návrat do anonymního stavu.
 
 Oblast E má implementovanou jednoduchou editaci základních údajů osoby:
 
@@ -246,10 +247,12 @@ Oblast E má implementovanou jednoduchou editaci základních údajů osoby:
 - cílené testy pokrývají service rollback, permission matice, neaktivního
   actora, skrytý cíl, CSRF, metody, tampering, validaci a OOB fragment.
 
-Oblast E zůstává jako celek otevřená pouze do skutečného browser ověření
-navazujícího login–edit–logout průchodu.
+Oblast E je pro RC 0.1 splněna. Browser ověřil otevření formuláře z
+detailu, serverovou validační chybu, platný HTMX zápis bez reloadu, potvrzení
+v UI i následnou obnovu demo záznamu. Čtenář editační akci nevidí a
+přímá editační URL mu vrací 403.
 
-První vertikální řez B+C+G je rozpracován a zatím neuzavírá celé oblasti:
+Vertikální řez B+C+G je implementován a browser ověřen:
 
 - hlavní URL čte skutečné, pro actora viditelné osoby z databáze,
 - výchozí seznam i detail bezpečně vylučují archivované a měkce odstraněné
@@ -269,8 +272,21 @@ První vertikální řez B+C+G je rozpracován a zatím neuzavírá celé oblast
 - cílené automatické testy pokrývají access matice, čerstvý stav actora,
   lifecycle, přímou URL, HTMX, admin bypass a neprozrazující odvození.
 
-Oblasti B, C a G zůstávají jako celek otevřené do úplného browser ověření
-výsledného RC průchodu společně se souvisejícími částmi D a E.
+Závěrečný browser průchod na desktopu 1280×720 a mobilu 390×844
+ověřil list/detail, výběr osoby, actor-specific odvozené údaje, mobilní
+panel bez horizontálního overflow a světlý i tmavý motiv. Sekvenční UI/UX
+review hlavního agenta nenašel blocker; samostatné subagent browser review
+nebylo v jeho izolovaném prostředí technicky dostupné.
+
+Oblasti B, C a G jsou tím pro RC 0.1 splněny. Bezpečnostní oblast F je
+doložena cílenými testy a nezávislým security review bez blockeru. Závěrečná
+brána H prošla `manage.py check`, `makemigrations --check --dry-run`, 1012
+automatickými testy, cílenými testy průchodu, nezávislým QA a security review,
+kontrolou dokumentace, diffu, tajemství a lokálních artefaktů.
+
+Všechna povinná acceptance kritéria A–H jsou splněna. RC 0.1 je připraven
+na větvi `agent/rc-0.1`; nejde o schválení produkčního nasazení, merge do
+`feature/mvp` nebo `main` ani o dokončení pozdějších fází roadmapy.
 
 ## Fáze 4 – Interaktivní prototyp
 

@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.15
-**Stav:** pracovní návrh v implementaci; experimentální RC 0.1
+**Verze dokumentace:** 0.16
+**Stav:** RC 0.1 připraven na větvi `agent/rc-0.1`; bez produkčního nasazení
 **Datum revize:** 17. 8. 2026
 
 ## Účel balíčku
@@ -39,6 +39,21 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.16
+
+Verze 0.16 uzavírá kontrolní bránu experimentálního RC 0.1:
+
+- skutečný browser průchod ověřil anonymní stav, Čtenáře a Editora,
+  actor-specific seznam/detail, login, serverovou validaci, HTMX uložení a
+  logout,
+- desktop 1280×720 i mobil 390×844 prošly list/detail tokem, mobilním panelem
+  bez horizontálního overflow a světlým i tmavým motivem,
+- Čtenář nemá editační akci a jeho přímý pokus o editační URL končí 403,
+- projektová brána prošla 1012 testy, systémovou kontrolou, kontrolou migrací,
+  nezávislým QA a security review i kontrolou diffu a artefaktů,
+- RC 0.1 je připraven pouze na `agent/rc-0.1`; produkční nasazení ani merge
+  do `feature/mvp` nebo `main` tím nejsou schváleny.
 
 ## Stav verze 0.15
 
