@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.10
+**Verze:** 0.11
 **Stav:** pracovní návrh  
 **Datum revize:** 17. 8. 2026
 
@@ -55,6 +55,13 @@ Může:
 - spravovat číselníky,
 - provádět export a zálohu,
 - spravovat omezený obsah.
+
+Jde o cílové produktové schopnosti, nikoli automatické zpřístupnění každého
+modelu přes výchozí Django admin. V aktuální infrastrukturní etapě admin
+zpřístupňuje spravovatelné číselníky míst, ale `Place`, `Residence`,
+`GraveSite` a `PersonGraveSite` jsou fail-closed odregistrovány. Bezpečné
+produktové rozhraní musí nejprve použít schválenou servisní hranici a
+actor-aware čtení; pro obecný `Place` taková úplná hranice zatím neexistuje.
 
 ## 5. Přístupové úrovně záznamů
 

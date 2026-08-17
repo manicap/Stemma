@@ -19,7 +19,6 @@ from common.models import (
     VerifiableModel,
 )
 
-from .admin import GraveSiteAdmin
 from .choices import GraveSiteStatus
 from .models import GraveSite, GraveSiteType, Place
 
@@ -585,50 +584,7 @@ class GraveSiteDatabaseTests(TestCase):
 
 
 class GraveSiteAdminTests(SimpleTestCase):
-    """Ověření lokální konfigurace GraveSite v Django Adminu."""
+    """Ověření fail-closed hranice GraveSite v Django Adminu."""
 
-    def test_model_is_registered_with_exact_configuration(self) -> None:
-        self.assertTrue(admin.site.is_registered(GraveSite))
-        model_admin = admin.site._registry[GraveSite]
-
-        self.assertIsInstance(model_admin, GraveSiteAdmin)
-        self.assertEqual(
-            model_admin.list_display,
-            (
-                "grave_site_type",
-                "cemetery_name",
-                "place",
-                "section",
-                "row",
-                "grave_number",
-                "status",
-                "access_level",
-                "verification_status",
-                "archived_at",
-                "deleted_at",
-            ),
-        )
-        self.assertEqual(
-            model_admin.list_filter,
-            (
-                "grave_site_type",
-                "status",
-                "access_level",
-                "verification_status",
-                "archived_at",
-                "deleted_at",
-            ),
-        )
-        self.assertEqual(
-            model_admin.search_fields,
-            (
-                "cemetery_name",
-                "location_text",
-                "place__name",
-                "section",
-                "row",
-                "grave_number",
-                "inscription",
-                "note",
-            ),
-        )
+    def test_model_is_not_registered(self) -> None:
+        self.assertFalse(admin.site.is_registered(GraveSite))

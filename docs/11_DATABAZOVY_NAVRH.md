@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.38
+**Verze:** 0.39
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 17. 8. 2026
 
@@ -33,6 +33,13 @@ Návrh prošel logickou i architektonickou revizí. Milníky M0 a M1 jsou implem
   archivovanou nebo měkce odstraněnou osobu. Z čerstvého řádku zachová
   `access_level`, `verification_status`, technická, autorská i lifecycle
   metadata a před uložením volá `full_clean()`.
+- Business modely `Place`, `Residence`, `GraveSite` a `PersonGraveSite`
+  nejsou registrovány v Django adminu. Jejich dřívější výchozí admin obcházel
+  existující hranice u bydlišť a hrobových míst a zároveň zveřejňoval
+  neautorizované interní querysety. Obecný `Place` úplnou schválenou servisní
+  a actor-aware hranici zatím nemá, proto je rovněž fail-closed. Bezpečné
+  produktové rozhraní musí tyto hranice použít nebo nejprve doplnit.
+  Uživatelsky spravovatelné číselníky zůstávají v adminu dostupné.
 
 ## 2. Závazné principy
 

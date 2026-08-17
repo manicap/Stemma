@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.30
+**Verze:** 0.31
 **Stav:** koncept  
 **Datum revize:** 17. 8. 2026
 
@@ -23,6 +23,12 @@ Další hlavní entity:
 - Zdravotní záznam,
 - Uživatel,
 - Změna.
+
+Business entity v aplikaci `places` (`Place`, `Residence`, `GraveSite` a
+`PersonGraveSite`) se zapisují pouze přes doménové služby tam, kde příslušný
+use-case existuje. Do vzniku servisně a autorizačně napojeného rozhraní
+nejsou registrovány v Django adminu. Spravovatelné číselníky zůstávají v
+adminu dostupné a jejich modelová validace se uplatní přes Django formuláře.
 
 ## 2. Osoba
 

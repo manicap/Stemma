@@ -17,7 +17,6 @@ from common.models import (
 )
 from people.models import Person
 
-from .admin import PersonGraveSiteAdmin
 from .choices import GraveSiteStatus
 from .models import (
     GraveSite,
@@ -444,48 +443,7 @@ class PersonGraveSiteDatabaseTests(TestCase):
 
 
 class PersonGraveSiteAdminTests(SimpleTestCase):
-    """Ověření lokální konfigurace spojovacího modelu v adminu."""
+    """Ověření fail-closed hranice spojovacího modelu v adminu."""
 
-    def test_model_is_registered_with_exact_configuration(self) -> None:
-        self.assertTrue(admin.site.is_registered(PersonGraveSite))
-        model_admin = admin.site._registry[PersonGraveSite]
-
-        self.assertIsInstance(model_admin, PersonGraveSiteAdmin)
-        self.assertEqual(
-            model_admin.list_display,
-            (
-                "person",
-                "grave_site",
-                "role",
-                "access_level",
-                "verification_status",
-                "archived_at",
-                "deleted_at",
-            ),
-        )
-        self.assertEqual(
-            model_admin.list_filter,
-            (
-                "role",
-                "access_level",
-                "verification_status",
-                "archived_at",
-                "deleted_at",
-            ),
-        )
-        self.assertEqual(
-            model_admin.search_fields,
-            (
-                "person__first_name",
-                "person__last_name",
-                "grave_site__cemetery_name",
-                "grave_site__location_text",
-                "grave_site__grave_number",
-                "role__name",
-                "note",
-            ),
-        )
-        self.assertEqual(
-            model_admin.list_select_related,
-            ("person", "grave_site", "role"),
-        )
+    def test_model_is_not_registered(self) -> None:
+        self.assertFalse(admin.site.is_registered(PersonGraveSite))

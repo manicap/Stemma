@@ -1,5 +1,16 @@
 # Historie změn dokumentace
 
+## Verze 0.48 – 17. 8. 2026
+
+- uzavřen neautorizovaný zapisovací i čtecí bypass v Django adminu pro
+  `Place`, `Residence`, `GraveSite` a `PersonGraveSite`,
+- business modely míst jsou do vzniku servisně a autorizačně napojeného
+  rozhraní fail-closed odregistrovány; současné produktové UI se nemění,
+- uživatelsky spravovatelné číselníky míst zůstávají v adminu dostupné,
+- aktualizovány regresní testy admin registrací; modely ani migrace se nemění.
+- role dokument nyní rozlišuje cílovou schopnost Správce od aktuálně
+  dostupných bezpečných admin cest.
+
 ## Verze 0.47 – 17. 8. 2026
 
 - doplněna atomická servisní hranice pro vytvoření a aktualizaci události

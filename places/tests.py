@@ -496,7 +496,7 @@ class PlaceDatabaseTests(TestCase):
 
 
 class PlaceAdminTests(SimpleTestCase):
-    """Ověření registrace místa v Django Adminu."""
+    """Ověření fail-closed hranice místa v Django Adminu."""
 
-    def test_model_is_registered_in_admin(self) -> None:
-        self.assertTrue(admin.site.is_registered(Place))
+    def test_model_is_not_registered_in_admin(self) -> None:
+        self.assertFalse(admin.site.is_registered(Place))

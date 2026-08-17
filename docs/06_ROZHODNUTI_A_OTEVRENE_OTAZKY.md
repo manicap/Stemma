@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.39
+**Verze:** 0.40
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 17. 8. 2026
 
@@ -95,6 +95,7 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 146. ACP-007 zavádí dlouhodobé neprozrazující odvozování: prezentační derived údaj smí pro konkrétního actora vycházet pouze z osob, událostí a dalších zdrojů, které jsou mu samy viditelné podle aktuální access a lifecycle policy. Skrytý zdroj nesmí být prozrazen věkem, stavem žijící/zemřelý, římským pořadím ani jinou agregací. Římské pořadí se počítá ve viditelné kohortě a může se podle oprávnění lišit; hodnoty se neukládají na osobu.
 147. ACP-008 schvaluje globální aplikační shell: kořenová URL patří Přehledu, stabilní globální navigace odděluje budoucí celorodinné oblasti a Osoby zůstávají samostatnou person-centric sekcí s kontextovým list/detail pohledem. Neimplementované oblasti jsou pouze jasně plánované. Výchozí motiv je tmavý, lokální volba dark/light se zachovává v prohlížeči a později přejde do uživatelského Nastavení.
 148. Zápisový agregát události tvoří frozen slotted `EventInput` a transakční `create_event()` a `update_event()`, které načtou čerstvé FK, při vytvoření snapshotují neuvedené defaulty typu, volají `full_clean()` a atomicky zapisují událost i úplnou sadu účastníků. Update i samostatná náhrada účastníků dovolují archivovaný, ale nikoli měkce odstraněný záznam. Již schválená jedinečnost životních událostí z rozhodnutí 79 se vynucuje pro přesné dvojice `birth` / `born_person` a `death` / `deceased_person`: osoba nesmí mít druhou účast v jiné události s `deleted_at IS NULL`. Archivace záznam nezneplatňuje, měkké odstranění ano; kontrola zamyká dotčené osoby v deterministickém pořadí a používá stabilní kód `duplicate_person_life_event`. `Event` ani `EventParticipant` nejsou do vzniku servisně napojeného rozhraní zapisovatelné přes Django admin. Nejde o nové ACP ani databázový constraint, protože invariant prochází normalizovanými tabulkami a transakční servisní hranicí.
+149. `Place`, `Residence`, `GraveSite` a `PersonGraveSite` nejsou do vzniku servisně a autorizačně napojeného rozhraní registrovány v Django adminu. Výchozí `ModelAdmin` obcházel existující doménové služby a actor-aware selectory bydlišť a hrobových míst; obecný `Place` takovou úplnou schválenou hranici zatím nemá. Bezpečnou náhradou proto není neomezený read-only seznam. Číselníky `PlaceType`, `ResidenceType`, `GraveSiteType` a `PersonGraveSiteRole` zůstávají spravovatelné v adminu a podléhají Django formulářové a modelové validaci. Jde o fail-closed uzavření aplikačních cest, nikoli změnu modelu, permission policy nebo nové ACP.
 
 ## 2. Otevřené otázky
 

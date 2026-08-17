@@ -24,7 +24,6 @@ from common.models import (
 )
 from people.models import Person
 
-from .admin import ResidenceAdmin
 from .models import Place, Residence, ResidenceType
 
 
@@ -470,50 +469,7 @@ class ResidenceDatabaseTests(TestCase):
 
 
 class ResidenceAdminTests(SimpleTestCase):
-    """Ověření lokální konfigurace bydliště v Django Adminu."""
+    """Ověření fail-closed hranice bydliště v Django Adminu."""
 
-    def test_model_is_registered_with_local_admin_class(self) -> None:
-        self.assertTrue(admin.site.is_registered(Residence))
-        self.assertIsInstance(
-            admin.site._registry[Residence],
-            ResidenceAdmin,
-        )
-
-    def test_admin_configuration(self) -> None:
-        model_admin = admin.site._registry[Residence]
-
-        self.assertEqual(
-            model_admin.list_display,
-            (
-                "person",
-                "residence_type",
-                "place",
-                "address_text",
-                "date_precision",
-                "access_level",
-                "verification_status",
-                "archived_at",
-                "deleted_at",
-            ),
-        )
-        self.assertEqual(
-            model_admin.list_filter,
-            (
-                "residence_type",
-                "date_precision",
-                "access_level",
-                "verification_status",
-                "archived_at",
-                "deleted_at",
-            ),
-        )
-        self.assertEqual(
-            model_admin.search_fields,
-            (
-                "person__first_name",
-                "person__last_name",
-                "place__name",
-                "address_text",
-                "note",
-            ),
-        )
+    def test_model_is_not_registered(self) -> None:
+        self.assertFalse(admin.site.is_registered(Residence))
