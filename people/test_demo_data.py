@@ -12,7 +12,7 @@ from events.models import Event, EventParticipant, EventType
 
 from . import services
 from .models import Person, PersonCategory
-from .services import PersonInput, create_person
+from .services import BasicPersonInput, PersonInput, create_person
 
 
 class PersonServiceApiTests(SimpleTestCase):
@@ -20,11 +20,13 @@ class PersonServiceApiTests(SimpleTestCase):
         self.assertEqual(
             services.__all__,
             (
+                "BasicPersonInput",
                 "PersonInput",
                 "RelationshipInput",
                 "create_person",
                 "create_relationship",
                 "update_person",
+                "update_person_basic",
                 "update_relationship",
             ),
         )
@@ -40,10 +42,24 @@ class PersonServiceApiTests(SimpleTestCase):
                 "gender",
                 "first_name",
                 "last_name",
+                "title_before_name",
+                "title_after_name",
                 "notes",
+                "biography",
                 "access_level",
                 "verification_status",
             ),
+        )
+        with self.assertRaises(FrozenInstanceError):
+            data.first_name = "Změna"
+
+    def test_basic_person_input_is_frozen_slotted_and_scoped(self) -> None:
+        data = BasicPersonInput()
+
+        self.assertFalse(hasattr(data, "__dict__"))
+        self.assertEqual(
+            tuple(field.name for field in fields(BasicPersonInput)),
+            ("category", "gender", "first_name", "last_name", "notes"),
         )
         with self.assertRaises(FrozenInstanceError):
             data.first_name = "Změna"
@@ -60,7 +76,10 @@ class PersonServiceTests(TestCase):
                 gender=Gender.FEMALE,
                 first_name="  Anna ",
                 last_name=" Nováková  ",
+                title_before_name="  PhDr. ",
+                title_after_name=" Ph.D.  ",
                 notes=" Poznámka. ",
+                biography=" Životopisný text. ",
                 access_level=AccessLevel.AUTHENTICATED,
                 verification_status=VerificationStatus.VERIFIED,
             ),
@@ -69,7 +88,10 @@ class PersonServiceTests(TestCase):
 
         self.assertEqual(person.first_name, "Anna")
         self.assertEqual(person.last_name, "Nováková")
+        self.assertEqual(person.title_before_name, "PhDr.")
+        self.assertEqual(person.title_after_name, "Ph.D.")
         self.assertEqual(person.notes, "Poznámka.")
+        self.assertEqual(person.biography, "Životopisný text.")
         self.assertEqual(person.category, category)
         self.assertEqual(person.created_by, actor)
 

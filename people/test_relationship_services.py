@@ -33,11 +33,13 @@ class RelationshipServiceApiTests(SimpleTestCase):
         self.assertEqual(
             services.__all__,
             (
+                "BasicPersonInput",
                 "PersonInput",
                 "RelationshipInput",
                 "create_person",
                 "create_relationship",
                 "update_person",
+                "update_person_basic",
                 "update_relationship",
             ),
         )

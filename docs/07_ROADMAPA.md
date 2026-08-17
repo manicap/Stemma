@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.15
+**Verze:** 0.16
 **Stav:** RC 0.1 připraven na větvi `agent/rc-0.1`
 **Datum revize:** 17. 8. 2026
 
@@ -239,7 +239,8 @@ Oblast E má implementovanou jednoduchou editaci základních údajů osoby:
 - oprávněný actor otevře formulář přímo z detailu, zatímco UI i server
   respektují `people.change_person` a viditelnost konkrétní osoby,
 - jméno, příjmení, pohlaví, kategorie a poznámka se ukládají přes
-  transakční `update_person()` s validací a zámkem aktuálního řádku,
+  transakční `update_person_basic()` s validací a zámkem aktuálního řádku;
+  služba mění jen rozsah formuláře a ostatní údaje zachová z čerstvého řádku,
 - přístup, ověření, lifecycle, autorství, narození a úmrtí formulář nemění;
   klientsky podstrčená pole jsou ignorována,
 - HTMX po úspěchu obnoví detail i položku seznamu bez reloadu, zobrazí

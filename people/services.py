@@ -20,11 +20,13 @@ from common.permissions import can_view_access_level
 from .models import Person, PersonCategory, Relationship, RelationshipType
 
 __all__ = (
+    "BasicPersonInput",
     "PersonInput",
     "RelationshipInput",
     "create_person",
     "create_relationship",
     "update_person",
+    "update_person_basic",
     "update_relationship",
 )
 
@@ -39,6 +41,17 @@ _PARENT_RELATIONSHIP_TYPE_CODES = frozenset(
 
 
 @dataclass(frozen=True, slots=True)
+class BasicPersonInput:
+    """Úplný snapshot údajů zpřístupněných základním formulářem."""
+
+    category: PersonCategory | None = None
+    gender: str = Gender.UNKNOWN
+    first_name: str = ""
+    last_name: str = ""
+    notes: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class PersonInput:
     """Úplný vstup základních editovatelných údajů osoby."""
 
@@ -46,7 +59,10 @@ class PersonInput:
     gender: str = Gender.UNKNOWN
     first_name: str = ""
     last_name: str = ""
+    title_before_name: str = ""
+    title_after_name: str = ""
     notes: str = ""
+    biography: str = ""
     access_level: str = AccessLevel.PUBLIC
     verification_status: str = VerificationStatus.UNCONFIRMED
 
@@ -141,7 +157,10 @@ def create_person(
             gender=data.gender,
             first_name=data.first_name.strip(),
             last_name=data.last_name.strip(),
+            title_before_name=data.title_before_name.strip(),
+            title_after_name=data.title_after_name.strip(),
             notes=data.notes.strip(),
+            biography=data.biography.strip(),
             access_level=data.access_level,
             verification_status=data.verification_status,
             created_by=_load_person_created_by(created_by),
@@ -161,6 +180,42 @@ def update_person(
 ) -> Person:
     """Atomicky a autorizovaně změň základní údaje osoby."""
 
+    with transaction.atomic():
+        current = _load_person_for_update(
+            person=person,
+            actor=actor,
+        )
+        _apply_basic_person_input(current=current, data=data)
+        current.title_before_name = data.title_before_name.strip()
+        current.title_after_name = data.title_after_name.strip()
+        current.biography = data.biography.strip()
+        return _validate_save_and_reload_person(current)
+
+
+def update_person_basic(
+    *,
+    person: Person,
+    data: BasicPersonInput,
+    actor: AbstractBaseUser,
+) -> Person:
+    """Změň jen pole v základním formuláři a ostatní zachovej z DB."""
+
+    with transaction.atomic():
+        current = _load_person_for_update(
+            person=person,
+            actor=actor,
+        )
+        _apply_basic_person_input(current=current, data=data)
+        return _validate_save_and_reload_person(current)
+
+
+def _load_person_for_update(
+    *,
+    person: Person,
+    actor: AbstractBaseUser,
+) -> Person:
+    """Ověř actora a vrať čerstvou uzamčenou editovatelnou osobu."""
+
     if person.pk is None:
         _raise_service_error(
             "person",
@@ -168,53 +223,59 @@ def update_person(
             "person_unsaved",
         )
 
-    with transaction.atomic():
-        user_model = get_user_model()
-        if (
-            not getattr(actor, "is_authenticated", False)
-            or actor.pk is None
-        ):
-            raise PermissionDenied("K úpravě osoby nemáte oprávnění.")
-        try:
-            current_actor = user_model._default_manager.get(pk=actor.pk)
-        except user_model.DoesNotExist as exc:
-            raise PermissionDenied(
-                "K úpravě osoby nemáte oprávnění."
-            ) from exc
-        if (
-            not current_actor.is_active
-            or not current_actor.has_perm("people.change_person")
-        ):
-            raise PermissionDenied("K úpravě osoby nemáte oprávnění.")
+    user_model = get_user_model()
+    if not getattr(actor, "is_authenticated", False) or actor.pk is None:
+        raise PermissionDenied("K úpravě osoby nemáte oprávnění.")
+    try:
+        current_actor = user_model._default_manager.get(pk=actor.pk)
+    except user_model.DoesNotExist as exc:
+        raise PermissionDenied(
+            "K úpravě osoby nemáte oprávnění."
+        ) from exc
+    if (
+        not current_actor.is_active
+        or not current_actor.has_perm("people.change_person")
+    ):
+        raise PermissionDenied("K úpravě osoby nemáte oprávnění.")
 
-        try:
-            current = Person.objects.select_for_update().get(pk=person.pk)
-        except Person.DoesNotExist:
-            _raise_service_error(
-                "person",
-                "Osoba musí být uložená v databázi.",
-                "person_unsaved",
-            )
-        if (
-            current.archived_at is not None
-            or current.deleted_at is not None
-            or not can_view_access_level(
-                actor=current_actor,
-                access_level=current.access_level,
-            )
-        ):
-            raise Person.DoesNotExist
-
-        current.category = _load_person_category(data.category)
-        current.gender = data.gender
-        current.first_name = data.first_name.strip()
-        current.last_name = data.last_name.strip()
-        current.notes = data.notes.strip()
-        current.full_clean()
-        current.save()
-        return Person.objects.select_related("category", "created_by").get(
-            pk=current.pk
+    try:
+        current = Person.objects.select_for_update().get(pk=person.pk)
+    except Person.DoesNotExist:
+        _raise_service_error(
+            "person",
+            "Osoba musí být uložená v databázi.",
+            "person_unsaved",
         )
+    if (
+        current.archived_at is not None
+        or current.deleted_at is not None
+        or not can_view_access_level(
+            actor=current_actor,
+            access_level=current.access_level,
+        )
+    ):
+        raise Person.DoesNotExist
+    return current
+
+
+def _apply_basic_person_input(
+    *,
+    current: Person,
+    data: BasicPersonInput | PersonInput,
+) -> None:
+    current.category = _load_person_category(data.category)
+    current.gender = data.gender
+    current.first_name = data.first_name.strip()
+    current.last_name = data.last_name.strip()
+    current.notes = data.notes.strip()
+
+
+def _validate_save_and_reload_person(current: Person) -> Person:
+    current.full_clean()
+    current.save()
+    return Person.objects.select_related("category", "created_by").get(
+        pk=current.pk
+    )
 
 
 def _load_relationship_type(

@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.29
+**Verze:** 0.30
 **Stav:** pracovní návrh  
 **Datum revize:** 17. 8. 2026
 
@@ -116,6 +116,7 @@ Základní údaje osoby:
 - pohlaví,
 - tituly,
 - stručná poznámka,
+- životopisný text,
 - hlavní fotografie.
 
 Narození a úmrtí nejsou uloženy jako běžná pole osoby, ale jako speciální typy událostí.
@@ -739,8 +740,10 @@ actorovi viditelná a aktuální actor musí mít `people.change_person`.
 Neviditelný a chybějící cíl zůstávají jednotnou 404; viditelný cíl bez
 editační permission vrací 403.
 
-Zápis koordinuje view přes `PersonForm` a transakční `update_person()`, ne
-přímým `save()`. Serverová validace zachová vyplněný formulář a chyby zobrazí
+Zápis koordinuje view přes `PersonForm` a transakční službu omezeného rozsahu
+`update_person_basic()`, ne přímým `save()`. Služba mění pouze pět polí
+formuláře a ostatní hodnoty zachová z čerstvě uzamčeného řádku. Serverová
+validace zachová vyplněný formulář a chyby zobrazí
 u pracovního místa. HTMX úspěch současně vymění detail a přes OOB fragment
 aktualizuje jméno a kategorii v levém seznamu, nastaví URL zpět na detail a
 zobrazí potvrzení. Rozpracovaná změna před opuštěním vyžaduje potvrzení.

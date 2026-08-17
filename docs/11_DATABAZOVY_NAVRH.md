@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.40
+**Verze:** 0.41
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 17. 8. 2026
 
@@ -26,13 +26,21 @@ Návrh prošel logickou i architektonickou revizí. Milníky M0 a M1 jsou implem
   transakční `create_person()`, které znovu načítají FK a autora, normalizují
   okraje textů a před uložením volají `full_clean()`. Stejnou hranici používá
   při zachování markerů opakovatelný lokální příkaz `seed_demo_data`; model
-  ani migrace se nemění.
+  nyní podle schváleného návrhu ukládá také titul před jménem, titul za jménem
+  a životopisný text. Strukturální migrace
+  `people.0010_person_titles_biography` nastaví existujícím řádkům prázdné
+  řetězce bez zpětného doplňování historických dat.
 - `update_person(*, person, data, actor)` uvnitř jedné transakce znovu načte
   aktuálního actora, ověří `people.change_person` a zamkne aktuální osobu přes
   `select_for_update()`. Odmítne neuloženou, fyzicky chybějící, neviditelnou,
   archivovanou nebo měkce odstraněnou osobu. Z čerstvého řádku zachová
   `access_level`, `verification_status`, technická, autorská i lifecycle
-  metadata a před uložením volá `full_clean()`.
+  metadata a před uložením volá `full_clean()`. Tituly a životopis jsou součástí
+  úplného servisního snapshotu. Užší současný RC formulář používá scoped
+  `BasicPersonInput` a `update_person_basic()`, které po stejném autorizačním
+  ověření a zámku mění jen jméno, příjmení, pohlaví, kategorii a poznámku.
+  Tituly a životopis proto zachovává přímo z čerstvého databázového řádku a
+  zatím je uživatelsky nezpřístupňuje.
 - Business modely `Place`, `Residence`, `GraveSite` a `PersonGraveSite`
   nejsou registrovány v Django adminu. Jejich dřívější výchozí admin obcházel
   existující hranice u bydlišť a hrobových míst a zároveň zveřejňoval
@@ -162,6 +170,11 @@ Osoba obsahuje pouze stabilní identitu:
 Musí být vyplněno alespoň jméno nebo příjmení. Jméno ani jeho kombinace nejsou unikátní.
 
 Osoba neobsahuje přímá pole narození, úmrtí, věku, stavu žijící/zemřelý ani římské číslice.
+
+Technická pole `title_before_name` a `title_after_name` jsou nepovinné
+`CharField(max_length=100, blank=True)`. Stručná poznámka `notes` a samostatný
+životopisný text `biography` jsou nepovinné `TextField(blank=True)`; životopis
+nenahrazuje krátkou kontextovou poznámku.
 
 ### 6.2 Kategorie osoby
 
@@ -2121,6 +2134,7 @@ people.0006_relationship_type
 people.0007_initial_relationship_types
 people.0008_relationship
 people.0009_alter_person_options
+people.0010_person_titles_biography
 accounts.0002_alter_user_options
 accounts.0003_initial_permission_groups
 places.0003_residence_type

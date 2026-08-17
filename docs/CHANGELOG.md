@@ -1,5 +1,19 @@
 # Historie změn dokumentace
 
+## Verze 0.50 – 17. 8. 2026
+
+- model `Person` byl dorovnán se schváleným databázovým návrhem o titul před
+  jménem, titul za jménem a životopisný text,
+- úplný `PersonInput` a služby vytvoření i změny tato pole normalizují a ukládají
+  přes stávající transakční doménovou hranici,
+- scoped `BasicPersonInput` a `update_person_basic()` dovolují současnému
+  úzce vymezenému RC formuláři měnit jen jeho pět polí; tituly a biografii
+  zachovávají z čerstvě uzamčeného databázového řádku a nevracejí souběžnou
+  změnu skrytých údajů na zastaralou hodnotu,
+- produktové UI se tímto infrastrukturním řezem nemění,
+- přidána strukturální migrace `people.0010_person_titles_biography` a cílené
+  modelové, servisní a webové regresní testy.
+
 ## Verze 0.49 – 17. 8. 2026
 
 - všechny vztahové mutace nově začínají společným coarse-grained mutexem a

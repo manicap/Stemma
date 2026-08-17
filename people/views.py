@@ -13,7 +13,7 @@ from .derived_selectors import (
 from .forms import PersonForm
 from .models import Person
 from .selectors import get_visible_person
-from .services import PersonInput, update_person
+from .services import BasicPersonInput, update_person_basic
 
 
 def _shell_context(
@@ -114,16 +114,13 @@ def _visible_person_or_404(request: HttpRequest, person_id: int) -> Person:
 def _person_input_from_form(
     *,
     form: PersonForm,
-    person: Person,
-) -> PersonInput:
-    return PersonInput(
+) -> BasicPersonInput:
+    return BasicPersonInput(
         category=form.cleaned_data["category"],
         gender=form.cleaned_data["gender"],
         first_name=form.cleaned_data["first_name"],
         last_name=form.cleaned_data["last_name"],
         notes=form.cleaned_data["notes"],
-        access_level=person.access_level,
-        verification_status=person.verification_status,
     )
 
 
@@ -157,9 +154,9 @@ def person_edit(request: HttpRequest, person_id: int) -> HttpResponse:
     form = PersonForm(request.POST or None, instance=person)
     if request.method == "POST" and form.is_valid():
         try:
-            updated_person = update_person(
+            updated_person = update_person_basic(
                 person=person,
-                data=_person_input_from_form(form=form, person=person),
+                data=_person_input_from_form(form=form),
                 actor=request.user,
             )
         except Person.DoesNotExist as error:

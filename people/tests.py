@@ -316,7 +316,16 @@ class PersonModelTests(SimpleTestCase):
 
         self.assertEqual(
             identity_fields,
-            ("category", "gender", "first_name", "last_name", "notes"),
+            (
+                "category",
+                "gender",
+                "first_name",
+                "last_name",
+                "title_before_name",
+                "title_after_name",
+                "notes",
+                "biography",
+            ),
         )
 
     def test_inherited_fields_are_present(self) -> None:
@@ -331,7 +340,10 @@ class PersonModelTests(SimpleTestCase):
         gender = Person._meta.get_field("gender")
         first_name = Person._meta.get_field("first_name")
         last_name = Person._meta.get_field("last_name")
+        title_before_name = Person._meta.get_field("title_before_name")
+        title_after_name = Person._meta.get_field("title_after_name")
         notes = Person._meta.get_field("notes")
+        biography = Person._meta.get_field("biography")
 
         self.assertIsInstance(category, models.ForeignKey)
         self.assertIsInstance(gender, models.CharField)
@@ -344,8 +356,16 @@ class PersonModelTests(SimpleTestCase):
         self.assertIsInstance(last_name, models.CharField)
         self.assertEqual(last_name.max_length, 100)
         self.assertTrue(last_name.blank)
+        self.assertIsInstance(title_before_name, models.CharField)
+        self.assertEqual(title_before_name.max_length, 100)
+        self.assertTrue(title_before_name.blank)
+        self.assertIsInstance(title_after_name, models.CharField)
+        self.assertEqual(title_after_name.max_length, 100)
+        self.assertTrue(title_after_name.blank)
         self.assertIsInstance(notes, models.TextField)
         self.assertTrue(notes.blank)
+        self.assertIsInstance(biography, models.TextField)
+        self.assertTrue(biography.blank)
 
     def test_category_relation(self) -> None:
         field = Person._meta.get_field("category")

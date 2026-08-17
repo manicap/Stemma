@@ -8,7 +8,12 @@ from django.utils import timezone
 from common.choices import AccessLevel, Gender, VerificationStatus
 
 from .models import Person, PersonCategory
-from .services import PersonInput, update_person
+from .services import (
+    BasicPersonInput,
+    PersonInput,
+    update_person,
+    update_person_basic,
+)
 
 
 class PersonUpdateServiceTests(TestCase):
@@ -37,7 +42,10 @@ class PersonUpdateServiceTests(TestCase):
                 gender=Gender.FEMALE,
                 first_name="  Anna ",
                 last_name=" Nováková  ",
+                title_before_name="  Ing. ",
+                title_after_name=" CSc.  ",
                 notes=" Poznámka. ",
+                biography=" Životopis. ",
                 access_level=AccessLevel.RESTRICTED,
                 verification_status=VerificationStatus.VERIFIED,
             ),
@@ -46,7 +54,10 @@ class PersonUpdateServiceTests(TestCase):
 
         self.assertEqual(updated.first_name, "Anna")
         self.assertEqual(updated.last_name, "Nováková")
+        self.assertEqual(updated.title_before_name, "Ing.")
+        self.assertEqual(updated.title_after_name, "CSc.")
         self.assertEqual(updated.notes, "Poznámka.")
+        self.assertEqual(updated.biography, "Životopis.")
         self.assertEqual(updated.category, category)
         self.assertEqual(updated.created_by, creator)
         self.assertIsNone(updated.archived_at)
@@ -55,6 +66,31 @@ class PersonUpdateServiceTests(TestCase):
             updated.verification_status,
             VerificationStatus.PROBABLE,
         )
+
+    def test_basic_update_preserves_fresh_fields_outside_its_scope(self) -> None:
+        person = Person.objects.create(
+            first_name="Původní",
+            title_before_name="Bc.",
+            title_after_name="DiS.",
+            biography="Starší životopis.",
+        )
+        Person.objects.filter(pk=person.pk).update(
+            title_before_name="PhDr.",
+            title_after_name="Ph.D.",
+            biography="Čerstvý životopis.",
+        )
+        editor = self.create_editor("basic-service-editor")
+
+        updated = update_person_basic(
+            person=person,
+            data=BasicPersonInput(first_name="  Nové jméno "),
+            actor=editor,
+        )
+
+        self.assertEqual(updated.first_name, "Nové jméno")
+        self.assertEqual(updated.title_before_name, "PhDr.")
+        self.assertEqual(updated.title_after_name, "Ph.D.")
+        self.assertEqual(updated.biography, "Čerstvý životopis.")
 
     def test_update_rejects_unsaved_missing_and_soft_deleted_person(self) -> None:
         missing = Person.objects.create(first_name="Chybějící")
@@ -315,6 +351,29 @@ class PersonEditWebTests(TestCase):
             VerificationStatus.PROBABLE,
         )
         self.assertContains(response, "Změny byly uloženy.")
+
+    def test_scoped_web_edit_preserves_person_fields_outside_form(self) -> None:
+        Person.objects.filter(pk=self.person.pk).update(
+            title_before_name="PhDr.",
+            title_after_name="Ph.D.",
+            biography="Původní životopis.",
+        )
+        editor = self.create_role_user("scoped-editor", "Editor")
+        self.client.force_login(editor)
+
+        response = self.client.post(
+            reverse("people:edit", args=(self.person.pk,)),
+            self.valid_data(),
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("people:detail", args=(self.person.pk,)),
+        )
+        self.person.refresh_from_db()
+        self.assertEqual(self.person.title_before_name, "PhDr.")
+        self.assertEqual(self.person.title_after_name, "Ph.D.")
+        self.assertEqual(self.person.biography, "Původní životopis.")
 
     def test_htmx_save_updates_detail_and_list_without_full_reload(self) -> None:
         editor = self.create_role_user("htmx-editor", "Editor")

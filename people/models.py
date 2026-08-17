@@ -140,7 +140,18 @@ class Person(
         max_length=100,
         blank=True,
     )
+    title_before_name = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+    title_after_name = models.CharField(
+        max_length=100,
+        blank=True,
+    )
     notes = models.TextField(
+        blank=True,
+    )
+    biography = models.TextField(
         blank=True,
     )
 

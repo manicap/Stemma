@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.32
+**Verze:** 0.33
 **Stav:** koncept  
 **Datum revize:** 17. 8. 2026
 
@@ -45,6 +45,7 @@ Navržená pole:
 - titul před jménem,
 - titul za jménem,
 - stručná poznámka,
+- životopisný text,
 - ID hlavní fotografie,
 - datum vytvoření,
 - datum poslední změny,
