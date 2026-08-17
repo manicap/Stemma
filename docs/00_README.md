@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.8
-**Stav:** pracovní návrh v implementaci
-**Datum revize:** 16. 7. 2026
+**Verze dokumentace:** 0.9
+**Stav:** pracovní návrh v implementaci; experimentální RC 0.1
+**Datum revize:** 17. 8. 2026
 
 ## Účel balíčku
 
@@ -40,7 +40,18 @@ Přehledové výstupy:
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
 
+## Stav verze 0.9
 
+Verze 0.9 zavádí experimentální autonomní vývojový režim pro první skutečně použitelný průřez aplikace:
+
+- zachovává `feature/mvp` jako původní non-agentní vývojový základ,
+- používá `backup/pre-agent-2026-08-17` jako neměnný návratový bod před experimentem,
+- zavádí aktivní experimentální větev `agent/rc-0.1`,
+- schvaluje ACP-006 pro autonomní agentní workflow pouze na této větvi,
+- definuje RC 0.1 jako měřitelný end-to-end průchod: spuštění, skutečný seznam osob, detail osoby, login/logout, jednoduchá editace, serverová oprávnění a použitelné UI,
+- umožňuje hlavnímu agentovi samostatně volit malé vertikální řezy, testovat, používat nezávislé review role, opravovat chyby, commitovat a pushovat ověřené řezy na `agent/rc-0.1`,
+- zachovává povinnou eskalaci při změně architektury, ACP, bezpečnostní policy, destruktivním zásahu, produkčním nasazení nebo skutečném rozporu dokumentace,
+- dokončení RC 0.1 samo neznamená dokončení celé Stemmy ani povolení produkčního nasazení.
 
 ## Stav verze 0.8
 
@@ -104,7 +115,6 @@ Verze 0.1 sjednocuje dosavadní návrh, odstraňuje rozpory verze 0.0 a doplňuj
 - pravidla kontroly konzistence,
 - roli projektového architekta Marcus.
 
-
 ## Technologické rozhodnutí
 
 - Python 3.14
@@ -123,18 +133,15 @@ Oficiální GitHub repozitář projektu:
 
 `https://github.com/manicap/Stemma`
 
-
 ## Aktuální fáze projektu
 
 - Návrh UI/UX je uzavřen jako schválený pracovní základ.
 - Databázový a technický návrh je dokončen jako schválený pracovní základ.
-- Implementace MVP byla zahájena ve větvi `feature/mvp`.
-- Milníky M0 – založení Django projektu – a M1 – společný základ – jsou dokončeny.
-- Existuje konfigurační balíček `config`, aplikace `accounts` a `common`, vlastní model `accounts.User`, první projektová migrace a testovaný společný základ.
-- `common` obsahuje pevné výčty, abstraktní modely a validaci neúplných dat včetně technických řadicích mezí.
-- Aktuálním krokem je M2: jádro Osoba, Místo, Událost a Vazba.
-- Hlavním technickým dokumentem zůstává `11_DATABAZOVY_NAVRH.md`.
-
+- Původní implementační posloupnost zůstává vedena v `feature/mvp`; M0 a M1 jsou dokončené a dokumentovaná implementace je v M2.
+- Pro ověření autonomního agentního vývoje běží oddělený experiment v `agent/rc-0.1` podle ACP-006.
+- Aktivním cílem této experimentální větve je RC 0.1 definované v `07_ROADMAPA.md`; nejde o náhradu stavů původních milníků.
+- `backup/pre-agent-2026-08-17` je návratový bod před zahájením agentního experimentu a neslouží k vývoji.
+- Hlavním technickým dokumentem zůstává `11_DATABAZOVY_NAVRH.md` a exekuční pravidla agentní větve určuje kořenový `AGENTS.md`.
 
 ## Autoritativní úložiště
 
