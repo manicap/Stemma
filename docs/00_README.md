@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.14
+**Verze dokumentace:** 0.15
 **Stav:** pracovní návrh v implementaci; experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -39,6 +39,19 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.15
+
+Verze 0.15 doplňuje bezpečné odvozené údaje seznamu a detailu osoby:
+
+- schválený ACP-007 zakazuje odvozovat prezentovaný údaj ze zdroje, který
+  aktuální actor sám nevidí,
+- selector za běhu počítá viditelné narození, úmrtí, spolehlivý věk, životní
+  stav a římské pořadí bez ukládání těchto hodnot na osobu,
+- neúplná data nezískávají falešnou přesnost, duplicitní životní události se
+  neřeší náhodným výběrem a skrytý jmenovec nevytváří mezeru v pořadí,
+- `seed_demo_data` poskytuje dvě shodně pojmenované osoby a tři životní
+  události pro ruční ověření data, věku, stavu a římských číslic.
 
 ## Stav verze 0.14
 
@@ -246,8 +259,11 @@ python manage.py runserver
 
 Aplikace je poté dostupná na `http://127.0.0.1:8000/`.
 
-`seed_demo_data` vytváří tři jednoznačně označené syntetické osoby pro
-veřejnou, přihlášenou a omezenou úroveň. Příkaz funguje pouze s lokálním
+`seed_demo_data` vytváří pět jednoznačně označených syntetických osob pro
+veřejnou, přihlášenou a omezenou úroveň. Dvě veřejné osoby jménem Josef
+Dvořák mají tři označené životní události, takže v seznamu a detailu lze
+ověřit římské pořadí, narození, úmrtí, stav i spolehlivě odvozený věk.
+Příkaz funguje pouze s lokálním
 `DEBUG=True`; mimo tento režim selže bez zápisu. Opakované spuštění při
 zachování vložených markerů nevytváří duplicity, existující ukázkové záznamy
 nepřepisuje a nic nemaže. Plán lze bez zápisu zkontrolovat příkazem

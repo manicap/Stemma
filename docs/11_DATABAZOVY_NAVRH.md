@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.36
+**Verze:** 0.37
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 17. 8. 2026
 
@@ -20,7 +20,8 @@ Návrh prošel logickou i architektonickou revizí. Milníky M0 a M1 jsou implem
   bydlišť, hrobových míst, doménových služeb a autorizovaných selectorů;
   stav původního milníku se řídí roadmapou.
 - RC 0.1 používá autorizovaný výchozí seznam a detail osoby nad skutečnými
-  daty; dalšími kroky jsou odvozené údaje a úplné browser ověření.
+  daty včetně actor-specific odvozených životních údajů a římského
+  pořadí; zbývá úplné browser ověření.
 - Základní zápis osoby pro RC používá frozen slotted `PersonInput` a
   transakční `create_person()`, které znovu načítají FK a autora, normalizují
   okraje textů a před uložením volají `full_clean()`. Stejnou hranici používá
@@ -2044,6 +2045,21 @@ Prioritní indexy podporují:
 - historii konkrétního objektu.
 
 Počty záznamů, věk, stav osoby, římská číslice a další agregace se zatím počítají za běhu.
+
+RC 0.1 realizuje tento výpočet autorizovaným
+`get_visible_person_presentations(*, actor, as_of=None)`. Selector vrací
+neměnné `PersonPresentation` a `PersonDerivedFacts`, načítá pouze běžně
+viditelné osoby a jejich viditelné, nearchivované a měkce neodstraněné
+události s konzistentní dvojicí `birth` + `born_person` nebo `death` +
+`deceased_person`. Skryté zdroje podle ACP-007 neovlivní žádný výstup.
+
+Datum se formátuje z uložených částečných komponent, nikoli z technických mezí
+jako z falešně přesného faktu. Věk se zobrazí jen tehdy, když všechny možné
+kombinace viditelných mezí dávají stejný nezáporný celý věk. Při více
+viditelných narozeních nebo úmrtích selector náhodně nevybírá jeden záznam.
+Římské pořadí používá přesně shodnou uloženou dvojici hlavních jmen, známá
+narození řadí podle technických mezí a PK, neznámá až za nimi a pracuje jen
+s actorovi viditelnou kohortou. Modely ani migrace se tím nemění.
 
 ## 18. Pořadí migrací
 

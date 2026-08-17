@@ -128,6 +128,7 @@ button, a { font: inherit; }
 .person-detail { max-width: 58rem; margin: 0 auto; }
 .person-header { display: flex; align-items: center; gap: 1.25rem; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; box-shadow: 0 .5rem 1.5rem var(--shadow); }
 .person-heading-copy { min-width: 0; flex: 1; }
+.life-dates { display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin: .4rem 0 0; color: var(--muted); }
 .portrait { width: 5.5rem; height: 5.5rem; flex: 0 0 auto; font-size: 1.4rem; }
 .person-overview { margin-top: 1rem; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; }
 .detail-empty { max-width: 32rem; margin: 12vh auto; text-align: center; }

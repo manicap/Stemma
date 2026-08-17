@@ -3,8 +3,14 @@
     <div class="portrait" aria-hidden="true">{{ selected_person.first_name|first|default:"·" }}{{ selected_person.last_name|first }}</div>
     <div class="person-heading-copy">
       <p class="eyebrow">{{ selected_person.category.name|default:"Bez kategorie" }}</p>
-      <h2>{{ selected_person.first_name }} {{ selected_person.last_name }}</h2>
-      <p>{{ selected_person.get_gender_display }}</p>
+      <h2>{{ selected_person.first_name }} {{ selected_person.last_name }}{% if selected_facts.roman_suffix %} {{ selected_facts.roman_suffix }}{% endif %}</h2>
+      <p>{{ selected_person.get_gender_display }} · {% if selected_facts.is_deceased %}Zemřelá osoba{% else %}Žijící osoba{% endif %}{% if selected_facts.age_text %} · {{ selected_facts.age_text }}{% endif %}</p>
+      {% if selected_facts.birth_text or selected_facts.death_text %}
+        <p class="life-dates">
+          {% if selected_facts.birth_text %}<span><strong>Narození:</strong> {{ selected_facts.birth_text }}</span>{% endif %}
+          {% if selected_facts.death_text %}<span><strong>Úmrtí:</strong> {{ selected_facts.death_text }}</span>{% endif %}
+        </p>
+      {% endif %}
     </div>
     {% if perms.people.change_person %}
       <a

@@ -8,6 +8,7 @@ from django.core.management import CommandError, call_command
 from django.test import SimpleTestCase, TestCase, override_settings
 
 from common.choices import AccessLevel, Gender, VerificationStatus
+from events.models import Event, EventParticipant, EventType
 
 from . import services
 from .models import Person, PersonCategory
@@ -89,14 +90,29 @@ class SeedDemoDataCommandTests(TestCase):
     def test_command_creates_synthetic_visibility_examples(self) -> None:
         output = self.run_command()
 
-        self.assertIn("nové 3", output)
-        self.assertEqual(Person.objects.count(), 3)
+        self.assertIn("osoby nové 5", output)
+        self.assertIn("události nové 3", output)
+        self.assertEqual(Person.objects.count(), 5)
         self.assertEqual(
             set(Person.objects.values_list("access_level", flat=True)),
             {
                 AccessLevel.PUBLIC,
                 AccessLevel.AUTHENTICATED,
                 AccessLevel.RESTRICTED,
+            },
+        )
+        self.assertEqual(Event.objects.count(), 3)
+        self.assertEqual(EventParticipant.objects.count(), 3)
+        self.assertEqual(
+            set(
+                EventParticipant.objects.values_list(
+                    "event__event_type__code",
+                    "role__code",
+                )
+            ),
+            {
+                ("birth", "born_person"),
+                ("death", "deceased_person"),
             },
         )
 
@@ -119,9 +135,12 @@ class SeedDemoDataCommandTests(TestCase):
 
         output = self.run_command()
 
-        self.assertIn("nové 0", output)
-        self.assertIn("již existující 3", output)
-        self.assertEqual(Person.objects.count(), 3)
+        self.assertIn("osoby nové 0", output)
+        self.assertIn("osoby existující 5", output)
+        self.assertIn("události nové 0", output)
+        self.assertIn("události existující 3", output)
+        self.assertEqual(Person.objects.count(), 5)
+        self.assertEqual(Event.objects.count(), 3)
         person.refresh_from_db()
         self.assertEqual(person.first_name, "Uživatelská změna")
         self.assertTrue(person.notes.endswith("Uživatelský dodatek."))
@@ -136,9 +155,10 @@ class SeedDemoDataCommandTests(TestCase):
 
         output = self.run_command()
 
-        self.assertIn("nové 2", output)
-        self.assertIn("již existující 1", output)
-        self.assertEqual(Person.objects.count(), 3)
+        self.assertIn("osoby nové 4", output)
+        self.assertIn("osoby existující 1", output)
+        self.assertEqual(Person.objects.count(), 5)
+        self.assertEqual(Event.objects.count(), 3)
 
     def test_command_rolls_back_the_batch_when_later_creation_fails(
         self,
@@ -165,5 +185,29 @@ class SeedDemoDataCommandTests(TestCase):
     def test_dry_run_describes_plan_without_writes(self) -> None:
         output = self.run_command("--dry-run")
 
-        self.assertIn("Plán: nové 3", output)
+        self.assertIn("Plán: osoby nové 5", output)
+        self.assertIn("události nové 3", output)
         self.assertFalse(Person.objects.exists())
+        self.assertFalse(Event.objects.exists())
+
+    def test_missing_life_event_catalog_rolls_back_people(self) -> None:
+        EventType.objects.filter(code="birth").update(code="missing-birth")
+
+        with self.assertRaisesMessage(CommandError, "spusťte migrace"):
+            self.run_command()
+
+        self.assertFalse(Person.objects.exists())
+        self.assertFalse(Event.objects.exists())
+
+    def test_seeded_life_facts_are_visible_in_real_detail_flow(self) -> None:
+        self.run_command()
+        older = Person.objects.get(
+            notes__contains="stemma-demo:derived:older"
+        )
+
+        response = self.client.get(f"/osoby/{older.pk}/")
+
+        self.assertContains(response, "Josef Dvořák I.", count=2)
+        self.assertContains(response, "Narození:</strong> 1. 1. 1900")
+        self.assertContains(response, "Úmrtí:</strong> 1. 1. 1980")
+        self.assertContains(response, "80 let")

@@ -11,7 +11,9 @@
 >
   <span class="avatar" aria-hidden="true">{{ person.first_name|first|default:"·" }}{{ person.last_name|first }}</span>
   <span>
-    <strong>{{ person.first_name }} {{ person.last_name }}</strong>
-    <small>{{ person.category.name|default:"Bez kategorie" }}</small>
+    <strong>{{ person.first_name }} {{ person.last_name }}{% if person_facts.roman_suffix %} {{ person_facts.roman_suffix }}{% endif %}</strong>
+    <small>
+      {% if person_facts.birth_text %}{{ person_facts.birth_text }}{% endif %}{% if person_facts.death_text %}–{{ person_facts.death_text }}{% endif %}{% if person_facts.birth_text or person_facts.death_text %} · {% endif %}{{ person.category.name|default:"Bez kategorie" }}
+    </small>
   </span>
 </a>

@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.27
+**Verze:** 0.28
 **Stav:** pracovní návrh  
 **Datum revize:** 17. 8. 2026
 
@@ -112,6 +112,8 @@ Narození a úmrtí nejsou uloženy jako běžná pole osoby, ale jako speciáln
 - Věk žijící osoby se počítá k aktuálnímu datu.
 - Věk zemřelé osoby se počítá k datu úmrtí.
 - Při neúplném datu se zobrazí pouze údaj, který lze spolehlivě odvodit.
+- Prezentační stav a věk se podle ACP-007 odvozují pouze z událostí, které
+  aktuální actor smí vidět; skrytá událost nesmí být nepřímo prozrazena.
 
 ## 6. Římské číslování
 
@@ -124,6 +126,10 @@ Pokud existuje více osob se stejným jménem a příjmením:
 - při doplnění starší osoby se pořadí automaticky přepočítá.
 
 Osoby bez známého data narození se zařadí za osoby s datem narození.
+
+Pro prezentační účely se kohorta i pořadí podle ACP-007 počítají pouze z osob
+a narození viditelných aktuálnímu actorovi. Číslice se proto může mezi rolemi
+lišit a nesmí mezerou prozradit skrytého jmenovce.
 
 ## 7. Události
 

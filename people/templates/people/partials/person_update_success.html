@@ -1,2 +1,4 @@
 {% include "people/partials/person_detail.html" with person_saved=True %}
-{% include "people/partials/person_list_item.html" with person=selected_person selected=True oob=True %}
+{% for presentation in person_presentations %}
+  {% include "people/partials/person_list_item.html" with person=presentation.person person_facts=presentation.facts oob=True %}
+{% endfor %}

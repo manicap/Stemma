@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 0.44 – 17. 8. 2026
+
+- schválen ACP-007: žádný odvozený prezentační údaj nesmí vycházet ze zdroje,
+  který aktuální actor sám nevidí podle access a lifecycle policy,
+- přidán actor-specific selector pro viditelné narození, úmrtí, životní stav,
+  spolehlivě určitelný věk a římské pořadí ve viditelné kohortě,
+- seznam, plný detail i HTMX fragment zobrazují odvozené údaje bez jejich
+  ukládání na osobu a po editaci obnoví všechny dotčené položky seznamu,
+- skryté, archivované, odstraněné, chybně propojené a nejednoznačně duplicitní
+  zdroje nemohou způsobit únik ani náhodně zvolený výsledek,
+- `seed_demo_data` nyní vytváří pět osob a tři životní události včetně dvou
+  shodně pojmenovaných osob pro reprodukovatelné ruční ověření derived UI,
+- doplněny cílené testy viditelnosti, neúplných dat, věku, lifecycle,
+  duplicit, římského pořadí, HTMX a konstantního dotazového profilu,
+- aktualizovány dokumenty 00, 02, 04, 06, 07, 10, 11 a 12; modely ani migrace se
+  nemění.
+
 ## Verze 0.43 – 17. 8. 2026
 
 - přidán lokální `DEBUG=True` příkaz `bootstrap_demo_accounts` pro

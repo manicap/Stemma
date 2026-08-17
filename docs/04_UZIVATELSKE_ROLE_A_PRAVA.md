@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.9
+**Verze:** 0.10
 **Stav:** pracovní návrh  
 **Datum revize:** 17. 8. 2026
 
@@ -237,6 +237,21 @@ výslovným obsahovým permissions upravit i zvýšené úrovně. `is_staff` bez
 obsahové permission neodhalí skrytý cíl a superuser zachovává centrální
 policy. POST vyžaduje CSRF a klient nemůže formulářem měnit přístup, ověření
 ani lifecycle.
+
+## 5.8 Odvozené údaje a viditelnost zdrojů
+
+Podle ACP-007 se věk, stav žijící/zemřelý, životní data, římské pořadí a
+další prezentační odvozené údaje počítají pouze z osob, událostí a jiných
+zdrojů, které jsou aktuálnímu actorovi samy viditelné. Běžný RC průchod
+vylučuje archivované i měkce odstraněné zdroje. Skrytá událost úmrtí proto
+nesmí změnit veřejně zobrazený stav a skrytý jmenovec nesmí vytvořit mezeru
+v římském pořadí.
+
+Římská číslice je actor-specific prezentační údaj a může se mezi rolemi
+lišit. Věk se zobrazí pouze tehdy, když jej lze z viditelného narození a
+případného viditelného úmrtí určit jednoznačně i při neúplném datu.
+Nejednoznačné duplicitní zdroje se nesmějí vyřešit náhodným výběrem jednoho
+záznamu.
 
 ## 6. Zamčený obsah
 

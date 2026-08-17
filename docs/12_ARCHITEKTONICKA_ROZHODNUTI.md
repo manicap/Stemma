@@ -1,7 +1,7 @@
 # Architektonická rozhodnutí
 
 **Dokument:** 12  
-**Verze:** 0.3  
+**Verze:** 0.4
 **Stav:** platný registr rozhodnutí  
 **Datum vytvoření:** 15. 7. 2026  
 **Datum revize:** 17. 8. 2026
@@ -208,3 +208,44 @@ Při skutečném rozporu autoritativní dokumentace, chybějícím materiálním
 - Agent může na experimentální větvi volit vertikální řezy přes více původních fází roadmapy, pokud respektuje jejich schválené závislosti; tím se automaticky nemění stav nedokončených milníků.
 - Dokončení RC 0.1 neznamená dokončení celé Stemmy ani automatické schválení produkčního nasazení.
 - `feature/mvp` zůstává zachovaným non-agentním vývojovým základem, dokud uživatel výslovně nerozhodne o integraci výsledků experimentu.
+
+---
+
+## ACP-007 — Neprozrazující odvozování prezentačních údajů
+
+**Stav:** Schváleno
+
+### Kontext
+
+Věk, stav žijící/zemřelý, římské pořadí a podobné údaje nejsou samostatnými
+uloženými fakty. Vznikají z osob, událostí a dalších zdrojových záznamů, které
+mají vlastní přístupovou úroveň a lifecycle. Globální odvození by mohlo
+nepřímo potvrdit existenci chráněné osoby nebo události.
+
+### Rozhodnutí
+
+Odvozený údaj zobrazený konkrétnímu actorovi smí vycházet pouze ze zdrojových
+osob, událostí a dalších záznamů, které jsou tomuto actorovi samy viditelné
+podle aktuální access a lifecycle policy.
+
+Skrytá skutečnost nesmí být nepřímo prozrazena věkem, stavem
+žijící/zemřelý, římským pořadím ani jiným odvozeným údajem. Prezentační
+římské pořadí se proto počítá pouze ve viditelné kohortě a může se podle
+oprávnění actora lišit. Tyto hodnoty se neukládají jako vlastnosti osoby.
+
+### Důvod
+
+- zachovat serverovou autorizaci i při agregaci a odvozování,
+- zabránit úniku existence skrytých osob a událostí přes mezery v pořadí,
+  věk nebo životní stav,
+- udržet jeden bezpečnostní princip pro současné i budoucí derived hodnoty.
+
+### Dopady
+
+- každý veřejný selector odvozených údajů musí nejprve uplatnit aktuální
+  access a lifecycle policy na všechny zdroje,
+- archivovaný nebo měkce odstraněný zdroj se v běžném RC detailu nepoužije,
+- stejná osoba může mít pro různé actory jiný prezentační stav nebo římskou
+  číslici, pokud mají rozdílnou viditelnost zdrojů,
+- při nejednoznačných nebo neúplných viditelných zdrojích se zobrazí pouze
+  údaj, který lze spolehlivě odvodit bez falešné přesnosti.

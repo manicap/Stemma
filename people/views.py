@@ -6,9 +6,13 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
+from .derived_selectors import (
+    PersonPresentation,
+    get_visible_person_presentations,
+)
 from .forms import PersonForm
 from .models import Person
-from .selectors import get_visible_people, get_visible_person
+from .selectors import get_visible_person
 from .services import PersonInput, update_person
 
 
@@ -16,10 +20,22 @@ def _shell_context(
     request: HttpRequest,
     *,
     selected_person: Person | None = None,
+    presentations: tuple[PersonPresentation, ...] | None = None,
 ) -> dict[str, object]:
+    if presentations is None:
+        presentations = get_visible_person_presentations(actor=request.user)
+    facts_by_person_id = {
+        presentation.person.pk: presentation.facts
+        for presentation in presentations
+    }
     return {
-        "people": get_visible_people(actor=request.user),
+        "person_presentations": presentations,
         "selected_person": selected_person,
+        "selected_facts": (
+            facts_by_person_id.get(selected_person.pk)
+            if selected_person is not None
+            else None
+        ),
     }
 
 
@@ -41,24 +57,36 @@ def person_detail(
 ) -> HttpResponse:
     """Zobraz bezpečně autorizovaný detail osoby."""
 
-    try:
-        person = get_visible_person(
-            person_id=person_id,
-            actor=request.user,
-        )
-    except Person.DoesNotExist as exc:
-        raise Http404("Osoba nebyla nalezena.") from exc
+    presentations = get_visible_person_presentations(actor=request.user)
+    presentation = next(
+        (
+            item
+            for item in presentations
+            if item.person.pk == person_id
+        ),
+        None,
+    )
+    if presentation is None:
+        raise Http404("Osoba nebyla nalezena.")
+    person = presentation.person
 
     if request.headers.get("HX-Request") == "true":
         return render(
             request,
             "people/partials/person_detail.html",
-            {"selected_person": person},
+            {
+                "selected_person": person,
+                "selected_facts": presentation.facts,
+            },
         )
     return render(
         request,
         "people/person_shell.html",
-        _shell_context(request, selected_person=person),
+        _shell_context(
+            request,
+            selected_person=person,
+            presentations=presentations,
+        ),
     )
 
 
@@ -140,10 +168,14 @@ def person_edit(request: HttpRequest, person_id: int) -> HttpResponse:
             _add_service_errors(form, error)
         else:
             if request.headers.get("HX-Request") == "true":
+                context = _shell_context(
+                    request,
+                    selected_person=updated_person,
+                )
                 response = render(
                     request,
                     "people/partials/person_update_success.html",
-                    {"selected_person": updated_person},
+                    context,
                 )
                 response["HX-Push-Url"] = reverse(
                     "people:detail",

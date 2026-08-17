@@ -1,9 +1,9 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.1  
+**Verze:** 0.2
 **Stav:** schválený pracovní základ  
-**Datum revize:** 15. 7. 2026
+**Datum revize:** 17. 8. 2026
 
 ## 1. Účel dokumentu
 
@@ -223,6 +223,11 @@ Příklad:
 
 Vybraná osoba bude výrazně označena kombinací jemného podbarvení a barevného akcentu na okraji.
 
+Římské pořadí a životní data se pro každého uživatele odvozují pouze
+z osob, událostí a dalších zdrojů, které tento uživatel smí vidět podle
+aktuální access a lifecycle policy. Římské pořadí se proto počítá ve
+viditelné kohortě a může se podle oprávnění lišit.
+
 ### 7.2 Vyhledávání
 
 Nad seznamem bude vyhledávací pole s našeptávačem.
@@ -300,6 +305,11 @@ Obsahuje:
 - tlačítko pro vytvoření souhrnného **PDF A4**.
 
 Tlačítka Zpět a Vpřed procházejí historii zobrazených osob podobně jako v prohlížeči.
+
+Zobrazené narození, úmrtí, věk a stav žijící/zemřelý vycházejí pouze
+ze zdrojů viditelných aktuálnímu uživateli. Skrytá událost nesmí být
+nepřímo prozrazena odvozeným údajem, takže se výsledek může podle
+oprávnění lišit.
 
 - Pokud v daném směru žádná historie neexistuje, tlačítko je šedé a neaktivní.
 - Po otevření další osoby se aktivuje Zpět.

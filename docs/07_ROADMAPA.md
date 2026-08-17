@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.12
+**Verze:** 0.13
 **Stav:** realizace MVP + experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -200,6 +200,8 @@ Oblast A má implementovaný reprodukovatelný lokální postup:
   přístupové úrovně, při zachování markerů je idempotentní, podporuje
   `--dry-run`, nic nemaže ani nepřepisuje a neobsahuje demo hesla nebo jiná
   tajemství; při `DEBUG=False` selže bez zápisu.
+- dvě další veřejné demo osoby a tři označené životní události umožňují ručně
+  ověřit narození, úmrtí, věk, stav a viditelné římské pořadí,
 - interaktivní `bootstrap_demo_accounts` vytvoří nebo resetuje lokálního
   Čtenáře, Editora a Správce s přesnými skupinami; heslo zadává tester skrytě,
   příkaz je nevypisuje ani neukládá v otevřené podobě a mimo `DEBUG=True`
@@ -261,12 +263,14 @@ První vertikální řez B+C+G je rozpracován a zatím neuzavírá celé oblast
 - Person a navazující jména a vztahy v Django Adminu respektují stejnou
   čtecí policy a zůstávají pouze pro čtení; zápis osoby vede aplikační
   editační průchod přes doménovou službu,
+- seznam a detail podle ACP-007 zobrazují pouze z viditelných zdrojů odvozené
+  narození, úmrtí, životní stav, spolehlivě určitelný věk a římské pořadí ve
+  viditelné kohortě; neúplná ani duplicitní data nezískávají falešnou přesnost,
 - cílené automatické testy pokrývají access matice, čerstvý stav actora,
-  lifecycle, přímou URL, HTMX a admin bypass.
+  lifecycle, přímou URL, HTMX, admin bypass a neprozrazující odvození.
 
-Oblasti B, C a G zůstávají nesplněné jako celek, dokud detail nedoplní
-schválené odvozené údaje a nejsou splněny i související login a editační
-části D a E včetně úplného browser ověření výsledného RC průchodu.
+Oblasti B, C a G zůstávají jako celek otevřené do úplného browser ověření
+výsledného RC průchodu společně se souvisejícími částmi D a E.
 
 ## Fáze 4 – Interaktivní prototyp
 
