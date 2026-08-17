@@ -23,6 +23,7 @@ class PersonServiceApiTests(SimpleTestCase):
                 "RelationshipInput",
                 "create_person",
                 "create_relationship",
+                "update_person",
                 "update_relationship",
             ),
         )

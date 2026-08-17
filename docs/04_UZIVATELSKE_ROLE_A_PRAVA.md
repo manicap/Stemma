@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.8
+**Verze:** 0.9
 **Stav:** pracovní návrh  
 **Datum revize:** 17. 8. 2026
 
@@ -220,8 +220,23 @@ Django Admin používá pro `Person` stejný autorizovaný selector. Admin
 přehledy `PersonName` a `Relationship` navíc vyžadují viditelnost vlastního
 záznamu i všech propojených osob. Všechny tři plochy jsou v této etapě pouze
 pro čtení. Běžné `is_staff` ani standardní modelové permission nesmějí
-obejít obsahová nebo lifecycle pravidla; zápis osoby bude veden přes
+obejít obsahová nebo lifecycle pravidla; zápis osoby je veden přes
 doménovou službu v aplikačním editačním průchodu.
+
+## 5.7 Editace základních údajů osoby pro RC 0.1
+
+Odkaz i formulář vidí pouze actor s `people.change_person`, ale UI není
+bezpečnostní hranicí. Editační view nejprve použije stejný autorizovaný
+selector jako detail, takže neviditelná, archivovaná nebo měkce odstraněná
+osoba zůstane skrytá jednotnou 404. Teprve pro viditelný cíl ověří čerstvý
+aktivní účet a `people.change_person`; bez permission vrací 403.
+
+Čtenář editaci nemá. Editor může upravit veřejnou a `authenticated` osobu,
+nikoli automaticky `restricted` nebo `admin_only`. Správce může díky svým
+výslovným obsahovým permissions upravit i zvýšené úrovně. `is_staff` bez
+obsahové permission neodhalí skrytý cíl a superuser zachovává centrální
+policy. POST vyžaduje CSRF a klient nemůže formulářem měnit přístup, ověření
+ani lifecycle.
 
 ## 6. Zamčený obsah
 

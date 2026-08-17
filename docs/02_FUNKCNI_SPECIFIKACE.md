@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.26
+**Verze:** 0.27
 **Stav:** pracovní návrh  
 **Datum revize:** 17. 8. 2026
 
@@ -709,6 +709,20 @@ externí `next` URL se ignoruje. Přihlášená lišta ukazuje identitu účtu a
 odhlášení přijímá pouze CSRF chráněný POST. Neaktivní účet se nepřihlásí.
 Po změně session se seznam i přímý detail vždy znovu autorizují proti
 aktuálnímu databázovému stavu actora.
+
+Jednoduchá RC editace osoby zpřístupňuje pouze jméno, příjmení, pohlaví,
+kategorii a poznámku. Narození a úmrtí zůstávají samostatnými událostmi;
+formulář nemění `access_level`, `verification_status`, autorství ani
+lifecycle metadata a podstrčená pole ignoruje. Vstupní osoba musí být
+actorovi viditelná a aktuální actor musí mít `people.change_person`.
+Neviditelný a chybějící cíl zůstávají jednotnou 404; viditelný cíl bez
+editační permission vrací 403.
+
+Zápis koordinuje view přes `PersonForm` a transakční `update_person()`, ne
+přímým `save()`. Serverová validace zachová vyplněný formulář a chyby zobrazí
+u pracovního místa. HTMX úspěch současně vymění detail a přes OOB fragment
+aktualizuje jméno a kategorii v levém seznamu, nastaví URL zpět na detail a
+zobrazí potvrzení. Rozpracovaná změna před opuštěním vyžaduje potvrzení.
 
 ## 15. Historie změn
 

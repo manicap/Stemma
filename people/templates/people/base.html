@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Stemma{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'people/stemma.css' %}">
+  <script src="{% static 'people/history-guard.js' %}"></script>
   <script src="{% static 'people/htmx-2.0.10.min.js' %}"></script>
 </head>
 <body>
@@ -34,7 +35,22 @@
       {% endif %}
     </div>
   </header>
+  {% if messages %}
+    <div class="global-messages" aria-live="polite">
+      {% for message in messages %}<p class="success-message">{{ message }}</p>{% endfor %}
+    </div>
+  {% endif %}
   {% block content %}{% endblock %}
+  <dialog id="unsaved-dialog" class="confirm-dialog" aria-labelledby="unsaved-dialog-heading">
+    <form method="dialog">
+      <h2 id="unsaved-dialog-heading">Máte neuložené změny</h2>
+      <p>Chcete rozpracovanou editaci zahodit?</p>
+      <div class="form-actions">
+        <button class="secondary-button" value="continue">Pokračovat v úpravě</button>
+        <button class="primary-button" value="discard">Zahodit změny</button>
+      </div>
+    </form>
+  </dialog>
   <script src="{% static 'people/stemma.js' %}"></script>
 </body>
 </html>

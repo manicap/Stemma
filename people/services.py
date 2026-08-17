@@ -5,7 +5,7 @@ from typing import NoReturn
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 
 from common.choices import (
@@ -15,6 +15,7 @@ from common.choices import (
     Gender,
     VerificationStatus,
 )
+from common.permissions import can_view_access_level
 
 from .models import Person, PersonCategory, Relationship, RelationshipType
 
@@ -23,6 +24,7 @@ __all__ = (
     "RelationshipInput",
     "create_person",
     "create_relationship",
+    "update_person",
     "update_relationship",
 )
 
@@ -148,6 +150,70 @@ def create_person(
         person.save()
         return Person.objects.select_related("category", "created_by").get(
             pk=person.pk
+        )
+
+
+def update_person(
+    *,
+    person: Person,
+    data: PersonInput,
+    actor: AbstractBaseUser,
+) -> Person:
+    """Atomicky a autorizovaně změň základní údaje osoby."""
+
+    if person.pk is None:
+        _raise_service_error(
+            "person",
+            "Osoba musí být uložená v databázi.",
+            "person_unsaved",
+        )
+
+    with transaction.atomic():
+        user_model = get_user_model()
+        if (
+            not getattr(actor, "is_authenticated", False)
+            or actor.pk is None
+        ):
+            raise PermissionDenied("K úpravě osoby nemáte oprávnění.")
+        try:
+            current_actor = user_model._default_manager.get(pk=actor.pk)
+        except user_model.DoesNotExist as exc:
+            raise PermissionDenied(
+                "K úpravě osoby nemáte oprávnění."
+            ) from exc
+        if (
+            not current_actor.is_active
+            or not current_actor.has_perm("people.change_person")
+        ):
+            raise PermissionDenied("K úpravě osoby nemáte oprávnění.")
+
+        try:
+            current = Person.objects.select_for_update().get(pk=person.pk)
+        except Person.DoesNotExist:
+            _raise_service_error(
+                "person",
+                "Osoba musí být uložená v databázi.",
+                "person_unsaved",
+            )
+        if (
+            current.archived_at is not None
+            or current.deleted_at is not None
+            or not can_view_access_level(
+                actor=current_actor,
+                access_level=current.access_level,
+            )
+        ):
+            raise Person.DoesNotExist
+
+        current.category = _load_person_category(data.category)
+        current.gender = data.gender
+        current.first_name = data.first_name.strip()
+        current.last_name = data.last_name.strip()
+        current.notes = data.notes.strip()
+        current.full_clean()
+        current.save()
+        return Person.objects.select_related("category", "created_by").get(
+            pk=current.pk
         )
 
 

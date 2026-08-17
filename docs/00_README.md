@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.12
+**Verze dokumentace:** 0.13
 **Stav:** pracovní návrh v implementaci; experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -39,6 +39,20 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.13
+
+Verze 0.13 doplňuje jednoduchou editaci osoby pro RC 0.1:
+
+- Editor a Správce mohou z viditelného detailu otevřít formulář základních
+  údajů a uložit jej přes transakční doménovou službu,
+- server znovu vynucuje viditelnost objektu, aktuální stav účtu,
+  `people.change_person`, CSRF a povolené HTTP metody,
+- RC formulář nemění přístupovou úroveň, stav ověření, lifecycle ani údaje
+  narození a úmrtí; klientsky podstrčené hodnoty se ignorují,
+- HTMX po uložení aktualizuje detail i odpovídající položku seznamu,
+  validace zůstává u formuláře a rozpracované změny jsou chráněné varováním,
+- úplný browser průchod zůstává před závěrečným uzavřením oblastí D, E a G.
 
 ## Stav verze 0.12
 

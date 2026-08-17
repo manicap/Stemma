@@ -44,10 +44,26 @@
     if (event.detail.target.id !== "person-detail") return;
     selectCurrentPerson();
     setListOpen(false);
+    event.detail.target.querySelector("[data-form-error-summary]")?.focus();
   });
+  const resetSubmitButton = (form) => {
+    const button = form?.querySelector("[data-person-submit]");
+    if (!button) return;
+    button.textContent = button.dataset.idleLabel;
+    button.disabled = false;
+  };
   const showRequestError = (event) => {
     const detail = event.detail.target;
     if (!(detail instanceof Element) || detail.id !== "person-detail") return;
+    const form = detail.querySelector("[data-person-form]");
+    if (form) {
+      form.dataset.dirty = "true";
+      form.dataset.submitting = "false";
+      resetSubmitButton(form);
+      form.querySelector("[data-request-error]")?.remove();
+      form.insertAdjacentHTML("afterbegin", '<div class="form-errors" role="alert" data-request-error><strong>Změny se nepodařilo uložit.</strong> Zadané hodnoty zůstaly zachovány. Zkuste akci zopakovat.</div>');
+      return;
+    }
     if (event.type === "htmx:responseError" && event.detail.xhr.status === 404) {
       detail.innerHTML = event.detail.xhr.responseText;
       return;
@@ -56,4 +72,57 @@
   };
   document.body.addEventListener("htmx:responseError", showRequestError);
   document.body.addEventListener("htmx:sendError", showRequestError);
+
+  const dirtyPersonForm = () => document.querySelector('[data-person-form][data-dirty="true"]');
+  const blockingPersonForm = () => document.querySelector('[data-person-form][data-dirty="true"]:not([data-submitting="true"])');
+  document.body.addEventListener("input", (event) => {
+    event.target.closest?.("[data-person-form]")?.setAttribute("data-dirty", "true");
+  });
+  document.body.addEventListener("change", (event) => {
+    event.target.closest?.("[data-person-form]")?.setAttribute("data-dirty", "true");
+  });
+  document.body.addEventListener("submit", (event) => {
+    event.target.closest?.("[data-person-form]")?.setAttribute("data-submitting", "true");
+  });
+  document.body.addEventListener("htmx:beforeRequest", (event) => {
+    const form = event.detail.elt.closest?.("[data-person-form]");
+    const button = form?.querySelector("[data-person-submit]");
+    if (button) button.textContent = button.dataset.loadingLabel;
+  });
+  const confirmDiscard = () => new Promise((resolve) => {
+    const dialog = document.querySelector("#unsaved-dialog");
+    if (
+      typeof HTMLDialogElement === "undefined"
+      || !(dialog instanceof HTMLDialogElement)
+    ) {
+      resolve(window.confirm("Máte neuložené změny. Chcete je zahodit?"));
+      return;
+    }
+    const finish = () => resolve(dialog.returnValue === "discard");
+    dialog.addEventListener("close", finish, { once: true });
+    dialog.showModal();
+  });
+  document.body.addEventListener("htmx:confirm", (event) => {
+    const form = dirtyPersonForm();
+    if (!form || event.detail.elt === form) return;
+    event.preventDefault();
+    confirmDiscard().then((discard) => {
+      if (!discard) return;
+      form.dataset.dirty = "false";
+      event.detail.issueRequest(true);
+    });
+  });
+  window.addEventListener("stemma:confirm-history-discard", (event) => {
+    confirmDiscard().then((discard) => {
+      if (!discard) return;
+      const form = dirtyPersonForm();
+      if (form) form.dataset.dirty = "false";
+      window.location.assign(event.detail.targetUrl);
+    });
+  });
+  window.addEventListener("beforeunload", (event) => {
+    if (!blockingPersonForm()) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
 }());

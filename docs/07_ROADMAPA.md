@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.10
+**Verze:** 0.11
 **Stav:** realizace MVP + experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -224,6 +224,23 @@ Oblast D má implementovaný autentizační a rolový základ:
 Oblast D zůstává jako celek otevřená do propojení editační akce v E a
 skutečného browser průchodu login–edit–logout.
 
+Oblast E má implementovanou jednoduchou editaci základních údajů osoby:
+
+- oprávněný actor otevře formulář přímo z detailu, zatímco UI i server
+  respektují `people.change_person` a viditelnost konkrétní osoby,
+- jméno, příjmení, pohlaví, kategorie a poznámka se ukládají přes
+  transakční `update_person()` s validací a zámkem aktuálního řádku,
+- přístup, ověření, lifecycle, autorství, narození a úmrtí formulář nemění;
+  klientsky podstrčená pole jsou ignorována,
+- HTMX po úspěchu obnoví detail i položku seznamu bez reloadu, zobrazí
+  potvrzení a nastaví detailovou URL; validační chyby a zadané hodnoty
+  zůstávají ve formuláři,
+- cílené testy pokrývají service rollback, permission matice, neaktivního
+  actora, skrytý cíl, CSRF, metody, tampering, validaci a OOB fragment.
+
+Oblast E zůstává jako celek otevřená pouze do skutečného browser ověření
+navazujícího login–edit–logout průchodu.
+
 První vertikální řez B+C+G je rozpracován a zatím neuzavírá celé oblasti:
 
 - hlavní URL čte skutečné, pro actora viditelné osoby z databáze,
@@ -236,7 +253,8 @@ První vertikální řez B+C+G je rozpracován a zatím neuzavírá celé oblast
 - desktopový i mobilní list/detail průchod včetně opakované HTMX výměny,
   výběru osoby, motivu a mobilního zavření panelu prošel reálným browserem,
 - Person a navazující jména a vztahy v Django Adminu respektují stejnou
-  čtecí policy a jsou do zavedení doménové editační služby pouze pro čtení,
+  čtecí policy a zůstávají pouze pro čtení; zápis osoby vede aplikační
+  editační průchod přes doménovou službu,
 - cílené automatické testy pokrývají access matice, čerstvý stav actora,
   lifecycle, přímou URL, HTMX a admin bypass.
 

@@ -1,0 +1,53 @@
+<article class="person-detail person-edit" aria-labelledby="person-edit-heading">
+  <header class="person-header">
+    <div class="portrait" aria-hidden="true">{{ selected_person.first_name|first|default:"·" }}{{ selected_person.last_name|first }}</div>
+    <div>
+      <p class="eyebrow">Editace osoby</p>
+      <h2 id="person-edit-heading">Upravit základní údaje</h2>
+    </div>
+  </header>
+  <form
+    class="person-form person-overview"
+    data-person-form
+    data-dirty="{% if form_submitted %}true{% else %}false{% endif %}"
+    data-edit-url="{% url 'people:edit' selected_person.pk %}"
+    method="post"
+    action="{% url 'people:edit' selected_person.pk %}"
+    hx-post="{% url 'people:edit' selected_person.pk %}"
+    hx-target="#person-detail"
+    hx-indicator="#detail-loading"
+    hx-disabled-elt="find [data-person-submit]"
+    novalidate
+  >
+    {% csrf_token %}
+    {% if person_form.errors %}
+      <div class="form-errors" role="alert" tabindex="-1" data-form-error-summary>
+        <p><strong>Formulář se nepodařilo uložit. Opravte uvedené chyby.</strong></p>
+        <ul>
+          {% for field in person_form %}
+            {% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}
+          {% endfor %}
+          {% for error in person_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    {% for field in person_form %}
+      <div class="form-field{% if field.errors %} has-error{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div id="{{ field.id_for_label }}-errors" class="field-errors">{{ field.errors }}</div>{% endif %}
+      </div>
+    {% endfor %}
+    <div class="form-actions">
+      <button class="primary-button" type="submit" data-person-submit data-idle-label="Uložit osobu" data-loading-label="Ukládám…">Uložit osobu</button>
+      <a
+        class="secondary-button"
+        data-cancel-edit
+        href="{% url 'people:detail' selected_person.pk %}"
+        hx-get="{% url 'people:detail' selected_person.pk %}"
+        hx-target="#person-detail"
+        hx-push-url="true"
+      >Zrušit</a>
+    </div>
+  </form>
+</article>

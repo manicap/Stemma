@@ -1,12 +1,24 @@
 <article class="person-detail">
   <header class="person-header">
     <div class="portrait" aria-hidden="true">{{ selected_person.first_name|first|default:"·" }}{{ selected_person.last_name|first }}</div>
-    <div>
+    <div class="person-heading-copy">
       <p class="eyebrow">{{ selected_person.category.name|default:"Bez kategorie" }}</p>
       <h2>{{ selected_person.first_name }} {{ selected_person.last_name }}</h2>
       <p>{{ selected_person.get_gender_display }}</p>
     </div>
+    {% if perms.people.change_person %}
+      <a
+        class="secondary-button person-edit-action"
+        href="{% url 'people:edit' selected_person.pk %}"
+        hx-get="{% url 'people:edit' selected_person.pk %}"
+        hx-target="#person-detail"
+        hx-push-url="true"
+      >Upravit osobu</a>
+    {% endif %}
   </header>
+  {% if person_saved %}
+    <p class="success-message" role="status">Změny byly uloženy.</p>
+  {% endif %}
   <section class="person-overview" aria-labelledby="overview-heading">
     <h3 id="overview-heading">Přehled</h3>
     {% if selected_person.notes %}

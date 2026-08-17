@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.35
+**Verze:** 0.36
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 17. 8. 2026
 
@@ -20,13 +20,18 @@ Návrh prošel logickou i architektonickou revizí. Milníky M0 a M1 jsou implem
   bydlišť, hrobových míst, doménových služeb a autorizovaných selectorů;
   stav původního milníku se řídí roadmapou.
 - RC 0.1 používá autorizovaný výchozí seznam a detail osoby nad skutečnými
-  daty; dalšími kroky jsou odvozené údaje, login, editace a úplné browser
-  ověření.
+  daty; dalšími kroky jsou odvozené údaje a úplné browser ověření.
 - Základní zápis osoby pro RC používá frozen slotted `PersonInput` a
   transakční `create_person()`, které znovu načítají FK a autora, normalizují
   okraje textů a před uložením volají `full_clean()`. Stejnou hranici používá
   při zachování markerů opakovatelný lokální příkaz `seed_demo_data`; model
   ani migrace se nemění.
+- `update_person(*, person, data, actor)` uvnitř jedné transakce znovu načte
+  aktuálního actora, ověří `people.change_person` a zamkne aktuální osobu přes
+  `select_for_update()`. Odmítne neuloženou, fyzicky chybějící, neviditelnou,
+  archivovanou nebo měkce odstraněnou osobu. Z čerstvého řádku zachová
+  `access_level`, `verification_status`, technická, autorská i lifecycle
+  metadata a před uložením volá `full_clean()`.
 
 ## 2. Závazné principy
 

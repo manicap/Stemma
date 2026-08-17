@@ -1,5 +1,21 @@
 # Historie změn dokumentace
 
+## Verze 0.42 – 17. 8. 2026
+
+- přidán `PersonForm` pro jméno, příjmení, pohlaví, kategorii a poznámku;
+  bezpečnostní metadata ani údaje narození a úmrtí nevystavuje,
+- doplněn transakční `update_person()` s `select_for_update()`, čerstvým
+  actorem a cílem, opakovanou permission/visibility kontrolou, modelovou
+  validací a zachováním security, lifecycle i technických metadat,
+- edit view kombinuje objektovou viditelnost s aktuálním
+  `people.change_person`, CSRF a omezením HTTP metod; skrytý cíl neprozradí,
+- HTMX úspěch obnoví detail i položku seznamu přes OOB fragment, validační
+  chyba zachová formulář a rozpracovaná editace má ochranné varování,
+- cílené testy pokrývají service i webovou permission matici, tampering,
+  rollback, invalidní formulář a fragmentovou aktualizaci,
+- aktualizovány dokumenty 00, 02, 04, 07 a 11; modely, migrace ani ACP se
+  nemění.
+
 ## Verze 0.41 – 17. 8. 2026
 
 - doplněn standardní Django session login s bezpečným lokálním `next` a
