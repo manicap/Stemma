@@ -1,9 +1,10 @@
 # Architektonická rozhodnutí
 
 **Dokument:** 12  
-**Verze:** 0.2  
+**Verze:** 0.3  
 **Stav:** platný registr rozhodnutí  
-**Datum vytvoření:** 15. 7. 2026
+**Datum vytvoření:** 15. 7. 2026  
+**Datum revize:** 17. 8. 2026
 
 ## Účel
 
@@ -151,3 +152,59 @@ Projektové zdroje v ChatGPT jsou pouze aktuální pracovní kopií pro danou et
 ### Dopady
 
 Každý nový balíček dokumentace obsahuje Git příkaz pro commit a push. Platný konečný stav je vždy stav v hlavní větvi repozitáře.
+
+---
+
+## ACP-006 — Experimentální autonomní agentní vývojový režim
+
+**Stav:** Schváleno
+
+### Kontext
+
+Dosavadní implementace byla řízena velmi malými ručně zadávanými kroky. Tento postup poskytoval vysokou kontrolu, ale zároveň přesouval značnou část orchestrace vývoje na uživatele a oddaloval okamžik, kdy lze aplikaci ověřit jako skutečně použitelný celek.
+
+Pro ověření agentního způsobu práce byla z aktuálního stavu `feature/mvp` vytvořena experimentální větev `agent/rc-0.1`. Původní stav je zachován ve `feature/mvp` a v návratovém bodu `backup/pre-agent-2026-08-17`.
+
+### Rozhodnutí
+
+Na větvi `agent/rc-0.1` se vývoj řídí cílovým stavem **RC 0.1** definovaným v `07_ROADMAPA.md`, nikoli nutností ručně schvalovat každý dílčí implementační krok.
+
+Hlavní agent na této větvi smí bez rutinního potvrzování uživatelem:
+
+- ověřit skutečný stav implementace proti dokumentaci,
+- zvolit nejmenší další bezpečný vertikální řez směrem k RC 0.1,
+- implementovat vratná řešení v rámci schválené architektury,
+- doplnit a spouštět testy a povinné kontroly,
+- používat subagenty nebo oddělené kontrolní průchody pro dokumentaci, QA, bezpečnost a UI/UX,
+- opravit zjištěné vady a znovu provést ověření,
+- aktualizovat existující dokumentaci, pokud implementace materiálně změnila stav projektu,
+- po úspěšném ověření vytvořit koherentní commit a pushnout jej na `origin/agent/rc-0.1`,
+- pokračovat dalším řezem bez čekání na nový uživatelský pokyn.
+
+Agent nesmí bez explicitního souhlasu uživatele:
+
+- měnit schválenou architekturu nebo existující ACP,
+- měnit význam systémových hodnot, bezpečnostní politiku nebo pravidla přístupových práv,
+- provádět destruktivní či nevratné operace nad reálnými daty,
+- nasazovat nebo měnit reálné produkční prostředí,
+- používat force-push nebo přepisovat sdílenou historii,
+- mergeovat nebo rebasovat `agent/rc-0.1` do `feature/mvp` či `main`,
+- posouvat nebo používat `backup/pre-agent-2026-08-17` jako pracovní větev.
+
+Při skutečném rozporu autoritativní dokumentace, chybějícím materiálním produktovém nebo bezpečnostním rozhodnutí, potřebě nového ACP, destruktivním zásahu nebo nevyřešitelném validačním bloku agent práci zastaví a eskaluje jedno souhrnné rozhodnutí uživateli.
+
+### Důvod
+
+- snížit množství rutinní orchestrace přenesené na uživatele,
+- průběžně směřovat k uživatelsky ověřitelnému výsledku místo pouze k interním milníkům,
+- zachovat dokumentově řízený vývoj a schválené architektonické hranice,
+- oddělit implementaci od nezávislé kontroly,
+- umožnit experiment kdykoli ukončit bez zásahu do původní pracovní větve.
+
+### Dopady
+
+- `AGENTS.md` je na `agent/rc-0.1` závaznou exekuční politikou a konkretizuje pracovní smyčku a eskalační hranice tohoto ACP.
+- `07_ROADMAPA.md` obsahuje měřitelnou definici RC 0.1 a jeho non-goals.
+- Agent může na experimentální větvi volit vertikální řezy přes více původních fází roadmapy, pokud respektuje jejich schválené závislosti; tím se automaticky nemění stav nedokončených milníků.
+- Dokončení RC 0.1 neznamená dokončení celé Stemmy ani automatické schválení produkčního nasazení.
+- `feature/mvp` zůstává zachovaným non-agentním vývojovým základem, dokud uživatel výslovně nerozhodne o integraci výsledků experimentu.
