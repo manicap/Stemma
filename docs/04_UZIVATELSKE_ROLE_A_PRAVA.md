@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.7
+**Verze:** 0.8
 **Stav:** pracovní návrh  
 **Datum revize:** 17. 8. 2026
 
@@ -90,16 +90,23 @@ nezná konkrétní doménové objekty ani lifecycle.
 
 Databázové skupiny jsou `Čtenář`, `Editor` a `Správce`.
 
-- Čtenář automaticky nezískává zvýšená obsahová ani lifecycle oprávnění.
-- Editor automaticky nezískává přístup k omezenému nebo
-  administrátorskému obsahu.
+- Čtenář automaticky nezískává zvýšená obsahová, lifecycle ani editační
+  oprávnění.
+- Editor získává pro RC průchod konkrétní `people.change_person`, ale
+  automaticky nezískává přístup k omezenému nebo administrátorskému obsahu.
 - Správce získává `accounts.view_restricted_content`,
   `accounts.view_admin_only_content`, `people.view_archived_person` a
-  `people.view_deleted_person`.
+  `people.view_deleted_person` a pro tentýž průchod také
+  `people.change_person`.
 
 Správce tím nezískává všechna standardní add/change/delete/view oprávnění,
 `is_staff` ani `is_superuser`. Konkrétní permission lze uživateli nebo jiné
 schválené skupině přidělit samostatně.
+
+Přihlášení ani samotné členství ve skupině nemění význam přístupových
+úrovní. Čtenář a Editor vidí `authenticated`, nikoli automaticky
+`restricted` nebo `admin_only`; Správce získává zvýšený obsah jen přes výše
+vyjmenovaná permission. Odhlášení vrací actora do anonymního režimu.
 
 Lifecycle osoby se posuzuje odděleně od její přístupové úrovně. Zobrazení
 archivované osoby vyžaduje `people.view_archived_person`; zobrazení měkce

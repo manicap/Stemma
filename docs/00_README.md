@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.11
+**Verze dokumentace:** 0.12
 **Stav:** pracovní návrh v implementaci; experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -39,6 +39,19 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.12
+
+Verze 0.12 doplňuje autentizační a rolový základ RC 0.1:
+
+- horní lišta nabízí anonymnímu uživateli přihlášení a přihlášenému účtu
+  identitu a bezpečné POST odhlášení,
+- přihlášení zachovává pouze bezpečný lokální návratový cíl a neaktivní účet
+  se nemůže přihlásit,
+- role Čtenář zůstává pouze pro čtení, zatímco Editor a Správce získávají
+  konkrétní `people.change_person` pro navazující editační průchod,
+- seznam po přihlášení okamžitě respektuje centrální obsahovou policy;
+  úplné browser ověření login–edit–logout zůstává součástí dokončení RC.
 
 ## Stav verze 0.11
 

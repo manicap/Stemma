@@ -12,6 +12,7 @@ ELEVATED_PERMISSION_KEYS = {
     ("people", "view_archived_person"),
     ("people", "view_deleted_person"),
 }
+PERSON_EDITOR_PERMISSION_KEY = ("people", "change_person")
 
 
 class InitialPermissionGroupTests(TestCase):
@@ -80,12 +81,23 @@ class InitialPermissionGroupTests(TestCase):
                 )
                 self.assertTrue(keys.isdisjoint(ELEVATED_PERMISSION_KEYS))
 
+    def test_person_edit_permission_matches_approved_roles(self) -> None:
+        reader_keys = self.group_permission_keys(Group.objects.get(name="Čtenář"))
+        editor_keys = self.group_permission_keys(Group.objects.get(name="Editor"))
+        administrator_keys = self.group_permission_keys(
+            Group.objects.get(name="Správce")
+        )
+
+        self.assertNotIn(PERSON_EDITOR_PERMISSION_KEY, reader_keys)
+        self.assertIn(PERSON_EDITOR_PERMISSION_KEY, editor_keys)
+        self.assertIn(PERSON_EDITOR_PERMISSION_KEY, administrator_keys)
+
     def test_administrator_has_all_four_elevated_permissions(self) -> None:
         keys = self.group_permission_keys(Group.objects.get(name="Správce"))
 
         self.assertTrue(ELEVATED_PERMISSION_KEYS.issubset(keys))
         self.assertNotIn(("accounts", "add_user"), keys)
-        self.assertNotIn(("people", "change_person"), keys)
+        self.assertNotIn(("people", "delete_person"), keys)
 
     def test_group_membership_does_not_change_user_flags(self) -> None:
         user = get_user_model().objects.create_user(username="administrator")
@@ -175,3 +187,57 @@ class InitialPermissionGroupTests(TestCase):
                     ELEVATED_PERMISSION_KEYS
                 )
             )
+
+
+class PersonEditorPermissionMigrationTests(TestCase):
+    migration = import_module(
+        "accounts.migrations.0004_person_editor_permissions"
+    )
+
+    def permission(self) -> Permission:
+        return Permission.objects.get(
+            content_type__app_label="people",
+            codename="change_person",
+        )
+
+    def test_forward_is_idempotent_and_repairs_approved_roles(self) -> None:
+        permission = self.permission()
+        reader = Group.objects.get(name="Čtenář")
+        editor = Group.objects.get(name="Editor")
+        administrator = Group.objects.get(name="Správce")
+        reader.permissions.add(permission)
+        editor.permissions.remove(permission)
+        administrator.permissions.remove(permission)
+
+        self.migration.grant_person_editor_permission(apps, None)
+        self.migration.grant_person_editor_permission(apps, None)
+
+        self.assertFalse(reader.permissions.filter(pk=permission.pk).exists())
+        self.assertTrue(editor.permissions.filter(pk=permission.pk).exists())
+        self.assertTrue(
+            administrator.permissions.filter(pk=permission.pk).exists()
+        )
+
+    def test_reverse_removes_only_role_bindings_and_preserves_permission(
+        self,
+    ) -> None:
+        permission = self.permission()
+        editor = Group.objects.get(name="Editor")
+        user = get_user_model().objects.create_user(username="editor-member")
+        user.groups.add(editor)
+
+        self.migration.revoke_person_editor_permission(apps, None)
+
+        self.assertTrue(Permission.objects.filter(pk=permission.pk).exists())
+        self.assertTrue(Group.objects.filter(pk=editor.pk).exists())
+        self.assertTrue(
+            get_user_model().objects.get(pk=user.pk).groups.filter(
+                pk=editor.pk
+            ).exists()
+        )
+        self.assertFalse(
+            Group.objects.filter(
+                name__in=("Editor", "Správce"),
+                permissions=permission,
+            ).exists()
+        )

@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.9
+**Verze:** 0.10
 **Stav:** realizace MVP + experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -208,6 +208,21 @@ Oblast A má implementovaný reprodukovatelný lokální postup:
 
 Oblast A je tím pro RC 0.1 splněna. Její regresní brána zůstává součástí
 závěrečného ověření celého kandidáta.
+
+Oblast D má implementovaný autentizační a rolový základ:
+
+- funguje standardní session login, bezpečný lokální návrat a CSRF chráněný
+  POST logout; neaktivní účet se nepřihlásí,
+- topbar rozlišuje anonymní a přihlášený stav a po změně session se seznam
+  přepočítá podle aktuální centrální access policy,
+- Čtenář zůstává bez editace, Editor a Správce dostávají konkrétní
+  `people.change_person`; `is_staff`, superuser a zvýšená obsahová permission
+  zachovávají samostatný dokumentovaný význam,
+- cílené testy pokrývají anonymního uživatele, neplatný i neaktivní login,
+  bezpečný `next`, logout/CSRF a praktický obsahový rozdíl rolí.
+
+Oblast D zůstává jako celek otevřená do propojení editační akce v E a
+skutečného browser průchodu login–edit–logout.
 
 První vertikální řez B+C+G je rozpracován a zatím neuzavírá celé oblasti:
 

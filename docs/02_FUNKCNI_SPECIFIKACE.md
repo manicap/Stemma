@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.25
+**Verze:** 0.26
 **Stav:** pracovní návrh  
 **Datum revize:** 17. 8. 2026
 
@@ -702,6 +702,13 @@ osoby s viditelným `access_level`. Neexistující a neviditelný přímý cíl
 vracejí v HTTP vrstvě stejný stav 404 a stejné uživatelské sdělení, aby
 nebylo možné z odpovědi odvodit existenci chráněné osoby. Explicitní režim
 pro oprávněné zobrazení archivovaných osob zůstává navazujícím krokem.
+
+RC autentizační průchod používá standardní Django session autentizaci.
+Anonymní horní lišta odkazuje na přihlášení s lokálním návratovým cílem;
+externí `next` URL se ignoruje. Přihlášená lišta ukazuje identitu účtu a
+odhlášení přijímá pouze CSRF chráněný POST. Neaktivní účet se nepřihlásí.
+Po změně session se seznam i přímý detail vždy znovu autorizují proti
+aktuálnímu databázovému stavu actora.
 
 ## 15. Historie změn
 

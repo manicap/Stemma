@@ -1,5 +1,17 @@
 # Historie změn dokumentace
 
+## Verze 0.41 – 17. 8. 2026
+
+- doplněn standardní Django session login s bezpečným lokálním `next` a
+  odmítnutím neaktivního účtu,
+- horní lišta rozlišuje anonymní přihlášení a identitu přihlášeného účtu;
+  logout je pouze CSRF chráněný POST,
+- nová datová migrace přiřazuje konkrétní `people.change_person` rolím
+  Editor a Správce, zatímco Čtenář zůstává pouze pro čtení,
+- cílené testy pokrývají login, externí návratovou URL, invalidní a neaktivní
+  účet, logout, CSRF a obsahové rozdíly rolí,
+- aktualizovány dokumenty 00, 02, 04 a 07; modelová pole ani ACP se nemění.
+
 ## Verze 0.40 – 17. 8. 2026
 
 - doplněn jednoznačný postup čistého lokálního spuštění pro Windows,

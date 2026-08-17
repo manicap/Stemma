@@ -67,4 +67,9 @@ def not_found(
         if request.headers.get("HX-Request") == "true"
         else "404.html"
     )
-    return render(request, template_name, status=404)
+    return render(
+        request,
+        template_name,
+        {"login_return_path": "/"},
+        status=404,
+    )

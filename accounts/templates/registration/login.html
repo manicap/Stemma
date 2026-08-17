@@ -1,0 +1,35 @@
+{% extends "people/base.html" %}
+
+{% block title %}Přihlášení · Stemma{% endblock %}
+
+{% block mobile_list_action %}{% endblock %}
+
+{% block content %}
+<main class="auth-page">
+  <section class="auth-card" aria-labelledby="login-heading">
+    <p class="eyebrow">Uživatelský účet</p>
+    <h1 id="login-heading">Přihlášení</h1>
+    <p class="auth-intro">Přihlaste se pro zobrazení rodinných údajů dostupných vašemu účtu.</p>
+    {% if form.non_field_errors %}
+      <div class="form-errors" role="alert">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+    <form method="post" class="auth-form" novalidate>
+      {% csrf_token %}
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+      <div class="form-field">
+        <label for="{{ form.username.id_for_label }}">Uživatelské jméno</label>
+        {{ form.username }}
+        {{ form.username.errors }}
+      </div>
+      <div class="form-field">
+        <label for="{{ form.password.id_for_label }}">Heslo</label>
+        {{ form.password }}
+        {{ form.password.errors }}
+      </div>
+      <button class="primary-button" type="submit">Přihlásit se</button>
+    </form>
+  </section>
+</main>
+{% endblock %}
