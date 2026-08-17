@@ -1,5 +1,16 @@
 # Historie změn dokumentace
 
+## Verze 0.38 – 17. 8. 2026
+
+- založen oddělený experimentální vývojový směr `agent/rc-0.1` se zachováním původního non-agentního základu `feature/mvp` a návratového bodu `backup/pre-agent-2026-08-17`,
+- schválen ACP-006 pro autonomní agentní vývoj pouze na `agent/rc-0.1`,
+- hlavní agent může v rámci schválené architektury samostatně volit malé vertikální řezy, implementovat je, testovat, používat nezávislé review role, opravovat nálezy a po úspěšném ověření commitovat a pushovat na agentní větev,
+- explicitně zachována eskalace změn architektury a ACP, významu systémových hodnot, bezpečnostní a přístupové policy, destruktivních zásahů, produkčního nasazení a integrace do `feature/mvp` či `main`,
+- `07_ROADMAPA.md` nově definuje RC 0.1 jako měřitelný end-to-end průřez se všemi povinnými acceptance kritérii a explicitními non-goals,
+- RC 0.1 vyžaduje reprodukovatelné spuštění, skutečný seznam a detail osoby, login/logout a role, jednoduchou editaci základních údajů `Person`, serverovou autorizační bránu, použitelné desktopové a mobilní UI, skutečné browser ověření a úplnou kontrolní bránu projektu,
+- dokončení RC 0.1 samo neznamená dokončení celé roadmapy ani povolení produkčního nasazení,
+- aktualizovány `00_README.md`, `06_ROZHODNUTI_A_OTEVRENE_OTAZKY.md`, `07_ROADMAPA.md`, `12_ARCHITEKTONICKA_ROZHODNUTI.md` a kořenový `AGENTS.md` tak, aby agentní workflow a cílový stav měly jediný konzistentní kontrakt.
+
 ## Verze 0.37 – 23. 7. 2026
 
 - přidány keyword-only autorizované selectory
@@ -105,7 +116,7 @@
 - poznámka se stripuje pouze na servisní hranici; create vyžaduje aktivní
   roli a update dovoluje zachovat stejnou neaktivní nebo přejít na aktivní,
 - archivovanou vazbu lze upravit, soft-deleted nikoli; archivovaná nebo
-  soft-deleted osoba a `GraveSite` i zaniklý fyzický stav jsou povoleny,
+  soft-deleted osoba a `GraveSite` i zaniklý fyzický status jsou povoleny,
 - služby nemají compatibility matici, párování přesunových rolí,
   deduplikaci ani mapování obecného `IntegrityError`,
 - doplněny testy veřejného API, rolí, fresh-state FK, normalizace,
