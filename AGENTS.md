@@ -120,7 +120,8 @@ The main agent is the implementation owner and should execute this loop autonomo
 10. Update existing documentation when the implemented behavior or project state materially changed.
 11. Inspect the final diff for unrelated changes, secrets, generated artifacts, database files, and accidental weakening of tests or permissions.
 12. Commit and push the accepted coherent slice to `agent/rc-0.1` when all required checks pass.
-13. Continue with the next slice without waiting for another user prompt, until a documented target is reached or the escalation policy applies.
+13. Verify that the pushed commit is present on `origin/agent/rc-0.1` and that the working tree is clean except for explicitly ignored local artifacts.
+14. Only then continue with the next slice without waiting for another user prompt, until a documented target is reached or the escalation policy applies.
 
 Do not solve a failing test by deleting it, weakening its assertion, bypassing authorization, hiding an error, or reducing documented guarantees unless the test is demonstrably incorrect according to authoritative documentation.
 
@@ -226,6 +227,8 @@ Commit and remote rules for `agent/rc-0.1`:
 
 - The lead agent may stage explicit relevant files, create a coherent commit, and push to `origin/agent/rc-0.1` after the required checks pass.
 - Commit only one coherent accepted slice at a time.
+- Every completed and verified vertical slice must be committed separately and pushed to `origin/agent/rc-0.1` before work begins on the next slice. After the push, the working tree must be clean except for explicitly ignored local artifacts.
+- Local test launcher artifacts `start_stemma_test.ps1`, `start_stemma_test.cmd`, `stemma_local_test_launcher/`, and packaged variants such as `stemma_local_test_launcher.zip` are user-owned local helpers only. Never stage, commit, or push them.
 - Before committing, run the relevant tests and checks, inspect `git diff --check`, `git status --short`, and the final diff.
 - Never use `git add .` or `git add -A` when a narrower explicit file list is available.
 - Do not amend or rewrite already pushed commits.

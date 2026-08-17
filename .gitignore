@@ -40,3 +40,9 @@ Desktop.ini
 
 # Local Django settings
 config/settings_local.py
+
+# Local Stemma test launcher
+/start_stemma_test.ps1
+/start_stemma_test.cmd
+/stemma_local_test_launcher.zip
+/stemma_local_test_launcher/

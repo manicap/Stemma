@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.24
+**Verze:** 0.25
 **Stav:** pracovní návrh  
-**Datum revize:** 23. 7. 2026
+**Datum revize:** 17. 8. 2026
 
 ## 1. Hlavní obrazovka
 
@@ -694,6 +694,14 @@ Zobrazení archivované osoby vyžaduje oprávnění
 `access_level`. Autorizovaný přehled vztahů je používá pro vstupní osobu,
 výsledné osoby a společné biologické rodiče; měkce odstraněné výsledné
 osoby ani rodiče nezveřejňuje.
+
+Autorizovaný základ hlavní obrazovky RC 0.1 používá
+`get_visible_people(*, actor)` a `get_visible_person(*, person_id, actor)`.
+Výchozí seznam i detail zahrnují pouze nearchivované a měkce neodstraněné
+osoby s viditelným `access_level`. Neexistující a neviditelný přímý cíl
+vracejí v HTTP vrstvě stejný stav 404 a stejné uživatelské sdělení, aby
+nebylo možné z odpovědi odvodit existenci chráněné osoby. Explicitní režim
+pro oprávněné zobrazení archivovaných osob zůstává navazujícím krokem.
 
 ## 15. Historie změn
 

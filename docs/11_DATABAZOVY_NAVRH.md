@@ -1,22 +1,27 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.33
+**Verze:** 0.34
 **Stav:** schválený technický návrh v implementaci
-**Datum revize:** 23. 7. 2026
+**Datum revize:** 17. 8. 2026
 
 ## 1. Účel
 
 Dokument definuje implementovatelný databázový návrh aplikace **Stemma** pro Django a SQLite. Navazuje zejména na dokumenty `02_FUNKCNI_SPECIFIKACE.md`, `03_DATOVY_MODEL.md`, `04_UZIVATELSKE_ROLE_A_PRAVA.md`, `08_ARCHITEKTONICKE_PRINCIPY.md`, `09_CODING_STANDARD.md` a `10_UI_UX_NAVRH.md`.
 
-Návrh prošel logickou i architektonickou revizí. Milníky M0 a M1 jsou implementovány; další etapou je vytvoření konkrétních doménových modelů, migrací, služeb a testů integrity v M2.
+Návrh prošel logickou i architektonickou revizí. Milníky M0 a M1 jsou implementovány a M2 již obsahuje konkrétní modely, migrace, služby a selectory pro osobu, místo, událost, vztah, bydliště a hrobová místa. Na experimentální větvi `agent/rc-0.1` se nad tímto základem současně skládá první uživatelský průchod RC 0.1.
 
 ### 1.1 Stav implementace
 
 - M0: projekt `config`, aplikace `accounts`, vlastní `accounts.User` a první migrace jsou dokončeny.
 - M1: aplikace `common`, pět aktuálně potřebných pevných výčtů, sedm abstraktních modelů a validace neúplných dat jsou dokončeny.
 - `common` nevytváří vlastní tabulku; při dokončení M1 nevznikla nová migrace.
-- Aktuální implementační krok je M2: Osoba, Místo, Událost a Vazba.
+- M2 obsahuje jádro Osoba, Místo, Událost a Vazba včetně navazujících
+  bydlišť, hrobových míst, doménových služeb a autorizovaných selectorů;
+  stav původního milníku se řídí roadmapou.
+- RC 0.1 používá autorizovaný výchozí seznam a detail osoby nad skutečnými
+  daty; dalšími kroky jsou odvozené údaje, login, editace, demo data a
+  úplné browser ověření.
 
 ## 2. Závazné principy
 

@@ -20,6 +20,8 @@ __all__ = (
     "get_biological_siblings",
     "get_relationship_overview",
     "get_sibling_overview",
+    "get_visible_people",
+    "get_visible_person",
     "get_visible_relationship_overview",
 )
 
@@ -449,6 +451,37 @@ def _is_person_visible(
             or can_view_deleted_person
         )
     )
+
+
+def get_visible_people(
+    *,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[Person]:
+    """Vrať aktivní osoby viditelné pro aktuálního actora."""
+
+    visible_access_levels = tuple(
+        access_level
+        for access_level in _ACCESS_LEVELS
+        if can_view_access_level(
+            actor=actor,
+            access_level=access_level,
+        )
+    )
+    return Person.objects.filter(
+        access_level__in=visible_access_levels,
+        archived_at__isnull=True,
+        deleted_at__isnull=True,
+    ).select_related("category")
+
+
+def get_visible_person(
+    *,
+    person_id: int,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> Person:
+    """Vrať jednu běžně viditelnou osobu nebo jednotně selži."""
+
+    return get_visible_people(actor=actor).get(pk=person_id)
 
 
 def _visible_biological_sibling_ids(

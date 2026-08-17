@@ -34,6 +34,8 @@ class VisibleRelationshipOverviewApiTests(SimpleTestCase):
                 "get_biological_siblings",
                 "get_relationship_overview",
                 "get_sibling_overview",
+                "get_visible_people",
+                "get_visible_person",
                 "get_visible_relationship_overview",
             ),
         )

@@ -1,0 +1,10 @@
+{% extends "people/base.html" %}
+
+{% block title %}Nenalezeno · Stemma{% endblock %}
+
+{% block content %}
+<main class="standalone-state">
+  {% include "people/partials/not_found.html" %}
+  <a class="primary-link" href="{% url 'people:index' %}">Zpět na seznam osob</a>
+</main>
+{% endblock %}

@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.9
+**Verze dokumentace:** 0.10
 **Stav:** pracovní návrh v implementaci; experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -39,6 +39,20 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.10
+
+Verze 0.10 zaznamenává první skutečný uživatelský vertikální řez RC 0.1:
+
+- autorizovaný seznam a detail osoby čtou skutečná databázová data,
+- přímá URL, HTMX i Django Admin respektují centrální access policy,
+- neexistující a neviditelný cíl mají jednotnou bezpečnou 404 odpověď,
+- vznikl responzivní dvousloupcový základ, mobilní vysouvací seznam,
+  funkční světlý a tmavý motiv a běžné empty/loading/error stavy,
+- HTMX 2.0.10 je uložen lokálně v projektové statice včetně licence,
+- desktopový i mobilní list/detail průchod byl ověřen ve skutečném browseru,
+- B, C a G zůstávají dílčí, dokud nejsou doplněny odvozené údaje,
+  login, editace a úplné browser ověření navazujícího RC průchodu.
 
 ## Stav verze 0.9
 

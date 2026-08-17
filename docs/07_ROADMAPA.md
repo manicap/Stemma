@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.7
+**Verze:** 0.8
 **Stav:** realizace MVP + experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -187,6 +187,28 @@ Pokud následující funkce nejsou nutné jako závislost výše uvedeného prů
 - finální vizuální polish a všechny budoucí možnosti personalizace.
 
 Existující backendové funkce z těchto oblastí se nesmějí odstranit, obejít nebo účelově oslabit. Agent má používat a zachovávat již implementované části a regresní testy.
+
+### Aktuální ověřený stav RC 0.1
+
+První vertikální řez B+C+G je rozpracován a zatím neuzavírá celé oblasti:
+
+- hlavní URL čte skutečné, pro actora viditelné osoby z databáze,
+- výchozí seznam i detail bezpečně vylučují archivované a měkce odstraněné
+  osoby a jednotně skrývají existenci neviditelného přímého cíle,
+- detail se načítá jako plná stránka i HTMX fragment a používá lokálně
+  verzovaný HTMX asset,
+- existuje dvousloupcový desktopový základ, mobilní vysouvací seznam,
+  světlý a tmavý motiv a použitelné empty, loading a 404 stavy,
+- desktopový i mobilní list/detail průchod včetně opakované HTMX výměny,
+  výběru osoby, motivu a mobilního zavření panelu prošel reálným browserem,
+- Person a navazující jména a vztahy v Django Adminu respektují stejnou
+  čtecí policy a jsou do zavedení doménové editační služby pouze pro čtení,
+- cílené automatické testy pokrývají access matice, čerstvý stav actora,
+  lifecycle, přímou URL, HTMX a admin bypass.
+
+Oblasti B, C a G zůstávají nesplněné jako celek, dokud detail nedoplní
+schválené odvozené údaje a nejsou splněny i související login a editační
+části D a E včetně úplného browser ověření výsledného RC průchodu.
 
 ## Fáze 4 – Interaktivní prototyp
 

@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.6
+**Verze:** 0.7
 **Stav:** pracovní návrh  
-**Datum revize:** 23. 7. 2026
+**Datum revize:** 17. 8. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -194,6 +194,27 @@ privilegovaný uživatel se posuzuje jako anonymní.
 Status a ověření, aktivita či systémovost typu a role a připojené `Place`
 se samostatně neautorizují. Oba selectory zachovávají lazy vyhodnocení,
 ordering a `select_related()` permissionless vrstvy.
+
+## 5.6 Autorizovaný seznam a detail osoby pro RC 0.1
+
+`get_visible_people(*, actor)` vrací lazy `QuerySet[Person]` pro hlavní
+obrazovku. Každou pevnou přístupovou úroveň posuzuje centrálním
+`can_view_access_level()` a výsledek databázově filtruje. Výchozí průchod
+vždy vylučuje archivované a měkce odstraněné osoby; oprávněné zobrazení
+archivu bude dostupné jen přes budoucí explicitní režim popsaný v UI/UX
+návrhu.
+
+`get_visible_person(*, person_id, actor)` používá stejnou výchozí hranici
+jako seznam. HTTP vrstva proto vrací pro fyzicky neexistující i neviditelnou
+osobu stejnou 404 odpověď bez prozrazení chráněných údajů. Platí to pro
+plnou stránku, HTMX fragment i ručně zadanou přímou URL.
+
+Django Admin používá pro `Person` stejný autorizovaný selector. Admin
+přehledy `PersonName` a `Relationship` navíc vyžadují viditelnost vlastního
+záznamu i všech propojených osob. Všechny tři plochy jsou v této etapě pouze
+pro čtení. Běžné `is_staff` ani standardní modelové permission nesmějí
+obejít obsahová nebo lifecycle pravidla; zápis osoby bude veden přes
+doménovou službu v aplikačním editačním průchodu.
 
 ## 6. Zamčený obsah
 

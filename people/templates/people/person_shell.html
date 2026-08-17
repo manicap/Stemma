@@ -1,0 +1,46 @@
+{% extends "people/base.html" %}
+
+{% block title %}Osoby · Stemma{% endblock %}
+
+{% block content %}
+<main class="workspace">
+  <aside id="people-panel" class="people-panel{% if not selected_person %} is-open{% endif %}" aria-labelledby="people-heading">
+    <div class="panel-heading">
+      <p class="eyebrow">Rodinný archiv</p>
+      <h1 id="people-heading">Osoby</h1>
+    </div>
+    <nav class="people-list" aria-label="Seznam osob">
+      {% for person in people %}
+        <a
+          class="person-list-item{% if selected_person.pk == person.pk %} is-selected{% endif %}"
+          {% if selected_person.pk == person.pk %}aria-current="page"{% endif %}
+          href="{% url 'people:detail' person.pk %}"
+          hx-get="{% url 'people:detail' person.pk %}"
+          hx-target="#person-detail"
+          hx-indicator="#detail-loading"
+          hx-push-url="true"
+        >
+          <span class="avatar" aria-hidden="true">{{ person.first_name|first|default:"·" }}{{ person.last_name|first }}</span>
+          <span>
+            <strong>{{ person.first_name }} {{ person.last_name }}</strong>
+            <small>{{ person.category.name|default:"Bez kategorie" }}</small>
+          </span>
+        </a>
+      {% empty %}
+        <p class="empty-state">Zatím zde nejsou žádné osoby, které můžete zobrazit.</p>
+      {% endfor %}
+    </nav>
+  </aside>
+  <button class="drawer-scrim" type="button" data-person-list-close aria-label="Zavřít seznam osob"></button>
+  <div class="detail-region">
+    <span id="detail-loading" class="detail-loading htmx-indicator" role="status">Načítám detail…</span>
+    <section id="person-detail" class="detail-panel" aria-live="polite">
+      {% if selected_person %}
+        {% include "people/partials/person_detail.html" %}
+      {% else %}
+        {% include "people/partials/person_empty.html" %}
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

@@ -1,5 +1,27 @@
 # Historie změn dokumentace
 
+## Verze 0.39 – 17. 8. 2026
+
+- přidány autorizované selectory `get_visible_people(*, actor)` a
+  `get_visible_person(*, person_id, actor)` pro výchozí RC seznam a detail,
+- oba průchody respektují centrální access policy a standardně vylučují
+  archivované i měkce odstraněné osoby,
+- neexistující a neviditelná osoba mají shodnou HTTP 404 odpověď pro plnou
+  stránku, HTMX i přímou URL,
+- hlavní obrazovka nyní čte skutečná data přes Django views a templates,
+- doplněn dvousloupcový desktopový základ, mobilní vysouvací seznam,
+  světlý a tmavý motiv a běžné empty, loading a error stavy,
+- list/detail průchod byl ověřen v reálném browseru na desktopu i mobilním
+  viewportu včetně opakované HTMX výměny a zavření mobilního panelu,
+- HTMX 2.0.10 je lokálně verzovaný v projektové statice s BSD licencí,
+- Person i navazující `PersonName` a `Relationship` v Django Adminu
+  respektují viditelnost vlastního záznamu a propojených osob a jsou do
+  zavedení doménové editační služby pouze pro čtení,
+- roadmapa výslovně ponechává oblasti B, C a G částečné do odvozených
+  údajů, login/editace a úplného browser ověření navazujícího RC průchodu,
+- aktualizovány dokumenty 00, 02, 04, 07 a 11; nové ACP ani migrace
+  nevznikly.
+
 ## Verze 0.38 – 17. 8. 2026
 
 - založen oddělený experimentální vývojový směr `agent/rc-0.1` se zachováním původního non-agentního základu `feature/mvp` a návratového bodu `backup/pre-agent-2026-08-17`,

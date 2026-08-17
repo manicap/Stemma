@@ -1,0 +1,29 @@
+{% load static %}
+<!doctype html>
+<html lang="cs" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Stemma{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'people/stemma.css' %}">
+  <script src="{% static 'people/htmx-2.0.10.min.js' %}"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{% url 'people:index' %}" aria-label="Stemma – hlavní stránka">
+      <span aria-hidden="true">♧</span>
+      <span>Stemma</span>
+    </a>
+    <div class="topbar-actions">
+      <button class="list-toggle" type="button" data-person-list-open aria-controls="people-panel" aria-expanded="false">
+        Seznam osob
+      </button>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Přepnout na tmavý motiv" aria-pressed="false">
+        Tmavý motiv
+      </button>
+    </div>
+  </header>
+  {% block content %}{% endblock %}
+  <script src="{% static 'people/stemma.js' %}"></script>
+</body>
+</html>

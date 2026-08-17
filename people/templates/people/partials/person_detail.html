@@ -1,0 +1,18 @@
+<article class="person-detail">
+  <header class="person-header">
+    <div class="portrait" aria-hidden="true">{{ selected_person.first_name|first|default:"·" }}{{ selected_person.last_name|first }}</div>
+    <div>
+      <p class="eyebrow">{{ selected_person.category.name|default:"Bez kategorie" }}</p>
+      <h2>{{ selected_person.first_name }} {{ selected_person.last_name }}</h2>
+      <p>{{ selected_person.get_gender_display }}</p>
+    </div>
+  </header>
+  <section class="person-overview" aria-labelledby="overview-heading">
+    <h3 id="overview-heading">Přehled</h3>
+    {% if selected_person.notes %}
+      <p>{{ selected_person.notes|linebreaksbr }}</p>
+    {% else %}
+      <p class="empty-state">Tato osoba zatím nemá doplněnou poznámku.</p>
+    {% endif %}
+  </section>
+</article>
