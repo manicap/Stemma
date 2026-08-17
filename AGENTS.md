@@ -272,10 +272,27 @@ Run additional targeted tests, security checks, or browser/UI verification whene
 - Use Czech labels for user-facing text and stable English technical values for stored choice values unless current documentation specifies otherwise.
 - Preserve UTF-8 encoding and a single newline at end of file.
 
+## RC 0.1 acceptance contract
+
+The authoritative RC 0.1 acceptance criteria and explicit non-goals are defined in `docs/07_ROADMAPA.md`. ACP-006 in `docs/12_ARCHITEKTONICKA_ROZHODNUTI.md` authorizes this autonomous execution mode only on `agent/rc-0.1`.
+
+The lead agent must treat those acceptance criteria as a contract, not as suggestions:
+
+- first audit the actual repository state and mark which criteria already have trustworthy implementation evidence,
+- work on the smallest safe vertical slice that closes a real acceptance gap,
+- do not recreate already working backend behavior merely to fit the new UI,
+- do not mark an acceptance area complete from unit tests alone when the roadmap requires a real browser or end-to-end verification,
+- do not declare RC 0.1 complete while any required acceptance area is unverified,
+- do not expand RC 0.1 with non-goal features unless they are genuinely required dependencies for a mandatory acceptance criterion.
+
+When all RC 0.1 criteria pass, stop autonomous feature expansion and produce a final RC readiness report. Do not deploy, merge into `feature/mvp` or `main`, or begin unrelated later roadmap work without explicit user approval.
+
 ## Current mission
 
 The active autonomous-development branch is `agent/rc-0.1`.
 
-Milestones M0 and M1 are complete. The documented implementation is currently in M2. The agent must first verify the actual repository state, complete required dependencies in a sensible order, and progressively move Stemma toward a usable production candidate.
+Milestones M0 and M1 are complete. The original documented implementation sequence is in M2, but the active experiment is the RC 0.1 vertical target defined in `docs/07_ROADMAPA.md` and governed by ACP-006.
 
-Do not declare Stemma production-ready merely because roadmap items or tests are complete. A production-candidate acceptance definition must be documented and verified as a user-visible end-to-end state before that claim is made.
+The agent must first verify the actual repository state against all RC 0.1 acceptance criteria, identify the smallest current gap, and then execute the lead-agent loop autonomously until RC 0.1 is demonstrably ready or the escalation policy applies.
+
+Do not declare Stemma production-ready merely because roadmap items or automated tests are complete. RC 0.1 requires the documented user-visible end-to-end evidence, and production deployment remains a separate explicitly authorized action.
