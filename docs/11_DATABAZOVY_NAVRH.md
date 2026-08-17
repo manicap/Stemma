@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.41
+**Verze:** 0.42
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 17. 8. 2026
 
@@ -48,6 +48,15 @@ Návrh prošel logickou i architektonickou revizí. Milníky M0 a M1 jsou implem
   a actor-aware hranici zatím nemá, proto je rovněž fail-closed. Bezpečné
   produktové rozhraní musí tyto hranice použít nebo nejprve doplnit.
   Uživatelsky spravovatelné číselníky zůstávají v adminu dostupné.
+- Společná admin hranice číselníků chrání u systémových řádků technický `code`
+  a odstranění; systémový `AllowedEventRole` má stejně chráněnou identitu
+  dvojice typu a role. U systémového `RelationshipType` jsou neměnné také
+  kategorie, symetrie, podpora rozmezí a odvoditelnost. Prezentační pole,
+  aktivita, snapshotové defaulty a validační konfigurace typů událostí
+  (`supports_date_range`, `allows_place`), konfigurační počty rolí a všechny
+  uživatelské řádky zůstávají spravovatelné. Guard kontroluje i podstrčený POST
+  a hromadné mazání, takže technickou identitu řídící doménové invarianty nelze
+  změnit výchozím adminem.
 
 ## 2. Závazné principy
 

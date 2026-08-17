@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.http import HttpRequest
 
+from common.admin import SystemValueAdminMixin
 from common.choices import AccessLevel
 from common.permissions import can_view_access_level
 
@@ -93,6 +94,16 @@ class RelationshipAdmin(_ReadOnlyAdminMixin, admin.ModelAdmin):
         )
 
 
-admin.site.register(PersonCategory)
-admin.site.register(NameType)
-admin.site.register(RelationshipType)
+admin.site.register(PersonCategory, SystemValueAdminMixin)
+admin.site.register(NameType, SystemValueAdminMixin)
+
+
+@admin.register(RelationshipType)
+class RelationshipTypeAdmin(SystemValueAdminMixin):
+    system_identity_fields = (
+        "code",
+        "category",
+        "is_symmetric",
+        "supports_date_range",
+        "is_derivable",
+    )

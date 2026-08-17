@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from common.admin import SystemValueAdminMixin
+
 from .models import (
     GraveSiteType,
     PersonGraveSiteRole,
@@ -9,7 +11,7 @@ from .models import (
 
 
 @admin.register(ResidenceType)
-class ResidenceTypeAdmin(admin.ModelAdmin):
+class ResidenceTypeAdmin(SystemValueAdminMixin):
     list_display = (
         "code",
         "name",
@@ -28,7 +30,7 @@ class ResidenceTypeAdmin(admin.ModelAdmin):
 
 
 @admin.register(GraveSiteType)
-class GraveSiteTypeAdmin(admin.ModelAdmin):
+class GraveSiteTypeAdmin(SystemValueAdminMixin):
     list_display = (
         "code",
         "name",
@@ -47,7 +49,7 @@ class GraveSiteTypeAdmin(admin.ModelAdmin):
 
 
 @admin.register(PersonGraveSiteRole)
-class PersonGraveSiteRoleAdmin(admin.ModelAdmin):
+class PersonGraveSiteRoleAdmin(SystemValueAdminMixin):
     list_display = (
         "code",
         "name",
@@ -65,4 +67,4 @@ class PersonGraveSiteRoleAdmin(admin.ModelAdmin):
     )
 
 
-admin.site.register(PlaceType)
+admin.site.register(PlaceType, SystemValueAdminMixin)

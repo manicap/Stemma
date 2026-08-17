@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.11
+**Verze:** 0.12
 **Stav:** pracovní návrh  
 **Datum revize:** 17. 8. 2026
 
@@ -62,6 +62,13 @@ zpřístupňuje spravovatelné číselníky míst, ale `Place`, `Residence`,
 `GraveSite` a `PersonGraveSite` jsou fail-closed odregistrovány. Bezpečné
 produktové rozhraní musí nejprve použít schválenou servisní hranici a
 actor-aware čtení; pro obecný `Place` taková úplná hranice zatím neexistuje.
+Systémové řádky spravovatelných číselníků mají v adminu neměnný technický kód
+a nelze je odstranit. Systémový typ vazby má navíc neměnnou kategorii,
+symetrii, podporu rozmezí a odvoditelnost, protože určují orientaci a validaci
+vazeb. Uživatelské názvy, popisy, pořadí a aktivitu může oprávněný správce
+nadále měnit. Snapshotové defaulty typů událostí a konfigurační počty rolí
+spolu s validační konfigurací `supports_date_range` a `allows_place` zůstávají
+spravovatelným systémovým nastavením; uživatelské řádky jsou plně spravovatelné.
 
 ## 5. Přístupové úrovně záznamů
 

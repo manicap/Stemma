@@ -1,5 +1,18 @@
 # Historie změn dokumentace
 
+## Verze 0.51 – 17. 8. 2026
+
+- všechny runtime adminy uživatelsky spravovatelných číselníků používají
+  společnou ochranu identity systémových hodnot,
+- systémový `code`, dvojice typu a role u `AllowedEventRole` a fyzické
+  odstranění systémového řádku jsou chráněné i proti podstrčenému POSTu a bulk
+  delete; systémové typy vazeb mají navíc zamčenou kategorii, symetrii, podporu
+  rozmezí a odvoditelnost,
+- prezentační pole, aktivita, snapshotové defaulty a validační konfigurace typů
+  událostí, konfigurační počty rolí a uživatelské řádky zůstávají spravovatelné,
+- doplněny integrační admin testy systémové i uživatelské změny a přímého i
+  hromadného odstranění; modely a migrace se nemění.
+
 ## Verze 0.50 – 17. 8. 2026
 
 - model `Person` byl dorovnán se schváleným databázovým návrhem o titul před
