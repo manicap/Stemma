@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.35
+**Verze:** 0.36
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 23. 7. 2026
+**Datum revize:** 17. 8. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -86,6 +86,12 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 140. M2.7e-2 zavádí permissionless `get_person_grave_site_links(*, person)` a `get_grave_site_person_links(*, grave_site)` vracející lazy `QuerySet[PersonGraveSite]`. Vstup musí mít PK a existující řádek; jinak se použije `person_unsaved` nebo `grave_site_unsaved`, zatímco archivace, měkké odstranění a status existujícího vstupu se nefiltrují. Oba selectory vylučují pouze vazby s `deleted_at IS NOT NULL`; zahrnují archivované vazby, archivované či měkce odstraněné protistrany, všechny access a verification hodnoty, aktivní, neaktivní, systémové i uživatelské role a duplicitní tvrzení. Přehled osoby se řadí podle lokality místa, ID místa, role a PK, přehled místa podle ID osoby, role a PK. `select_related()` načítá osobu, místo, typ místa, `Place`, roli a autora; po jednom validačním `exists()` dotazu zůstává jeden lazy SELECT bez N+1. Selectory nemají actor, nevolají permissions ani `full_clean()`, nededuplikují, nic nezapisují a nesmějí být přímo veřejným výstupem. Krok nemění modely ani migrace, autorizované varianty vzniknou v M2.7f a nové ACP není potřeba.
 141. M2.7f-1 zavádí `get_visible_grave_sites(*, actor)` jako autorizovanou lazy `QuerySet[GraveSite]` vrstvu nad `get_grave_sites()`. Každý známý `AccessLevel` vyhodnotí nejvýše jednou centrálním `can_view_access_level()` a povolené hodnoty přidá databázovým filtrem `access_level__in`; zachovává proto `actor_invalid`, `actor_unsaved` a čerstvý databázový stav uloženého actora. AnonymousUser a neaktivní uživatel vidí jen `public`, běžný aktivní také `authenticated`, `is_staff` přístup nerozšiřuje, obě vyšší úrovně mají oddělená oprávnění a aktivní superuser vidí všechny. Archivované `GraveSite` se vracejí bez lifecycle permission, soft-deleted nikoli ani superuserovi. Status, verification, typ ani připojené `Place` se samostatně neautorizují. Původní ordering a `select_related()` zůstávají zachovány, výsledný SELECT je lazy a dotazový profil neroste s počtem míst. Nevzniká migrace, permission codename, změna centrální policy ani ACP; autorizované `PersonGraveSite` selectory následují v M2.7f-2.
 142. M2.7f-2 zavádí `get_visible_person_grave_site_links(*, person, actor)` a `get_visible_grave_site_person_links(*, grave_site, actor)` jako autorizované lazy vrstvy nad permissionless selectory M2.7e-2. Konkrétní vstup je chráněný cílový objekt: neuložený nebo fyzicky chybějící vstup zachovává `person_unsaved` či `grave_site_unsaved`, ale existující neviditelný vstup vyvolá obecnou `PermissionDenied`, nikoli prázdný QuerySet. Čerstvá vstupní osoba používá `access_level` a nezávislá `people.view_archived_person` a `people.view_deleted_person`; vstupní `GraveSite` používá `access_level`, dovoluje archivaci a všechny statusy, ale odmítá soft-delete i superuserovi. Každý výsledný řádek musí současně splnit viditelnost access úrovně vazby, osoby a hrobového místa; neviditelný řádek či protistrana se tiše databázově odfiltrují. Výsledná osoba používá stejná lifecycle oprávnění, archivovaná vazba a archivované či zaniklé místo zůstávají zahrnuté a soft-deleted vazba či místo vyloučené. Status, verification, typ, role ani připojené `Place` se samostatně neautorizují. Zachovává se ordering, `select_related()`, laziness, legitimní duplicity a konstantní dotazový profil bez N+1. Nevzniká zápis, migrace, nový permission codename, obecný permission framework ani ACP.
+
+### Agentní experiment RC 0.1
+
+143. Pro experimentální větev `agent/rc-0.1` je schválen ACP-006. Hlavní agent smí v rámci existující architektury sám volit malé vertikální řezy, implementovat je, testovat, použít nezávislé review role, opravovat nálezy a po úspěšném ověření commitovat a pushovat na `origin/agent/rc-0.1` bez schvalování každého dílčího kroku. `feature/mvp` zůstává původním non-agentním základem a `backup/pre-agent-2026-08-17` návratovým bodem, který se neposouvá.
+144. Cílem agentní větve je RC 0.1 definované měřitelnými acceptance kritérii v `07_ROADMAPA.md`: reprodukovatelné spuštění, skutečný seznam osob, bezpečný detail osoby, login/logout a role, jednoduchá editace základních údajů `Person`, autorizační/security brána, použitelné desktopové a mobilní UI a úplná kontrolní brána projektu. Dokončení RC 0.1 neznamená dokončení celé roadmapy ani povolení produkčního nasazení.
+145. Agentní autonomie nekryje změnu schválené architektury, ACP, významu systémových hodnot nebo přístupové policy, destruktivní zásahy, produkční nasazení, force-push ani integraci do `feature/mvp` nebo `main`; tyto situace se vždy eskalují uživateli.
 
 ## 2. Otevřené otázky
 
