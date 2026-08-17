@@ -1,9 +1,15 @@
-{% extends "people/base.html" %}
+{% extends "common/base.html" %}
 
 {% block title %}Osoby · Stemma{% endblock %}
 
+{% block mobile_list_action %}
+<button class="list-toggle" type="button" data-person-list-open data-short-label="Osoby" aria-controls="people-panel" aria-expanded="false">
+  Seznam osob
+</button>
+{% endblock %}
+
 {% block content %}
-<main class="workspace">
+<main class="workspace people-workspace">
   <aside id="people-panel" class="people-panel{% if not selected_person %} is-open{% endif %}" aria-labelledby="people-heading">
     <div class="panel-heading">
       <p class="eyebrow">Rodinný archiv</p>

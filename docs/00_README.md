@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.16
+**Verze dokumentace:** 0.17
 **Stav:** RC 0.1 připraven na větvi `agent/rc-0.1`; bez produkčního nasazení
 **Datum revize:** 17. 8. 2026
 
@@ -39,6 +39,26 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.17
+
+Verze 0.17 zavádí schválený UI foundation podle ACP-008:
+
+- kořenová URL zobrazuje actor-specific Přehled a sekce Osoby se přesouvá na
+  `/osoby/` při zachování stávajících detailových URL,
+- stabilní globální navigace odděluje konkrétní pracovní sekci od kontextového
+  list/detail pohledu uvnitř Osob,
+- budoucí Rodokmen, Dokumenty, Místa, Materiály / zdroje a Můj prostor jsou
+  pouze jasně označené plánované oblasti bez falešných dat nebo funkčnosti,
+- výchozí je tmavý modrošedý motiv; light mode zůstává plnohodnotný a lokální
+  preference se zachovává mezi návštěvami,
+- browser review ověřil nový shell na desktopu 1440×900, tabletovém mezistupni
+  768×900 a mobilu 390×844, oba motivy, samostatné drawery a absenci
+  horizontálního overflow,
+- úplná projektová brána prošla 1020 testy, systémovou kontrolou, kontrolou
+  migrací a nezávislými QA, security a UI/dokumentačními review,
+- datový model, oprávnění, selector/service kontrakty ani existující ACP se
+  nemění.
 
 ## Stav verze 0.16
 

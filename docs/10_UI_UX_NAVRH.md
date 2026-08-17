@@ -1,7 +1,7 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.2
+**Verze:** 0.3
 **Stav:** schválený pracovní základ  
 **Datum revize:** 17. 8. 2026
 
@@ -64,6 +64,11 @@ Liší se pouze vizuálním zpracováním.
 
 Přepínač světlého a tmavého režimu bude dostupný v horní liště i nepřihlášenému uživateli. Volba nepřihlášeného uživatele se uloží lokálně v prohlížeči. Později ji bude možné ukládat i k uživatelskému profilu.
 
+Výchozím vzhledem je tmavý motiv. Pokud prohlížeč ještě nemá uloženou volbu,
+Stemma se otevře tmavě bez ohledu na systémové nastavení. Volba každého
+uživatele se ukládá lokálně v prohlížeči; později bude patřit do uživatelského
+Nastavení, nikoli do samostatného řešení vytvořeného pouze pro motiv.
+
 ### 4.1 Světlý motiv
 
 Charakter:
@@ -79,17 +84,17 @@ Základní barevné proměnné:
 ```css
 :root,
 [data-theme="light"] {
-  --color-page: #F5F1E8;
-  --color-surface: #FFFCF6;
-  --color-surface-muted: #F0EADF;
+  --color-page: #EEF1F0;
+  --color-surface: #FAFAF7;
+  --color-surface-muted: #E8ECEB;
 
-  --color-text: #243033;
-  --color-text-muted: #6E7472;
-  --color-border: #DDD5C8;
+  --color-text: #202B30;
+  --color-text-muted: #68767C;
+  --color-border: #CFD7D8;
 
-  --color-primary: #167D7B;
-  --color-primary-hover: #106966;
-  --color-primary-soft: #D7ECE7;
+  --color-primary: #466D7D;
+  --color-primary-hover: #3C5E6B;
+  --color-primary-soft: #DCE7EA;
 
   --color-male: #3569A8;
   --color-female: #C94F4F;
@@ -101,7 +106,7 @@ Základní barevné proměnné:
 
   --color-danger: #B64242;
   --color-warning: #B07A2E;
-  --color-shadow: rgba(52, 46, 38, 0.12);
+  --color-shadow: rgba(38, 49, 53, 0.10);
 }
 ```
 
@@ -119,17 +124,17 @@ Základní barevné proměnné:
 
 ```css
 [data-theme="dark"] {
-  --color-page: #151B1D;
-  --color-surface: #1D2528;
-  --color-surface-muted: #252F32;
+  --color-page: #10171B;
+  --color-surface: #172126;
+  --color-surface-muted: #1E2B31;
 
-  --color-text: #EDF1EF;
-  --color-text-muted: #A9B2B0;
-  --color-border: #374347;
+  --color-text: #E7ECEC;
+  --color-text-muted: #9BA9AE;
+  --color-border: #304148;
 
-  --color-primary: #35B7AD;
-  --color-primary-hover: #48C8BE;
-  --color-primary-soft: #234C49;
+  --color-primary: #88ADBC;
+  --color-primary-hover: #9ABCC8;
+  --color-primary-soft: #243B45;
 
   --color-male: #6E9ED8;
   --color-female: #E06A6A;
@@ -139,22 +144,43 @@ Základní barevné proměnné:
   --color-info-bg: #263B46;
   --color-info-text: #A7CEDF;
 
-  --color-danger: #E06A6A;
+  --color-danger: #E07B7B;
   --color-warning: #D6A352;
-  --color-shadow: rgba(0, 0, 0, 0.35);
+  --color-shadow: rgba(0, 0, 0, 0.32);
 }
 ```
 
 ### 4.3 Použití barev
 
-- Petrolejová je hlavní akcentní barva aplikace.
+- Tlumená modrošedá je hlavní akcentní barva aplikace.
 - Používá se pro hlavní tlačítka, aktivní záložku, vybranou osobu, ikony, odkazy a indikátor načítání.
 - Jména mužů uvedená jako druhotné informace nebo odkazy se výchozím způsobem zobrazují modře.
 - Jména žen uvedená jako druhotné informace nebo odkazy se výchozím způsobem zobrazují červeně.
 - Barevné rozlišení pohlaví se nepoužívá na hlavní jméno osoby v záhlaví.
 - Význam chyby, varování nebo zamčení nesmí být vyjádřen pouze barvou; vždy jej doplní text nebo ikona.
 
-## 5. Horní lišta aplikace
+## 5. Globální aplikační shell
+
+Shell má tři úrovně: globální navigaci aplikace, konkrétní pracovní sekci a
+případnou kontextovou navigaci uvnitř sekce. Globální navigace je stabilní a
+oddělená od seznamu osob.
+
+Obsahuje oblasti:
+
+- Přehled,
+- Osoby,
+- Rodokmen,
+- Dokumenty,
+- Místa,
+- Materiály / zdroje,
+- Můj prostor.
+
+Aktivní sekce je zřetelně označená. Neimplementované oblasti jsou disabled a
+označené jako plánované; nevedou na falešná data ani prázdnou imitaci funkce.
+Na tabletu a mobilu se globální navigace otevírá vlastním tlačítkem jako
+vysouvací panel. Zavřený panel není součástí focus ani accessibility toku.
+
+### 5.1 Horní lišta aplikace
 
 Horní lišta bude jednoduchá a nízká.
 
@@ -162,7 +188,7 @@ Horní lišta bude jednoduchá a nízká.
 
 - jednoduchý piktogram rozvětveného stromu,
 - název **Stemma**,
-- kliknutí na název nebo symbol otevře hlavní obrazovku.
+- kliknutí na název nebo symbol otevře Přehled.
 
 ### Vpravo
 
@@ -171,27 +197,33 @@ Horní lišta bude jednoduchá a nízká.
 - u přihlášeného uživatele profilové menu,
 - budoucí nastavení vzhledu bude součástí profilového menu.
 
-## 6. Hlavní obrazovka
+## 6. Přehled a pracovní sekce Osoby
 
-Desktopová hlavní obrazovka používá dvousloupcový model:
+Kořenová obrazovka Přehled je budoucím vstupním bodem celé rodinné databáze.
+Architektonicky počítá s osobami, rodokmenem, společnými dokumenty, kronikami,
+matrikami, místy, dalšími zdroji a osobním prostorem. Zobrazuje pouze již
+existující actor-visible data; ostatní moduly mají jasný plánovaný stav.
+
+Sekce Osoby zachovává uvnitř globálního shellu dvousloupcový pracovní model:
 
 - vlevo je seznam osob,
 - vpravo je detail vybrané osoby.
 
-Kliknutí na osobu změní detail vpravo bez opuštění hlavní obrazovky.
+Kliknutí na osobu změní detail vpravo bez opuštění sekce Osoby.
 
 ### Tablet
 
-- zachová se dvousloupcové rozhraní,
-- levý seznam bude možné sbalit,
-- po sbalení využije detail většinu šířky.
+- globální navigace se přesune do vlastního vysouvacího panelu,
+- sekce Osoby zachová dvousloupcové rozhraní seznam + detail, dokud pro ně
+  zůstává dostatečná šířka.
 
 ### Telefon
 
+- globální navigace se otevírá samostatným mobilním mechanismem,
 - detail osoby se zobrazuje přes celou obrazovku,
 - seznam osob se otevírá jako panel vysunutý zleva,
 - panel zabírá přibližně 85 % šířky,
-- lze jej zavřít tlačítkem, klepnutím mimo panel nebo gestem,
+- lze jej zavřít tlačítkem, klepnutím mimo panel nebo klávesou Escape,
 - po výběru osoby se panel automaticky zavře.
 
 ## 7. Seznam osob
@@ -600,7 +632,9 @@ Akce:
 
 ## 24. Vizuální reference
 
-Schváleným výchozím směrem je návrh zobrazující světlý a tmavý režim vedle sebe, včetně hlavní obrazovky, seznamu osob, detailu osoby a základních komponent.
+Schváleným výchozím směrem je klidný modrošedý shell ve světlém a tmavém
+režimu včetně Přehledu, globální navigace, sekce Osoby, seznamu, detailu a
+základních komponent.
 
 Doporučený soubor reference v projektu:
 
@@ -616,4 +650,4 @@ Reference určuje vizuální směr, nikoli přesné pixelové rozměry všech pr
 - Detailní návrh dialogů a náhledu materiálů.
 - Rozsah první implementace generování PDF A4.
 - Rozsah a technické řešení AI návrhu životopisného textu.
-- Samostatný návrh rodokmenu a dalších globálních obrazovek.
+- Samostatný návrh skutečného rodokmenu a obsahových modulů globálních sekcí.

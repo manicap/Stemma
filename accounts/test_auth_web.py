@@ -18,7 +18,7 @@ class AuthenticationWebTests(TestCase):
         response = self.client.get(reverse("people:index"))
 
         self.assertContains(response, "Přihlásit se")
-        self.assertContains(response, "next=/")
+        self.assertContains(response, "next=/osoby/")
         self.assertNotContains(response, "Odhlásit se")
 
     def test_login_authenticates_and_returns_to_safe_local_next(self) -> None:
@@ -44,7 +44,7 @@ class AuthenticationWebTests(TestCase):
             },
         )
 
-        self.assertRedirects(response, reverse("people:index"))
+        self.assertRedirects(response, reverse("common:overview"))
 
     def test_invalid_login_has_usable_error_without_authentication(self) -> None:
         response = self.client.post(
@@ -84,7 +84,7 @@ class AuthenticationWebTests(TestCase):
         post_response = self.client.post(reverse("accounts:logout"))
 
         self.assertEqual(get_response.status_code, 405)
-        self.assertRedirects(post_response, reverse("people:index"))
+        self.assertRedirects(post_response, reverse("common:overview"))
         self.assertNotIn("_auth_user_id", self.client.session)
 
     def test_logout_requires_csrf_token(self) -> None:

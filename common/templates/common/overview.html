@@ -1,0 +1,66 @@
+{% extends "common/base.html" %}
+
+{% block title %}Přehled · Stemma{% endblock %}
+
+{% block content %}
+<main class="overview-page">
+  <header class="overview-header">
+    <p class="eyebrow">Rodinná databáze</p>
+    <h1>Přehled</h1>
+    <p>Klidné výchozí místo pro společnou rodinnou paměť a další práci ve Stemmě.</p>
+  </header>
+
+  <section class="overview-grid" aria-label="Přehled oblastí Stemmy">
+    <article class="overview-card overview-card-primary">
+      <div>
+        <p class="card-kicker">Dostupná data</p>
+        <h2>Osoby</h2>
+        <p class="overview-metric" aria-label="Dostupné osoby: {{ visible_person_count }}">{{ visible_person_count }}</p>
+        <p class="muted-copy">Tolik osob nyní můžete zobrazit podle svých oprávnění.</p>
+      </div>
+      {% if visible_person_presentations %}
+        <ul class="overview-person-list" aria-label="Dostupné osoby">
+          {% for presentation in visible_person_presentations %}
+            <li>
+              <a href="{% url 'people:detail' presentation.person.pk %}">
+                {{ presentation.person.first_name }} {{ presentation.person.last_name }}{% if presentation.facts.roman_suffix %} {{ presentation.facts.roman_suffix }}{% endif %}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-state">Zatím zde nejsou žádné osoby, které můžete zobrazit.</p>
+      {% endif %}
+      <a class="secondary-button" href="{% url 'people:index' %}">Otevřít osoby</a>
+    </article>
+
+    <article class="overview-card is-planned">
+      <p class="card-kicker">Plánovaná oblast</p>
+      <h2>Rodokmen</h2>
+      <p>Budoucí společný pohled na rodinné vazby. V tomto řezu nevytváříme náhradní ani ukázková data.</p>
+    </article>
+
+    <article class="overview-card is-planned">
+      <p class="card-kicker">Plánovaná oblast</p>
+      <h2>Dokumenty a zdroje</h2>
+      <p>Prostor pro společné dokumenty, kroniky, matriky a další prameny bude doplněn v samostatném řezu.</p>
+    </article>
+
+    <article class="overview-card is-planned">
+      <p class="card-kicker">Plánovaná oblast</p>
+      <h2>Místa</h2>
+      <p>Budoucí celorodinný pohled na místa a jejich souvislosti. Současný datový model se zde zatím neprezentuje.</p>
+    </article>
+
+    <article class="overview-card is-planned">
+      <p class="card-kicker">Plánovaná oblast</p>
+      <h2>Můj prostor</h2>
+      {% if user.is_authenticated %}
+        <p>Přihlášený člen: <strong>{{ user.get_full_name|default:user.username }}</strong>. Osobní pracovní prostor bude doplněn později.</p>
+      {% else %}
+        <p>Osobní pracovní prostor bude v budoucnu navázán na přihlášený účet.</p>
+      {% endif %}
+    </article>
+  </section>
+</main>
+{% endblock %}

@@ -1,5 +1,24 @@
 # Historie změn dokumentace
 
+## Verze 0.46 – 17. 8. 2026
+
+- schválen ACP-008 pro globální aplikační shell, kořenový Přehled a samostatnou
+  person-centric sekci Osoby,
+- globální navigace nově odděluje pracovní sekce od kontextového seznamu a
+  detailu osob; neimplementované oblasti jsou jasně disabled/plánované,
+- Přehled zobrazuje pouze skutečné actor-visible osoby a poctivé prázdné nebo
+  plánované stavy bez falešných dat,
+- výchozí motiv je tmavý bez ohledu na systémové nastavení, light zůstává
+  plnohodnotný a explicitní volba se zachovává lokálně v prohlížeči,
+- skutečný browser průchod ověřil shell a oba motivy na desktopu 1440×900,
+  tabletový mezistupeň 768×900 a mobil 390×844 bez horizontálního overflow;
+  mobilní globální a person-list drawer se vzájemně vylučují a správně řídí
+  focus i dostupnost zavřeného obsahu,
+- úplná brána prošla 1020 testy, `manage.py check`, kontrolou migrací,
+  nezávislým QA, security a UI/dokumentačním review,
+- aktualizovány dokumenty 00, 02, 06, 07, 10 a 12; modely ani migrace se
+  nemění.
+
 ## Verze 0.45 – 17. 8. 2026
 
 - dokončen skutečný RC browser průchod anonymní návštěvník → Editor →

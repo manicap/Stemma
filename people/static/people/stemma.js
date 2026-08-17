@@ -1,8 +1,10 @@
 (function () {
   const root = document.documentElement;
-  const storedTheme = window.localStorage.getItem("stemma-theme");
-  if (storedTheme === "dark" || storedTheme === "light") {
-    root.dataset.theme = storedTheme;
+  try {
+    const storedTheme = window.localStorage.getItem("stemma-theme");
+    root.dataset.theme = storedTheme === "light" ? "light" : "dark";
+  } catch (error) {
+    root.dataset.theme = "dark";
   }
 
   const themeToggle = document.querySelector("[data-theme-toggle]");
@@ -18,19 +20,87 @@
   themeToggle?.addEventListener("click", () => {
     const nextTheme = root.dataset.theme === "dark" ? "light" : "dark";
     root.dataset.theme = nextTheme;
-    window.localStorage.setItem("stemma-theme", nextTheme);
+    try {
+      window.localStorage.setItem("stemma-theme", nextTheme);
+    } catch (error) {
+      // The selected theme remains active for the current page.
+    }
     updateThemeLabel();
   });
 
+  const appNavigation = document.querySelector("#app-navigation");
+  const appMenuToggle = document.querySelector("[data-app-nav-open]");
   const peoplePanel = document.querySelector("#people-panel");
   const listToggle = document.querySelector("[data-person-list-open]");
-  const setListOpen = (isOpen) => {
+  const appDrawerQuery = window.matchMedia("(max-width: 64rem)");
+  const peopleDrawerQuery = window.matchMedia("(max-width: 44rem)");
+  const syncDrawerAccessibility = (panel, isOpen, isDrawer) => {
+    if (!panel) return;
+    panel.inert = isDrawer && !isOpen;
+    if (isDrawer) panel.setAttribute("aria-hidden", String(!isOpen));
+    else panel.removeAttribute("aria-hidden");
+  };
+  const setAppNavigationOpen = (isOpen, { moveFocus = false, returnFocus = false } = {}) => {
+    appNavigation?.classList.toggle("is-open", isOpen);
+    appMenuToggle?.setAttribute("aria-expanded", String(isOpen));
+    if (isOpen) setListOpen(false);
+    syncDrawerAccessibility(appNavigation, isOpen, appDrawerQuery.matches);
+    if (isOpen && moveFocus) {
+      appNavigation?.querySelector("[aria-current='page'], a")?.focus();
+    } else if (!isOpen && returnFocus) {
+      appMenuToggle?.focus();
+    }
+  };
+  const setListOpen = (isOpen, { moveFocus = false, returnFocus = false } = {}) => {
     peoplePanel?.classList.toggle("is-open", isOpen);
     listToggle?.setAttribute("aria-expanded", String(isOpen));
+    if (isOpen) {
+      appNavigation?.classList.remove("is-open");
+      appMenuToggle?.setAttribute("aria-expanded", "false");
+      syncDrawerAccessibility(appNavigation, false, appDrawerQuery.matches);
+    }
+    syncDrawerAccessibility(peoplePanel, isOpen, peopleDrawerQuery.matches);
+    if (isOpen && moveFocus) {
+      peoplePanel?.querySelector("[aria-current='page'], a")?.focus();
+    } else if (!isOpen && returnFocus) {
+      listToggle?.focus();
+    }
   };
+  setAppNavigationOpen(false);
   setListOpen(peoplePanel?.classList.contains("is-open") ?? false);
-  listToggle?.addEventListener("click", () => setListOpen(!peoplePanel?.classList.contains("is-open")));
-  document.querySelector("[data-person-list-close]")?.addEventListener("click", () => setListOpen(false));
+  appMenuToggle?.addEventListener(
+    "click",
+    () => setAppNavigationOpen(
+      !appNavigation?.classList.contains("is-open"),
+      { moveFocus: true },
+    ),
+  );
+  document.querySelector("[data-app-nav-close]")?.addEventListener(
+    "click",
+    () => setAppNavigationOpen(false, { returnFocus: true }),
+  );
+  listToggle?.addEventListener("click", () => setListOpen(
+    !peoplePanel?.classList.contains("is-open"),
+    { moveFocus: true },
+  ));
+  document.querySelector("[data-person-list-close]")?.addEventListener(
+    "click",
+    () => setListOpen(false, { returnFocus: true }),
+  );
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (appNavigation?.classList.contains("is-open")) {
+      setAppNavigationOpen(false, { returnFocus: true });
+    } else if (peoplePanel?.classList.contains("is-open")) {
+      setListOpen(false, { returnFocus: true });
+    }
+  });
+  appDrawerQuery.addEventListener("change", () => {
+    setAppNavigationOpen(false);
+  });
+  peopleDrawerQuery.addEventListener("change", () => {
+    setListOpen(peoplePanel?.classList.contains("is-open") ?? false);
+  });
 
   const selectCurrentPerson = () => {
     document.querySelectorAll(".person-list-item").forEach((link) => {

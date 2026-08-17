@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.14
+**Verze:** 0.15
 **Stav:** RC 0.1 připraven na větvi `agent/rc-0.1`
 **Datum revize:** 17. 8. 2026
 
@@ -98,7 +98,7 @@ RC 0.1 lze označit za dokončené pouze tehdy, když jsou splněny **všechny**
 
 #### B. Skutečný seznam osob
 
-- hlavní obrazovka čte skutečné osoby z databáze, nikoli mocky nebo pevně zapsaná demonstrační data v šabloně,
+- pracovní sekce Osoby čte skutečné osoby z databáze, nikoli mocky nebo pevně zapsaná demonstrační data v šabloně,
 - seznam vrací pouze osoby viditelné pro aktuálního actora podle existujících pravidel přístupové úrovně a lifecycle,
 - výběr osoby otevře její skutečný detail,
 - prázdný seznam a neexistující výsledek mají použitelné uživatelské sdělení.
@@ -143,7 +143,8 @@ RC nesmí oslabit existující selector, service ani permission kontrakty jen pr
 
 #### G. Použitelné skutečné UI
 
-- hlavní obrazovka odpovídá základnímu dvousloupcovému konceptu na desktopu,
+- globální shell obsahuje Přehled a stabilní navigaci oddělenou od sekce Osoby,
+- sekce Osoby odpovídá uvnitř shellu dvousloupcovému konceptu seznam/detail na desktopu,
 - mobilní zobrazení je funkčně použitelné bez nutnosti zoomu a bez funkcí dostupných pouze hoverem,
 - základní vizuální systém vychází ze schváleného UI/UX návrhu,
 - světlý i tmavý motiv jsou alespoň funkčně použitelné; RC nevyžaduje finální kosmetické vyladění,
@@ -252,15 +253,18 @@ detailu, serverovou validační chybu, platný HTMX zápis bez reloadu, potvrzen
 v UI i následnou obnovu demo záznamu. Čtenář editační akci nevidí a
 přímá editační URL mu vrací 403.
 
-Vertikální řez B+C+G je implementován a browser ověřen:
+Vertikální řez B+C+G a navazující UI foundation jsou implementovány:
 
-- hlavní URL čte skutečné, pro actora viditelné osoby z databáze,
+- kořenová URL zobrazuje Přehled pouze ze skutečných actor-visible dat a
+  globální navigace odděluje Přehled, Osoby a jasně plánované budoucí oblasti,
+- sekce Osoby čte skutečné, pro actora viditelné osoby z databáze,
 - výchozí seznam i detail bezpečně vylučují archivované a měkce odstraněné
   osoby a jednotně skrývají existenci neviditelného přímého cíle,
 - detail se načítá jako plná stránka i HTMX fragment a používá lokálně
   verzovaný HTMX asset,
 - existuje dvousloupcový desktopový základ, mobilní vysouvací seznam,
-  světlý a tmavý motiv a použitelné empty, loading a 404 stavy,
+  světlý a tmavý motiv a použitelné empty, loading a 404 stavy; výchozí je
+  tmavý motiv a lokální preference se zachovává mezi návštěvami,
 - desktopový i mobilní list/detail průchod včetně opakované HTMX výměny,
   výběru osoby, motivu a mobilního zavření panelu prošel reálným browserem,
 - Person a navazující jména a vztahy v Django Adminu respektují stejnou
@@ -278,9 +282,17 @@ panel bez horizontálního overflow a světlý i tmavý motiv. Sekvenční UI/UX
 review hlavního agenta nenašel blocker; samostatné subagent browser review
 nebylo v jeho izolovaném prostředí technicky dostupné.
 
+Navazující browser průchod UI foundation ověřil na desktopu 1440×900 globální
+navigaci, Přehled i zachovaný HTMX list/detail v sekci Osoby, na tabletu
+768×900 globální drawer vedle použitelného dvousloupcového pohledu Osob a na
+mobilu 390×844 samostatné globální a person-list drawery bez horizontálního
+overflow. Světlý i tmavý motiv zůstaly použitelné a explicitní volba přežila
+reload; zavřené drawery jsou vyřazeny z focus a accessibility toku a Escape
+vrací focus na jejich ovládací prvek.
+
 Oblasti B, C a G jsou tím pro RC 0.1 splněny. Bezpečnostní oblast F je
 doložena cílenými testy a nezávislým security review bez blockeru. Závěrečná
-brána H prošla `manage.py check`, `makemigrations --check --dry-run`, 1012
+brána H prošla `manage.py check`, `makemigrations --check --dry-run`, 1020
 automatickými testy, cílenými testy průchodu, nezávislým QA a security review,
 kontrolou dokumentace, diffu, tajemství a lokálních artefaktů.
 

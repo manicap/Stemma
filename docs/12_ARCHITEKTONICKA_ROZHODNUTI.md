@@ -1,7 +1,7 @@
 # Architektonická rozhodnutí
 
 **Dokument:** 12  
-**Verze:** 0.4
+**Verze:** 0.5
 **Stav:** platný registr rozhodnutí  
 **Datum vytvoření:** 15. 7. 2026  
 **Datum revize:** 17. 8. 2026
@@ -249,3 +249,47 @@ oprávnění actora lišit. Tyto hodnoty se neukládají jako vlastnosti osoby.
   číslici, pokud mají rozdílnou viditelnost zdrojů,
 - při nejednoznačných nebo neúplných viditelných zdrojích se zobrazí pouze
   údaj, který lze spolehlivě odvodit bez falešné přesnosti.
+
+---
+
+## ACP-008 — Globální aplikační shell a sekční navigace
+
+**Stav:** Schváleno
+
+### Kontext
+
+Dosavadní RC obrazovka byla záměrně person-centric a používala seznam osob
+vlevo a detail vpravo jako jediný hlavní pohled. Stemma však dlouhodobě
+zahrnuje i celorodinné oblasti, které nejsou kontextem jedné osoby. Seznam
+osob proto nesmí plnit současně roli globální navigace celé aplikace.
+
+### Rozhodnutí
+
+Stemma používá stabilní globální aplikační shell. Kořenová URL patří Přehledu;
+globální navigace odděluje Přehled, Osoby, Rodokmen, Dokumenty, Místa,
+Materiály / zdroje a Můj prostor. Osoby zůstávají samostatnou pracovní sekcí
+s kontextovým seznamem vlevo a detailem vpravo. Neimplementované oblasti jsou
+jasně označené jako plánované a nesmějí prezentovat falešná data nebo funkce.
+
+Shell zůstává server-rendered a progresivní interakce v sekci Osoby nadále
+používají HTMX podle ACP-003. Na mobilu jsou globální navigace, seznam osob a
+detail samostatně použitelné vrstvy; aplikace se nesnaží zobrazit tři sloupce
+vedle sebe.
+
+### Důvod
+
+- oddělit globální informační architekturu od person-centric kontextu,
+- vytvořit stabilní základ pro budoucí celorodinné moduly bez jejich předčasné
+  implementace,
+- zachovat fungující list/detail tok Osob i stávající bezpečnostní hranice,
+- umožnit jednotný responzivní a tematický designový systém celé aplikace.
+
+### Dopady
+
+- `/` je Přehled a pracovní seznam osob je na `/osoby/`; existující detailové
+  URL `/osoby/<id>/` zůstávají stabilní,
+- globální navigace je součástí sdílené základní šablony, nikoli seznamu osob,
+- Přehled smí zobrazit pouze skutečná data filtrovaná pro aktuálního actora,
+- výchozí motiv je tmavý; explicitní dark/light volba se zatím ukládá lokálně
+  v prohlížeči a později se začlení do uživatelského Nastavení,
+- ACP nemění datový model, přístupovou policy ani význam doménových hodnot.

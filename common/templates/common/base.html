@@ -1,0 +1,98 @@
+{% load static %}
+<!doctype html>
+<html lang="cs" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Stemma{% endblock %}</title>
+  <script>
+    try {
+      const storedTheme = window.localStorage.getItem("stemma-theme");
+      if (storedTheme === "dark" || storedTheme === "light") {
+        document.documentElement.dataset.theme = storedTheme;
+      }
+    } catch (error) {
+      document.documentElement.dataset.theme = "dark";
+    }
+  </script>
+  <link rel="stylesheet" href="{% static 'people/stemma.css' %}">
+  <script src="{% static 'people/history-guard.js' %}"></script>
+  <script src="{% static 'people/htmx-2.0.10.min.js' %}"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-start">
+      <button
+        class="app-menu-toggle"
+        type="button"
+        data-app-nav-open
+        aria-controls="app-navigation"
+        aria-expanded="false"
+      >Menu</button>
+      <a class="brand" href="{% url 'common:overview' %}" aria-label="Stemma – přehled">
+        <span class="brand-mark" aria-hidden="true">♧</span>
+        <span>Stemma</span>
+      </a>
+    </div>
+    <div class="topbar-actions">
+      {% block mobile_list_action %}{% endblock %}
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Přepnout na světlý motiv" aria-pressed="true">
+        Světlý motiv
+      </button>
+      {% if user.is_authenticated %}
+        <span class="profile-summary" aria-label="Přihlášený uživatel">{{ user.get_full_name|default:user.username }}</span>
+        <form class="logout-form" method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button class="auth-action" type="submit" data-short-label="Odhlásit">Odhlásit se</button>
+        </form>
+      {% else %}
+        <a class="auth-action" data-short-label="Přihlásit" href="{% url 'accounts:login' %}?next={{ login_return_path|default:request.get_full_path|urlencode }}">Přihlásit se</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="app-frame">
+    <aside id="app-navigation" class="app-sidebar" aria-label="Hlavní navigace">
+      <div class="app-sidebar-heading">
+        <p class="eyebrow">Rodinný archiv</p>
+        <p class="app-sidebar-title">Stemma</p>
+      </div>
+      <nav class="app-nav" aria-label="Sekce aplikace">
+        <a class="app-nav-link{% if request.resolver_match.namespace == 'common' %} is-active{% endif %}" href="{% url 'common:overview' %}"{% if request.resolver_match.namespace == 'common' %} aria-current="page"{% endif %}>
+          <span>Přehled</span>
+        </a>
+        <a class="app-nav-link{% if request.resolver_match.namespace == 'people' %} is-active{% endif %}" href="{% url 'people:index' %}"{% if request.resolver_match.namespace == 'people' %} aria-current="page"{% endif %}>
+          <span>Osoby</span>
+        </a>
+        <span class="app-nav-link is-disabled" aria-disabled="true"><span>Rodokmen</span><small>Plánováno</small></span>
+        <span class="app-nav-link is-disabled" aria-disabled="true"><span>Dokumenty</span><small>Plánováno</small></span>
+        <span class="app-nav-link is-disabled" aria-disabled="true"><span>Místa</span><small>Plánováno</small></span>
+        <span class="app-nav-link is-disabled" aria-disabled="true"><span>Materiály / zdroje</span><small>Plánováno</small></span>
+        <span class="app-nav-link is-disabled" aria-disabled="true"><span>Můj prostor</span><small>Plánováno</small></span>
+      </nav>
+    </aside>
+    <button class="app-nav-scrim" type="button" data-app-nav-close aria-label="Zavřít hlavní navigaci"></button>
+
+    <div class="app-content">
+      {% if messages %}
+        <div class="global-messages" aria-live="polite">
+          {% for message in messages %}<p class="success-message">{{ message }}</p>{% endfor %}
+        </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+  <dialog id="unsaved-dialog" class="confirm-dialog" aria-labelledby="unsaved-dialog-heading">
+    <form method="dialog">
+      <h2 id="unsaved-dialog-heading">Máte neuložené změny</h2>
+      <p>Chcete rozpracovanou editaci zahodit?</p>
+      <div class="form-actions">
+        <button class="secondary-button" value="continue">Pokračovat v úpravě</button>
+        <button class="primary-button" value="discard">Zahodit změny</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="{% static 'people/stemma.js' %}"></script>
+</body>
+</html>

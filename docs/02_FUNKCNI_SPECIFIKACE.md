@@ -1,13 +1,28 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.28
+**Verze:** 0.29
 **Stav:** pracovní návrh  
 **Datum revize:** 17. 8. 2026
 
-## 1. Hlavní obrazovka
+## 1. Globální aplikační shell a Přehled
 
-Desktopové rozhraní používá dvousloupcový model:
+Kořenová URL zobrazuje Přehled jako vstupní bod celé rodinné databáze.
+Stabilní globální navigace odděluje celorodinné oblasti Přehled, Osoby,
+Rodokmen, Dokumenty, Místa, Materiály / zdroje a Můj prostor od kontextové
+navigace uvnitř jednotlivých sekcí. Neimplementované oblasti jsou jasně
+označené jako plánované a neprezentují falešná data ani funkce.
+
+Přehled používá pouze data skutečně viditelná aktuálnímu actorovi. V tomto
+řezu zobrazuje počet a malý výběr dostupných osob; rodokmen, dokumenty,
+zdroje, místa a osobní pracovní prostor mají pouze poctivé plánované stavy.
+
+Horní lišta obsahuje značku Stemma, mobilní vstup do globální navigace,
+přepínač světlého a tmavého režimu a přihlášení nebo identitu účtu.
+
+### 1.1 Pracovní sekce Osoby
+
+Desktopová sekce Osoby používá uvnitř globálního shellu dvousloupcový model:
 
 - vlevo je trvale viditelný seznam osob,
 - vpravo je detail právě vybrané osoby,
@@ -15,9 +30,9 @@ Desktopové rozhraní používá dvousloupcový model:
 - vybraná osoba je v seznamu zřetelně zvýrazněna,
 - změny se po uložení bez obnovení stránky promítnou do všech souvisejících částí rozhraní.
 
-Na tabletu zůstává dvousloupcové rozhraní, ale seznam lze sbalit. Na telefonu se seznam otevírá jako panel vysunutý zleva a po výběru osoby se automaticky zavře.
-
-Horní lišta obsahuje piktogram rozvětveného stromu, název Stemma, přepínač světlého a tmavého režimu a přihlášení nebo profilové menu.
+Na tabletu zůstává dvousloupcové rozhraní, ale seznam lze sbalit. Na telefonu
+jsou globální navigace i seznam osob samostatné vysouvací vrstvy; detail se
+používá samostatně a seznam se po výběru osoby automaticky zavře.
 
 ## 2. Seznam osob
 
@@ -701,7 +716,7 @@ Zobrazení archivované osoby vyžaduje oprávnění
 výsledné osoby a společné biologické rodiče; měkce odstraněné výsledné
 osoby ani rodiče nezveřejňuje.
 
-Autorizovaný základ hlavní obrazovky RC 0.1 používá
+Autorizovaný základ pracovního pohledu Osoby a osobního modulu Přehledu používá
 `get_visible_people(*, actor)` a `get_visible_person(*, person_id, actor)`.
 Výchozí seznam i detail zahrnují pouze nearchivované a měkce neodstraněné
 osoby s viditelným `access_level`. Neexistující a neviditelný přímý cíl

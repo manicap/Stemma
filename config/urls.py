@@ -20,7 +20,8 @@ from django.urls import include, path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("ucet/", include("accounts.urls")),
-    path("", include("people.urls")),
+    path("osoby/", include("people.urls")),
+    path("", include("common.urls")),
 ]
 
 handler404 = "people.views.not_found"

@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.37
+**Verze:** 0.38
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 17. 8. 2026
 
@@ -93,6 +93,7 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 144. Cílem agentní větve je RC 0.1 definované měřitelnými acceptance kritérii v `07_ROADMAPA.md`: reprodukovatelné spuštění, skutečný seznam osob, bezpečný detail osoby, login/logout a role, jednoduchá editace základních údajů `Person`, autorizační/security brána, použitelné desktopové a mobilní UI a úplná kontrolní brána projektu. Dokončení RC 0.1 neznamená dokončení celé roadmapy ani povolení produkčního nasazení.
 145. Agentní autonomie nekryje změnu schválené architektury, ACP, významu systémových hodnot nebo přístupové policy, destruktivní zásahy, produkční nasazení, force-push ani integraci do `feature/mvp` nebo `main`; tyto situace se vždy eskalují uživateli.
 146. ACP-007 zavádí dlouhodobé neprozrazující odvozování: prezentační derived údaj smí pro konkrétního actora vycházet pouze z osob, událostí a dalších zdrojů, které jsou mu samy viditelné podle aktuální access a lifecycle policy. Skrytý zdroj nesmí být prozrazen věkem, stavem žijící/zemřelý, římským pořadím ani jinou agregací. Římské pořadí se počítá ve viditelné kohortě a může se podle oprávnění lišit; hodnoty se neukládají na osobu.
+147. ACP-008 schvaluje globální aplikační shell: kořenová URL patří Přehledu, stabilní globální navigace odděluje budoucí celorodinné oblasti a Osoby zůstávají samostatnou person-centric sekcí s kontextovým list/detail pohledem. Neimplementované oblasti jsou pouze jasně plánované. Výchozí motiv je tmavý, lokální volba dark/light se zachovává v prohlížeči a později přejde do uživatelského Nastavení.
 
 ## 2. Otevřené otázky
 
