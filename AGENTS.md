@@ -266,6 +266,12 @@ git diff
 
 Run additional targeted tests, security checks, or browser/UI verification whenever the changed behavior requires them.
 
+## Testability gate
+
+A vertical slice must not be marked complete or ready for browser verification unless the user has a reproducible, documented way to create the data, accounts, roles, permissions, or other local state required to verify the new behavior manually.
+
+Any feature that requires authentication or specific permissions must include a safe local bootstrap for the relevant test identities before its slice is accepted. Local test credentials must never be hard-coded, staged, committed, pushed, logged, or reused as production credentials.
+
 ## Code style
 
 - Follow PEP 8.

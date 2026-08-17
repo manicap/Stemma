@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.13
+**Verze dokumentace:** 0.14
 **Stav:** pracovní návrh v implementaci; experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -39,6 +39,18 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.14
+
+Verze 0.14 doplňuje reprodukovatelný lokální bootstrap rolových identit:
+
+- interaktivní příkaz `bootstrap_demo_accounts` funguje pouze s `DEBUG=True`,
+- vytvoří nebo resetuje vyhrazeného Čtenáře, Editora a Správce a opraví jim
+  přesné skupiny, přímá oprávnění i neprivilegované stavové příznaky,
+- heslo zadává tester skrytě a potvrzuje je; příkaz je nevypisuje ani neukládá
+  v otevřené podobě do zdrojů a používá standardní Django validátory,
+- opakované spuštění nevytváří duplicity a slouží jako jednoznačný lokální
+  reset přihlašovacích údajů.
 
 ## Stav verze 0.13
 
@@ -208,6 +220,7 @@ Poslední příkaz vypíše náhodný lokální klíč. V novém
 ```powershell
 .\.venv\Scripts\python.exe manage.py migrate
 .\.venv\Scripts\python.exe manage.py seed_demo_data
+.\.venv\Scripts\python.exe manage.py bootstrap_demo_accounts
 .\.venv\Scripts\python.exe manage.py runserver
 ```
 
@@ -227,6 +240,7 @@ a spusťte:
 ```bash
 python manage.py migrate
 python manage.py seed_demo_data
+python manage.py bootstrap_demo_accounts
 python manage.py runserver
 ```
 
@@ -237,8 +251,22 @@ veřejnou, přihlášenou a omezenou úroveň. Příkaz funguje pouze s lokáln�
 `DEBUG=True`; mimo tento režim selže bez zápisu. Opakované spuštění při
 zachování vložených markerů nevytváří duplicity, existující ukázkové záznamy
 nepřepisuje a nic nemaže. Plán lze bez zápisu zkontrolovat příkazem
-`python manage.py seed_demo_data --dry-run`. Demo uživatelské účty nejsou
-součástí tohoto kroku a příkaz neukládá žádná hesla ani tajemství.
+`python manage.py seed_demo_data --dry-run`.
+
+`bootstrap_demo_accounts` následně interaktivně vyžádá jedno nové lokální
+heslo a jeho potvrzení. Heslo se při psaní nezobrazuje, nepatří do argumentu
+příkazu ani do repozitáře a musí projít standardními Django validátory. Příkaz
+vytvoří nebo resetuje tyto lokální identity:
+
+- Čtenář: `stemma-demo-reader`,
+- Editor: `stemma-demo-editor`,
+- Správce: `stemma-demo-administrator`.
+
+Každé další spuštění stejným postupem bezpečně nastaví nové heslo všem třem
+účtům a opraví jejich skupiny, systémovou oprávňovací matici i přímá oprávnění.
+Příkaz funguje pouze s lokálním
+`DEBUG=True`; vyhrazená uživatelská jména ani zadané heslo se nesmějí používat
+v produkčním prostředí.
 
 ## Aktuální fáze projektu
 

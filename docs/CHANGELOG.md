@@ -1,5 +1,19 @@
 # Historie změn dokumentace
 
+## Verze 0.43 – 17. 8. 2026
+
+- přidán lokální `DEBUG=True` příkaz `bootstrap_demo_accounts` pro
+  reprodukovatelného Čtenáře, Editora a Správce,
+- heslo se zadává skrytě dvakrát, prochází Django validátory a není součástí
+  zdrojů, argumentů ani výstupu příkazu,
+- opakované spuštění účty neduplikuje, bezpečně resetuje heslo a opraví přesnou
+  skupinu, přímá oprávnění i privilegované příznaky demo identity,
+- doplněny automatické testy DEBUG pojistky, idempotence, resetu, efektivních
+  oprávnění rolí, atomického rollbacku, kolize vyhrazeného jména a neplatných
+  přihlašovacích údajů,
+- `AGENTS.md` nyní vyžaduje reprodukovatelný lokální stav a testovací identity
+  před uzavřením autentizovaného vertikálního řezu.
+
 ## Verze 0.42 – 17. 8. 2026
 
 - přidán `PersonForm` pro jméno, příjmení, pohlaví, kategorii a poznámku;

@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.11
+**Verze:** 0.12
 **Stav:** realizace MVP + experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -200,6 +200,10 @@ Oblast A má implementovaný reprodukovatelný lokální postup:
   přístupové úrovně, při zachování markerů je idempotentní, podporuje
   `--dry-run`, nic nemaže ani nepřepisuje a neobsahuje demo hesla nebo jiná
   tajemství; při `DEBUG=False` selže bez zápisu.
+- interaktivní `bootstrap_demo_accounts` vytvoří nebo resetuje lokálního
+  Čtenáře, Editora a Správce s přesnými skupinami; heslo zadává tester skrytě,
+  příkaz je nevypisuje ani neukládá v otevřené podobě a mimo `DEBUG=True`
+  selže bez zápisu,
 - izolovaný Windows clean-snapshot smoke test prošel vytvořením nového
   Python 3.14 `venv`, instalací z `requirements.txt`, všemi migracemi,
   dry-runem, prvním i opakovaným seedem, `manage.py check` a HTTP 200 ze
@@ -220,6 +224,8 @@ Oblast D má implementovaný autentizační a rolový základ:
   zachovávají samostatný dokumentovaný význam,
 - cílené testy pokrývají anonymního uživatele, neplatný i neaktivní login,
   bezpečný `next`, logout/CSRF a praktický obsahový rozdíl rolí.
+- lokální tester může všechny tři role reprodukovatelně vytvořit nebo jim
+  resetovat přihlašovací údaje bez commitnutého či vypsaného hesla.
 
 Oblast D zůstává jako celek otevřená do propojení editační akce v E a
 skutečného browser průchodu login–edit–logout.
