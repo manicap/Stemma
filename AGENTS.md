@@ -2,7 +2,9 @@
 
 ## Project
 
-Stemma is a Django-based family information system. Work in small, reviewable steps and preserve the approved architecture.
+Stemma is a Django-based family information system. Preserve the approved architecture and move the project toward a genuinely usable first production candidate through small, verifiable vertical slices.
+
+This file contains the execution policy for the experimental autonomous-development branch `agent/rc-0.1`. It does not grant permission to change approved architecture, ACP decisions, security policy, or the meaning of documented system values.
 
 ## Source of truth
 
@@ -12,13 +14,14 @@ Before implementing a non-trivial change, read the relevant current documents, e
 
 - `docs/00_README.md`
 - `docs/05_PRAVIDLA_DOKUMENTACE.md`
+- `docs/06_ROZHODNUTI_A_OTEVRENE_OTAZKY.md`
 - `docs/07_ROADMAPA.md`
 - `docs/08_ARCHITEKTONICKE_PRINCIPY.md`
 - `docs/09_CODING_STANDARD.md`
 - `docs/11_DATABAZOVY_NAVRH.md`
 - `docs/12_ARCHITEKTONICKA_ROZHODNUTI.md`
 
-When documentation and an older discussion differ, the newest documentation in the repository wins.
+When documentation and an older discussion differ, the newest authoritative documentation in the repository wins. When two authoritative documents appear to differ, prefer the more specific rule only when they can be reconciled without changing product meaning. Otherwise escalate.
 
 ## Current technical baseline
 
@@ -66,95 +69,173 @@ Applications live in the repository root:
 - Do not log or audit passwords, tokens, secrets or file contents.
 - Preserve the distinction between archiving and soft deletion.
 - Do not introduce a dependency without a clear and documented benefit.
-- Do not change approved architecture or the meaning of system values without stopping and reporting the conflict.
+- Do not change approved architecture, ACP decisions, access-control semantics, or the meaning of system values without explicit user approval.
 
-## Implementation workflow
+## Autonomous operating mode
 
-For each task:
+On `agent/rc-0.1`, the default behavior is to continue working rather than stop after every implementation step.
 
-1. Inspect the current branch, working tree and relevant documentation.
-2. State the planned small change before editing.
-3. Modify only files required by the task.
-4. Add or update tests for every new behavior.
-5. Do not create migrations unless database models or fields changed.
-6. Keep structural and data migrations separate when that improves clarity.
-7. Do not rewrite migrations already shared in the repository; create a new migration for corrections.
-8. Run the relevant checks and report exact results.
-9. Summarize changed files, risks, deviations and a proposed commit message.
+For reversible implementation decisions that are consistent with approved documentation and architecture:
 
-Before a larger architectural decision, stop and request approval. If needed, identify the affected documentation and whether a new ACP is required.
+- choose the simplest maintainable option,
+- prefer existing project patterns over new abstractions,
+- document a material decision when required,
+- implement it,
+- verify it,
+- fix discovered defects,
+- and continue to the next smallest useful vertical slice without asking for routine approval.
+
+Do not ask the user to choose between equivalent low-risk implementation details. Minor naming, internal refactoring, test structure, template structure, and similarly reversible details should be resolved autonomously using existing project conventions.
+
+Do not treat a completed internal milestone as sufficient evidence of progress. Prefer vertical slices that move the application toward actual user-visible usefulness while respecting the documented roadmap and dependencies.
+
+## Escalation policy
+
+Stop and ask the user only when at least one of these conditions is true:
+
+1. Two current authoritative documents contain a material conflict that cannot be reconciled without changing product behavior.
+2. The next step requires a new or changed ACP, a change to approved architecture, or a change to the meaning of a documented system value.
+3. A security, privacy, visibility, authorization, or access-control policy is materially undefined and the choice would affect what real users can see or modify.
+4. The action is destructive or meaningfully irreversible, including intentional data loss, destructive migration, deletion of user data, history rewriting, or force-push.
+5. The work requires credentials, secrets, an external account decision, paid service activation, or access that is not already available.
+6. The work would deploy to or mutate a real production environment or real user data and that production action has not been explicitly authorized.
+7. A material user-visible product decision has multiple incompatible interpretations and current documentation does not determine the intended behavior.
+8. Required validation remains failing after at least three materially different reasonable attempts and continuing would require a risky workaround, weakening tests, or guessing at architecture.
+
+When escalating, provide one concise message containing: the blocking fact, the relevant evidence, the safest recommended choice, and the consequence of each materially different alternative. Do not ask several low-level questions separately.
+
+## Lead-agent workflow
+
+The main agent is the implementation owner and should execute this loop autonomously:
+
+1. Inspect the current branch, working tree, recent changes, tests, and relevant documentation.
+2. Determine the current actual implementation state rather than trusting milestone labels alone.
+3. Select the smallest next vertical slice that advances the current documented goal and has clear acceptance conditions.
+4. State the short internal plan, but do not wait for approval unless the escalation policy applies.
+5. Implement only the files required for that slice.
+6. Add or update tests for every new behavior.
+7. Run focused tests first, then the required project checks.
+8. Perform an independent review pass using subagents when available.
+9. Fix valid findings and rerun the affected checks. Repeat until the slice passes its acceptance conditions or escalation is required.
+10. Update existing documentation when the implemented behavior or project state materially changed.
+11. Inspect the final diff for unrelated changes, secrets, generated artifacts, database files, and accidental weakening of tests or permissions.
+12. Commit and push the accepted coherent slice to `agent/rc-0.1` when all required checks pass.
+13. Continue with the next slice without waiting for another user prompt, until a documented target is reached or the escalation policy applies.
+
+Do not solve a failing test by deleting it, weakening its assertion, bypassing authorization, hiding an error, or reducing documented guarantees unless the test is demonstrably incorrect according to authoritative documentation.
+
+## Subagents and independent review
+
+Use subagents for bounded, primarily read-only independent work when the environment supports them. The lead agent remains responsible for final implementation and integration.
+
+Default review roles are:
+
+### Documentation auditor
+
+- compare implementation with current documentation,
+- identify stale milestone claims or undocumented behavior,
+- flag true contradictions,
+- do not invent product requirements.
+
+### QA and test reviewer
+
+- inspect changed behavior and tests independently,
+- look for missing edge cases and regressions,
+- verify that tests exercise behavior rather than merely implementation details.
+
+### Security and access-control reviewer
+
+Use whenever authentication, authorization, visibility, health data, private data, selectors, services, forms, or direct-object URLs are involved.
+
+- attempt to find ways to bypass intended access rules,
+- check anonymous, authenticated, inactive, staff, superuser, and object-visibility cases when relevant,
+- treat server-side enforcement as mandatory.
+
+### UI/UX reviewer
+
+Use whenever user-facing views, templates, forms, HTMX interactions, responsive layout, validation messages, or navigation change.
+
+- verify the feature as a user flow, not only as isolated code,
+- check failure and empty states where applicable,
+- prefer the approved UI/UX documentation over ad-hoc redesign.
+
+Subagents should normally report findings rather than modify shared files. If an isolated worktree is explicitly used for parallel implementation, the lead agent must review and integrate the result and must prevent overlapping writes to the same files.
+
+If subagents are unavailable, perform the same review roles sequentially as independent review passes before accepting the slice.
+
+## Migrations
+
+- Do not create migrations unless database models, fields, constraints, indexes, or required data state changed.
+- Keep structural and data migrations separate when that improves clarity.
+- Do not rewrite migrations already shared in the repository; create a new migration for corrections.
+- Never introduce intentional data loss without escalation and explicit approval.
 
 ## Documentation updates
 
-Documentation is part of the product and must remain consistent with the implementation.
+Documentation is part of the product and must remain consistent with implementation.
 
 Update existing documentation when a change:
 
 - completes or materially advances an implementation milestone,
 - changes the current project state recorded in the roadmap or README,
-- introduces or changes a model, fixed system value, validation rule, permission, workflow or architectural decision,
+- introduces or changes a model, fixed system value, validation rule, permission, workflow, or architectural decision,
 - resolves an open question,
-- creates a meaningful difference between implementation and the current documentation.
+- creates a meaningful difference between implementation and current documentation.
 
-Create new documentation only when the subject is significant, long-lived and not adequately covered by an existing document. Before creating a new document:
+For routine implementation where it is merely unclear which existing document should receive a small factual update, choose the most specific existing document and continue. Do not stop solely for document-placement uncertainty.
+
+Create new documentation only when the subject is significant, long-lived, and not adequately covered by an existing document. Before creating a new document:
 
 - verify that the information does not belong in an existing document,
 - follow the naming and numbering rules in `docs/05_PRAVIDLA_DOKUMENTACE.md`,
 - add the new document to `docs/00_README.md`,
 - record the addition in `docs/CHANGELOG.md`,
-- do not create a new ACP document; architectural decisions belong in `docs/12_ARCHITEKTONICKA_ROZHODNUTI.md` and require explicit approval.
+- do not create a separate ACP document; architectural decisions belong in `docs/12_ARCHITEKTONICKA_ROZHODNUTI.md` and still require explicit user approval.
 
 For significant documentation updates:
 
-- update the relevant document version, revision date and status when required by `docs/05_PRAVIDLA_DOKUMENTACE.md`,
+- update the relevant document version, revision date, and status when required by `docs/05_PRAVIDLA_DOKUMENTACE.md`,
 - update `docs/CHANGELOG.md`,
 - update `docs/07_ROADMAPA.md` when milestone status changes,
 - update `docs/00_README.md` when the current project state or documentation index changes,
-- update `docs/06_ROZHODNUTI_A_OTEVRENE_OTAZKY.md` when a decision is made or an open question is resolved,
-- do not create or modify an ACP without explicit approval.
+- update `docs/06_ROZHODNUTI_A_OTEVRENE_OTAZKY.md` when a decision is made or an open question is resolved.
 
 Do not update documentation for trivial internal refactoring, formatting-only changes, or tests that do not change documented behavior or milestone status.
 
-If it is unclear whether documentation should be updated or created, stop and report the affected files and recommended action before editing.
-
 ## Git and branch safety
 
-Protect the repository history and the user's local work.
+Protect repository history and the user's local work.
 
 Before editing:
 
 - run `git branch --show-current` and `git status --short`,
-- confirm that the repository is Stemma and that the expected base branch is active,
-- stop if there are unrelated uncommitted changes, merge conflicts, an unfinished rebase, or an unexpected detached `HEAD`,
-- never discard, overwrite, stash, stage, or modify unrelated user changes without explicit approval.
+- confirm that the repository is Stemma,
+- for autonomous RC work, expect `agent/rc-0.1` unless an isolated task worktree was intentionally created from it,
+- stop if there are unrelated uncommitted user changes, merge conflicts, an unfinished rebase, or an unexpected detached `HEAD`,
+- never discard, overwrite, stash, stage, or modify unrelated user changes.
 
 Branch workflow:
 
-- The normal active integration branch for MVP work is `feature/mvp`.
-- Small, sequential, reviewed tasks may be implemented directly on `feature/mvp` when the task explicitly allows local edits there.
-- For larger, risky, experimental, or parallel tasks, create a dedicated task branch from the current `feature/mvp` state.
-- Name task branches `codex/<milestone>-<short-description>`, for example `codex/m1-partial-date-validation`.
-- Do not create a new branch for trivial formatting-only work or a tiny follow-up that belongs to the current uncommitted task.
-- Do not switch branches, create a branch, or create a worktree unless the task explicitly permits it or the current task is classified as larger, risky, experimental, or parallel. When uncertain, stop and ask.
-- If working in a Codex worktree, verify the selected base branch before editing. If `HEAD` is detached, create a named task branch before any commit.
+- `feature/mvp` is the preserved pre-agent integration baseline and must not be modified by autonomous RC work.
+- `backup/pre-agent-2026-08-17` is a recovery snapshot and must never be moved or used for development.
+- `agent/rc-0.1` is the active autonomous-development branch.
+- The lead agent may create temporary `codex/<milestone>-<short-description>` branches or isolated worktrees from `agent/rc-0.1` when genuinely useful for risky or parallel work, without asking for routine approval.
+- Subagents should be read-only by default; parallel write work must be isolated and non-overlapping.
 
-Commit and remote rules:
+Commit and remote rules for `agent/rc-0.1`:
 
-- Do not commit, amend, merge, rebase, push, force-push, open a pull request, or delete a branch unless the user explicitly requests that action for the current task.
-- Before a requested commit, run tests and checks, inspect `git diff --check`, `git status --short`, and the staged diff.
-- A commit must contain only one coherent change and must not include unrelated files, secrets, local settings, caches, generated artifacts, or database files.
+- The lead agent may stage explicit relevant files, create a coherent commit, and push to `origin/agent/rc-0.1` after the required checks pass.
+- Commit only one coherent accepted slice at a time.
+- Before committing, run the relevant tests and checks, inspect `git diff --check`, `git status --short`, and the final diff.
 - Never use `git add .` or `git add -A` when a narrower explicit file list is available.
-- Never use destructive commands such as `git reset --hard`, `git clean -fd`, checkout/restore that discards changes, or history rewriting without explicit approval.
-- Never force-push. Never rewrite commits already pushed to a shared branch.
-- Do not merge a task branch into `feature/mvp`; prepare the diff and report the recommended integration step unless explicitly instructed otherwise.
+- Do not amend or rewrite already pushed commits.
+- Never force-push.
+- Never merge or rebase `agent/rc-0.1` into `feature/mvp` or `main` without explicit user approval.
+- Never delete `feature/mvp`, `backup/pre-agent-2026-08-17`, `agent/rc-0.1`, or another user's branch without explicit approval.
+- Do not open or merge a pull request into `feature/mvp` or `main` without explicit user approval.
+- Never use destructive commands such as `git reset --hard`, `git clean -fd`, checkout/restore that discards user changes, or history rewriting without explicit approval.
 
-At the end of each task, report:
-
-- current branch,
-- changed and untracked files,
-- whether a task branch or worktree was used,
-- whether any commit, push, merge, rebase, or pull request was performed,
-- the exact recommended next Git command, if appropriate.
+After an autonomous slice is accepted and pushed, record enough information in the final run summary to identify the branch, commit, checks, and any residual risk. Routine successful slices do not require the user to approve the next slice.
 
 ## Required checks
 
@@ -172,13 +253,15 @@ For a single application, also run its focused tests first, for example:
 python manage.py test common
 ```
 
-For staged changes, check whitespace and the diff:
+Before accepting a coherent change, also check:
 
 ```text
 git diff --check
 git status --short
 git diff
 ```
+
+Run additional targeted tests, security checks, or browser/UI verification whenever the changed behavior requires them.
 
 ## Code style
 
@@ -189,8 +272,10 @@ git diff
 - Use Czech labels for user-facing text and stable English technical values for stored choice values unless current documentation specifies otherwise.
 - Preserve UTF-8 encoding and a single newline at end of file.
 
-## Current milestone
+## Current mission
 
-The active implementation branch is `feature/mvp`.
+The active autonomous-development branch is `agent/rc-0.1`.
 
-Milestones M0 and M1 are complete. Current work is milestone M2: the core domain model for Person, Place, Event and Relationship, implemented in small structural and data-migration steps.
+Milestones M0 and M1 are complete. The documented implementation is currently in M2. The agent must first verify the actual repository state, complete required dependencies in a sensible order, and progressively move Stemma toward a usable production candidate.
+
+Do not declare Stemma production-ready merely because roadmap items or tests are complete. A production-candidate acceptance definition must be documented and verified as a user-visible end-to-end state before that claim is made.
