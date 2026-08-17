@@ -12,13 +12,16 @@ from common.choices import (
     AccessLevel,
     DatePrecision,
     DateQualifier,
+    Gender,
     VerificationStatus,
 )
 
-from .models import Person, Relationship, RelationshipType
+from .models import Person, PersonCategory, Relationship, RelationshipType
 
 __all__ = (
+    "PersonInput",
     "RelationshipInput",
+    "create_person",
     "create_relationship",
     "update_relationship",
 )
@@ -31,6 +34,19 @@ _PARENT_RELATIONSHIP_TYPE_CODES = frozenset(
         "foster_parent",
     }
 )
+
+
+@dataclass(frozen=True, slots=True)
+class PersonInput:
+    """Úplný vstup základních editovatelných údajů osoby."""
+
+    category: PersonCategory | None = None
+    gender: str = Gender.UNKNOWN
+    first_name: str = ""
+    last_name: str = ""
+    notes: str = ""
+    access_level: str = AccessLevel.PUBLIC
+    verification_status: str = VerificationStatus.UNCONFIRMED
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,6 +81,74 @@ def _raise_service_error(key: str, message: str, code: str) -> NoReturn:
     raise ValidationError(
         {key: ValidationError(message, code=code)}
     )
+
+
+def _load_person_category(
+    category: PersonCategory | None,
+) -> PersonCategory | None:
+    if category is None:
+        return None
+    if category.pk is None:
+        _raise_service_error(
+            "category",
+            "Kategorie osoby musí být uložená v databázi.",
+            "person_category_unsaved",
+        )
+    try:
+        return PersonCategory.objects.get(pk=category.pk)
+    except PersonCategory.DoesNotExist:
+        _raise_service_error(
+            "category",
+            "Kategorie osoby musí být uložená v databázi.",
+            "person_category_unsaved",
+        )
+
+
+def _load_person_created_by(
+    created_by: AbstractBaseUser | None,
+) -> AbstractBaseUser | None:
+    if created_by is None:
+        return None
+    if created_by.pk is None:
+        _raise_service_error(
+            "created_by",
+            "Autor musí být uložený v databázi.",
+            "person_created_by_unsaved",
+        )
+    user_model = get_user_model()
+    try:
+        return user_model._default_manager.get(pk=created_by.pk)
+    except user_model.DoesNotExist:
+        _raise_service_error(
+            "created_by",
+            "Autor musí být uložený v databázi.",
+            "person_created_by_unsaved",
+        )
+
+
+def create_person(
+    *,
+    data: PersonInput,
+    created_by: AbstractBaseUser | None = None,
+) -> Person:
+    """Atomicky vytvoř osobu přes validační doménovou hranici."""
+
+    with transaction.atomic():
+        person = Person(
+            category=_load_person_category(data.category),
+            gender=data.gender,
+            first_name=data.first_name.strip(),
+            last_name=data.last_name.strip(),
+            notes=data.notes.strip(),
+            access_level=data.access_level,
+            verification_status=data.verification_status,
+            created_by=_load_person_created_by(created_by),
+        )
+        person.full_clean()
+        person.save()
+        return Person.objects.select_related("category", "created_by").get(
+            pk=person.pk
+        )
 
 
 def _load_relationship_type(

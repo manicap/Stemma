@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 0.40 – 17. 8. 2026
+
+- doplněn jednoznačný postup čistého lokálního spuštění pro Windows,
+  Linux a macOS od Pythonu 3.14 přes `venv`, instalaci, lokální tajný klíč,
+  migrace a vývojový server,
+- přidán bezpečný lokální příkaz `seed_demo_data` se třemi syntetickými
+  osobami pro veřejnou, přihlášenou a omezenou úroveň a režimem `--dry-run`;
+  při `DEBUG=False` příkaz selže bez zápisu,
+- příkaz existující ukázkové záznamy nepřepisuje, nic nemaže a nevytváří
+  účty, hesla ani jiná tajemství,
+- zápis ukázkových osob používá novou validační doménovou hranici
+  `PersonInput` + `create_person()` v transakci,
+- izolovaný Windows clean-snapshot smoke test ověřil nový venv, instalaci,
+  migrace, dry-run, opakovanou idempotenci, systémovou kontrolu a HTTP 200
+  skutečného vývojového serveru; POSIX kroky prošly statickou kontrolou,
+- aktualizovány dokumenty 00, 07 a 11; modely, migrace ani ACP se nemění.
+
 ## Verze 0.39 – 17. 8. 2026
 
 - přidány autorizované selectory `get_visible_people(*, actor)` a

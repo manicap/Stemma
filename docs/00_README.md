@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.10
+**Verze dokumentace:** 0.11
 **Stav:** pracovní návrh v implementaci; experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -39,6 +39,19 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.11
+
+Verze 0.11 doplňuje reprodukovatelné lokální spuštění RC 0.1:
+
+- čistý checkout má jednoznačný návod pro Python 3.14, `venv`, závislosti,
+  lokální tajný klíč, migrace a vývojový server,
+- bezpečný lokální `seed_demo_data` poskytuje syntetická data pro ověření
+  tří přístupových úrovní bez účtů, hesel nebo jiných tajemství,
+- příkaz podporuje náhled bez zápisu, nepřepisuje ani nemaže existující data
+  a mimo lokální režim `DEBUG=True` selže,
+- celý Windows postup prošel v izolovaném čistém snapshotu včetně instalace,
+  migrací, opakovaného seedu, systémové kontroly a HTTP 200 vývojového serveru.
 
 ## Stav verze 0.10
 
@@ -146,6 +159,59 @@ Django bylo zvoleno jako kompromis mezi rychlostí výsledné aplikace, rychlost
 Oficiální GitHub repozitář projektu:
 
 `https://github.com/manicap/Stemma`
+
+## Reprodukovatelné lokální spuštění
+
+Požadovaným základem je Python 3.14. Všechny příkazy se spouštějí v kořeni
+čistého checkoutu. Lokální databáze a tajný klíč se do Gitu neukládají.
+
+### Windows PowerShell
+
+```powershell
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item config\settings_local.example.py config\settings_local.py
+.\.venv\Scripts\python.exe -c "from secrets import token_urlsafe; print(token_urlsafe(50))"
+```
+
+Poslední příkaz vypíše náhodný lokální klíč. V novém
+`config/settings_local.py` jím nahraďte text
+`replace-with-a-random-secret-key` a pokračujte:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py seed_demo_data
+.\.venv\Scripts\python.exe manage.py runserver
+```
+
+### Linux a macOS
+
+```bash
+python3.14 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+cp config/settings_local.example.py config/settings_local.py
+python -c "from secrets import token_urlsafe; print(token_urlsafe(50))"
+```
+
+V `config/settings_local.py` nahraďte stejný zástupný text vypsaným klíčem
+a spusťte:
+
+```bash
+python manage.py migrate
+python manage.py seed_demo_data
+python manage.py runserver
+```
+
+Aplikace je poté dostupná na `http://127.0.0.1:8000/`.
+
+`seed_demo_data` vytváří tři jednoznačně označené syntetické osoby pro
+veřejnou, přihlášenou a omezenou úroveň. Příkaz funguje pouze s lokálním
+`DEBUG=True`; mimo tento režim selže bez zápisu. Opakované spuštění při
+zachování vložených markerů nevytváří duplicity, existující ukázkové záznamy
+nepřepisuje a nic nemaže. Plán lze bez zápisu zkontrolovat příkazem
+`python manage.py seed_demo_data --dry-run`. Demo uživatelské účty nejsou
+součástí tohoto kroku a příkaz neukládá žádná hesla ani tajemství.
 
 ## Aktuální fáze projektu
 

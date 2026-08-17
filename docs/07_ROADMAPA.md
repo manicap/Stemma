@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.8
+**Verze:** 0.9
 **Stav:** realizace MVP + experimentální RC 0.1
 **Datum revize:** 17. 8. 2026
 
@@ -189,6 +189,25 @@ Pokud následující funkce nejsou nutné jako závislost výše uvedeného prů
 Existující backendové funkce z těchto oblastí se nesmějí odstranit, obejít nebo účelově oslabit. Agent má používat a zachovávat již implementované části a regresní testy.
 
 ### Aktuální ověřený stav RC 0.1
+
+Oblast A má implementovaný reprodukovatelný lokální postup:
+
+- dokumentace vede čistý checkout od Python 3.14 přes izolovaný `venv`,
+  instalaci jediného deklarovaného balíčku, lokální tajný klíč a migrace až
+  ke spuštění serveru,
+- lokální konfigurace, databáze a launcher artefakty zůstávají mimo Git,
+- lokálně omezený `seed_demo_data` vytvoří syntetické osoby pro tři
+  přístupové úrovně, při zachování markerů je idempotentní, podporuje
+  `--dry-run`, nic nemaže ani nepřepisuje a neobsahuje demo hesla nebo jiná
+  tajemství; při `DEBUG=False` selže bez zápisu.
+- izolovaný Windows clean-snapshot smoke test prošel vytvořením nového
+  Python 3.14 `venv`, instalací z `requirements.txt`, všemi migracemi,
+  dry-runem, prvním i opakovaným seedem, `manage.py check` a HTTP 200 ze
+  skutečně spuštěného vývojového serveru; POSIX varianta byla zkontrolována
+  staticky proti stejným projektovým vstupům.
+
+Oblast A je tím pro RC 0.1 splněna. Její regresní brána zůstává součástí
+závěrečného ověření celého kandidáta.
 
 První vertikální řez B+C+G je rozpracován a zatím neuzavírá celé oblasti:
 
