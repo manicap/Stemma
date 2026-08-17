@@ -4,19 +4,58 @@ from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from common.choices import (
+    DatePrecision,
+    DateQualifier,
+    VerificationStatus,
+)
 from people.models import Person
+from places.models import Place
 
 from .models import (
     AllowedEventRole,
     Event,
     EventParticipant,
+    EventType,
     ParticipantRole,
 )
 
-__all__ = ("EventParticipantInput", "replace_event_participants")
+__all__ = (
+    "EventInput",
+    "EventParticipantInput",
+    "create_event",
+    "replace_event_participants",
+    "update_event",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class EventInput:
+    """Úplný snapshot editovatelných údajů události."""
+
+    event_type: EventType
+    place: Place | None = None
+    location_detail: str = ""
+    title: str = ""
+    description: str = ""
+    show_in_overview: bool | None = None
+    access_level: str | None = None
+    verification_status: str = VerificationStatus.UNCONFIRMED
+    date_precision: str = DatePrecision.UNKNOWN
+    date_qualifier: str = DateQualifier.NONE
+    start_year: int | None = None
+    start_month: int | None = None
+    start_day: int | None = None
+    end_year: int | None = None
+    end_month: int | None = None
+    end_day: int | None = None
+    original_date_text: str = ""
+    date_note: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +68,10 @@ class EventParticipantInput:
 
 
 _ErrorMap = dict[str, list[ValidationError]]
+_LIFE_EVENT_ROLE_CODES = {
+    "birth": "born_person",
+    "death": "deceased_person",
+}
 
 
 def _available_params(**values: object) -> dict[str, object]:
@@ -66,6 +109,116 @@ def _raise_event_unsaved() -> None:
             ]
         }
     )
+
+
+def _raise_service_error(key: str, message: str, code: str) -> None:
+    raise ValidationError({key: ValidationError(message, code=code)})
+
+
+def _load_event_type(event_type: EventType) -> EventType:
+    if event_type.pk is None:
+        _raise_service_error(
+            "event_type",
+            "Typ události musí být uložený v databázi.",
+            "event_type_unsaved",
+        )
+    try:
+        return EventType.objects.select_for_update().get(pk=event_type.pk)
+    except EventType.DoesNotExist:
+        _raise_service_error(
+            "event_type",
+            "Typ události musí být uložený v databázi.",
+            "event_type_unsaved",
+        )
+
+
+def _load_place(place: Place | None) -> Place | None:
+    if place is None:
+        return None
+    if place.pk is None:
+        _raise_service_error(
+            "place",
+            "Místo musí být uložené v databázi.",
+            "event_place_unsaved",
+        )
+    try:
+        return Place.objects.select_for_update().get(pk=place.pk)
+    except Place.DoesNotExist:
+        _raise_service_error(
+            "place",
+            "Místo musí být uložené v databázi.",
+            "event_place_unsaved",
+        )
+
+
+def _load_created_by(
+    created_by: AbstractBaseUser | None,
+) -> AbstractBaseUser | None:
+    if created_by is None:
+        return None
+    if created_by.pk is None:
+        _raise_service_error(
+            "created_by",
+            "Autor musí být uložený v databázi.",
+            "event_created_by_unsaved",
+        )
+    try:
+        return get_user_model()._default_manager.select_for_update().get(
+            pk=created_by.pk
+        )
+    except get_user_model().DoesNotExist:
+        _raise_service_error(
+            "created_by",
+            "Autor musí být uložený v databázi.",
+            "event_created_by_unsaved",
+        )
+
+
+def _apply_event_input(
+    event: Event,
+    *,
+    data: EventInput,
+    event_type: EventType,
+    place: Place | None,
+    creating: bool,
+) -> None:
+    access_level = data.access_level
+    if access_level is None:
+        access_level = (
+            event_type.default_access_level if creating else event.access_level
+        )
+    show_in_overview = data.show_in_overview
+    if show_in_overview is None:
+        show_in_overview = (
+            event_type.default_show_in_overview
+            if creating
+            else event.show_in_overview
+        )
+
+    event.event_type = event_type
+    event.place = place
+    event.location_detail = data.location_detail.strip()
+    event.title = data.title.strip()
+    event.description = data.description.strip()
+    event.show_in_overview = show_in_overview
+    event.access_level = access_level
+    event.verification_status = data.verification_status
+    event.date_precision = data.date_precision
+    event.date_qualifier = data.date_qualifier
+    event.start_year = data.start_year
+    event.start_month = data.start_month
+    event.start_day = data.start_day
+    event.end_year = data.end_year
+    event.end_month = data.end_month
+    event.end_day = data.end_day
+    event.original_date_text = data.original_date_text.strip()
+    event.date_note = data.date_note.strip()
+
+
+def _reload_event(event_id: int) -> Event:
+    return Event.objects.select_related(
+        "event_type", "place", "created_by"
+    ).get(pk=event_id)
 
 
 def _validate_participant_inputs(
@@ -212,6 +365,64 @@ def _validate_participant_inputs(
         raise ValidationError(errors)
 
 
+def _validate_unique_life_event_participation(
+    *,
+    event: Event,
+    inputs: list[EventParticipantInput],
+    roles_by_id: dict[int, ParticipantRole],
+) -> None:
+    """Zabraň druhému aktivnímu narození nebo úmrtí stejné osoby."""
+
+    if event.deleted_at is not None:
+        return
+
+    expected_role_code = _LIFE_EVENT_ROLE_CODES.get(event.event_type.code)
+    if expected_role_code is None:
+        return
+
+    relevant_inputs = [
+        (index, item)
+        for index, item in enumerate(inputs)
+        if item.role.pk in roles_by_id
+        and roles_by_id[item.role.pk].code == expected_role_code
+        and item.person.pk is not None
+    ]
+    if not relevant_inputs:
+        return
+
+    person_ids = sorted({item.person.pk for _, item in relevant_inputs})
+    conflicts = {
+        participant.person_id: participant.event_id
+        for participant in EventParticipant.objects.select_for_update()
+        .filter(
+            person_id__in=person_ids,
+            role__code=expected_role_code,
+            event__event_type__code=event.event_type.code,
+            event__deleted_at__isnull=True,
+        )
+        .exclude(event_id=event.pk)
+        .order_by("person_id", "event_id")
+    }
+    errors: _ErrorMap = {}
+    for index, item in relevant_inputs:
+        conflicting_event_id = conflicts.get(item.person.pk)
+        if conflicting_event_id is None:
+            continue
+        _add_error(
+            errors,
+            "participants",
+            "Osoba už má jinou aktivní událost tohoto životního typu.",
+            "duplicate_person_life_event",
+            index=index,
+            person_id=item.person.pk,
+            event_type_code=event.event_type.code,
+            conflicting_event_id=conflicting_event_id,
+        )
+
+    if errors:
+        raise ValidationError(errors)
+
+
 def replace_event_participants(
     *,
     event: Event,
@@ -234,6 +445,12 @@ def replace_event_participants(
             )
         except Event.DoesNotExist:
             _raise_event_unsaved()
+        if locked_event.deleted_at is not None:
+            _raise_service_error(
+                "event",
+                "Měkce odstraněné události nelze měnit účastníky.",
+                "event_deleted",
+            )
 
         existing_participants = list(
             EventParticipant.objects.select_for_update()
@@ -292,6 +509,11 @@ def replace_event_participants(
             rules=rules,
             require_complete=require_complete,
         )
+        _validate_unique_life_event_participation(
+            event=locked_event,
+            inputs=inputs,
+            roles_by_id=roles_by_id,
+        )
 
         desired_by_key = {
             (item.person.pk, item.role.pk): item for item in inputs
@@ -325,3 +547,98 @@ def replace_event_participants(
             EventParticipant.objects.filter(event=locked_event)
             .select_related("event", "person", "role")
         )
+
+
+@transaction.atomic
+def create_event(
+    *,
+    data: EventInput,
+    participants: Iterable[EventParticipantInput] = (),
+    created_by: AbstractBaseUser | None = None,
+    require_complete: bool = False,
+) -> Event:
+    """Atomicky vytvoř událost včetně úplné sady účastníků."""
+
+    participant_inputs = list(participants)
+    event_type = _load_event_type(data.event_type)
+    if not event_type.is_active:
+        _raise_service_error(
+            "event_type",
+            "Typ události není aktivní.",
+            "event_type_inactive",
+        )
+    place = _load_place(data.place)
+    author = _load_created_by(created_by)
+
+    event = Event(created_by=author)
+    _apply_event_input(
+        event,
+        data=data,
+        event_type=event_type,
+        place=place,
+        creating=True,
+    )
+    event.full_clean()
+    event.save()
+    replace_event_participants(
+        event=event,
+        participants=participant_inputs,
+        require_complete=require_complete,
+    )
+    return _reload_event(event.pk)
+
+
+@transaction.atomic
+def update_event(
+    *,
+    event: Event,
+    data: EventInput,
+    participants: Iterable[EventParticipantInput],
+    require_complete: bool = False,
+) -> Event:
+    """Atomicky nahraď údaje události i její úplnou sadu účastníků."""
+
+    if event.pk is None:
+        _raise_event_unsaved()
+    participant_inputs = list(participants)
+    try:
+        locked_event = (
+            Event.objects.select_for_update()
+            .select_related("event_type")
+            .get(pk=event.pk)
+        )
+    except Event.DoesNotExist:
+        _raise_event_unsaved()
+    if locked_event.deleted_at is not None:
+        _raise_service_error(
+            "event",
+            "Měkce odstraněnou událost nelze upravit.",
+            "event_deleted",
+        )
+
+    event_type = _load_event_type(data.event_type)
+    if (
+        not event_type.is_active
+        and event_type.pk != locked_event.event_type_id
+    ):
+        _raise_service_error(
+            "event_type",
+            "Typ události není aktivní.",
+            "event_type_inactive",
+        )
+    place = _load_place(data.place)
+    _apply_event_input(
+        locked_event,
+        data=data,
+        event_type=event_type,
+        place=place,
+        creating=False,
+    )
+    locked_event.full_clean()
+    locked_event.save()
+    replace_event_participants(
+        event=locked_event,
+        participants=participant_inputs,
+        require_complete=require_complete,
+    )
+    return _reload_event(locked_event.pk)

@@ -1665,7 +1665,7 @@ class EventAdminTests(SimpleTestCase):
     """Ověření jednoduché registrace události v Django Adminu."""
 
     def test_event_is_registered_in_admin(self) -> None:
-        self.assertTrue(admin.site.is_registered(Event))
+        self.assertFalse(admin.site.is_registered(Event))
 
 
 class EventParticipantModelTests(SimpleTestCase):
@@ -2071,4 +2071,4 @@ class EventParticipantAdminTests(SimpleTestCase):
     """Ověření jednoduché registrace účastníka v Django Adminu."""
 
     def test_event_participant_is_registered_in_admin(self) -> None:
-        self.assertTrue(admin.site.is_registered(EventParticipant))
+        self.assertFalse(admin.site.is_registered(EventParticipant))

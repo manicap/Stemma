@@ -321,17 +321,18 @@ class EventParticipantServiceTests(TestCase):
 
         self.assertEqual(len(result), 2)
 
-    def test_does_not_reject_event_lifecycle_state(self) -> None:
+    def test_rejects_soft_deleted_event(self) -> None:
         Event.objects.filter(pk=self.event.pk).update(
             deleted_at=timezone.now()
         )
 
-        result = replace_event_participants(
-            event=self.event,
-            participants=[self.participant_input(self.people[0])],
-        )
+        with self.assertRaises(ValidationError) as context:
+            replace_event_participants(
+                event=self.event,
+                participants=[self.participant_input(self.people[0])],
+            )
 
-        self.assertEqual(len(result), 1)
+        self.assert_error(context, key="event", code="event_deleted")
 
     def test_rejects_unsaved_event(self) -> None:
         with self.assertRaises(ValidationError) as context:

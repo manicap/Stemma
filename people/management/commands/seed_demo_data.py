@@ -10,7 +10,8 @@ from common.choices import (
     Gender,
     VerificationStatus,
 )
-from events.models import Event, EventParticipant, EventType, ParticipantRole
+from events.models import Event, EventType, ParticipantRole
+from events.services import EventInput, EventParticipantInput, create_event
 from people.models import Person
 from people.services import PersonInput, create_person
 
@@ -183,25 +184,31 @@ class Command(BaseCommand):
                 if dry_run:
                     created_event_count += 1
                     continue
-                event = Event(
-                    event_type=event_types[demo_event.event_type_code],
-                    title=demo_event.marker,
-                    date_precision=DatePrecision.EXACT,
-                    start_year=demo_event.year,
-                    start_month=demo_event.month,
-                    start_day=demo_event.day,
-                    access_level=AccessLevel.PUBLIC,
-                    verification_status=VerificationStatus.UNCONFIRMED,
+                create_event(
+                    data=EventInput(
+                        event_type=event_types[
+                            demo_event.event_type_code
+                        ],
+                        title=demo_event.marker,
+                        date_precision=DatePrecision.EXACT,
+                        start_year=demo_event.year,
+                        start_month=demo_event.month,
+                        start_day=demo_event.day,
+                        access_level=AccessLevel.PUBLIC,
+                        verification_status=(
+                            VerificationStatus.UNCONFIRMED
+                        ),
+                    ),
+                    participants=(
+                        EventParticipantInput(
+                            person=people_by_marker[
+                                demo_event.person_marker
+                            ],
+                            role=roles[demo_event.role_code],
+                        ),
+                    ),
+                    require_complete=True,
                 )
-                event.full_clean()
-                event.save()
-                participant = EventParticipant(
-                    event=event,
-                    person=people_by_marker[demo_event.person_marker],
-                    role=roles[demo_event.role_code],
-                )
-                participant.full_clean()
-                participant.save()
                 created_event_count += 1
 
             if dry_run:

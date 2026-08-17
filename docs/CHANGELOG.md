@@ -1,5 +1,21 @@
 # Historie změn dokumentace
 
+## Verze 0.47 – 17. 8. 2026
+
+- doplněna atomická servisní hranice pro vytvoření a aktualizaci události
+  společně s úplnou sadou účastníků,
+- nové události snapshotují neuvedený přístup a zobrazení z aktuálního typu;
+  aktualizace uložené hodnoty bez výslovného požadavku nepřepisuje,
+- vynucena schválená nejvýše jedna neodstraněná událost narození a úmrtí na
+  osobu, přičemž archivovaná historická událost zůstává platná,
+- demonstrační seed zapisuje životní události výhradně přes novou servisní
+  hranici; modely ani migrace se nemění,
+- `Event` a `EventParticipant` byly odregistrovány z Django adminu, aby přímý
+  aplikační zápis neobcházel servisní pravidla; měkce odstraněnou událost ani
+  její účastníky služby neupravují,
+- doplněny regresní testy snapshotů, atomického rollbacku, životní
+  jedinečnosti a lifecycle okrajů.
+
 ## Verze 0.46 – 17. 8. 2026
 
 - schválen ACP-008 pro globální aplikační shell, kořenový Přehled a samostatnou

@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.29
+**Verze:** 0.30
 **Stav:** koncept  
-**Datum revize:** 23. 7. 2026
+**Datum revize:** 17. 8. 2026
 
 ## 1. Základní pilíře
 
@@ -109,7 +109,7 @@ podporuje. Typ bez povoleného místa zakazuje strukturované místo i
 neprázdný lokalizační detail.
 
 Výchozí přístup a zobrazení v přehledu jsou snapshotové návrhy typu pro
-novou událost. Budoucí doménová služba je při založení zkopíruje, pokud
+novou událost. Doménová služba je při založení zkopíruje, pokud
 uživatel nezadá vlastní hodnotu. Pozdější změna typu nebo jeho defaultů
 existující událost nepřepisuje.
 
@@ -138,9 +138,17 @@ může mít více osob. Trojice událost, osoba a role je jedinečná; rozdíln�
 poznámka nepovoluje duplicitní účast.
 
 Databázový constraint hlídá pouze přesnou duplicitu. Povolenost a aktivita
-role, minimální a maximální počty a úplnost celé události budou ověřovány
-budoucí transakční doménovou službou. Změna konfigurace nemá zpětně
+role, minimální a maximální počty a úplnost celé události ověřuje
+transakční doménová služba. Stejná hranice atomicky vytváří nebo aktualizuje
+událost spolu s celou sadou účastníků. U rolí `born_person` v události
+`birth` a `deceased_person` v události `death` současně odmítá druhou
+neodstraněnou životní událost stejné osoby; archivace historickou skutečnost
+neruší, měkké odstranění ano. Změna konfigurace nemá zpětně
 zneplatňovat uložené historické účasti.
+
+Měkce odstraněnou událost ani její účastníky nelze přes zápisové služby
+měnit. Oba business modely jsou do vytvoření servisně napojeného rozhraní
+odregistrovány z Django adminu, aby aplikační vrstva nemohla pravidla obejít.
 
 Role osoby je spravovatelný číselník. Systémové role jsou hlavní osoba,
 narozená osoba, křtěná osoba, zemřelá osoba, manželský partner, rodič,

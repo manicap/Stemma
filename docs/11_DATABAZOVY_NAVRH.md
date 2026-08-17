@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.37
+**Verze:** 0.38
 **Stav:** schválený technický návrh v implementaci
 **Datum revize:** 17. 8. 2026
 
@@ -392,11 +392,10 @@ validace a odvození technických mezí zůstávají v `PartialDateModel`.
 
 Hodnoty `EventType.default_access_level` a
 `EventType.default_show_in_overview` jsou návrhy pro novou událost.
-Budoucí doménová služba je při založení zkopíruje pouze tehdy, pokud
-uživatel neuvede vlastní hodnotu. Změna typu ani jeho defaultů existující
-události zpětně nemění. M2.4c snapshotovou službu neimplementuje;
-`access_level` proto používá modelový default `AccessLevel.PUBLIC` a
-`show_in_overview` modelový default `False`.
+Doménová služba je při založení zkopíruje pouze tehdy, pokud volající
+neuvede vlastní hodnotu. Změna typu ani jeho defaultů existující události
+zpětně nemění; při aktualizaci se uložený snapshot zachová, není-li výslovně
+nahrazen.
 
 Metadata modelu jsou `verbose_name = "Událost"`,
 `verbose_name_plural = "Události"` a
@@ -457,12 +456,24 @@ Textová reprezentace vrací `"{person} – {role} – {event}"`. Pro
 nedostupnou vazbu používá bezpečné texty `"Neznámá osoba"`,
 `"Neznámá role"` a `"Událost"`.
 
-Model dynamicky nekontroluje aktuální `AllowedEventRole`. Budoucí
-transakční doménová služba při vytvoření nebo změně účasti ověří aktivní
+Model dynamicky nekontroluje aktuální `AllowedEventRole`. Transakční
+doménová služba při vytvoření nebo změně účasti ověří aktivní
 konfiguraci, aktivitu role a počty účastníků. Změna konfigurace sama
 nezneplatňuje již uložené historické účasti.
 
-### 8.5 Doménová služba účastníků
+### 8.5 Doménové služby události a účastníků
+
+`EventInput`, `create_event()` a `update_event()` tvoří zápisovou hranici
+celého agregátu. Vstup je frozen slotted command DTO editovatelných polí;
+`None` u výchozího přístupu a zobrazení znamená při create převzetí defaultu
+typu a při update zachování uloženého snapshotu.
+Create načte čerstvý aktivní typ, volitelné místo a autora, zkopíruje
+neuvedené výchozí hodnoty typu, zavolá `full_clean()` a v jedné transakci
+uloží událost i úplnou sadu účastníků. Update zamkne a znovu načte aktuální
+událost, autora ani lifecycle metadata nemění, dovoluje zachovat její
+stávající neaktivní typ a atomicky nahradí pole i účastníky. Archivovaný
+záznam lze opravit, měkce odstraněný nikoli. Chyba kterékoliv části vrátí
+celý agregát do původního stavu.
 
 Změnu účastníků jedné události zajišťuje služba v `events/services.py`:
 
@@ -512,8 +523,17 @@ Validační chyby používají `django.core.exceptions.ValidationError`, klíče
 `participant_person_unsaved`, `participant_role_unsaved`,
 `participant_role_inactive`, `role_not_allowed_for_event_type`,
 `duplicate_event_person_role`, `participant_count_above_maximum` a
-`participant_count_below_minimum`. Dostupný kontext je předáván v
-`params`. Implementace M2.4e nemění modely a nevytváří migraci.
+`participant_count_below_minimum`. Pro přesnou dvojici `birth` /
+`born_person` a `death` / `deceased_person` služba navíc pod zámkem osoby
+odmítá jinou účast stejné osoby v neodstraněné události kódem
+`duplicate_person_life_event`. Archivovaná událost se nadále počítá jako
+platná historická skutečnost, měkce odstraněná nikoli; jiný typ, například
+`funeral`, se nezapočítává. Dostupný kontext je předáván v `params`.
+Implementace nemění modely a nevytváří migraci.
+
+`Event` a `EventParticipant` nejsou do vzniku servisně napojeného rozhraní
+registrovány v Django adminu. Přímý admin zápis by obcházel atomickou hranici,
+aktuální konfiguraci rolí, lifecycle zákaz i životní jedinečnost.
 
 ## 9. Vazby mezi osobami
 
