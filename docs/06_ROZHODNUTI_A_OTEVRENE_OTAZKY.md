@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.42
+**Verze:** 0.43
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 17. 8. 2026
+**Datum revize:** 30. 8. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -98,6 +98,7 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 149. `Place`, `Residence`, `GraveSite` a `PersonGraveSite` nejsou do vzniku servisně a autorizačně napojeného rozhraní registrovány v Django adminu. Výchozí `ModelAdmin` obcházel existující doménové služby a actor-aware selectory bydlišť a hrobových míst; obecný `Place` takovou úplnou schválenou hranici zatím nemá. Bezpečnou náhradou proto není neomezený read-only seznam. Číselníky `PlaceType`, `ResidenceType`, `GraveSiteType` a `PersonGraveSiteRole` zůstávají spravovatelné v adminu a podléhají Django formulářové a modelové validaci. Jde o fail-closed uzavření aplikačních cest, nikoli změnu modelu, permission policy nebo nové ACP.
 150. `create_relationship()` i `update_relationship()` používají jednotný lock protokol: prvním doménovým zámkem je společný coarse-grained relationship mutation mutex nad prvním schváleným rodičovským typem s `is_system=True`, poté update zamkne cílový vztah a obě cesty načtou osoby jedním dotazem s rostoucím pořadím PK. Chybějící systémový sentinel selže uzavřeně kódem `relationship_configuration_invalid`. Protokol omezuje deadlocky z rozdílného pořadí zámků na databázích se skutečnými řádkovými zámky. Na SQLite je `select_for_update()` no-op, takže testy dokazují pořadí dotazů, nikoli skutečnou serializaci; známé phantom omezení rodičovského grafu zůstává. Existující validační kódy, orientace směrových vztahů a normalizace symetrických vztahů se jinak nemění; nevzniká migrace ani nové ACP.
 151. Systémové číselníkové a konfigurační řádky mají v Django adminu chráněnou technickou identitu a nelze je fyzicky odstranit. Společný guard zamyká `code`; u systémového `AllowedEventRole` zamyká dvojici typu události a role účastníka. U systémového `RelationshipType` jsou vedle kódu neměnné také `category`, `is_symmetric`, `supports_date_range` a `is_derivable`, protože přímo určují orientaci, normalizaci a validaci vazeb. Ochrana se znovu vynucuje při uložení a při přímém i hromadném odstranění, takže podstrčený POST ani bulk action pravidlo neobejdou. Názvy, popisy, pořadí a aktivita zůstávají spravovatelné. Snapshotové defaulty `EventType` podle rozhodnutí 117, jeho validační konfigurace `supports_date_range` a `allows_place` a konfigurační počty `AllowedEventRole` jsou nadále měnitelným systémovým nastavením; uživatelské řádky lze měnit i odstranit. Jde o vynucení existující neměnnosti významu systémových hodnot, nikoli o novou permission policy, modelovou změnu, migraci nebo ACP.
+152. `DeathDetail` je 1:1 specializovaný potomek výhradně systémové události typu `death`. Obsahuje volitelné texty příčiny a okolností, z nichž alespoň jeden musí být neprázdný, a nemá vlastní access, lifecycle, verification ani author metadata; viditelnost a lifecycle vždy beze zbytku dědí z rodičovského `Event`. Vytvoření, změna a samostatné explicitní odstranění procházejí transakčními službami, které zamykají rodičovskou událost; změna události s detailem na jiný typ se odmítá a detail se při změně typu nikdy automaticky nemaže. Při fyzickém odstranění rodičovského `Event` detail zaniká přes `CASCADE` jako součást zděděného lifecycle. Oprávnění musí případné budoucí aplikační rozhraní ověřit nad rodičovskou událostí, v této etapě nevzniká UI, API ani admin. Toto uživatelsky schválené zpřesnění naplňuje existující databázový návrh a nevyžaduje nové ACP.
 
 ## 2. Otevřené otázky
 

@@ -213,6 +213,59 @@ class Event(
             return "Událost"
 
 
+class DeathDetail(models.Model):
+    """Příčina a okolnosti úmrtí dědící policy nadřazené události."""
+
+    event = models.OneToOneField(
+        Event,
+        on_delete=models.CASCADE,
+        related_name="death_detail",
+    )
+    cause = models.TextField(blank=True)
+    circumstances = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Detail úmrtí"
+        verbose_name_plural = "Detaily úmrtí"
+
+    def clean(self) -> None:
+        super().clean()
+        errors: dict[str, ValidationError] = {}
+
+        if not (self.cause or "").strip() and not (
+            self.circumstances or ""
+        ).strip():
+            errors[NON_FIELD_ERRORS] = ValidationError(
+                "Vyplňte příčinu nebo okolnosti úmrtí.",
+                code="death_detail_empty",
+            )
+
+        event_type_identity = None
+        if self.event_id is not None:
+            event_type_identity = (
+                Event.objects.filter(pk=self.event_id)
+                .values_list(
+                    "event_type__code",
+                    "event_type__is_system",
+                )
+                .first()
+            )
+        if event_type_identity is not None and event_type_identity != (
+            "death",
+            True,
+        ):
+            errors["event"] = ValidationError(
+                "Detail úmrtí lze připojit pouze k systémové události úmrtí.",
+                code="death_detail_event_type_required",
+            )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self) -> str:
+        return f"Detail úmrtí – {self.event}"
+
+
 class EventParticipant(models.Model):
     """Účast konkrétní osoby v události v určité roli."""
 

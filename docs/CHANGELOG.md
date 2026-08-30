@@ -1,5 +1,20 @@
 # Historie změn dokumentace
 
+## Verze 0.52 – 30. 8. 2026
+
+- implementován 1:1 `events.DeathDetail` pro volitelné texty příčiny a
+  okolností systémové události úmrtí; alespoň jeden text je povinný,
+- detail beze zbytku dědí access, lifecycle, verification a autorství z
+  rodičovské události a nemá vlastní produktové, API ani admin rozhraní,
+- přidány transakční služby vytvoření, změny a explicitního odstranění s
+  jednotným pořadím zámků, stabilním mapováním databází potvrzené duplicitní
+  1:1 kolize a ochranou proti změně rodičovské události na jiný typ; SQLite
+  skutečnou řádkovou serializaci neposkytuje,
+- přidána strukturální migrace `events.0008_deathdetail` a cílené modelové,
+  servisní, migrační a registrační regresní testy,
+- uživatelsky schválený kontrakt je zaznamenán jako rozhodnutí 152; nové ACP
+  není potřeba.
+
 ## Verze 0.51 – 17. 8. 2026
 
 - všechny runtime adminy uživatelsky spravovatelných číselníků používají

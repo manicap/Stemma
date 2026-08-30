@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.33
+**Verze:** 0.34
 **Stav:** koncept  
-**Datum revize:** 17. 8. 2026
+**Datum revize:** 30. 8. 2026
 
 ## 1. Základní pilíře
 
@@ -127,8 +127,15 @@ Pravidla:
 - sňatek je jedna společná událost propojená s více osobami,
 - neznámé datum se nenahrazuje vymyšleným přesným datem.
 
-Příčina a okolnosti úmrtí patří do samostatného specializovaného detailu
-`DeathDetail` ve vztahu jedna ku jedné k události úmrtí.
+Příčina a okolnosti úmrtí patří do samostatného specializovaného modelu
+`DeathDetail` ve vztahu jedna ku jedné k systémové události úmrtí. Model
+obsahuje pouze vazbu `event` a volitelné texty `cause` a `circumstances`, z
+nichž alespoň jeden musí být neprázdný. Nedědí přístupová, lifecycle,
+ověřovací ani autorská metadata, protože je beze zbytku přebírá z rodičovské
+události. Zápis a explicitní odstranění procházejí transakční servisní
+hranicí; existující detail blokuje změnu rodiče na jiný typ události.
+Samostatné odstranění detailu je explicitní; při fyzickém odstranění rodiče
+zaniká detail přes `CASCADE` jako součást jeho zděděného lifecycle.
 
 ## 4. Účast osoby na události
 

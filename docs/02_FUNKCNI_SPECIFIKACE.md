@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.30
+**Verze:** 0.31
 **Stav:** pracovní návrh  
-**Datum revize:** 17. 8. 2026
+**Datum revize:** 30. 8. 2026
 
 ## 1. Globální aplikační shell a Přehled
 
@@ -183,7 +183,13 @@ Událost může obsahovat:
 - přístupovou úroveň.
 
 Příčina a okolnosti úmrtí se ukládají ve specializovaném detailu
-`DeathDetail` propojeném s událostí úmrtí.
+`DeathDetail` propojeném jedna ku jedné výhradně se systémovou událostí
+úmrtí. Alespoň jeden z obou textů musí být vyplněn. Detail nemá vlastní
+přístupová, lifecycle, ověřovací ani autorská metadata; veškerou viditelnost
+a životní cyklus beze zbytku dědí z nadřazené události. V této etapě nemá
+produktové ani admin rozhraní a mění se pouze explicitními transakčními
+službami. Událost s detailem nelze převést na jiný typ a detail se nikdy
+automaticky neodstraňuje při změně typu.
 
 ## 8. Vazby mezi osobami
 

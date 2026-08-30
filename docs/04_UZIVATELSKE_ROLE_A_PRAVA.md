@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.12
+**Verze:** 0.13
 **Stav:** pracovní návrh  
-**Datum revize:** 17. 8. 2026
+**Datum revize:** 30. 8. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -266,6 +266,15 @@ lišit. Věk se zobrazí pouze tehdy, když jej lze z viditelného narození a
 případného viditelného úmrtí určit jednoznačně i při neúplném datu.
 Nejednoznačné duplicitní zdroje se nesmějí vyřešit náhodným výběrem jednoho
 záznamu.
+
+## 5.9 Detail úmrtí dědí policy události
+
+`DeathDetail` nemá samostatnou access ani lifecycle policy. Konkrétnímu
+actorovi smí být zpřístupněn pouze tehdy a ve stejném rozsahu jako jeho
+nadřazená událost úmrtí; samotná existence detailu nesmí prozradit skrytou
+událost. Doménové služby záměrně neřeší HTTP oprávnění, proto je budoucí
+aplikační rozhraní smí zavolat až po serverové autorizaci rodičovské události.
+V aktuální etapě není detail vystaven v produktovém UI, API ani Django adminu.
 
 ## 6. Zamčený obsah
 

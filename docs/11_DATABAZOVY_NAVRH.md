@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.42
+**Verze:** 0.43
 **Stav:** schválený technický návrh v implementaci
-**Datum revize:** 17. 8. 2026
+**Datum revize:** 30. 8. 2026
 
 ## 1. Účel
 
@@ -436,7 +436,29 @@ dostupného typu text `"Událost"`.
 spojovací model. Přílohy a zdroje budou používat samostatné
 explicitní spojovací modely.
 
-Příčina a okolnosti úmrtí se ukládají v samostatném modelu `DeathDetail` ve vztahu jedna ku jedné k události úmrtí.
+Příčina a okolnosti úmrtí se ukládají v samostatném modelu `DeathDetail`,
+který dědí pouze z `models.Model`. Obsahuje `event` jako povinný
+`OneToOneField` na `Event` s `on_delete=CASCADE` a
+`related_name="death_detail"` a volitelné texty `cause` a `circumstances`.
+Alespoň jeden text musí být po oříznutí neprázdný a rodičem smí být pouze
+systémový typ `death`.
+
+Detail nemá vlastní access, lifecycle, verification ani author metadata;
+všechny tyto významy a případná aplikační autorizace se odvozují výhradně z
+rodičovské události. Veřejnou zápisovou hranici tvoří keyword-only
+`create_death_detail()`, `update_death_detail()` a `delete_death_detail()`
+nad frozen slotted `DeathDetailInput`. Služby používají `transaction.atomic()`,
+zamykají nejprve rodičovský `Event` a pak detail, dovolují archivovanou, ale
+nikoli měkce odstraněnou událost a mapují souběžnou 1:1 kolizi na stabilní
+`death_detail_exists`, pokud databáze potvrdí duplicitní řádek. Zámek rodiče
+serializuje zápisy na databázích s účinnými řádkovými zámky; SQLite má
+`select_for_update()` jako no-op, takže testy dokazují pořadí zámků a mapování
+kolize, nikoli skutečnou souběžnou serializaci. `update_event()` odmítne změnu
+události s detailem na jiný než systémový typ `death`; při změně typu se detail
+nikdy automaticky neodstraňuje. Samostatné odstranění je pouze explicitní
+službou a zachovává rodičovský `Event`. Při fyzickém odstranění rodiče detail
+zaniká přes `CASCADE` jako součást zděděného lifecycle.
+`DeathDetail` není v této etapě registrován v adminu ani vystaven v UI či API.
 
 Jedna osoba smí mít nejvýše jednu aktivní účast jako narozená osoba a jednu jako zemřelá osoba.
 
@@ -2139,6 +2161,7 @@ events.0004_initial_participant_roles
 events.0005_initial_allowed_event_roles
 events.0006_event
 events.0007_event_participant
+events.0008_deathdetail
 people.0006_relationship_type
 people.0007_initial_relationship_types
 people.0008_relationship

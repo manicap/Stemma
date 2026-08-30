@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 
 from common.choices import (
     DatePrecision,
@@ -19,6 +19,7 @@ from places.models import Place
 
 from .models import (
     AllowedEventRole,
+    DeathDetail,
     Event,
     EventParticipant,
     EventType,
@@ -26,12 +27,24 @@ from .models import (
 )
 
 __all__ = (
+    "DeathDetailInput",
     "EventInput",
     "EventParticipantInput",
+    "create_death_detail",
     "create_event",
+    "delete_death_detail",
     "replace_event_participants",
+    "update_death_detail",
     "update_event",
 )
+
+
+@dataclass(frozen=True, slots=True)
+class DeathDetailInput:
+    """Úplný snapshot textového detailu úmrtí."""
+
+    cause: str = ""
+    circumstances: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,6 +232,169 @@ def _reload_event(event_id: int) -> Event:
     return Event.objects.select_related(
         "event_type", "place", "created_by"
     ).get(pk=event_id)
+
+
+def _is_system_death_type(event_type: EventType) -> bool:
+    return event_type.code == "death" and event_type.is_system
+
+
+def _raise_death_detail_unsaved() -> None:
+    _raise_service_error(
+        "death_detail",
+        "Detail úmrtí musí být uložený v databázi.",
+        "death_detail_unsaved",
+    )
+
+
+def _validate_death_detail_event(
+    event: Event,
+    *,
+    require_death_type: bool = True,
+) -> None:
+    if event.deleted_at is not None:
+        _raise_service_error(
+            "event",
+            "Detail měkce odstraněné události nelze měnit.",
+            "death_detail_event_deleted",
+        )
+    if require_death_type and not _is_system_death_type(event.event_type):
+        _raise_service_error(
+            "event",
+            "Detail úmrtí lze připojit pouze k systémové události úmrtí.",
+            "death_detail_event_type_required",
+        )
+
+
+def _lock_death_event(event: Event) -> Event:
+    if event.pk is None:
+        _raise_service_error(
+            "event",
+            "Událost musí být uložená v databázi.",
+            "death_detail_event_unsaved",
+        )
+    try:
+        locked_event = (
+            Event.objects.select_for_update()
+            .select_related("event_type")
+            .get(pk=event.pk)
+        )
+    except Event.DoesNotExist:
+        _raise_service_error(
+            "event",
+            "Událost musí být uložená v databázi.",
+            "death_detail_event_unsaved",
+        )
+    _validate_death_detail_event(locked_event)
+    return locked_event
+
+
+def _lock_death_detail(
+    detail: DeathDetail,
+    *,
+    require_death_type: bool = True,
+) -> DeathDetail:
+    if detail.pk is None:
+        _raise_death_detail_unsaved()
+    event_id = (
+        DeathDetail.objects.filter(pk=detail.pk)
+        .values_list("event_id", flat=True)
+        .first()
+    )
+    if event_id is None:
+        _raise_death_detail_unsaved()
+    try:
+        locked_event = (
+            Event.objects.select_for_update()
+            .select_related("event_type")
+            .get(pk=event_id)
+        )
+        locked_detail = DeathDetail.objects.select_for_update().get(
+            pk=detail.pk,
+            event_id=event_id,
+        )
+    except (Event.DoesNotExist, DeathDetail.DoesNotExist):
+        _raise_death_detail_unsaved()
+    _validate_death_detail_event(
+        locked_event,
+        require_death_type=require_death_type,
+    )
+    return locked_detail
+
+
+def _reload_death_detail(detail_id: int) -> DeathDetail:
+    return DeathDetail.objects.select_related(
+        "event", "event__event_type"
+    ).get(pk=detail_id)
+
+
+@transaction.atomic
+def create_death_detail(
+    *,
+    event: Event,
+    data: DeathDetailInput,
+) -> DeathDetail:
+    """Vytvoř jediný detail systémové události úmrtí."""
+
+    locked_event = _lock_death_event(event)
+    if DeathDetail.objects.select_for_update().filter(
+        event=locked_event
+    ).exists():
+        _raise_service_error(
+            "event",
+            "Událost už detail úmrtí obsahuje.",
+            "death_detail_exists",
+        )
+    detail = DeathDetail(
+        event=locked_event,
+        cause=data.cause.strip(),
+        circumstances=data.circumstances.strip(),
+    )
+    # Jedinečnost 1:1 definitivně rozhoduje databáze. Přeskočení ORM unique
+    # dotazu ponechá i souběžnou kolizi na níže mapovaném stabilním kódu.
+    detail.full_clean(validate_unique=False)
+    try:
+        with transaction.atomic():
+            detail.save()
+    except IntegrityError as exc:
+        if DeathDetail.objects.filter(event=locked_event).exists():
+            error = ValidationError(
+                {
+                    "event": ValidationError(
+                        "Událost už detail úmrtí obsahuje.",
+                        code="death_detail_exists",
+                    )
+                }
+            )
+            raise error from exc
+        raise
+    return _reload_death_detail(detail.pk)
+
+
+@transaction.atomic
+def update_death_detail(
+    *,
+    death_detail: DeathDetail,
+    data: DeathDetailInput,
+) -> DeathDetail:
+    """Aktualizuj texty detailu a zachovej jeho nadřazenou událost."""
+
+    locked_detail = _lock_death_detail(death_detail)
+    locked_detail.cause = data.cause.strip()
+    locked_detail.circumstances = data.circumstances.strip()
+    locked_detail.full_clean()
+    locked_detail.save()
+    return _reload_death_detail(locked_detail.pk)
+
+
+@transaction.atomic
+def delete_death_detail(*, death_detail: DeathDetail) -> None:
+    """Explicitně odstraň detail bez odstranění nadřazené události."""
+
+    locked_detail = _lock_death_detail(
+        death_detail,
+        require_death_type=False,
+    )
+    locked_detail.delete()
 
 
 def _validate_participant_inputs(
@@ -625,6 +801,15 @@ def update_event(
             "event_type",
             "Typ události není aktivní.",
             "event_type_inactive",
+        )
+    if (
+        DeathDetail.objects.filter(event=locked_event).exists()
+        and not _is_system_death_type(event_type)
+    ):
+        _raise_service_error(
+            "event_type",
+            "Událost s detailem úmrtí musí zůstat systémovou událostí úmrtí.",
+            "death_detail_event_type_required",
         )
     place = _load_place(data.place)
     _apply_event_input(
