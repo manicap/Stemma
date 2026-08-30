@@ -9,7 +9,17 @@ from django.test import SimpleTestCase, TestCase
 from common.admin import SystemValueAdminMixin
 from common.models import LookupModel
 
-from .models import Attachment, AttachmentCategory, AttachmentRole
+from .models import (
+    Attachment,
+    AttachmentCategory,
+    AttachmentRole,
+    EventAttachment,
+    GraveSiteAttachment,
+    PersonAttachment,
+    PlaceAttachment,
+    RelationshipAttachment,
+    ResidenceAttachment,
+)
 
 
 class MaterialsApplicationTests(SimpleTestCase):
@@ -24,7 +34,17 @@ class MaterialsApplicationTests(SimpleTestCase):
         )
         self.assertEqual(
             tuple(config.get_models()),
-            (AttachmentCategory, AttachmentRole, Attachment),
+            (
+                AttachmentCategory,
+                AttachmentRole,
+                Attachment,
+                PersonAttachment,
+                EventAttachment,
+                RelationshipAttachment,
+                ResidenceAttachment,
+                GraveSiteAttachment,
+                PlaceAttachment,
+            ),
         )
 
 

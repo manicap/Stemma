@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.19
+**Verze:** 0.20
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 30. 8. 2026
 
@@ -103,9 +103,14 @@ Druhý řez přidává pevný `FileStatus`, metadata model `Attachment` a migrac
 integritní základ; upload, doručení, explicitní vazby, služby, selectory,
 admin a UI zůstávají pro samostatné navazující řezy.
 
+Třetí řez přidává šest explicitních vazeb ke stávajícím doménám, migraci
+`materials.0003_attachment_links` a transakční create/update služby. Vazby na
+zdravotní záznam a zdroj zůstávají záměrně odložené do příslušných domén.
+Nevzniká generická vazba, selector, admin, doručovací URL ani produktové UI.
+
 #### Následující implementační kroky
 
-1. doplnit přílohy, zdroje a jejich explicitní propojení,
+1. doplnit zdroje, jejich explicitní propojení a actor-aware čtení příloh,
 2. doplnit zdravotní záznamy,
 3. doplnit audit navazujících zápisových operací,
 4. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic.

@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.35
+**Verze:** 0.36
 **Stav:** koncept  
 **Datum revize:** 30. 8. 2026
 
@@ -46,7 +46,6 @@ Navržená pole:
 - titul za jménem,
 - stručná poznámka,
 - životopisný text,
-- ID hlavní fotografie,
 - datum vytvoření,
 - datum poslední změny,
 - stav archivace.
@@ -923,6 +922,19 @@ Pevný `FileStatus` má hodnoty `pending`, `available`, `missing` a
 `quarantined` s výchozím `pending`. Stav je nezávislý na access a lifecycle;
 pouze `available` smí budoucí doručovací vrstva zpřístupnit. Model zatím
 nevolí storage backend, nezapisuje fyzický soubor a nemá admin ani UI.
+
+Explicitní `PersonAttachment`, `EventAttachment`, `RelationshipAttachment`,
+`ResidenceAttachment`, `GraveSiteAttachment` a `PlaceAttachment` dědí přes
+společný abstraktní základ timestamp, access, autorství a lifecycle. Každý
+řádek chráněnými FK propojuje jediný cílový objekt, `Attachment` a
+`AttachmentRole` a obsahuje popis kontextu, pořadí a `is_primary`.
+
+`PersonAttachment` má podmíněný constraint nejvýše jedné primární vazby na
+osobu při `deleted_at IS NULL`; archivace slot neuvolní. Tento příznak je
+obecná primární reprezentace osoby, nikoli tvrzení o fotografickém MIME,
+kategorii, roli nebo ověření. Přímý FK hlavní fotografie na `Person` neexistuje.
+Vazby na budoucí zdravotní záznamy a zdroje zůstávají plánované explicitní
+modely a nesmějí být nahrazeny generickým vztahem.
 
 ## 9. Zdroj
 

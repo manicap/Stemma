@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.32
+**Verze:** 0.33
 **Stav:** pracovní návrh  
 **Datum revize:** 30. 8. 2026
 
@@ -470,6 +470,15 @@ očekávaný soubor a `quarantined` záměrné vyřazení kvůli bezpečnostní 
 integritní kontrole. Pouze `available` může být později přímo doručován.
 Ostatní stavy doručení zakazují bez ohledu na oprávnění uživatele. Nejde o
 přístupovou úroveň a stav souboru je nezávislý na archivaci a soft-delete.
+
+Současná infrastruktura používá samostatné explicitní vazby přílohy k osobě,
+události, vazbě osob, bydlišti, hrobovému místu a místu. Vazba nese roli,
+popis kontextu, pořadí, příznak primární přílohy a vlastní access/lifecycle.
+`PersonAttachment.is_primary` zatím označuje pouze primární reprezentaci osoby;
+bez schválené role, kategorie a MIME kontraktu sám nedokazuje, že jde o
+fotografii. Budoucí zobrazení vyžaduje také `available` a autorizaci přílohy,
+vazby i osoby, jinak používá siluetu. Přílohy zdravotních záznamů a zdrojů
+vzniknou až s příslušnými doménami.
 
 ## 12. Zdravotní informace
 

@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.20
+**Verze dokumentace:** 0.21
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
 **Datum revize:** 30. 8. 2026
 
@@ -39,6 +39,19 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.21
+
+Verze 0.21 přidává explicitní vazby příloh ke stabilnímu M2 jádru:
+
+- šest modelů propojuje `Attachment` s osobou, událostí, vazbou, bydlištěm,
+  hrobovým místem nebo místem bez generického vztahu,
+- vazby mají vlastní access, autorství a lifecycle a používají `PROTECT`,
+- transakční služby vynucují schválená create/update lifecycle pravidla z
+  čerstvého databázového stavu,
+- osoba smí mít nejvýše jednu primární vazbu s `deleted_at IS NULL`; příznak
+  sám neprohlašuje přílohu za fotografii,
+- nevzniká doručovací URL, selector, admin, UI ani katalogová seed hodnota.
 
 ## Stav verze 0.20
 

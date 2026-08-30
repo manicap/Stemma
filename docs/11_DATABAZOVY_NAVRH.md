@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.46
+**Verze:** 0.47
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 30. 8. 2026
 
@@ -32,8 +32,10 @@ hrobová místa; RC 0.1 je nad tímto základem rovněž připravené.
   automatická i browser brána jsou dokončené.
 - Aplikace `materials` je založena a registrována jako samostatný doménový
   balíček. `AttachmentCategory` a `AttachmentRole` přímo dědí z
-  `LookupModel`; strukturální migrace `materials.0001_attachment_lookups`
-  nevkládá systémová data. Přílohy, zdroje a explicitní vazby zatím nevznikají.
+  `LookupModel`; migrace `materials.0001_attachment_lookups` nevkládá
+  systémová data. `Attachment` a šest explicitních vazeb ke stávajícím
+  doménám vznikají v migracích `materials.0002` a `materials.0003`; zdroje a
+  jejich vazby zůstávají plánované.
 - Základní zápis osoby pro RC používá frozen slotted `PersonInput` a
   transakční `create_person()`, které znovu načítají FK a autora, normalizují
   okraje textů a před uložením volají `full_clean()`. Stejnou hranici používá
@@ -1964,7 +1966,43 @@ Spojení obsahuje:
 - pořadí,
 - příznak hlavní přílohy.
 
-Hlavní fotografie osoby je pouze role spojení `PersonAttachment`; na osobě není druhý přímý odkaz. Jedna osoba smí mít nejvýše jednu aktivní hlavní fotografii.
+Budoucí ověřená hlavní fotografie smí být reprezentována pouze přes
+`PersonAttachment`; na osobě není druhý přímý odkaz. Současný obecný příznak
+`is_primary` sám fotografický význam nezakládá.
+
+Třetí implementační řez konkretizuje šest aktuálně realizovatelných vazeb:
+`PersonAttachment`, `EventAttachment`, `RelationshipAttachment`,
+`ResidenceAttachment`, `GraveSiteAttachment` a `PlaceAttachment`. Společný
+abstraktní základ dědí `TimestampedModel`, `AccessControlledModel`,
+`AuthoredModel` a `LifecycleModel`; nepoužívá `VerifiableModel` ani
+`PartialDateModel`. Každý konkrétní model používá `PROTECT` pro cíl,
+`Attachment` i `AttachmentRole` a obsahuje `context_description`, nezáporné
+`sort_order` s výchozí nulou a `is_primary` s výchozí `False`.
+
+Pouze `PersonAttachment` má podmíněnou databázovou unikátnost osoby pro
+`is_primary=True` a `deleted_at IS NULL`. Archivovaná vazba zůstává v tomto
+významu aktivní, měkce odstraněná nikoli. `is_primary` zatím znamená primární
+reprezentaci osoby, nikoli automaticky fotografii; neexistuje seed role ani
+kontrola kategorie či MIME. Stav přílohy vazbu automaticky nemění.
+
+`AttachmentLinkInput` a dvanáct veřejných create/update služeb v
+`materials.services` znovu načítá roli, autora, oba endpointy a při update i
+vazbu pod transakčními zámky a volá `full_clean()`. Create odmítá archivovaný
+nebo měkce odstraněný endpoint. Update dovoluje zachovat tentýž mezitím
+archivovaný endpoint, ale nepřipojí jiný archivovaný endpoint a vždy odmítne
+soft-delete; archivovanou vazbu lze měnit, soft-deleted nikoli. Neaktivní
+roli nelze nově použít, ale stávající lze při update zachovat. Potvrzený
+souběžný konflikt primární vazby se převádí na stabilní validační kód a jiné
+`IntegrityError` se nemaskují.
+
+Migrace `materials.0003_attachment_links` je strukturální. Modely nejsou v
+adminu a nevzniká selector, URL, upload, doručení ani UI. Budoucí aplikační
+zápis musí před službou serverově autorizovat při create cíl, přílohu i
+vytvoření kontextu; při update existující vazbu v dosavadním kontextu a každý
+měněný endpoint i oprávnění mutace. Budoucí čtení a doručení musí být
+kontextové přes konkrétní vazbu a vyhodnotit nejpřísnější
+access/lifecycle přílohy, vazby a cíle společně s `FileStatus.AVAILABLE`.
+Vazby ke zdravotním záznamům a zdrojům zůstávají plánované samostatné modely.
 
 ## 12. Zdroje
 

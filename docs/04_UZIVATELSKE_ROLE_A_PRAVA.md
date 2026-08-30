@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.14
+**Verze:** 0.15
 **Stav:** pracovní návrh  
 **Datum revize:** 30. 8. 2026
 
@@ -287,6 +287,25 @@ Samotné `available` přístup nezakládá. Budoucí doručovací hranice musí 
 vyhodnotit nejpřísnější kombinaci access a lifecycle pravidel přílohy,
 explicitní vazby a cílového objektu. Přímý storage odkaz nesmí tuto kontrolu
 obejít. V aktuální etapě neexistuje doručovací view, URL, selector ani UI.
+
+## 5.11 Kontextová autorizace explicitní vazby přílohy
+
+Neexistuje obecná doručovací URL založená pouze na `Attachment.id` nebo
+`storage_key`. Budoucí doručení musí být adresováno přes konkrétní explicitní
+vazbu a současně autorizovat cílový objekt, vazbu, přílohu a
+`FileStatus.AVAILABLE`. Neviditelný kontext se nesmí prozradit jinou slabší
+cestou.
+
+Při vytvoření vazby nesmí být příloha ani cíl archivovaný či měkce odstraněný.
+Při změně lze zachovat stejný mezitím archivovaný endpoint, nelze však přejít
+na jiný archivovaný endpoint; měkce odstraněný endpoint je zakázaný vždy.
+Archivovanou vazbu lze změnit, měkce odstraněnou nikoli. Doménová služba
+rozhoduje podle čerstvého databázového stavu. Případné aplikační rozhraní musí
+před voláním služby serverově ověřit při create cíl, přílohu i oprávnění
+vytvořit daný kontext. Při update musí nejprve autorizovat existující vazbu v
+jejím dosavadním kontextu cíle a přílohy a poté každý měněný endpoint i
+oprávnění k mutaci. Teprve po těchto kontrolách smí vrátit konkrétní validační
+nebo konfliktní detail.
 
 ## 6. Zamčený obsah
 

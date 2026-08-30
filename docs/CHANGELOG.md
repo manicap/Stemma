@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 0.56 – 30. 8. 2026
+
+- rozhodnutí 156 konkretizuje šest explicitních vazeb příloh ke stávajícím
+  doménám, jejich vlastní access/lifecycle a kontextovou autorizaci bez ACP,
+- implementovány modely `PersonAttachment`, `EventAttachment`,
+  `RelationshipAttachment`, `ResidenceAttachment`, `GraveSiteAttachment` a
+  `PlaceAttachment` s chráněnými FK a společnými poli vazby,
+- jedna osoba smí mít nejvýše jednu primární vazbu s `deleted_at IS NULL`;
+  `is_primary` zatím není tvrzením o fotografii, kategorii, roli ani MIME,
+- transakční create/update služby rozhodují z čerstvého DB stavu a vynucují
+  schválené zacházení s archivovanými a měkce odstraněnými endpointy i vazbou,
+- přidána strukturální migrace `materials.0003_attachment_links` a cílené
+  testy struktury, služeb, constraintů, `PROTECT`, lifecycle a migrace,
+- odstraněn zastaralý přímý návrh ID hlavní fotografie na `Person`; budoucí
+  health/source vazby zůstávají explicitně plánované,
+- nevzniká generický vztah, seed role, selector, admin, URL, doručení ani UI.
+
 ## Verze 0.55 – 30. 8. 2026
 
 - přidán pevný `FileStatus(pending, available, missing, quarantined)` s
