@@ -46,11 +46,11 @@ Current applications live in the repository root:
 - `people`
 - `places`
 - `events`
+- `materials`
 
 The approved design also plans these domain applications, but their packages
 do not exist yet and must not be treated as implemented:
 
-- `materials`
 - `health`
 - `audit`
 

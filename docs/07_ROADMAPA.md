@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.17
-**Stav:** RC 0.1 a infrastrukturní milník M2 dokončeny na větvi `agent/rc-0.1`
+**Verze:** 0.18
+**Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 30. 8. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -92,8 +92,11 @@ Audit skutečné implementace z 30. 8. 2026 potvrzuje dokončení M2:
 #### Nejbližší další infrastrukturní milník
 
 Podle skutečných závislostí je dalším krokem doména materiálů: jednou uložené
-přílohy a zdroje a jejich explicitní propojení se stabilním M2 jádrem. Tento
-stavový commit implementaci materiálů nezahajuje.
+přílohy a zdroje a jejich explicitní propojení se stabilním M2 jádrem.
+Registrovaná aplikace `materials` a prázdné katalogy `AttachmentCategory` a
+`AttachmentRole` ve strukturální migraci `materials.0001_attachment_lookups`
+tvoří první samostatný řez. Nevznikají systémové hodnoty, přílohy, zdroje,
+vazby, souborové úložiště ani aplikační rozhraní.
 
 #### Následující implementační kroky
 

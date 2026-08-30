@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.18
-**Stav:** RC 0.1 a M2 dokončeny na větvi `agent/rc-0.1`; bez produkčního nasazení
+**Verze dokumentace:** 0.19
+**Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
 **Datum revize:** 30. 8. 2026
 
 ## Účel balíčku
@@ -39,6 +39,20 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.19
+
+Verze 0.19 zahajuje navazující infrastrukturní milník bezpečným scaffoldem:
+
+- založena a registrována Django aplikace `materials`,
+- `AttachmentCategory` a `AttachmentRole` jsou prázdné, uživatelsky
+  rozšiřitelné katalogy nad společným `LookupModel`,
+- strukturální migrace `materials.0001_attachment_lookups` nevkládá žádné
+  neschválené systémové hodnoty a oba katalogy spravuje admin se společnou
+  ochranou identity systémových řádků,
+- cílené testy hlídají registraci, přesnou strukturu, migraci a admin guard,
+- aplikace zatím záměrně neobsahuje přílohu, zdroj, vazby, služby, selectory,
+  souborové úložiště ani UI.
 
 ## Stav verze 0.18
 

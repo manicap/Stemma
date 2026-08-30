@@ -1,5 +1,19 @@
 # Historie změn dokumentace
 
+## Verze 0.54 – 30. 8. 2026
+
+- založena a v `INSTALLED_APPS` registrována aplikace `materials` jako první
+  samostatný řez navazujícího infrastrukturního milníku,
+- přidány prázdné rozšiřitelné katalogy `AttachmentCategory` a
+  `AttachmentRole`, strukturální migrace `materials.0001_attachment_lookups`
+  bez seed hodnot a admin se společnou ochranou systémové identity,
+- cílené testy ověřují registraci, přesná pole a metadata, prázdný výchozí
+  stav, databázové tabulky, migraci a admin guard,
+- příloha, zdroj, vazby, služby, selectory, úložiště a UI zatím nevznikají,
+- `AGENTS.md` nyní správně uvádí `materials` mezi současnými aplikacemi;
+  `health` a `audit` zůstávají plánované,
+- zahájení je zaznamenáno rozhodnutím 154 a nevyžaduje nové ACP.
+
 ## Verze 0.53 – 30. 8. 2026
 
 - skutečný audit kódu, nikoli historický roadmapový status, potvrdil dokončení

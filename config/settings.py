@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "people.apps.PeopleConfig",
     "places.apps.PlacesConfig",
     "events.apps.EventsConfig",
+    "materials.apps.MaterialsConfig",
 ]
 
 MIDDLEWARE = [

@@ -1,8 +1,8 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.44
-**Stav:** schválený technický návrh; infrastrukturní milník M2 dokončen
+**Verze:** 0.45
+**Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 30. 8. 2026
 
 ## 1. Účel
@@ -30,6 +30,10 @@ hrobová místa; RC 0.1 je nad tímto základem rovněž připravené.
 - RC 0.1 používá autorizovaný výchozí seznam a detail osoby nad skutečnými
   daty včetně actor-specific odvozených životních údajů a římského pořadí;
   automatická i browser brána jsou dokončené.
+- Aplikace `materials` je založena a registrována jako samostatný doménový
+  balíček. `AttachmentCategory` a `AttachmentRole` přímo dědí z
+  `LookupModel`; strukturální migrace `materials.0001_attachment_lookups`
+  nevkládá systémová data. Přílohy, zdroje a explicitní vazby zatím nevznikají.
 - Základní zápis osoby pro RC používá frozen slotted `PersonInput` a
   transakční `create_person()`, které znovu načítají FK a autora, normalizují
   okraje textů a před uložením volají `full_clean()`. Stejnou hranici používá
@@ -1888,6 +1892,15 @@ ohledu na množství výsledků. Krok nic nezapisuje a nevytváří modelovou
 změnu, migraci, nový permission codename ani ACP.
 
 ## 11. Přílohy
+
+První implementační řez zavádí dva prázdné katalogy:
+
+- `AttachmentCategory` — uživatelsky rozšiřitelná kategorie přílohy,
+- `AttachmentRole` — uživatelsky rozšiřitelný význam explicitního propojení.
+
+Oba přímo dědí z `LookupModel`, mají pouze jeho společná pole a používají
+admin guard systémové identity. Migrace `materials.0001_attachment_lookups`
+je čistě strukturální a záměrně nevytváří žádné neschválené seed hodnoty.
 
 Příloha reprezentuje jeden fyzicky uložený digitální soubor a jeho metadata.
 

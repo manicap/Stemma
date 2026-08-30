@@ -5,6 +5,7 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from events.models import AllowedEventRole, EventType, ParticipantRole
+from materials.models import AttachmentCategory, AttachmentRole
 from people.models import NameType, PersonCategory, RelationshipType
 from places.models import (
     GraveSiteType,
@@ -28,6 +29,8 @@ class SystemValueAdminTests(TestCase):
         ResidenceType,
         GraveSiteType,
         PersonGraveSiteRole,
+        AttachmentCategory,
+        AttachmentRole,
     )
 
     def setUp(self) -> None:
