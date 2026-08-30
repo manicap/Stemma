@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.18
+**Verze:** 0.19
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 30. 8. 2026
 
@@ -97,6 +97,11 @@ Registrovaná aplikace `materials` a prázdné katalogy `AttachmentCategory` a
 `AttachmentRole` ve strukturální migraci `materials.0001_attachment_lookups`
 tvoří první samostatný řez. Nevznikají systémové hodnoty, přílohy, zdroje,
 vazby, souborové úložiště ani aplikační rozhraní.
+
+Druhý řez přidává pevný `FileStatus`, metadata model `Attachment` a migraci
+`materials.0002_attachments`. Model je backendově neutrální a pouze připravuje
+integritní základ; upload, doručení, explicitní vazby, služby, selectory,
+admin a UI zůstávají pro samostatné navazující řezy.
 
 #### Následující implementační kroky
 

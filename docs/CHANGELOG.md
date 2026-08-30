@@ -1,5 +1,19 @@
 # Historie změn dokumentace
 
+## Verze 0.55 – 30. 8. 2026
+
+- přidán pevný `FileStatus(pending, available, missing, quarantined)` s
+  výchozím `pending`; pouze `available` smí budoucí doručovací vrstva vydat,
+- implementován backendově neutrální metadata model `Attachment` s kategorií,
+  neúplným datem, access, autorstvím, lifecycle, unikátním `storage_key`, MIME,
+  velikostí, indexovaným neunikátním SHA-256 a technickým JSON objektem,
+- file status je nezávislý na access, archivaci a soft-delete; hash není
+  identitou přílohy a model záměrně nedědí verification,
+- přidána strukturální migrace `materials.0002_attachments` a cílené testy
+  výčtu, modelu, validace, databázových constraintů, lifecycle a admin hranice,
+- nevzniká storage backend, fyzický upload, doručení, vazba, služba, selector,
+  admin ani UI; schválený kontrakt je zaznamenán rozhodnutím 155 bez ACP.
+
 ## Verze 0.54 – 30. 8. 2026
 
 - založena a v `INSTALLED_APPS` registrována aplikace `materials` jako první

@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.34
+**Verze:** 0.35
 **Stav:** koncept  
 **Datum revize:** 30. 8. 2026
 
@@ -911,6 +911,18 @@ Pole:
 - stav archivace.
 
 Příloha může být propojena s více objekty.
+
+Implementovaný `Attachment` dědí `TimestampedModel`, `PartialDateModel`,
+`AccessControlledModel`, `AuthoredModel` a `LifecycleModel`, nikoli
+`VerifiableModel`. Kategorie je chráněný cizí klíč na `AttachmentCategory`.
+Neprůhledný `storage_key` je unikátní identita uloženého objektu; SHA-256 je
+64znakový lowercase hexadecimální údaj s indexem, ale záměrně není unikátní a
+není identitou záznamu. Technická metadata jsou JSON objekt.
+
+Pevný `FileStatus` má hodnoty `pending`, `available`, `missing` a
+`quarantined` s výchozím `pending`. Stav je nezávislý na access a lifecycle;
+pouze `available` smí budoucí doručovací vrstva zpřístupnit. Model zatím
+nevolí storage backend, nezapisuje fyzický soubor a nemá admin ani UI.
 
 ## 9. Zdroj
 

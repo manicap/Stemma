@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.19
+**Verze dokumentace:** 0.20
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
 **Datum revize:** 30. 8. 2026
 
@@ -39,6 +39,21 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.20
+
+Verze 0.20 přidává schválený metadata model jedné fyzické přílohy:
+
+- pevný `FileStatus` rozlišuje `pending`, `available`, `missing` a
+  `quarantined`; pouze `available` smí být v budoucnu doručován,
+- `Attachment` ukládá kategorii, popisná metadata, unikátní neprůhledný
+  `storage_key`, MIME typ, velikost, indexovaný neunikátní SHA-256, technická
+  JSON metadata, neúplné datum, access, autorství a lifecycle,
+- konkrétní storage backend, upload služba, přímé doručení, vazby, selectory,
+  admin a UI v tomto řezu nevznikají,
+- strukturální migrace `materials.0002_attachments` a cílené testy ověřují
+  pole, validaci, constrainty, nezávislost file statusu a lifecycle i
+  fail-closed absenci adminu.
 
 ## Stav verze 0.19
 

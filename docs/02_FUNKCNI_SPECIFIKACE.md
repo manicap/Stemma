@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.31
+**Verze:** 0.32
 **Stav:** pracovní návrh  
 **Datum revize:** 30. 8. 2026
 
@@ -463,6 +463,13 @@ Příloha je univerzální objekt pro:
 - ZIP a další soubory.
 
 Stejná příloha může být propojena s více osobami, událostmi, zdroji nebo hrobovými místy.
+
+Příloha má samostatný fyzický stav souboru: `pending` znamená dosud
+nepotvrzenou připravenost, `available` běžnou dostupnost, `missing` chybějící
+očekávaný soubor a `quarantined` záměrné vyřazení kvůli bezpečnostní nebo
+integritní kontrole. Pouze `available` může být později přímo doručován.
+Ostatní stavy doručení zakazují bez ohledu na oprávnění uživatele. Nejde o
+přístupovou úroveň a stav souboru je nezávislý na archivaci a soft-delete.
 
 ## 12. Zdravotní informace
 

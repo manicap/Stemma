@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.45
+**Verze:** 0.46
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 30. 8. 2026
 
@@ -1901,6 +1901,40 @@ První implementační řez zavádí dva prázdné katalogy:
 Oba přímo dědí z `LookupModel`, mají pouze jeho společná pole a používají
 admin guard systémové identity. Migrace `materials.0001_attachment_lookups`
 je čistě strukturální a záměrně nevytváří žádné neschválené seed hodnoty.
+
+Druhý řez zavádí pevný `FileStatus`:
+
+| Hodnota | Význam |
+|---|---|
+| `pending` | Databázový záznam existuje, fyzický soubor ještě není potvrzen jako připravený. |
+| `available` | Fyzický soubor je dostupný pro běžné použití. |
+| `missing` | Očekávaný fyzický soubor není dostupný. |
+| `quarantined` | Soubor je záměrně vyřazen kvůli bezpečnostní nebo integritní kontrole. |
+
+Výchozí je `pending`. Pouze `available` smí budoucí doručovací vrstva vydat;
+ostatní stavy jsou fail-closed bez ohledu na actorova oprávnění. `FileStatus`
+není access úroveň a zůstává nezávislý na archivaci a soft-delete.
+
+Konkrétní `Attachment` dědí v tomto pořadí z `TimestampedModel`,
+`PartialDateModel`, `AccessControlledModel`, `AuthoredModel`, `LifecycleModel`
+a `models.Model`; `VerifiableModel` nepoužívá. Obsahuje:
+
+- povinnou chráněnou `category` na `AttachmentCategory`,
+- volitelný `display_name` a `description`,
+- povinný `original_filename`, unikátní neprůhledný `storage_key`, `mime_type`
+  a nezápornou `size_bytes`,
+- lowercase SHA-256 délky 64 s indexem bez unikátnosti,
+- indexovaný `file_status` s výchozím `pending`,
+- volitelné `creator_name`, `provenance`, `original_owner` a `language`,
+- `technical_metadata` jako JSON objekt s výchozí prázdnou mapou,
+- společná pole neúplného data, access, autorství a lifecycle.
+
+`storage_key` je pouze backendově neutrální interní identifikátor objektu.
+Migrace `materials.0002_attachments` má swappable dependency na User a
+nevytváří fyzický soubor ani volbu storage backendu. `Attachment` není
+registrován v adminu a zatím nemá službu, selector, vazby, URL, API ani UI.
+Budoucí doručení musí kombinovat `available` s nejpřísnější policy přílohy,
+vazby a cílového objektu; přímý storage odkaz není autorizační hranice.
 
 Příloha reprezentuje jeden fyzicky uložený digitální soubor a jeho metadata.
 

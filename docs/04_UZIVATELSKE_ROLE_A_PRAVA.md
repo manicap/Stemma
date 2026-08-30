@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.13
+**Verze:** 0.14
 **Stav:** pracovní návrh  
 **Datum revize:** 30. 8. 2026
 
@@ -275,6 +275,18 @@ nadřazená událost úmrtí; samotná existence detailu nesmí prozradit skryto
 událost. Doménové služby záměrně neřeší HTTP oprávnění, proto je budoucí
 aplikační rozhraní smí zavolat až po serverové autorizaci rodičovské události.
 V aktuální etapě není detail vystaven v produktovém UI, API ani Django adminu.
+
+## 5.10 Fyzický stav a budoucí doručení přílohy
+
+`FileStatus` není přístupová úroveň. Pouze příloha ve stavu `available` smí
+být v budoucnu přímo doručena. `pending`, `missing` a `quarantined` doručení
+zakazují i actorovi, který by jinak splnil access policy. Stav souboru je
+nezávislý na archivaci a měkkém odstranění.
+
+Samotné `available` přístup nezakládá. Budoucí doručovací hranice musí současně
+vyhodnotit nejpřísnější kombinaci access a lifecycle pravidel přílohy,
+explicitní vazby a cílového objektu. Přímý storage odkaz nesmí tuto kontrolu
+obejít. V aktuální etapě neexistuje doručovací view, URL, selector ani UI.
 
 ## 6. Zamčený obsah
 
