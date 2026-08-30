@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.17
-**Stav:** RC 0.1 připraven na větvi `agent/rc-0.1`; bez produkčního nasazení
-**Datum revize:** 17. 8. 2026
+**Verze dokumentace:** 0.18
+**Stav:** RC 0.1 a M2 dokončeny na větvi `agent/rc-0.1`; bez produkčního nasazení
+**Datum revize:** 30. 8. 2026
 
 ## Účel balíčku
 
@@ -39,6 +39,24 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.18
+
+Verze 0.18 zaznamenává skutečné uzavření infrastrukturního milníku M2:
+
+- audit konkrétních modelů, číselníků, migrací, constraintů, modelové
+  validace, služeb, selectorů a testů potvrdil jádro Person, Place,
+  Event/EventParticipant/DeathDetail a Relationship,
+- všechny existující aplikační zápisy M2 entit procházejí doménovou hranicí;
+  nepřipravené business admin plochy zůstávají read-only nebo fail-closed,
+- aplikační čtení osob a odvozených údajů používá centrální actor-aware
+  access/lifecycle policy a žádná slabší paralelní veřejná cesta nebyla
+  nalezena,
+- poslední skutečnou mezeru uzavřel `DeathDetail` v commitu `21c5cc1`; plná
+  brána poté prošla 1 083 testy, kontrolou systému a kontrolou migrací,
+- nejbližším dalším infrastrukturním milníkem jsou jednou ukládané přílohy a
+  zdroje s explicitními vazbami na stabilní M2 jádro; jejich implementace v
+  tomto stavovém řezu nezačíná.
 
 ## Stav verze 0.17
 
@@ -323,9 +341,11 @@ v produkčním prostředí.
 
 - Návrh UI/UX je uzavřen jako schválený pracovní základ.
 - Databázový a technický návrh je dokončen jako schválený pracovní základ.
-- Původní implementační posloupnost zůstává vedena v `feature/mvp`; M0 a M1 jsou dokončené a dokumentovaná implementace je v M2.
+- M0, M1 a M2 jsou na `agent/rc-0.1` skutečně dokončené; `feature/mvp`
+  zůstává nedotčeným pre-agentním integračním základem.
 - Pro ověření autonomního agentního vývoje běží oddělený experiment v `agent/rc-0.1` podle ACP-006.
-- Aktivním cílem této experimentální větve je RC 0.1 definované v `07_ROADMAPA.md`; nejde o náhradu stavů původních milníků.
+- RC 0.1 je na experimentální větvi připravené podle `07_ROADMAPA.md`; tento
+  stav ani dokončení M2 nepovolují produkční nasazení nebo merge.
 - `backup/pre-agent-2026-08-17` je návratový bod před zahájením agentního experimentu a neslouží k vývoji.
 - Hlavním technickým dokumentem zůstává `11_DATABAZOVY_NAVRH.md` a exekuční pravidla agentní větve určuje kořenový `AGENTS.md`.
 

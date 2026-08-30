@@ -1,27 +1,35 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.43
-**Stav:** schválený technický návrh v implementaci
+**Verze:** 0.44
+**Stav:** schválený technický návrh; infrastrukturní milník M2 dokončen
 **Datum revize:** 30. 8. 2026
 
 ## 1. Účel
 
 Dokument definuje implementovatelný databázový návrh aplikace **Stemma** pro Django a SQLite. Navazuje zejména na dokumenty `02_FUNKCNI_SPECIFIKACE.md`, `03_DATOVY_MODEL.md`, `04_UZIVATELSKE_ROLE_A_PRAVA.md`, `08_ARCHITEKTONICKE_PRINCIPY.md`, `09_CODING_STANDARD.md` a `10_UI_UX_NAVRH.md`.
 
-Návrh prošel logickou i architektonickou revizí. Milníky M0 a M1 jsou implementovány a M2 již obsahuje konkrétní modely, migrace, služby a selectory pro osobu, místo, událost, vztah, bydliště a hrobová místa. Na experimentální větvi `agent/rc-0.1` se nad tímto základem současně skládá první uživatelský průchod RC 0.1.
+Návrh prošel logickou i architektonickou revizí. Milníky M0, M1 a M2 jsou na
+větvi `agent/rc-0.1` implementovány a ověřeny. M2 obsahuje konkrétní modely,
+migrace, služby a selectory pro osobu, místo, událost, vztah, bydliště a
+hrobová místa; RC 0.1 je nad tímto základem rovněž připravené.
 
 ### 1.1 Stav implementace
 
 - M0: projekt `config`, aplikace `accounts`, vlastní `accounts.User` a první migrace jsou dokončeny.
 - M1: aplikace `common`, pět aktuálně potřebných pevných výčtů, sedm abstraktních modelů a validace neúplných dat jsou dokončeny.
 - `common` nevytváří vlastní tabulku; při dokončení M1 nevznikla nová migrace.
-- M2 obsahuje jádro Osoba, Místo, Událost a Vazba včetně navazujících
-  bydlišť, hrobových míst, doménových služeb a autorizovaných selectorů;
-  stav původního milníku se řídí roadmapou.
+- M2 je dokončené: obsahuje jádro Osoba, Místo, Událost a Vazba včetně
+  `EventParticipant`, `DeathDetail`, navazujících bydlišť, hrobových míst,
+  doménových služeb a autorizovaných selectorů. Audit ověřil také migrace,
+  constrainty, modelovou validaci, rollbacky, pořadí zámků a regresní testy.
+- Existující aplikační zápisy M2 entit vedou přes servisní hranice a čtení
+  používané aplikační vrstvou přes centrální actor-aware access/lifecycle
+  policy. Obecný `Place` nemá produktovou cestu a zůstává v adminu fail-closed,
+  dokud nevznikne jeho úplná servisní a autorizační hranice.
 - RC 0.1 používá autorizovaný výchozí seznam a detail osoby nad skutečnými
-  daty včetně actor-specific odvozených životních údajů a římského
-  pořadí; zbývá úplné browser ověření.
+  daty včetně actor-specific odvozených životních údajů a římského pořadí;
+  automatická i browser brána jsou dokončené.
 - Základní zápis osoby pro RC používá frozen slotted `PersonInput` a
   transakční `create_person()`, které znovu načítají FK a autora, normalizují
   okraje textů a před uložením volají `full_clean()`. Stejnou hranici používá

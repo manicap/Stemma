@@ -39,13 +39,17 @@ Use `settings.AUTH_USER_MODEL` or `get_user_model()` instead of importing the us
 
 ## Project applications
 
-Applications live in the repository root:
+Current applications live in the repository root:
 
 - `accounts`
 - `common`
 - `people`
 - `places`
 - `events`
+
+The approved design also plans these domain applications, but their packages
+do not exist yet and must not be treated as implemented:
+
 - `materials`
 - `health`
 - `audit`

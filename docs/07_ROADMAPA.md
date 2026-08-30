@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.16
-**Stav:** RC 0.1 připraven na větvi `agent/rc-0.1`
-**Datum revize:** 17. 8. 2026
+**Verze:** 0.17
+**Stav:** RC 0.1 a infrastrukturní milník M2 dokončeny na větvi `agent/rc-0.1`
+**Datum revize:** 30. 8. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -59,7 +59,7 @@
 - doplněny testy; M1 nevytváří vlastní databázovou tabulku ani migraci,
 - změny implementovány a ověřeny ve větvi `feature/mvp`.
 
-#### M2 – jádro Osoba, Místo, Událost a Vazba ◀ aktuální v původní implementační posloupnosti
+#### M2 – jádro Osoba, Místo, Událost a Vazba ✅
 
 1. založit doménové aplikace potřebné pro jádro,
 2. implementovat základní číselníky a model Osoba,
@@ -69,17 +69,40 @@
 6. vytvářet malé strukturální a datové migrace,
 7. doplňovat testy databázové integrity a doménových pravidel.
 
-#### Následující implementační kroky původní posloupnosti
+Audit skutečné implementace z 30. 8. 2026 potvrzuje dokončení M2:
 
-1. dokončit M2 – jádro Osoba, Místo, Událost a Vazba,
-2. doplnit bydliště a hrobová místa,
-3. doplnit přílohy, zdroje a jejich propojení,
-4. doplnit zdravotní záznamy,
-5. doplnit audit a projektová oprávnění,
-6. rozšiřovat testy databázové integrity,
-7. připravit vývojová ukázková data.
+- `Person`, `Place`, `Event`, `EventParticipant`, `DeathDetail` a
+  `Relationship` včetně souvisejících číselníků mají konkrétní modely,
+  strukturální a datové migrace a cílené integritní testy,
+- navazující `Residence`, `GraveSite` a `PersonGraveSite` mají rovněž
+  servisní a selectorové hranice; nejde jen o historický roadmapový status,
+- existující aplikační zápisy M2 entit procházejí transakčními doménovými
+  službami a business admin cesty, které by hranici obcházely, jsou read-only
+  nebo fail-closed,
+- aplikační čtení osob a odvozených údajů používá centrální actor-aware
+  access/lifecycle policy; autorizované selectory existují také pro vazby,
+  bydliště a hrobová místa,
+- obecný `Place` zatím nemá produktový zápisový ani čtecí use-case a není
+  vystaven neomezeným adminem; případné budoucí rozhraní musí nejprve doplnit
+  odpovídající servisní a actor-aware hranici,
+- závěrečná brána po doplnění `DeathDetail` prošla 1 083 testy,
+  `manage.py check`, kontrolou migrací a nezávislým QA, security a
+  dokumentačním review.
 
-## Experimentální cílový průřez – RC 0.1 ◀ aktivní na `agent/rc-0.1`
+#### Nejbližší další infrastrukturní milník
+
+Podle skutečných závislostí je dalším krokem doména materiálů: jednou uložené
+přílohy a zdroje a jejich explicitní propojení se stabilním M2 jádrem. Tento
+stavový commit implementaci materiálů nezahajuje.
+
+#### Následující implementační kroky
+
+1. doplnit přílohy, zdroje a jejich explicitní propojení,
+2. doplnit zdravotní záznamy,
+3. doplnit audit navazujících zápisových operací,
+4. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic.
+
+## Experimentální cílový průřez – RC 0.1 ✅ připraven na `agent/rc-0.1`
 
 RC 0.1 je pracovní označení prvního skutečně použitelného kandidáta aplikace. Neznamená dokončení celé roadmapy ani schválení produkčního nasazení. Jeho účelem je co nejdříve ověřit jeden úplný uživatelský průchod od databáze přes oprávnění až po skutečné UI.
 

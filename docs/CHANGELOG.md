@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 0.53 – 30. 8. 2026
+
+- skutečný audit kódu, nikoli historický roadmapový status, potvrdil dokončení
+  infrastrukturního milníku M2,
+- roadmapa, README a databázový návrh nyní shodně evidují modely, číselníky,
+  migrace, integritu, servisní zápisy, autorizované aplikační čtení a regresní
+  bránu jádra Person, Place, Event a Relationship,
+- obecný `Place` zůstává bez produktového use-case a fail-closed mimo business
+  admin; případné budoucí rozhraní musí nejprve doplnit servisní a actor-aware
+  hranici,
+- jako nejbližší další infrastrukturní milník byly vyhodnoceny jednou ukládané
+  přílohy a zdroje s explicitními vazbami; tento samostatný stavový řez jejich
+  implementaci nezahajuje,
+- exekuční pravidla rozlišují současné Django aplikace od plánovaných balíčků
+  `materials`, `health` a `audit`, které v repozitáři zatím neexistují,
+- dokončení M2 je zaznamenáno rozhodnutím 153 a nevyžaduje nové ACP.
+
 ## Verze 0.52 – 30. 8. 2026
 
 - implementován 1:1 `events.DeathDetail` pro volitelné texty příčiny a
