@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.51
+**Verze:** 0.52
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -2088,6 +2088,28 @@ Zdroj se explicitně váže ke konkrétním strukturovaným záznamům, zejména
 - příloze.
 
 Propojení obsahuje roli zdroje, citovanou část, krátký úryvek, výklad a sílu podpory. Zdroj může tvrzení potvrzovat, naznačovat, doplňovat nebo mu odporovat.
+
+Implementovaný pevný `SourceSupport` obsahuje technické hodnoty `confirms`,
+`suggests`, `supplements` a `contradicts` s českými popisky. Nemá databázovou
+tabulku ani výchozí hodnotu. Společný abstraktní `SourceLinkModel` dědí
+`TimestampedModel`, `AccessControlledModel`, `AuthoredModel` a
+`LifecycleModel` a obsahuje:
+
+- `source` — povinný chráněný FK na `Source`,
+- `role` — povinný chráněný FK na `SourceRole`,
+- `cited_part` — `CharField(max_length=255, blank=True)`,
+- `excerpt` a `interpretation` — `TextField(blank=True)`,
+- `support_strength` — povinný `CharField(max_length=20,
+  choices=SourceSupport.choices)` bez defaultu.
+
+Konkrétní modely jsou `PersonNameSource`, `EventSource`,
+`RelationshipSource`, `ResidenceSource`, `GraveSiteSource` a
+`AttachmentSource`. Každý používá povinný `ForeignKey` na jediný pojmenovaný
+cíl s `on_delete=models.PROTECT` a `related_name="source_links"`; zdroj i role
+jsou rovněž chráněné. Duplicity nejsou dodatečně zakázané a žádný model
+nepoužívá generický vztah. Migrace `materials.0006_source_links` nevkládá seed
+data. Modely zatím nejsou registrované v adminu ani vystavené službou,
+selectorem, API nebo UI.
 
 Access policy cílového doménového objektu je pro každou vazbu povinná.
 Případná vlastní access úroveň vazby nebo zdroje ji smí pouze zpřísnit a

@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.25
+**Verze dokumentace:** 0.26
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
 **Datum revize:** 2. 9. 2026
 
@@ -39,6 +39,17 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.26
+
+Verze 0.26 přidává integritní základ explicitních zdrojových vazeb:
+
+- šest samostatných modelů propojuje `Source` s `PersonName`, `Event`,
+  `Relationship`, `Residence`, `GraveSite` a `Attachment`,
+- vazba ukládá `SourceRole`, citovanou část, úryvek, výklad a povinnou pevnou
+  sílu podpory; nevzniká generický vztah,
+- migrace `materials.0006_source_links` neobsahuje seed data a vazby zatím
+  nejsou vystavené adminem, službou, selectorem ani UI.
 
 ## Stav verze 0.25
 

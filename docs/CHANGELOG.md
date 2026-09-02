@@ -1,5 +1,15 @@
 # Historie změn dokumentace
 
+## Verze 0.61 – 2. 9. 2026
+
+- přidán pevný `SourceSupport` pro potvrzení, naznačení, doplnění a rozpor,
+- implementován abstraktní `SourceLinkModel` a šest explicitních vazeb ke
+  jménu osoby, události, vztahu, bydlišti, hrobovému místu a příloze,
+- všechny endpointy, zdroj i role používají chráněné cizí klíče; nevzniká
+  generický vztah, deduplikační constraint ani default síly podpory,
+- přidána strukturální migrace `materials.0006_source_links` a cílené testy;
+  služby, selectory, admin, API a UI zůstávají navazujícími řezy.
+
 ## Verze 0.60 – 2. 9. 2026
 
 - implementován znovupoužitelný `Source` s povinným chráněným `SourceType` a

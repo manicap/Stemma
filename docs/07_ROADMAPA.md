@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.24
+**Verze:** 0.25
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -129,6 +129,12 @@ bibliografická metadata jsou volitelná a neúplné datum používá společný
 `PartialDateModel`. Model nese access, autorství a lifecycle, ale žádné globální
 hodnocení důvěryhodnosti ani verification. Explicitní vazby, služby, selectory,
 admin a UI zůstávají oddělenými navazujícími řezy.
+
+Sedmý řez přidává pevnou sílu podpory a šest explicitních zdrojových vazeb ke
+stávajícím strukturovaným cílům v migraci `materials.0006_source_links`.
+Každá cesta má vlastní model a chráněné cizí klíče; generický vztah ani vazba
+přímo na celou osobu nevznikají. Zápisové služby, actor-aware selectory, admin
+a UI zůstávají samostatnými navazujícími řezy.
 
 #### Následující implementační kroky
 

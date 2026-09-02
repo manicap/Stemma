@@ -11,10 +11,10 @@ from common.models import (
     TimestampedModel,
 )
 from events.models import Event
-from people.models import Person, Relationship
+from people.models import Person, PersonName, Relationship
 from places.models import GraveSite, Place, Residence
 
-from .choices import FileStatus
+from .choices import FileStatus, SourceSupport
 
 
 class AttachmentCategory(LookupModel):
@@ -109,6 +109,148 @@ class Source(
 
     def __str__(self) -> str:
         return (self.title or "").strip() or "Zdroj"
+
+
+class SourceLinkModel(
+    TimestampedModel,
+    AccessControlledModel,
+    AuthoredModel,
+    LifecycleModel,
+    models.Model,
+):
+    """Společná metadata explicitního propojení zdroje s objektem."""
+
+    source = models.ForeignKey(
+        Source,
+        on_delete=models.PROTECT,
+        related_name="%(class)s_links",
+    )
+    role = models.ForeignKey(
+        SourceRole,
+        on_delete=models.PROTECT,
+        related_name="%(class)s_links",
+    )
+    cited_part = models.CharField(max_length=255, blank=True)
+    excerpt = models.TextField(blank=True)
+    interpretation = models.TextField(blank=True)
+    support_strength = models.CharField(
+        max_length=20,
+        choices=SourceSupport.choices,
+    )
+
+    class Meta:
+        abstract = True
+
+    def _link_text(self, target: object) -> str:
+        return f"{target} – {self.source}"
+
+
+class PersonNameSource(SourceLinkModel):
+    """Explicitní propojení dalšího jména osoby a zdroje."""
+
+    person_name = models.ForeignKey(
+        PersonName,
+        on_delete=models.PROTECT,
+        related_name="source_links",
+    )
+
+    class Meta:
+        verbose_name = "Zdroj jména osoby"
+        verbose_name_plural = "Zdroje jmen osob"
+        ordering = ("person_name_id", "role__sort_order", "pk")
+
+    def __str__(self) -> str:
+        return self._link_text(self.person_name)
+
+
+class EventSource(SourceLinkModel):
+    """Explicitní propojení události a zdroje."""
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.PROTECT,
+        related_name="source_links",
+    )
+
+    class Meta:
+        verbose_name = "Zdroj události"
+        verbose_name_plural = "Zdroje událostí"
+        ordering = ("event_id", "role__sort_order", "pk")
+
+    def __str__(self) -> str:
+        return self._link_text(self.event)
+
+
+class RelationshipSource(SourceLinkModel):
+    """Explicitní propojení vztahu a zdroje."""
+
+    relationship = models.ForeignKey(
+        Relationship,
+        on_delete=models.PROTECT,
+        related_name="source_links",
+    )
+
+    class Meta:
+        verbose_name = "Zdroj vazby"
+        verbose_name_plural = "Zdroje vazeb"
+        ordering = ("relationship_id", "role__sort_order", "pk")
+
+    def __str__(self) -> str:
+        return self._link_text(self.relationship)
+
+
+class ResidenceSource(SourceLinkModel):
+    """Explicitní propojení bydliště a zdroje."""
+
+    residence = models.ForeignKey(
+        Residence,
+        on_delete=models.PROTECT,
+        related_name="source_links",
+    )
+
+    class Meta:
+        verbose_name = "Zdroj bydliště"
+        verbose_name_plural = "Zdroje bydlišť"
+        ordering = ("residence_id", "role__sort_order", "pk")
+
+    def __str__(self) -> str:
+        return self._link_text(self.residence)
+
+
+class GraveSiteSource(SourceLinkModel):
+    """Explicitní propojení hrobového místa a zdroje."""
+
+    grave_site = models.ForeignKey(
+        GraveSite,
+        on_delete=models.PROTECT,
+        related_name="source_links",
+    )
+
+    class Meta:
+        verbose_name = "Zdroj hrobového místa"
+        verbose_name_plural = "Zdroje hrobových míst"
+        ordering = ("grave_site_id", "role__sort_order", "pk")
+
+    def __str__(self) -> str:
+        return self._link_text(self.grave_site)
+
+
+class AttachmentSource(SourceLinkModel):
+    """Explicitní propojení digitální přílohy a zdroje."""
+
+    attachment = models.ForeignKey(
+        "Attachment",
+        on_delete=models.PROTECT,
+        related_name="source_links",
+    )
+
+    class Meta:
+        verbose_name = "Zdroj přílohy"
+        verbose_name_plural = "Zdroje příloh"
+        ordering = ("attachment_id", "role__sort_order", "pk")
+
+    def __str__(self) -> str:
+        return self._link_text(self.attachment)
 
 
 class Attachment(

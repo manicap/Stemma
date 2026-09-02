@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.38
+**Verze:** 0.39
 **Stav:** koncept  
 **Datum revize:** 2. 9. 2026
 
@@ -966,10 +966,21 @@ pouze zpřísnit. Lifecycle se vyhodnocuje na všech objektech dané cesty. Jin�
 přístupná vazba ke stejnému zdroji nesmí zpřístupnit ani prozradit chráněný
 cílový objekt.
 
+Aktuální explicitní modely jsou `PersonNameSource`, `EventSource`,
+`RelationshipSource`, `ResidenceSource`, `GraveSiteSource` a
+`AttachmentSource`. Jejich společný abstraktní základ `SourceLinkModel` nese
+timestamp, access, autorství a lifecycle a povinně propojuje `Source`,
+`SourceRole` a jednu konkrétní cílovou entitu přes chráněné cizí klíče. Dále
+ukládá volitelnou citovanou část, úryvek a výklad a povinnou pevnou sílu podpory
+`confirms`, `suggests`, `supplements` nebo `contradicts`. Neexistuje generický
+`content_type/object_id` vztah ani dodatečná unikátnost.
+
 První implementační řez vytvořil prázdné katalogy `SourceType` a `SourceRole`.
 Navazující strukturální migrace `materials.0005_sources` vytváří samotný
 `Source` bez seed dat, explicitních vazeb, služeb, selectorů, adminu nebo UI.
 Samostatný lookup podle `Source.id` proto není aplikační autorizační hranice.
+Migrace `materials.0006_source_links` následně vytváří šest explicitních vazeb;
+zápisové služby, actor-aware selectory, admin a UI stále nejsou součástí řezu.
 
 ## 10. Zdravotní záznam
 
