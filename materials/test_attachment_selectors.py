@@ -34,8 +34,10 @@ class PersonAttachmentSelectorApiTests(SimpleTestCase):
             (
                 "get_event_attachment_links",
                 "get_person_attachment_links",
+                "get_person_name_source_links",
                 "get_visible_event_attachment_links",
                 "get_visible_person_attachment_links",
+                "get_visible_person_name_source_links",
             ),
         )
         expectations = (

@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.53
+**Verze:** 0.54
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -2123,7 +2123,24 @@ editovatelná a textový kontext se ořezává.
 Tyto služby neověřují actor oprávnění. Před budoucím aplikačním použitím musí
 volající autorizovat create nad cílem, zdrojem a vznikem kontextu; update musí
 nejprve autorizovat dosavadní konkrétní cestu a potom každý měněný endpoint i
-samotnou mutaci. Admin, API, UI a actor-aware selectory zatím nevznikají.
+samotnou mutaci. Admin, API, UI a ostatní actor-aware selectory zatím
+nevznikají.
+
+První čtecí hranice zdrojů je záměrně kontextová. Permissionless
+`get_person_name_source_links(*, person_name)` vrací lazy historii všech
+měkce neodstraněných `PersonNameSource`. Actor-aware
+`get_visible_person_name_source_links(*, person_name, actor)` vyžaduje
+viditelnou rodičovskou osobu a viditelné, nearchivované a neodstraněné jméno.
+Výsledek současně databázově filtruje access osoby, jména, vazby a zdroje a
+vylučuje archivované či odstraněné jméno, vazbu a zdroj. Lifecycle osoby
+respektuje `people.view_archived_person` a `people.view_deleted_person` a je
+znovu součástí výsledkového filtru, takže změna mezi vytvořením a vyhodnocením
+lazy querysetu selže uzavřeně.
+
+Oba selectory načítají `PersonName`, osobu, typ jména, `Source`, typ zdroje,
+roli a autory přes `select_related()`. Jiná viditelná vazba ke stejnému zdroji
+se dotazu neúčastní a nemůže potvrdit chráněný cíl. Obecný selector podle
+`Source.id`, admin, API ani UI nevznikají.
 
 Access policy cílového doménového objektu je pro každou vazbu povinná.
 Případná vlastní access úroveň vazby nebo zdroje ji smí pouze zpřísnit a

@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.27
+**Verze dokumentace:** 0.28
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
 **Datum revize:** 2. 9. 2026
 
@@ -39,6 +39,16 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.28
+
+Verze 0.28 přidává první actor-aware čtení zdrojů v kontextu `PersonName`:
+
+- permissionless selector zachovává interní historii nesmazaných vazeb,
+- actor-aware selector současně kontroluje osobu, konkrétní jméno, vazbu a
+  zdroj včetně access a lifecycle celé cesty,
+- jiná viditelná vazba ke stejnému zdroji nezpřístupní ani nepotvrdí chráněné
+  jméno; obecný selector podle `Source.id` nevzniká.
 
 ## Stav verze 0.27
 

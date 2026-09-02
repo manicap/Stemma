@@ -9,16 +9,18 @@ from django.db.models import Q, QuerySet
 from common.choices import AccessLevel
 from common.permissions import can_view_access_level
 from events.models import Event
-from people.models import Person
+from people.models import Person, PersonName
 
 from .choices import FileStatus
-from .models import EventAttachment, PersonAttachment
+from .models import EventAttachment, PersonAttachment, PersonNameSource
 
 __all__ = (
     "get_event_attachment_links",
     "get_person_attachment_links",
+    "get_person_name_source_links",
     "get_visible_event_attachment_links",
     "get_visible_person_attachment_links",
+    "get_visible_person_name_source_links",
 )
 
 _ACCESS_LEVELS = (
@@ -53,6 +55,17 @@ def _event_unsaved_error() -> ValidationError:
     )
 
 
+def _person_name_unsaved_error() -> ValidationError:
+    return ValidationError(
+        {
+            "person_name": ValidationError(
+                "Jméno osoby musí být uložené a existovat v databázi.",
+                code="person_name_unsaved",
+            )
+        }
+    )
+
+
 def _load_current_person(person: Person) -> Person:
     if not isinstance(person, Person) or person.pk is None:
         raise _person_unsaved_error()
@@ -71,6 +84,18 @@ def _load_current_event(event: Event) -> Event:
         return Event.objects.get(pk=event.pk)
     except Event.DoesNotExist as error:
         raise _event_unsaved_error() from error
+
+
+def _load_current_person_name(person_name: PersonName) -> PersonName:
+    if not isinstance(person_name, PersonName) or person_name.pk is None:
+        raise _person_name_unsaved_error()
+
+    try:
+        return PersonName.objects.select_related("person").get(
+            pk=person_name.pk
+        )
+    except PersonName.DoesNotExist as error:
+        raise _person_name_unsaved_error() from error
 
 
 def _get_lifecycle_permissions(
@@ -100,6 +125,19 @@ def _person_lifecycle_filter(
         condition &= Q(person__archived_at__isnull=True)
     if not can_view_deleted:
         condition &= Q(person__deleted_at__isnull=True)
+    return condition
+
+
+def _person_name_parent_lifecycle_filter(
+    *,
+    can_view_archived: bool,
+    can_view_deleted: bool,
+) -> Q:
+    condition = Q()
+    if not can_view_archived:
+        condition &= Q(person_name__person__archived_at__isnull=True)
+    if not can_view_deleted:
+        condition &= Q(person_name__person__deleted_at__isnull=True)
     return condition
 
 
@@ -141,6 +179,29 @@ def get_event_attachment_links(
         "attachment",
         "attachment__category",
         "attachment__created_by",
+        "role",
+        "created_by",
+    )
+
+
+def get_person_name_source_links(
+    *,
+    person_name: PersonName,
+) -> QuerySet[PersonNameSource]:
+    """Vrať permissionless historii nesmazaných vazeb zdrojů jména."""
+
+    current_name = _load_current_person_name(person_name)
+    return PersonNameSource.objects.filter(
+        person_name_id=current_name.pk,
+        deleted_at__isnull=True,
+    ).select_related(
+        "person_name",
+        "person_name__person",
+        "person_name__name_type",
+        "person_name__created_by",
+        "source",
+        "source__source_type",
+        "source__created_by",
         "role",
         "created_by",
     )
@@ -226,4 +287,53 @@ def get_visible_event_attachment_links(
         attachment__archived_at__isnull=True,
         attachment__deleted_at__isnull=True,
         attachment__file_status=FileStatus.AVAILABLE,
+    )
+
+
+def get_visible_person_name_source_links(
+    *,
+    person_name: PersonName,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[PersonNameSource]:
+    """Vrať zdroje konkrétního jména viditelné po celé jeho cestě."""
+
+    access_visibility = {
+        access_level: can_view_access_level(
+            actor=actor,
+            access_level=access_level,
+        )
+        for access_level in _ACCESS_LEVELS
+    }
+    can_view_archived, can_view_deleted = _get_lifecycle_permissions(actor)
+    current_name = _load_current_person_name(person_name)
+    person = current_name.person
+    if not (
+        access_visibility.get(person.access_level, False)
+        and (person.archived_at is None or can_view_archived)
+        and (person.deleted_at is None or can_view_deleted)
+        and access_visibility.get(current_name.access_level, False)
+        and current_name.archived_at is None
+        and current_name.deleted_at is None
+    ):
+        raise PermissionDenied("Nemáte oprávnění zobrazit toto jméno osoby.")
+
+    visible_access_levels = tuple(
+        access_level
+        for access_level, is_visible in access_visibility.items()
+        if is_visible
+    )
+    return get_person_name_source_links(person_name=current_name).filter(
+        _person_name_parent_lifecycle_filter(
+            can_view_archived=can_view_archived,
+            can_view_deleted=can_view_deleted,
+        ),
+        access_level__in=visible_access_levels,
+        archived_at__isnull=True,
+        person_name__access_level__in=visible_access_levels,
+        person_name__archived_at__isnull=True,
+        person_name__deleted_at__isnull=True,
+        person_name__person__access_level__in=visible_access_levels,
+        source__access_level__in=visible_access_levels,
+        source__archived_at__isnull=True,
+        source__deleted_at__isnull=True,
     )

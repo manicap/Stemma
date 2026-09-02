@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.40
+**Verze:** 0.41
 **Stav:** koncept  
 **Datum revize:** 2. 9. 2026
 
@@ -983,8 +983,16 @@ Migrace `materials.0006_source_links` následně vytváří šest explicitních 
 interní transakční create/update služby přijímají úplný `SourceLinkInput`,
 znovu načítají endpointy a vynucují lifecycle a aktivitu role. Nejde o actor
 autorizaci: budoucí aplikační volající musí před službou ověřit stávající
-kontext i každý měněný endpoint. Actor-aware selectory, admin a UI stále
-nejsou součástí řezu.
+kontext i každý měněný endpoint. Ostatní actor-aware selectory, admin a UI
+stále nejsou součástí řezu.
+
+První čtecí řez tvoří `get_person_name_source_links(*, person_name)` pro
+interní historii nesmazaných vazeb a
+`get_visible_person_name_source_links(*, person_name, actor)` pro běžné
+kontextové čtení. Actor-aware varianta ověřuje access a lifecycle rodičovské
+osoby, konkrétního `PersonName`, vazby a `Source`. Archivované či odstraněné
+jméno, vazba nebo zdroj běžně nevydá; lifecycle rodičovské osoby respektuje
+její explicitní permissions. Jiná vazba ke stejnému zdroji výsledek neovlivní.
 
 ## 10. Zdravotní záznam
 

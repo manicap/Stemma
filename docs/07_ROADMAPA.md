@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.26
+**Verze:** 0.27
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -142,9 +142,16 @@ aktivitu role a validují úplný model. Nejsou však actor autorizační hranic
 budoucí aplikační volající musí oprávnění ověřit kontextově. Actor-aware
 selectory, admin, API a UI zůstávají dalšími řezy.
 
+Devátý řez zavádí permissionless historii a actor-aware čtení zdrojových vazeb
+konkrétního `PersonName`. Autorizovaná varianta vynucuje access a lifecycle
+osoby, jména, vazby i zdroje, znovu filtruje lazy výsledek proti změněnému
+databázovému stavu a přednačítá celý kontext bez N+1. Jiná vazba ke stejnému
+zdroji chráněné jméno neodhalí; selector podle samotného zdroje nevzniká.
+
 #### Následující implementační kroky
 
-1. doplnit zdroje, jejich explicitní propojení a actor-aware čtení příloh,
+1. dokončit kontextové actor-aware selectory zbývajících vazeb příloh a
+   zdrojů,
 2. doplnit zdravotní záznamy,
 3. doplnit audit navazujících zápisových operací,
 4. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic.

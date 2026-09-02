@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.16
+**Verze:** 0.17
 **Stav:** pracovní návrh  
 **Datum revize:** 2. 9. 2026
 
@@ -320,6 +320,20 @@ vazby nebo zdroje ji smí pouze zpřísnit a lifecycle se vyhodnocuje na všech
 objektech konkrétní cesty. Chybějící nebo neviditelný článek cesty selže
 uzavřeně. Obecná URL nebo selector pouze podle `Source.id` nesmí sloužit jako
 autorizační hranice pro doménový kontext.
+
+### 5.12.1 Implementovaný kontext jména osoby
+
+`get_visible_person_name_source_links(*, person_name, actor)` nejprve ověří
+rodičovskou osobu a konkrétní `PersonName`. Osoba používá centrální access
+policy a explicitní permissions pro archivovaný či měkce odstraněný stav.
+Archivované nebo odstraněné jméno se v běžném průchodu nevydá ani superuserovi.
+Výsledný dotaz znovu databázově filtruje access celé cesty a vždy vylučuje
+archivovanou či odstraněnou vazbu a zdroj.
+
+Permissionless protějšek je pouze interní historie nesmazaných vazeb a není
+autorizační hranicí. Neexistuje selector podle samotného `Source.id`. Viditelná
+vazba jiného jména ke stejnému zdroji proto nemůže potvrdit existenci ani obsah
+chráněného `PersonName`.
 
 ## 6. Zamčený obsah
 

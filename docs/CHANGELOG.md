@@ -1,5 +1,15 @@
 # Historie změn dokumentace
 
+## Verze 0.63 – 2. 9. 2026
+
+- přidána permissionless historie a actor-aware selector zdrojových vazeb
+  konkrétního `PersonName`,
+- actor-aware čtení kontroluje access a lifecycle osoby, jména, vazby i zdroje
+  a opakuje podmínky ve výsledkovém lazy dotazu,
+- celý kontext je přednačten bez N+1 a jiná přístupná vazba ke stejnému zdroji
+  nemůže odhalit chráněné jméno,
+- obecný selector podle `Source.id`, admin, API a UI nevznikají.
+
 ## Verze 0.62 – 2. 9. 2026
 
 - přidán `SourceLinkInput` a transakční create/update služby pro všech šest
