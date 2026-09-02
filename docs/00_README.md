@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.23
+**Verze dokumentace:** 0.24
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
 **Datum revize:** 2. 9. 2026
 
@@ -39,6 +39,19 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.24
+
+Verze 0.24 zahajuje zdroje dvěma prázdnými rozšiřitelnými katalogy:
+
+- `SourceType` klasifikuje druh znovupoužitelného informačního pramene a
+  `SourceRole` význam zdroje vůči konkrétnímu propojenému objektu,
+- migrace `materials.0004_source_lookups` je čistě strukturální a nevkládá
+  neschválené systémové hodnoty,
+- globální důvěryhodnost zdroje se v této etapě nemodeluje a kontextová vazba
+  nesmí přes jiný přístupný cíl prozradit chráněný objekt,
+- konkrétní `Source`, bibliografická pole a explicitní vazby následují v
+  samostatných řezech.
 
 ## Stav verze 0.23
 

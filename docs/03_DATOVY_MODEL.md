@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.36
+**Verze:** 0.37
 **Stav:** koncept  
-**Datum revize:** 30. 8. 2026
+**Datum revize:** 2. 9. 2026
 
 ## 1. Základní pilíře
 
@@ -938,7 +938,16 @@ modely a nesmějí být nahrazeny generickým vztahem.
 
 ## 9. Zdroj
 
-Pole:
+`Source` reprezentuje znovupoužitelný informační pramen, nikoli digitální
+soubor. Jeho povinný druh klasifikuje uživatelsky rozšiřitelný `SourceType`.
+Význam zdroje vůči konkrétnímu doménovému objektu neleží na `Source`, ale na
+explicitní vazbě s uživatelsky rozšiřitelným `SourceRole`.
+
+Kromě typu a názvu mohou být bibliografické údaje neúplné. Přesný katalog
+polí konkretizuje navazující strukturální řez; globální hodnocení
+důvěryhodnosti se v této etapě nemodeluje.
+
+Plánovaná pole zahrnují:
 
 - ID,
 - typ zdroje,
@@ -948,10 +957,18 @@ Pole:
 - signatura,
 - odkaz,
 - poznámka,
-- míra důvěryhodnosti,
 - přístupová úroveň.
 
-Zdroj se má vázat na konkrétní tvrzení nebo záznam, nikoli pouze na celou osobu.
+Zdroj se váže ke konkrétnímu strukturovanému záznamu, nikoli obecně k celé
+osobě nebo libovolnému poli. Access policy cílového doménového objektu je pro
+každou vazbu povinná; případná vlastní access úroveň vazby nebo zdroje ji smí
+pouze zpřísnit. Lifecycle se vyhodnocuje na všech objektech dané cesty. Jiná
+přístupná vazba ke stejnému zdroji nesmí zpřístupnit ani prozradit chráněný
+cílový objekt.
+
+První implementační řez vytváří pouze prázdné katalogy `SourceType` a
+`SourceRole` nad `LookupModel`; nevkládá seed hodnoty a ještě nevytváří
+`Source` ani jeho vazby.
 
 ## 10. Zdravotní záznam
 

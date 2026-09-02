@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.49
+**Verze:** 0.50
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -2042,6 +2042,15 @@ konkrétní vazbu autorizovat znovu.
 
 Zdroj popisuje původ informace, nikoli samotný digitální soubor.
 
+`Source` je znovupoužitelný informační pramen. Povinný `SourceType` klasifikuje
+jeho druh a `SourceRole` patří až explicitní vazbě, kde popisuje význam zdroje
+vůči jednomu konkrétnímu doménovému objektu. Oba katalogy jsou uživatelsky
+rozšiřitelné modely nad `LookupModel` a první strukturální migrace
+`materials.0004_source_lookups` je vytváří prázdné bez systémových seed hodnot.
+
+Kromě názvu a typu mohou být bibliografické údaje neúplné. Globální hodnocení
+důvěryhodnosti zdroje se v této etapě nemodeluje.
+
 Obsahuje například:
 
 - typ zdroje,
@@ -2051,7 +2060,6 @@ Obsahuje například:
 - publikační údaje,
 - URL a datum přístupu,
 - externí identifikátor,
-- důvěryhodnost,
 - přístupovou úroveň.
 
 Zdroj se explicitně váže ke konkrétním strukturovaným záznamům, zejména k:
@@ -2065,6 +2073,13 @@ Zdroj se explicitně váže ke konkrétním strukturovaným záznamům, zejména
 - příloze.
 
 Propojení obsahuje roli zdroje, citovanou část, krátký úryvek, výklad a sílu podpory. Zdroj může tvrzení potvrzovat, naznačovat, doplňovat nebo mu odporovat.
+
+Access policy cílového doménového objektu je pro každou vazbu povinná.
+Případná vlastní access úroveň vazby nebo zdroje ji smí pouze zpřísnit a
+lifecycle se vyhodnocuje na všech objektech konkrétní cesty. Existence jiné
+přístupné vazby ke stejnému `Source` nesmí zpřístupnit ani potvrdit existenci
+chráněného cíle. Budoucí actor-aware čtení proto musí zůstat kontextové;
+obecný lookup podle `Source.id` není autorizační hranice.
 
 Univerzální systém zdrojování libovolného databázového pole není součástí první verze.
 

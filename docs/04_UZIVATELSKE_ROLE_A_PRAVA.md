@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.15
+**Verze:** 0.16
 **Stav:** pracovní návrh  
-**Datum revize:** 30. 8. 2026
+**Datum revize:** 2. 9. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -307,9 +307,26 @@ jejím dosavadním kontextu cíle a přílohy a poté každý měněný endpoint
 oprávnění k mutaci. Teprve po těchto kontrolách smí vrátit konkrétní validační
 nebo konfliktní detail.
 
+## 5.12 Kontextová autorizace zdroje
+
+`Source` je znovupoužitelný informační pramen, ale jeho opakované použití
+nevytváří globální zkratku k chráněným objektům. Každá explicitní vazba se
+autorizuje v kontextu vlastního cílového doménového objektu. To, že actor vidí
+tentýž zdroj přes jinou přístupnou vazbu, nesmí potvrdit existenci, identitu ani
+obsah chráněného cíle.
+
+Access policy cíle je pro vazbu vždy povinná. Případná vlastní access úroveň
+vazby nebo zdroje ji smí pouze zpřísnit a lifecycle se vyhodnocuje na všech
+objektech konkrétní cesty. Chybějící nebo neviditelný článek cesty selže
+uzavřeně. Obecná URL nebo selector pouze podle `Source.id` nesmí sloužit jako
+autorizační hranice pro doménový kontext.
+
 ## 6. Zamčený obsah
 
 Uživatel bez oprávnění má být informován, že chráněný obsah existuje.
+Jde o obecné upozornění na skrytou sekci nebo položky; nesmí potvrdit existenci,
+identitu ani vazbu konkrétního chráněného objektu dosaženého direct-object URL
+nebo přes jiný přístupný kontext.
 
 Možné zprávy:
 

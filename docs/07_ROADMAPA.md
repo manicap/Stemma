@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.22
+**Verze:** 0.23
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -115,6 +115,13 @@ fyzického souboru `available`. Měkce odstraněné vazby ani přílohy nevydáv
 historické archivované záznamy zachovávají pouze v interním permissionless
 přehledu a související metadata načítají bez N+1. Ostatní kontexty, zdroje,
 storage URL, upload a UI zůstávají navazujícími řezy.
+
+Pátý řez zahajuje zdroje prázdnými rozšiřitelnými katalogy `SourceType` a
+`SourceRole` ve strukturální migraci `materials.0004_source_lookups` bez seed
+hodnot. Schválený kontrakt rozlišuje znovupoužitelný pramen, jeho typ a význam
+jednotlivé explicitní vazby; globální důvěryhodnost se nemodeluje a jiná
+přístupná vazba nesmí prozradit chráněný cíl. Konkrétní `Source` a vazby
+zůstávají samostatnými navazujícími řezy.
 
 #### Následující implementační kroky
 

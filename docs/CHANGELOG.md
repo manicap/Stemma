@@ -1,5 +1,20 @@
 # Historie změn dokumentace
 
+## Verze 0.59 – 2. 9. 2026
+
+- schváleno, že `Source` je znovupoužitelný informační pramen, `SourceType`
+  klasifikuje jeho druh a `SourceRole` význam vůči konkrétnímu cíli,
+- kromě názvu a typu mohou být bibliografické údaje neúplné a globální
+  hodnocení důvěryhodnosti se v této etapě nemodeluje,
+- access cíle je pro zdrojovou vazbu povinný, případný access vazby nebo
+  zdroje jej smí jen zpřísnit a lifecycle se vyhodnocuje na celé cestě; jiná
+  přístupná vazba nesmí prozradit chráněný cíl,
+- implementovány prázdné katalogy `SourceType` a `SourceRole`, admin guard,
+  strukturální migrace `materials.0004_source_lookups` bez seed hodnot a
+  cílené testy modelů, registrace, tabulek a migrace,
+- konkrétní `Source`, bibliografická pole, explicitní vazby, služby, selectory
+  a UI zůstávají navazujícími řezy.
+
 ## Verze 0.58 – 2. 9. 2026
 
 - bezpečné čtení příloh rozšířeno o permissionless historii vazeb události a

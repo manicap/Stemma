@@ -19,6 +19,8 @@ from .models import (
     PlaceAttachment,
     RelationshipAttachment,
     ResidenceAttachment,
+    SourceRole,
+    SourceType,
 )
 
 
@@ -37,6 +39,8 @@ class MaterialsApplicationTests(SimpleTestCase):
             (
                 AttachmentCategory,
                 AttachmentRole,
+                SourceType,
+                SourceRole,
                 Attachment,
                 PersonAttachment,
                 EventAttachment,

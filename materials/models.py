@@ -39,6 +39,28 @@ class AttachmentRole(LookupModel):
         return self.name
 
 
+class SourceType(LookupModel):
+    """Uživatelsky rozšiřitelná klasifikace informačního pramene."""
+
+    class Meta(LookupModel.Meta):
+        verbose_name = "Typ zdroje"
+        verbose_name_plural = "Typy zdrojů"
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class SourceRole(LookupModel):
+    """Význam zdroje vůči konkrétnímu propojenému objektu."""
+
+    class Meta(LookupModel.Meta):
+        verbose_name = "Role zdroje"
+        verbose_name_plural = "Role zdrojů"
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Attachment(
     TimestampedModel,
     PartialDateModel,
