@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.20
+**Verze:** 0.21
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
-**Datum revize:** 30. 8. 2026
+**Datum revize:** 2. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -107,6 +107,14 @@ Třetí řez přidává šest explicitních vazeb ke stávajícím doménám, mi
 `materials.0003_attachment_links` a transakční create/update služby. Vazby na
 zdravotní záznam a zdroj zůstávají záměrně odložené do příslušných domén.
 Nevzniká generická vazba, selector, admin, doručovací URL ani produktové UI.
+
+Čtvrtý řez zahajuje bezpečné čtení materiálů kontextem osoby. Permissionless
+selector poskytuje interní historii vazeb a actor-aware varianta vynucuje
+současně access osoby, vazby i přílohy, lifecycle a stav fyzického souboru
+`available`. Měkce odstraněné vazby ani přílohy nevydává, zachovává historické
+archivované záznamy pouze v interním permissionless přehledu a načítá
+související metadata bez N+1. Ostatní kontexty, zdroje, storage URL, upload a
+UI zůstávají navazujícími řezy.
 
 #### Následující implementační kroky
 

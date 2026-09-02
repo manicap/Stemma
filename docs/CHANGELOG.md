@@ -1,5 +1,20 @@
 # Historie změn dokumentace
 
+## Verze 0.57 – 2. 9. 2026
+
+- přidán permissionless selector interní historie vazeb příloh osoby a
+  actor-aware selector pro bezpečné kontextové čtení,
+- autorizovaný výsledek vyžaduje současně viditelnou osobu, vazbu i přílohu,
+  nearchivovanou a měkce neodstraněnou vazbu i přílohu a
+  `FileStatus.AVAILABLE`; lifecycle vstupní osoby dál řídí existující
+  oprávnění,
+- vstupní osoba, stav actora a oprávnění se čtou z aktuální databáze a
+  související osoba, příloha, kategorie, role a autoři se načítají bez N+1,
+- doplněny cílené testy API, access/lifecycle matice, file statusu, čerstvého
+  DB stavu, řazení, laziness a dotazového profilu,
+- nevzniká migrace, nové oprávnění, obecná přílohová URL, upload, doručení,
+  admin ani UI; obecný `Place` se bez své target policy nezpřístupňuje.
+
 ## Verze 0.56 – 30. 8. 2026
 
 - rozhodnutí 156 konkretizuje šest explicitních vazeb příloh ke stávajícím

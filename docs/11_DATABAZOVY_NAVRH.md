@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.47
+**Verze:** 0.48
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
-**Datum revize:** 30. 8. 2026
+**Datum revize:** 2. 9. 2026
 
 ## 1. Účel
 
@@ -2003,6 +2003,26 @@ měněný endpoint i oprávnění mutace. Budoucí čtení a doručení musí b�
 kontextové přes konkrétní vazbu a vyhodnotit nejpřísnější
 access/lifecycle přílohy, vazby a cíle společně s `FileStatus.AVAILABLE`.
 Vazby ke zdravotním záznamům a zdrojům zůstávají plánované samostatné modely.
+
+První čtecí řez nad vazbami osoby zavádí
+`get_person_attachment_links(*, person)` a
+`get_visible_person_attachment_links(*, person, actor)`. Permissionless
+varianta vrací lazy interní historii vazeb s `deleted_at IS NULL` bez
+autorizace, filtrování stavu přílohy nebo jejího lifecycle. Autorizovaná
+varianta nejprve chrání vstupní osobu čerstvým stavem access a jejími
+existujícími lifecycle permissions a pak databázově vyžaduje viditelnou access
+úroveň osoby, vazby i přílohy, měkce neodstraněnou vazbu a přílohu a
+`attachment.file_status = available`. Vazba i příloha navíc musí být
+nearchivované; dokud pro materiály neexistuje explicitní lifecycle oprávnění,
+je běžné actor-aware čtení v této vrstvě konzervativně fail-closed.
+
+Archivované vazby a přílohy zůstávají dostupné pouze v permissionless interní
+historii; neaktivní kategorie a role nejsou samostatnou autorizační vrstvou.
+Oba selectory zachovávají modelové řazení a přednačítají osobu, přílohu,
+kategorii, roli a autory jedním výsledkovým dotazem bez N+1. Nevydávají fyzický
+soubor ani storage URL a budoucí doručení musí konkrétní kontext autorizovat
+znovu. Další cílové typy dostanou vlastní kontextové selectory až podle své
+target policy; obecný `Place` tento řez nezpřístupňuje.
 
 ## 12. Zdroje
 

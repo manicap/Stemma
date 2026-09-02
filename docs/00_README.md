@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.21
+**Verze dokumentace:** 0.22
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
-**Datum revize:** 30. 8. 2026
+**Datum revize:** 2. 9. 2026
 
 ## Účel balíčku
 
@@ -39,6 +39,20 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.22
+
+Verze 0.22 přidává první bezpečné kontextové čtení příloh osoby:
+
+- permissionless selector zpřístupňuje interní historii vazeb bez produktové
+  URL a actor-aware selector kombinuje access osoby, vazby a přílohy,
+- běžný výsledek vyžaduje nearchivovanou a měkce neodstraněnou vazbu i
+  přílohu a fyzický stav `available`; lifecycle vstupní osoby zachovává
+  existující oprávnění,
+- šest explicitních vazeb příloh ke stávajícím doménám má strukturální migraci
+  a transakční create/update služby,
+- zdroje, ostatní actor-aware kontexty, upload, doručení a UI zůstávají
+  navazujícími řezy.
 
 ## Stav verze 0.21
 
