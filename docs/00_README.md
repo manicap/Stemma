@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.26
+**Verze dokumentace:** 0.27
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
 **Datum revize:** 2. 9. 2026
 
@@ -39,6 +39,16 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.27
+
+Verze 0.27 doplňuje interní transakční zápisy zdrojových vazeb:
+
+- typované create/update služby pokrývají všech šest explicitních cílů,
+- endpointy, zdroj, role i autor se načítají znovu a zápis respektuje jejich
+  lifecycle a aktivitu role,
+- služby samy neudělují actor oprávnění; případné budoucí aplikační volání
+  musí autorizovat původní kontext i každý měněný endpoint.
 
 ## Stav verze 0.26
 

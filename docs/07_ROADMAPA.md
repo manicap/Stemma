@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.25
+**Verze:** 0.26
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -135,6 +135,12 @@ stávajícím strukturovaným cílům v migraci `materials.0006_source_links`.
 Každá cesta má vlastní model a chráněné cizí klíče; generický vztah ani vazba
 přímo na celou osobu nevznikají. Zápisové služby, actor-aware selectory, admin
 a UI zůstávají samostatnými navazujícími řezy.
+
+Osmý řez doplňuje interní transakční create/update služby všech šesti vazeb.
+Služby pracují s čerstvým databázovým stavem, chrání lifecycle endpointů a
+aktivitu role a validují úplný model. Nejsou však actor autorizační hranicí;
+budoucí aplikační volající musí oprávnění ověřit kontextově. Actor-aware
+selectory, admin, API a UI zůstávají dalšími řezy.
 
 #### Následující implementační kroky
 

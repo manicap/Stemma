@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.52
+**Verze:** 0.53
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -2110,6 +2110,20 @@ jsou rovněž chráněné. Duplicity nejsou dodatečně zakázané a žádný mo
 nepoužívá generický vztah. Migrace `materials.0006_source_links` nevkládá seed
 data. Modely zatím nejsou registrované v adminu ani vystavené službou,
 selectorem, API nebo UI.
+
+Interní zápisová hranice používá frozen slotted `SourceLinkInput` a samostatné
+typované create/update funkce pro všech šest modelů. V transakci vždy znovu
+načte konkrétní cíl, zdroj, roli a volitelného autora a před uložením provede
+`full_clean()`. Create odmítá archivovaný či odstraněný cíl nebo zdroj a
+neaktivní roli. Update odmítá odstraněnou vazbu nebo endpoint, dovoluje však
+zachovat stejný mezitím archivovaný cíl či zdroj a stejnou mezitím neaktivní
+roli; na jiný takový endpoint přejít nesmí. Archivovaná vazba zůstává
+editovatelná a textový kontext se ořezává.
+
+Tyto služby neověřují actor oprávnění. Před budoucím aplikačním použitím musí
+volající autorizovat create nad cílem, zdrojem a vznikem kontextu; update musí
+nejprve autorizovat dosavadní konkrétní cestu a potom každý měněný endpoint i
+samotnou mutaci. Admin, API, UI a actor-aware selectory zatím nevznikají.
 
 Access policy cílového doménového objektu je pro každou vazbu povinná.
 Případná vlastní access úroveň vazby nebo zdroje ji smí pouze zpřísnit a

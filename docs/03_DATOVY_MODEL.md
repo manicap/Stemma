@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.39
+**Verze:** 0.40
 **Stav:** koncept  
 **Datum revize:** 2. 9. 2026
 
@@ -980,7 +980,11 @@ Navazující strukturální migrace `materials.0005_sources` vytváří samotný
 `Source` bez seed dat, explicitních vazeb, služeb, selectorů, adminu nebo UI.
 Samostatný lookup podle `Source.id` proto není aplikační autorizační hranice.
 Migrace `materials.0006_source_links` následně vytváří šest explicitních vazeb;
-zápisové služby, actor-aware selectory, admin a UI stále nejsou součástí řezu.
+interní transakční create/update služby přijímají úplný `SourceLinkInput`,
+znovu načítají endpointy a vynucují lifecycle a aktivitu role. Nejde o actor
+autorizaci: budoucí aplikační volající musí před službou ověřit stávající
+kontext i každý měněný endpoint. Actor-aware selectory, admin a UI stále
+nejsou součástí řezu.
 
 ## 10. Zdravotní záznam
 

@@ -1,5 +1,16 @@
 # Historie změn dokumentace
 
+## Verze 0.62 – 2. 9. 2026
+
+- přidán `SourceLinkInput` a transakční create/update služby pro všech šest
+  explicitních zdrojových vazeb,
+- služby znovu načítají endpointy, zdroj, roli a autora, validují celý model a
+  ořezávají textový kontext,
+- create a update vynucují lifecycle a aktivitu role se zachováním stejného
+  mezitím archivovaného endpointu nebo neaktivní role při update,
+- služby nejsou actor autorizací; admin, API, UI a actor-aware selectory stále
+  nevznikají.
+
 ## Verze 0.61 – 2. 9. 2026
 
 - přidán pevný `SourceSupport` pro potvrzení, naznačení, doplnění a rozpor,
