@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.50
+**Verze:** 0.51
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -2049,18 +2049,33 @@ rozšiřitelné modely nad `LookupModel` a první strukturální migrace
 `materials.0004_source_lookups` je vytváří prázdné bez systémových seed hodnot.
 
 Kromě názvu a typu mohou být bibliografické údaje neúplné. Globální hodnocení
-důvěryhodnosti zdroje se v této etapě nemodeluje.
+důvěryhodnosti zdroje se v této etapě nemodeluje. Implementovaný `Source` dědí
+`TimestampedModel`, `PartialDateModel`, `AccessControlledModel`,
+`AuthoredModel` a `LifecycleModel`; nedědí `VerifiableModel`.
 
-Obsahuje například:
+Vlastní pole modelu jsou:
 
-- typ zdroje,
-- název a úplnou citaci,
-- instituci, fond, signaturu, svazek a inventární číslo,
-- autora nebo původce,
-- publikační údaje,
-- URL a datum přístupu,
-- externí identifikátor,
-- přístupovou úroveň.
+- `source_type` — povinný `ForeignKey` na `SourceType`, `null=False`,
+  `blank=False`, `on_delete=models.PROTECT`, `related_name="sources"`,
+- `title` — povinný `CharField(max_length=255)`; vlastní modelová validace
+  odmítne název tvořený pouze mezerami kódem `source_title_required`,
+- `full_citation` — `TextField(blank=True)`,
+- `institution`, `fonds` a `shelfmark` — volitelné `CharField(max_length=255)`,
+- `volume` a `inventory_number` — volitelné `CharField(max_length=100)`,
+- `creator_name` — `CharField(max_length=255, blank=True)`,
+- `publication_details` — `TextField(blank=True)`,
+- `url` — `URLField(max_length=500, blank=True)`,
+- `accessed_on` — `DateField(null=True, blank=True)`,
+- `external_identifier` — `CharField(max_length=255, blank=True)`,
+- `note` — `TextField(blank=True)`.
+
+Neúplné historické nebo publikační datum je uloženo společnými poli
+`PartialDateModel`; přesné datum přístupu zůstává oddělené. Bibliografická pole
+nemají dodatečnou unikátnost. Metadata používají `verbose_name = "Zdroj"`,
+`verbose_name_plural = "Zdroje"` a `ordering = ("title", "pk")`.
+Strukturální migrace `materials.0005_sources` vytváří jedinou tabulku bez seed
+dat. Model zatím není registrován v adminu ani vystaven službou, selectorem,
+API nebo UI.
 
 Zdroj se explicitně váže ke konkrétním strukturovaným záznamům, zejména k:
 

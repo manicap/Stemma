@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.23
+**Verze:** 0.24
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -122,6 +122,13 @@ hodnot. Schválený kontrakt rozlišuje znovupoužitelný pramen, jeho typ a vý
 jednotlivé explicitní vazby; globální důvěryhodnost se nemodeluje a jiná
 přístupná vazba nesmí prozradit chráněný cíl. Konkrétní `Source` a vazby
 zůstávají samostatnými navazujícími řezy.
+
+Šestý řez přidává samotný `Source` a strukturální migraci
+`materials.0005_sources`. Povinné jsou pouze typ a neprázdný název; zbývající
+bibliografická metadata jsou volitelná a neúplné datum používá společný
+`PartialDateModel`. Model nese access, autorství a lifecycle, ale žádné globální
+hodnocení důvěryhodnosti ani verification. Explicitní vazby, služby, selectory,
+admin a UI zůstávají oddělenými navazujícími řezy.
 
 #### Následující implementační kroky
 

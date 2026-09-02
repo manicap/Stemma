@@ -1,5 +1,17 @@
 # Historie změn dokumentace
 
+## Verze 0.60 – 2. 9. 2026
+
+- implementován znovupoužitelný `Source` s povinným chráněným `SourceType` a
+  neprázdným názvem,
+- doplněna volitelná bibliografie, společné neúplné datum, access, autorství a
+  lifecycle bez verification nebo globálního hodnocení důvěryhodnosti,
+- přidána čistě strukturální migrace `materials.0005_sources` a cílené testy
+  povinnosti, neúplnosti, ochrany typu, absence důvěryhodnosti a registrace v
+  adminu,
+- `Source` zatím není registrován v adminu ani vystaven službou, selectorem,
+  API nebo UI; explicitní vazby a jejich kontextová autorizace následují.
+
 ## Verze 0.59 – 2. 9. 2026
 
 - schváleno, že `Source` je znovupoužitelný informační pramen, `SourceType`

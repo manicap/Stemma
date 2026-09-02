@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.37
+**Verze:** 0.38
 **Stav:** koncept  
 **Datum revize:** 2. 9. 2026
 
@@ -943,21 +943,21 @@ soubor. Jeho povinný druh klasifikuje uživatelsky rozšiřitelný `SourceType`
 Význam zdroje vůči konkrétnímu doménovému objektu neleží na `Source`, ale na
 explicitní vazbě s uživatelsky rozšiřitelným `SourceRole`.
 
-Kromě typu a názvu mohou být bibliografické údaje neúplné. Přesný katalog
-polí konkretizuje navazující strukturální řez; globální hodnocení
+Kromě typu a názvu mohou být bibliografické údaje neúplné. Globální hodnocení
 důvěryhodnosti se v této etapě nemodeluje.
 
-Plánovaná pole zahrnují:
+Implementovaný `Source` dědí timestamp, neúplné datum, access, autorství a
+lifecycle bez verification. Jeho vlastní pole jsou:
 
-- ID,
-- typ zdroje,
-- název,
-- citace,
-- archiv nebo instituce,
-- signatura,
-- odkaz,
-- poznámka,
-- přístupová úroveň.
+- `source_type` — povinný chráněný FK na `SourceType`,
+- `title` — povinný název, který nesmí být prázdný ani pouze z mezer,
+- `full_citation`, `institution`, `fonds`, `shelfmark`, `volume`,
+  `inventory_number`, `creator_name`, `publication_details`, `url`,
+  `accessed_on`, `external_identifier` a `note` — volitelné bibliografické
+  údaje bez dodatečné povinnosti nebo unikátnosti.
+
+Neúplné historické nebo publikační datum používá společná pole
+`PartialDateModel`; `accessed_on` je samostatné volitelné přesné datum přístupu.
 
 Zdroj se váže ke konkrétnímu strukturovanému záznamu, nikoli obecně k celé
 osobě nebo libovolnému poli. Access policy cílového doménového objektu je pro
@@ -966,9 +966,10 @@ pouze zpřísnit. Lifecycle se vyhodnocuje na všech objektech dané cesty. Jin�
 přístupná vazba ke stejnému zdroji nesmí zpřístupnit ani prozradit chráněný
 cílový objekt.
 
-První implementační řez vytváří pouze prázdné katalogy `SourceType` a
-`SourceRole` nad `LookupModel`; nevkládá seed hodnoty a ještě nevytváří
-`Source` ani jeho vazby.
+První implementační řez vytvořil prázdné katalogy `SourceType` a `SourceRole`.
+Navazující strukturální migrace `materials.0005_sources` vytváří samotný
+`Source` bez seed dat, explicitních vazeb, služeb, selectorů, adminu nebo UI.
+Samostatný lookup podle `Source.id` proto není aplikační autorizační hranice.
 
 ## 10. Zdravotní záznam
 

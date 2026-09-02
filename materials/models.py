@@ -61,6 +61,56 @@ class SourceRole(LookupModel):
         return self.name
 
 
+class Source(
+    TimestampedModel,
+    PartialDateModel,
+    AccessControlledModel,
+    AuthoredModel,
+    LifecycleModel,
+    models.Model,
+):
+    """Znovupoužitelný informační pramen s volitelnou bibliografií."""
+
+    source_type = models.ForeignKey(
+        SourceType,
+        on_delete=models.PROTECT,
+        related_name="sources",
+    )
+    title = models.CharField(max_length=255)
+    full_citation = models.TextField(blank=True)
+    institution = models.CharField(max_length=255, blank=True)
+    fonds = models.CharField(max_length=255, blank=True)
+    shelfmark = models.CharField(max_length=255, blank=True)
+    volume = models.CharField(max_length=100, blank=True)
+    inventory_number = models.CharField(max_length=100, blank=True)
+    creator_name = models.CharField(max_length=255, blank=True)
+    publication_details = models.TextField(blank=True)
+    url = models.URLField(max_length=500, blank=True)
+    accessed_on = models.DateField(null=True, blank=True)
+    external_identifier = models.CharField(max_length=255, blank=True)
+    note = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Zdroj"
+        verbose_name_plural = "Zdroje"
+        ordering = ("title", "pk")
+
+    def clean(self) -> None:
+        super().clean()
+        if not (self.title or "").strip():
+            raise ValidationError(
+                {
+                    "title": ValidationError(
+                        "Název zdroje nesmí být prázdný.",
+                        code="source_title_required",
+                    )
+                }
+            )
+
+    def __str__(self) -> str:
+        return (self.title or "").strip() or "Zdroj"
+
+
 class Attachment(
     TimestampedModel,
     PartialDateModel,
