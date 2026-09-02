@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.54
+**Verze:** 0.55
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -2141,6 +2141,18 @@ Oba selectory načítají `PersonName`, osobu, typ jména, `Source`, typ zdroje,
 roli a autory přes `select_related()`. Jiná viditelná vazba ke stejnému zdroji
 se dotazu neúčastní a nemůže potvrdit chráněný cíl. Obecný selector podle
 `Source.id`, admin, API ani UI nevznikají.
+
+Kontext události tvoří `get_event_source_links(*, event)` a
+`get_visible_event_source_links(*, event, actor)`. Permissionless varianta
+vrací lazy historii nesmazaných `EventSource`. Actor-aware varianta nejprve
+vyžaduje viditelný, nearchivovaný a neodstraněný vstupní `Event` a výsledek
+znovu databázově filtruje access a lifecycle události, vazby a zdroje. Načítá
+event, jeho typ, místo a autora, zdroj, typ zdroje a autora, roli a autora vazby
+přes `select_related()` bez N+1.
+
+Dotaz je omezen konkrétním `event_id`; žádná jiná vazba ke sdílenému zdroji se
+jej neúčastní a nemůže potvrdit chráněnou událost. Obecný selector podle
+`Source.id`, admin, API a UI nevznikají.
 
 Access policy cílového doménového objektu je pro každou vazbu povinná.
 Případná vlastní access úroveň vazby nebo zdroje ji smí pouze zpřísnit a

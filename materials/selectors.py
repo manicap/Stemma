@@ -12,13 +12,20 @@ from events.models import Event
 from people.models import Person, PersonName
 
 from .choices import FileStatus
-from .models import EventAttachment, PersonAttachment, PersonNameSource
+from .models import (
+    EventAttachment,
+    EventSource,
+    PersonAttachment,
+    PersonNameSource,
+)
 
 __all__ = (
     "get_event_attachment_links",
+    "get_event_source_links",
     "get_person_attachment_links",
     "get_person_name_source_links",
     "get_visible_event_attachment_links",
+    "get_visible_event_source_links",
     "get_visible_person_attachment_links",
     "get_visible_person_name_source_links",
 )
@@ -207,6 +214,29 @@ def get_person_name_source_links(
     )
 
 
+def get_event_source_links(
+    *,
+    event: Event,
+) -> QuerySet[EventSource]:
+    """Vrať permissionless historii nesmazaných vazeb zdrojů události."""
+
+    current_event = _load_current_event(event)
+    return EventSource.objects.filter(
+        event_id=current_event.pk,
+        deleted_at__isnull=True,
+    ).select_related(
+        "event",
+        "event__event_type",
+        "event__place",
+        "event__created_by",
+        "source",
+        "source__source_type",
+        "source__created_by",
+        "role",
+        "created_by",
+    )
+
+
 def get_visible_person_attachment_links(
     *,
     person: Person,
@@ -333,6 +363,45 @@ def get_visible_person_name_source_links(
         person_name__archived_at__isnull=True,
         person_name__deleted_at__isnull=True,
         person_name__person__access_level__in=visible_access_levels,
+        source__access_level__in=visible_access_levels,
+        source__archived_at__isnull=True,
+        source__deleted_at__isnull=True,
+    )
+
+
+def get_visible_event_source_links(
+    *,
+    event: Event,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[EventSource]:
+    """Vrať zdroje konkrétní události viditelné po celé její cestě."""
+
+    access_visibility = {
+        access_level: can_view_access_level(
+            actor=actor,
+            access_level=access_level,
+        )
+        for access_level in _ACCESS_LEVELS
+    }
+    current_event = _load_current_event(event)
+    if not (
+        access_visibility.get(current_event.access_level, False)
+        and current_event.archived_at is None
+        and current_event.deleted_at is None
+    ):
+        raise PermissionDenied("Nemáte oprávnění zobrazit tuto událost.")
+
+    visible_access_levels = tuple(
+        access_level
+        for access_level, is_visible in access_visibility.items()
+        if is_visible
+    )
+    return get_event_source_links(event=current_event).filter(
+        access_level__in=visible_access_levels,
+        archived_at__isnull=True,
+        event__access_level__in=visible_access_levels,
+        event__archived_at__isnull=True,
+        event__deleted_at__isnull=True,
         source__access_level__in=visible_access_levels,
         source__archived_at__isnull=True,
         source__deleted_at__isnull=True,

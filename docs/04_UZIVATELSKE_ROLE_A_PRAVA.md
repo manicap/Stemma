@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.17
+**Verze:** 0.18
 **Stav:** pracovní návrh  
 **Datum revize:** 2. 9. 2026
 
@@ -334,6 +334,17 @@ Permissionless protějšek je pouze interní historie nesmazaných vazeb a není
 autorizační hranicí. Neexistuje selector podle samotného `Source.id`. Viditelná
 vazba jiného jména ke stejnému zdroji proto nemůže potvrdit existenci ani obsah
 chráněného `PersonName`.
+
+### 5.12.2 Implementovaný kontext události
+
+`get_visible_event_source_links(*, event, actor)` vyžaduje viditelnou,
+nearchivovanou a měkce neodstraněnou událost. Výsledný lazy dotaz znovu
+kontroluje access a lifecycle události, konkrétní vazby a zdroje. Permissionless
+protějšek je pouze interní historie nesmazaných eventových vazeb.
+
+Viditelnost stejného `Source` přes jinou událost nezakládá žádné oprávnění k
+chráněné události ani její vazbě. Neexistuje obecná cesta od zdroje zpět ke
+všem cílům.
 
 ## 6. Zamčený obsah
 

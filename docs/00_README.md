@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.28
+**Verze dokumentace:** 0.29
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
 **Datum revize:** 2. 9. 2026
 
@@ -39,6 +39,16 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.29
+
+Verze 0.29 rozšiřuje kontextové actor-aware čtení zdrojů na `Event`:
+
+- permissionless historie vrací nesmazané vazby konkrétní události,
+- autorizovaná varianta vyžaduje viditelnou aktivní událost a filtruje access
+  i lifecycle vazby a zdroje,
+- sdílený zdroj nezpřístupní chráněnou událost a celý kontext se načítá bez
+  N+1.
 
 ## Stav verze 0.28
 

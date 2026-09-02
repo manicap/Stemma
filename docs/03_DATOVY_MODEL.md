@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.41
+**Verze:** 0.42
 **Stav:** koncept  
 **Datum revize:** 2. 9. 2026
 
@@ -993,6 +993,13 @@ kontextové čtení. Actor-aware varianta ověřuje access a lifecycle rodičovs
 osoby, konkrétního `PersonName`, vazby a `Source`. Archivované či odstraněné
 jméno, vazba nebo zdroj běžně nevydá; lifecycle rodičovské osoby respektuje
 její explicitní permissions. Jiná vazba ke stejnému zdroji výsledek neovlivní.
+
+Stejný kontextový kontrakt pro událost poskytují
+`get_event_source_links(*, event)` a
+`get_visible_event_source_links(*, event, actor)`. Actor-aware varianta
+vyžaduje viditelný, nearchivovaný a neodstraněný `Event` a ve výsledku znovu
+filtruje access a lifecycle události, vazby a zdroje. Jiná eventová vazba ke
+stejnému zdroji se výsledku neúčastní.
 
 ## 10. Zdravotní záznam
 

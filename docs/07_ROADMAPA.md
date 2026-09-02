@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.27
+**Verze:** 0.28
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -147,6 +147,12 @@ konkrétního `PersonName`. Autorizovaná varianta vynucuje access a lifecycle
 osoby, jména, vazby i zdroje, znovu filtruje lazy výsledek proti změněnému
 databázovému stavu a přednačítá celý kontext bez N+1. Jiná vazba ke stejnému
 zdroji chráněné jméno neodhalí; selector podle samotného zdroje nevzniká.
+
+Desátý řez rozšiřuje stejný kontrakt na `EventSource`. Permissionless historie
+filtruje odstraněné vazby a actor-aware varianta vyžaduje viditelnou aktivní
+událost a současně access a lifecycle vazby i zdroje. Lazy výsledkový dotaz
+odolává změně databázového stavu, přednačítá kontext bez N+1 a sdílený zdroj
+neodhalí chráněnou událost.
 
 #### Následující implementační kroky
 

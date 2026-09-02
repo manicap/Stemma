@@ -1,5 +1,15 @@
 # Historie změn dokumentace
 
+## Verze 0.64 – 2. 9. 2026
+
+- přidána permissionless historie a actor-aware selector zdrojových vazeb
+  konkrétní události,
+- actor-aware varianta vyžaduje viditelný aktivní event a filtruje access i
+  lifecycle události, vazby a zdroje v lazy výsledku,
+- celý eventový kontext je přednačten bez N+1 a sdílený zdroj neodhalí jinou
+  chráněnou událost,
+- obecný selector podle `Source.id`, admin, API a UI nevznikají.
+
 ## Verze 0.63 – 2. 9. 2026
 
 - přidána permissionless historie a actor-aware selector zdrojových vazeb
