@@ -1,5 +1,18 @@
 # Historie změn dokumentace
 
+## Verze 0.58 – 2. 9. 2026
+
+- bezpečné čtení příloh rozšířeno o permissionless historii vazeb události a
+  actor-aware event selector,
+- vstupní událost musí projít centrální access policy a být nearchivovaná a
+  měkce neodstraněná; stejné lifecycle omezení platí pro výslednou vazbu a
+  přílohu a soubor musí být `available`,
+- výsledkový dotaz znovu filtruje access všech tří vrstev a přednačítá typ a
+  místo události, přílohu, kategorii, roli a autory bez N+1,
+- doplněny cílené testy API, access/lifecycle, actor semantics, file statusu,
+  čerstvého DB stavu, řazení a query profilu,
+- nevzniká migrace, permission, storage URL, doručení, admin ani UI.
+
 ## Verze 0.57 – 2. 9. 2026
 
 - přidán permissionless selector interní historie vazeb příloh osoby a

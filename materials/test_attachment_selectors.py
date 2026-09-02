@@ -32,7 +32,9 @@ class PersonAttachmentSelectorApiTests(SimpleTestCase):
         self.assertEqual(
             selectors.__all__,
             (
+                "get_event_attachment_links",
                 "get_person_attachment_links",
+                "get_visible_event_attachment_links",
                 "get_visible_person_attachment_links",
             ),
         )

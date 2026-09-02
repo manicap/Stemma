@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.21
+**Verze:** 0.22
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -108,13 +108,13 @@ Třetí řez přidává šest explicitních vazeb ke stávajícím doménám, mi
 zdravotní záznam a zdroj zůstávají záměrně odložené do příslušných domén.
 Nevzniká generická vazba, selector, admin, doručovací URL ani produktové UI.
 
-Čtvrtý řez zahajuje bezpečné čtení materiálů kontextem osoby. Permissionless
-selector poskytuje interní historii vazeb a actor-aware varianta vynucuje
-současně access osoby, vazby i přílohy, lifecycle a stav fyzického souboru
-`available`. Měkce odstraněné vazby ani přílohy nevydává, zachovává historické
-archivované záznamy pouze v interním permissionless přehledu a načítá
-související metadata bez N+1. Ostatní kontexty, zdroje, storage URL, upload a
-UI zůstávají navazujícími řezy.
+Čtvrtý řez zahajuje bezpečné čtení materiálů kontextem osoby a události.
+Permissionless selectory poskytují interní historii vazeb a actor-aware
+varianty vynucují současně access cíle, vazby i přílohy, lifecycle a stav
+fyzického souboru `available`. Měkce odstraněné vazby ani přílohy nevydávají,
+historické archivované záznamy zachovávají pouze v interním permissionless
+přehledu a související metadata načítají bez N+1. Ostatní kontexty, zdroje,
+storage URL, upload a UI zůstávají navazujícími řezy.
 
 #### Následující implementační kroky
 

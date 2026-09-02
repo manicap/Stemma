@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.48
+**Verze:** 0.49
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 2. 9. 2026
 
@@ -2023,6 +2023,20 @@ kategorii, roli a autory jedním výsledkovým dotazem bez N+1. Nevydávají fyz
 soubor ani storage URL a budoucí doručení musí konkrétní kontext autorizovat
 znovu. Další cílové typy dostanou vlastní kontextové selectory až podle své
 target policy; obecný `Place` tento řez nezpřístupňuje.
+
+Kontext události analogicky poskytuje `get_event_attachment_links(*, event)`
+a `get_visible_event_attachment_links(*, event, actor)`. Permissionless
+varianta zachovává interní historii všech měkce neodstraněných vazeb události.
+Actor-aware varianta nejprve načte aktuální událost a odmítne neviditelnou,
+archivovanou nebo měkce odstraněnou událost. Výsledkový SQL filtr znovu
+vyžaduje viditelnou access úroveň události, vazby a přílohy, nearchivovaný a
+měkce neodstraněný stav všech tří vrstev a `FileStatus.AVAILABLE`.
+
+Oba event selectory zachovávají modelové řazení a přednačítají událost, její
+typ a místo, přílohu, kategorii, roli a autory bez výsledkového N+1. Aktivita
+typu události, kategorie a role není samostatnou autorizační vrstvou. Ani tento
+kontext nevydává fyzický soubor či storage URL a budoucí doručení musí
+konkrétní vazbu autorizovat znovu.
 
 ## 12. Zdroje
 

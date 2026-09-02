@@ -8,13 +8,16 @@ from django.db.models import Q, QuerySet
 
 from common.choices import AccessLevel
 from common.permissions import can_view_access_level
+from events.models import Event
 from people.models import Person
 
 from .choices import FileStatus
-from .models import PersonAttachment
+from .models import EventAttachment, PersonAttachment
 
 __all__ = (
+    "get_event_attachment_links",
     "get_person_attachment_links",
+    "get_visible_event_attachment_links",
     "get_visible_person_attachment_links",
 )
 
@@ -39,6 +42,17 @@ def _person_unsaved_error() -> ValidationError:
     )
 
 
+def _event_unsaved_error() -> ValidationError:
+    return ValidationError(
+        {
+            "event": ValidationError(
+                "Událost musí být uložená a existovat v databázi.",
+                code="event_unsaved",
+            )
+        }
+    )
+
+
 def _load_current_person(person: Person) -> Person:
     if not isinstance(person, Person) or person.pk is None:
         raise _person_unsaved_error()
@@ -47,6 +61,16 @@ def _load_current_person(person: Person) -> Person:
         return Person.objects.get(pk=person.pk)
     except Person.DoesNotExist as error:
         raise _person_unsaved_error() from error
+
+
+def _load_current_event(event: Event) -> Event:
+    if not isinstance(event, Event) or event.pk is None:
+        raise _event_unsaved_error()
+
+    try:
+        return Event.objects.get(pk=event.pk)
+    except Event.DoesNotExist as error:
+        raise _event_unsaved_error() from error
 
 
 def _get_lifecycle_permissions(
@@ -99,6 +123,29 @@ def get_person_attachment_links(
     )
 
 
+def get_event_attachment_links(
+    *,
+    event: Event,
+) -> QuerySet[EventAttachment]:
+    """Vrať permissionless historii nesmazaných vazeb příloh události."""
+
+    current_event = _load_current_event(event)
+    return EventAttachment.objects.filter(
+        event_id=current_event.pk,
+        deleted_at__isnull=True,
+    ).select_related(
+        "event",
+        "event__event_type",
+        "event__place",
+        "event__created_by",
+        "attachment",
+        "attachment__category",
+        "attachment__created_by",
+        "role",
+        "created_by",
+    )
+
+
 def get_visible_person_attachment_links(
     *,
     person: Person,
@@ -135,6 +182,46 @@ def get_visible_person_attachment_links(
         access_level__in=visible_access_levels,
         archived_at__isnull=True,
         person__access_level__in=visible_access_levels,
+        attachment__access_level__in=visible_access_levels,
+        attachment__archived_at__isnull=True,
+        attachment__deleted_at__isnull=True,
+        attachment__file_status=FileStatus.AVAILABLE,
+    )
+
+
+def get_visible_event_attachment_links(
+    *,
+    event: Event,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[EventAttachment]:
+    """Vrať dostupné přílohy události viditelné pro aktuálního actora."""
+
+    access_visibility = {
+        access_level: can_view_access_level(
+            actor=actor,
+            access_level=access_level,
+        )
+        for access_level in _ACCESS_LEVELS
+    }
+    current_event = _load_current_event(event)
+    if not (
+        access_visibility.get(current_event.access_level, False)
+        and current_event.archived_at is None
+        and current_event.deleted_at is None
+    ):
+        raise PermissionDenied("Nemáte oprávnění zobrazit tuto událost.")
+
+    visible_access_levels = tuple(
+        access_level
+        for access_level, is_visible in access_visibility.items()
+        if is_visible
+    )
+    return get_event_attachment_links(event=current_event).filter(
+        access_level__in=visible_access_levels,
+        archived_at__isnull=True,
+        event__access_level__in=visible_access_levels,
+        event__archived_at__isnull=True,
+        event__deleted_at__isnull=True,
         attachment__access_level__in=visible_access_levels,
         attachment__archived_at__isnull=True,
         attachment__deleted_at__isnull=True,
