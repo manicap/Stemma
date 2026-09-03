@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.60
+**Verze:** 0.61
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -2209,6 +2209,16 @@ Výsledné SQL znovu filtruje access a lifecycle místa, vazby a přílohy a
 vyžaduje `FileStatus.AVAILABLE`. Selectory přednačítají celý kontext bez N+1,
 jsou omezené konkrétním `grave_site_id`, nevydávají storage URL a sdílená
 příloha nemůže odhalit jiné chráněné místo.
+
+Zdroje hrobového místa používají `get_grave_site_source_links(*, grave_site)`
+a `get_visible_grave_site_source_links(*, grave_site, actor)`. Actor-aware
+varianta chrání hrobové místo stejnou policy jako přílohový kontext, zachovává
+jeho archivaci a neautorizuje samostatně status, verification, typ ani
+připojené `Place`.
+
+Výsledné SQL znovu filtruje access a lifecycle místa, vazby a zdroje. Selectory
+přednačítají celý kontext bez N+1 a jsou omezené konkrétním `grave_site_id`,
+takže sdílený zdroj nemůže potvrdit jiné chráněné hrobové místo.
 
 Access policy cílového doménového objektu je pro každou vazbu povinná.
 Případná vlastní access úroveň vazby nebo zdroje ji smí pouze zpřísnit a

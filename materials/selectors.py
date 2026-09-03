@@ -17,6 +17,7 @@ from .models import (
     EventAttachment,
     EventSource,
     GraveSiteAttachment,
+    GraveSiteSource,
     PersonAttachment,
     PersonNameSource,
     ResidenceAttachment,
@@ -29,6 +30,7 @@ __all__ = (
     "get_event_attachment_links",
     "get_event_source_links",
     "get_grave_site_attachment_links",
+    "get_grave_site_source_links",
     "get_person_attachment_links",
     "get_person_name_source_links",
     "get_residence_attachment_links",
@@ -38,6 +40,7 @@ __all__ = (
     "get_visible_event_attachment_links",
     "get_visible_event_source_links",
     "get_visible_grave_site_attachment_links",
+    "get_visible_grave_site_source_links",
     "get_visible_person_attachment_links",
     "get_visible_person_name_source_links",
     "get_visible_residence_attachment_links",
@@ -467,6 +470,29 @@ def get_grave_site_attachment_links(
     )
 
 
+def get_grave_site_source_links(
+    *,
+    grave_site: GraveSite,
+) -> QuerySet[GraveSiteSource]:
+    """Vrať permissionless historii nesmazaných zdrojů hrobového místa."""
+
+    current = _load_current_grave_site(grave_site)
+    return GraveSiteSource.objects.filter(
+        grave_site_id=current.pk,
+        deleted_at__isnull=True,
+    ).select_related(
+        "grave_site",
+        "grave_site__grave_site_type",
+        "grave_site__place",
+        "grave_site__created_by",
+        "source",
+        "source__source_type",
+        "source__created_by",
+        "role",
+        "created_by",
+    )
+
+
 def get_visible_person_attachment_links(
     *,
     person: Person,
@@ -844,4 +870,36 @@ def get_visible_grave_site_attachment_links(
         attachment__archived_at__isnull=True,
         attachment__deleted_at__isnull=True,
         attachment__file_status=FileStatus.AVAILABLE,
+    )
+
+
+def get_visible_grave_site_source_links(
+    *,
+    grave_site: GraveSite,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[GraveSiteSource]:
+    """Vrať zdroje viditelné v kontextu hrobového místa."""
+
+    visibility = {
+        level: can_view_access_level(actor=actor, access_level=level)
+        for level in _ACCESS_LEVELS
+    }
+    current = _load_current_grave_site(grave_site)
+    if not (
+        visibility.get(current.access_level, False)
+        and current.deleted_at is None
+    ):
+        raise PermissionDenied("Nemáte oprávnění zobrazit toto hrobové místo.")
+
+    visible_levels = tuple(
+        level for level, is_visible in visibility.items() if is_visible
+    )
+    return get_grave_site_source_links(grave_site=current).filter(
+        access_level__in=visible_levels,
+        archived_at__isnull=True,
+        grave_site__access_level__in=visible_levels,
+        grave_site__deleted_at__isnull=True,
+        source__access_level__in=visible_levels,
+        source__archived_at__isnull=True,
+        source__deleted_at__isnull=True,
     )

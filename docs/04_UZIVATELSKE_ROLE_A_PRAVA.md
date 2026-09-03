@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.23
+**Verze:** 0.24
 **Stav:** pracovní návrh  
 **Datum revize:** 3. 9. 2026
 
@@ -401,6 +401,17 @@ nearchivovanou a neodstraněnou vazbu i přílohu ve stavu `available`.
 Status, verification, typ a připojené `Place` nejsou samostatnou autorizační
 vrstvou. Selector nevydává storage URL a sdílená příloha neodhalí jiné
 chráněné hrobové místo.
+
+### 5.12.8 Implementované zdroje hrobového místa
+
+`get_visible_grave_site_source_links(*, grave_site, actor)` používá stejnou
+ochranu hrobového místa jako přílohový selector. Výsledný lazy dotaz znovu
+kontroluje místo a vydává pouze viditelnou, nearchivovanou a neodstraněnou
+zdrojovou vazbu i `Source`.
+
+Status, verification, typ a připojené `Place` nejsou samostatnou autorizační
+vrstvou. Viditelnost stejného zdroje přes jiný kontext nezakládá přístup k
+chráněnému hrobovému místu.
 
 ## 6. Zamčený obsah
 

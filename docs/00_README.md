@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.34
+**Verze dokumentace:** 0.35
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
 **Datum revize:** 3. 9. 2026
 
@@ -39,6 +39,16 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.35
+
+Verze 0.35 přidává actor-aware zdroje konkrétního `GraveSite`:
+
+- cesta kontroluje hrobové místo, zdrojovou vazbu i zdroj,
+- archivované hrobové místo zůstává historicky čitelné a odstraněné cestu
+  uzavře i superuserovi,
+- status místa ani připojené `Place` nejsou samostatnou autorizační vrstvou a
+  sdílený zdroj neodhalí chráněné místo.
 
 ## Stav verze 0.34
 

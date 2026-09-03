@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.47
+**Verze:** 0.48
 **Stav:** koncept  
 **Datum revize:** 3. 9. 2026
 
@@ -1029,6 +1029,11 @@ Pro `GraveSiteAttachment` existují `get_grave_site_attachment_links()` a
 viditelné, měkce neodstraněné hrobové místo a aktivní viditelnou vazbu i
 přílohu ve stavu `available`. Archivace místa cestu nezavírá; jeho status, typ a
 připojené `Place` se samostatně neautorizují.
+
+Pro `GraveSiteSource` existují `get_grave_site_source_links()` a
+`get_visible_grave_site_source_links()`. Používají stejnou policy hrobového
+místa jako přílohy; zdrojová vazba a zdroj musí být viditelné, nearchivované a
+neodstraněné. Sdílený zdroj nevytváří přístup k jinému hrobovému místu.
 
 ## 10. Zdravotní záznam
 

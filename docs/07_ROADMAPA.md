@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.33
+**Verze:** 0.34
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -181,6 +181,11 @@ varianta zachovává archivovaná hrobová místa, odmítá odstraněná a vydá
 aktivní viditelné přílohy ve stavu `available`. Status místa a připojené
 `Place` nejsou samostatnou autorizační vrstvou a sdílená příloha neodhalí
 chráněné hrobové místo.
+
+Šestnáctý řez přidává kontextové čtení `GraveSiteSource`. Používá stejnou
+ochranu hrobového místa, zachovává jeho archivaci a vyžaduje aktivní viditelnou
+zdrojovou vazbu i zdroj. Status, typ a připojené místo se samostatně
+neautorizují a sdílený zdroj neodhalí chráněné hrobové místo.
 
 #### Následující implementační kroky
 
