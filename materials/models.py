@@ -11,6 +11,7 @@ from common.models import (
     TimestampedModel,
 )
 from events.models import Event
+from health.models import HealthRecord
 from people.models import Person, PersonName, Relationship
 from places.models import GraveSite, Place, Residence
 
@@ -404,6 +405,34 @@ class EventAttachment(AttachmentLinkModel):
 
     def __str__(self) -> str:
         return self._link_text(self.event)
+
+
+class HealthRecordAttachment(AttachmentLinkModel):
+    """Explicitní propojení zdravotního záznamu a jednou uložené přílohy."""
+
+    health_record = models.ForeignKey(
+        HealthRecord,
+        on_delete=models.PROTECT,
+        related_name="attachment_links",
+    )
+    attachment = models.ForeignKey(
+        Attachment,
+        on_delete=models.PROTECT,
+        related_name="health_record_links",
+    )
+
+    class Meta:
+        verbose_name = "Příloha zdravotního záznamu"
+        verbose_name_plural = "Přílohy zdravotních záznamů"
+        ordering = (
+            "health_record_id",
+            "sort_order",
+            "role__sort_order",
+            "pk",
+        )
+
+    def __str__(self) -> str:
+        return self._link_text(self.health_record)
 
 
 class RelationshipAttachment(AttachmentLinkModel):

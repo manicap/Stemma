@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.65
+**Verze:** 0.66
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 3. 9. 2026
 
@@ -123,6 +123,8 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 174. Actor-aware čtení `HealthRecord` tvoří `get_visible_health_records(*, person, actor)` a `get_visible_health_record(*, health_record_id, actor)`. Oba veřejné selectory používají stejný interní lazy queryset a jediný centralizovaný `get_health_record_visibility_filter(*, actor)`. Filtr současně vyžaduje access aktivní osoby podle obecné policy, access záznamu přes `can_view_health_record_access()`, nearchivovaný a neodstraněný záznam a aktivní `HealthRecordType`; archivovaná nebo odstraněná osoba se nevydává. Detail skrytého, neaktivního, chybějícího či chybně identifikovaného záznamu používá stejné `HealthRecord.DoesNotExist`, takže znalost ID policy neobchází. Výsledek je doménový objekt nebo `QuerySet` s přednačtenou osobou, typem, místem a autorem, bez HTTP, serializace či UI. Nevzniká permissionless read selector, nový permission ani paralelní autorizační mechanismus; budoucí health oprávnění lze doplnit uvnitř centralizované policy bez změny veřejných selectorů. Řez nemění model, migrace ani ACP.
 
 175. Upřesnění rozhodnutí 174: volitelné `HealthRecord.place` je stejně jako připojené `Place` u ostatních strukturovaných domén kontextem, nikoli samostatnou autorizační či lifecycle vrstvou. Viditelnost zdravotního záznamu proto nerozšiřuje ani neomezuje; rozhodující zůstávají výslovně určené vrstvy osoby, `HealthRecord` a `HealthRecordType`. Jde o zdokumentování hranice dvacátého řezu, nikoli o nový permission mechanismus nebo ACP.
+
+176. Přílohu zdravotního záznamu propojuje `materials.HealthRecordAttachment`, konkrétní potomek společného `AttachmentLinkModel` s chráněnými FK na `HealthRecord`, `Attachment` a `AttachmentRole`; strukturální migrace je `materials.0007_health_record_attachment`. Permissionless create/update služby používají stávající generickou transakční hranici a odmítají nově připojit archivovaný či odstraněný endpoint. Jediným veřejným čtením této vazby je kontextový actor-aware `get_visible_health_record_attachment_links(*, health_record, actor)`: vstupní záznam i SQL výsledek procházejí centralizovaným health visibility filtrem, vazba i příloha musí projít obecný access, nesmí být archivované ani odstraněné a příloha musí mít `FileStatus.AVAILABLE`. Neaktivní role a kategorie nejsou samostatnou read autorizační vrstvou. Znalost ID přílohy nebo vazby neposkytuje obecný selector ani neobchází health policy. Selector vrací `QuerySet[HealthRecordAttachment]`, nevydává storage URL ani obsah souboru a není autorizační hranicí budoucího fyzického doručení. Nevzniká Source vazba, HTTP, UI, nový health permission ani ACP.
 
 ## 2. Otevřené otázky
 

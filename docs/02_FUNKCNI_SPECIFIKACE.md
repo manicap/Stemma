@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.36
+**Verze:** 0.37
 **Stav:** pracovní návrh  
 **Datum revize:** 3. 9. 2026
 
@@ -472,13 +472,13 @@ Ostatní stavy doručení zakazují bez ohledu na oprávnění uživatele. Nejde
 přístupovou úroveň a stav souboru je nezávislý na archivaci a soft-delete.
 
 Současná infrastruktura používá samostatné explicitní vazby přílohy k osobě,
-události, vazbě osob, bydlišti, hrobovému místu a místu. Vazba nese roli,
+události, vazbě osob, bydlišti, hrobovému místu, místu a zdravotnímu záznamu.
+Vazba nese roli,
 popis kontextu, pořadí, příznak primární přílohy a vlastní access/lifecycle.
 `PersonAttachment.is_primary` zatím označuje pouze primární reprezentaci osoby;
 bez schválené role, kategorie a MIME kontraktu sám nedokazuje, že jde o
 fotografii. Budoucí zobrazení vyžaduje také `available` a autorizaci přílohy,
-vazby i osoby, jinak používá siluetu. Přílohy zdravotních záznamů a zdrojů
-vzniknou až s příslušnými doménami.
+vazby i osoby, jinak používá siluetu. Vazba přílohy na zdroj zůstává plánovaná.
 
 ## 12. Zdravotní informace
 
@@ -545,6 +545,14 @@ serializaci ani UI. Nová permission nevzniká.
 Volitelné `Place` je kontext zdravotního záznamu a není další autorizační ani
 lifecycle vrstvou; viditelnost zdravotního záznamu proto neodvozuje ani
 nerozšiřuje.
+
+Přílohy zdravotního záznamu používají explicitní `HealthRecordAttachment` nad
+společným attachment modelem. Actor-aware
+`get_visible_health_record_attachment_links(*, health_record, actor)` vydá jen
+vazby, jejichž zdravotní záznam projde úplnou centralizovanou health policy a
+jejichž vazba i příloha jsou viditelné, nearchivované a neodstraněné; soubor
+musí být ve stavu `available`. Selector je pouze kontextový, nevydává storage
+URL ani obsah a nenabízí obecné čtení podle ID přílohy nebo vazby.
 
 ## 13. Hrobová místa
 

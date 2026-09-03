@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.65
+**Verze:** 0.66
 **Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -1985,7 +1985,7 @@ významu aktivní, měkce odstraněná nikoli. `is_primary` zatím znamená prim
 reprezentaci osoby, nikoli automaticky fotografii; neexistuje seed role ani
 kontrola kategorie či MIME. Stav přílohy vazbu automaticky nemění.
 
-`AttachmentLinkInput` a dvanáct veřejných create/update služeb v
+`AttachmentLinkInput` a čtrnáct veřejných create/update služeb v
 `materials.services` znovu načítá roli, autora, oba endpointy a při update i
 vazbu pod transakčními zámky a volá `full_clean()`. Create odmítá archivovaný
 nebo měkce odstraněný endpoint. Update dovoluje zachovat tentýž mezitím
@@ -2002,7 +2002,8 @@ vytvoření kontextu; při update existující vazbu v dosavadním kontextu a ka
 měněný endpoint i oprávnění mutace. Budoucí čtení a doručení musí být
 kontextové přes konkrétní vazbu a vyhodnotit nejpřísnější
 access/lifecycle přílohy, vazby a cíle společně s `FileStatus.AVAILABLE`.
-Vazby ke zdravotním záznamům a zdrojům zůstávají plánované samostatné modely.
+`HealthRecordAttachment` už doplňuje vazbu ke zdravotnímu záznamu; dosud
+nevytvořené vazby na zdroje zůstávají plánovanými samostatnými modely.
 
 První čtecí řez nad vazbami osoby zavádí
 `get_person_attachment_links(*, person)` a
@@ -2286,6 +2287,21 @@ nedostupný. Nevzniká nový permission, modelová nebo migrační změna.
 Volitelné `Place` je pouze kontext záznamu; jeho access ani lifecycle se v
 health selectoru samostatně neautorizují a nemění viditelnost záznamu.
 
+`HealthRecordAttachment` dědí beze změny ze společného `AttachmentLinkModel` a
+obsahuje chráněné FK `health_record`, `attachment` a `role`. Reverse vazby jsou
+`HealthRecord.attachment_links` a `Attachment.health_record_links`; řazení je
+podle záznamu, `sort_order`, pořadí role a PK. Migrace
+`materials.0007_health_record_attachment` je čistě strukturální.
+
+Zápisy používají stávající `AttachmentLinkInput` a generické atomické
+create/update služby. Veřejné čtení je pouze
+`get_visible_health_record_attachment_links(*, health_record, actor)`. Selector
+ověří vstup přes `get_health_record_visibility_filter()` a stejný filtr vloží i
+do výsledného SQL. Dále filtruje access a aktivní lifecycle vazby i přílohy a
+vyžaduje `FileStatus.AVAILABLE`. Vrací lazy přednačtený
+`QuerySet[HealthRecordAttachment]`; nečte fyzický soubor, nevydává storage URL a
+neexistuje obecný selector podle ID přílohy nebo vazby.
+
 ## 14. Uživatelé a oprávnění
 
 Použije se vlastní Django uživatelský model založený na standardních mechanismech Djanga.
@@ -2508,12 +2524,13 @@ materials.0006_source_links
 accounts.0004_person_editor_permissions
 health.0001_health_record_types
 health.0002_health_records
+materials.0007_health_record_attachment
 ```
 
 Následující plánované migrace začínají:
 
 ```text
-health.0003_material_links
+materials.0008_health_record_source
 audit.0001_initial
 accounts.0005_user_profile_person_link
 ```

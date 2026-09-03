@@ -9,6 +9,8 @@ from django.db.models import Q, QuerySet
 from common.choices import AccessLevel
 from common.permissions import can_view_access_level
 from events.models import Event
+from health.models import HealthRecord
+from health.permissions import get_health_record_visibility_filter
 from people.models import Person, PersonName, Relationship
 from places.models import GraveSite, Residence
 
@@ -18,6 +20,7 @@ from .models import (
     EventSource,
     GraveSiteAttachment,
     GraveSiteSource,
+    HealthRecordAttachment,
     PersonAttachment,
     PersonNameSource,
     ResidenceAttachment,
@@ -41,6 +44,7 @@ __all__ = (
     "get_visible_event_source_links",
     "get_visible_grave_site_attachment_links",
     "get_visible_grave_site_source_links",
+    "get_visible_health_record_attachment_links",
     "get_visible_person_attachment_links",
     "get_visible_person_name_source_links",
     "get_visible_residence_attachment_links",
@@ -120,6 +124,17 @@ def _grave_site_unsaved_error() -> ValidationError:
             "grave_site": ValidationError(
                 "Hrobové místo musí být uložené a existovat v databázi.",
                 code="grave_site_unsaved",
+            )
+        }
+    )
+
+
+def _health_record_unsaved_error() -> ValidationError:
+    return ValidationError(
+        {
+            "health_record": ValidationError(
+                "Zdravotní záznam musí být uložený a existovat v databázi.",
+                code="health_record_unsaved",
             )
         }
     )
@@ -573,6 +588,56 @@ def get_visible_event_attachment_links(
         attachment__archived_at__isnull=True,
         attachment__deleted_at__isnull=True,
         attachment__file_status=FileStatus.AVAILABLE,
+    )
+
+
+def get_visible_health_record_attachment_links(
+    *,
+    health_record: HealthRecord,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[HealthRecordAttachment]:
+    """Vrať vydatelné přílohy dostupného zdravotního záznamu."""
+
+    if not isinstance(health_record, HealthRecord) or health_record.pk is None:
+        raise _health_record_unsaved_error()
+
+    if not HealthRecord.objects.filter(pk=health_record.pk).exists():
+        raise _health_record_unsaved_error()
+
+    visible_health_records = HealthRecord.objects.filter(
+        get_health_record_visibility_filter(actor=actor)
+    )
+    current = visible_health_records.get(pk=health_record.pk)
+
+    visible_levels = tuple(
+        level
+        for level in _ACCESS_LEVELS
+        if can_view_access_level(actor=actor, access_level=level)
+    )
+    return (
+        HealthRecordAttachment.objects.filter(
+            health_record_id=current.pk,
+            health_record_id__in=visible_health_records.values("pk"),
+            access_level__in=visible_levels,
+            archived_at__isnull=True,
+            deleted_at__isnull=True,
+            attachment__access_level__in=visible_levels,
+            attachment__archived_at__isnull=True,
+            attachment__deleted_at__isnull=True,
+            attachment__file_status=FileStatus.AVAILABLE,
+        )
+        .select_related(
+            "health_record",
+            "health_record__person",
+            "health_record__record_type",
+            "health_record__place",
+            "health_record__created_by",
+            "attachment",
+            "attachment__category",
+            "attachment__created_by",
+            "role",
+            "created_by",
+        )
     )
 
 

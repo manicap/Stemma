@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.52
+**Verze:** 0.53
 **Stav:** koncept  
 **Datum revize:** 3. 9. 2026
 
@@ -924,7 +924,8 @@ pouze `available` smí budoucí doručovací vrstva zpřístupnit. Model zatím
 nevolí storage backend, nezapisuje fyzický soubor a nemá admin ani UI.
 
 Explicitní `PersonAttachment`, `EventAttachment`, `RelationshipAttachment`,
-`ResidenceAttachment`, `GraveSiteAttachment` a `PlaceAttachment` dědí přes
+`ResidenceAttachment`, `GraveSiteAttachment`, `PlaceAttachment` a
+`HealthRecordAttachment` dědí přes
 společný abstraktní základ timestamp, access, autorství a lifecycle. Každý
 řádek chráněnými FK propojuje jediný cílový objekt, `Attachment` a
 `AttachmentRole` a obsahuje popis kontextu, pořadí a `is_primary`.
@@ -933,8 +934,8 @@ společný abstraktní základ timestamp, access, autorství a lifecycle. Každ�
 osobu při `deleted_at IS NULL`; archivace slot neuvolní. Tento příznak je
 obecná primární reprezentace osoby, nikoli tvrzení o fotografickém MIME,
 kategorii, roli nebo ověření. Přímý FK hlavní fotografie na `Person` neexistuje.
-Vazby na budoucí zdravotní záznamy a zdroje zůstávají plánované explicitní
-modely a nesmějí být nahrazeny generickým vztahem.
+Dosud nevytvořené vazby na zdroje zůstávají plánovanými explicitními modely a
+nesmějí být nahrazeny generickým vztahem.
 
 ## 9. Zdroj
 
@@ -1093,6 +1094,13 @@ neaktivní typ. `get_visible_health_records()` i `get_visible_health_record()`
 staví nad přesně stejným interním querysetem se `select_related()` pro osobu,
 typ, místo a autora. Detail skrytého, chybějícího nebo chybně označeného cíle
 vrací stejné `HealthRecord.DoesNotExist`.
+
+`materials.HealthRecordAttachment` je konkrétní explicitní vazba dědící ze
+společného `AttachmentLinkModel`. Chráněnými FK propojuje jediný
+`HealthRecord`, existující `Attachment` a `AttachmentRole`; přebírá access,
+autorství, lifecycle, popis kontextu, pořadí a `is_primary`. Nevzniká generická
+relace ani nová kopie souboru. Databázovou tabulku přidává strukturální migrace
+`materials.0007_health_record_attachment` bez datové migrace.
 
 ## 11. Místo
 

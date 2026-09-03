@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.26
+**Verze:** 0.27
 **Stav:** pracovní návrh  
 **Datum revize:** 3. 9. 2026
 
@@ -113,6 +113,12 @@ záznamu a aktivní lifecycle osoby, zdravotního záznamu a jeho typu. Kolekčn
 detailní selector používají tentýž filtr; znalost ID skrytého záznamu nepřidává
 žádný přístup a detail se chová stejně jako neexistující cíl. Nevzniká nové
 health oprávnění ani paralelní permission mechanismus.
+
+Actor-aware čtení zdravotních příloh nejprve vyžaduje celý centrální health
+řetězec osoby, záznamu a aktivního typu. Výsledné SQL dále vyžaduje viditelnou,
+nearchivovanou a neodstraněnou vazbu i přílohu a stav souboru `available`.
+Znalost ID přílohy či vazby health policy neobchází. Nevzniká nové zdravotní
+oprávnění ani obecná cesta vydání souboru.
 
 ## 5.1 Systémové skupiny a zvýšená oprávnění
 

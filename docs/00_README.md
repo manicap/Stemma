@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.39
+**Verze dokumentace:** 0.40
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `health`
 **Datum revize:** 3. 9. 2026
 
@@ -39,6 +39,19 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.40
+
+Verze 0.40 přidává bezpečné explicitní přílohy zdravotních záznamů:
+
+- `HealthRecordAttachment` rozšiřuje společný `AttachmentLinkModel` a ukládá
+  jedinou explicitní vazbu mezi zdravotním záznamem a existující přílohou,
+- create/update používají stávající generickou transakční službu přílohových
+  vazeb; nový link vzniká ve strukturální migraci `materials.0007`,
+- jediný veřejný read selector je actor-aware a současně vynucuje health policy,
+  access a lifecycle vazby i přílohy a `FileStatus.AVAILABLE`,
+- nevzniká obecné čtení podle ID přílohy či vazby, storage URL, obsah souboru,
+  HTTP, UI, health permission ani vazba na zdroj.
 
 ## Stav verze 0.39
 

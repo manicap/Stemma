@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.38
+**Verze:** 0.39
 **Stav:** M2 dokončeno; infrastruktura `health` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -214,9 +214,15 @@ který kombinuje access osoby i záznamu a lifecycle osoby, záznamu a typu.
 Skrytý detail nelze odhalit znalostí ID, kontext je přednačten bez N+1 a
 nevzniká HTTP, UI, serializace ani nová permission.
 
+Dvacátý první řez přidává explicitní `HealthRecordAttachment`, jeho
+strukturální migraci, create/update přes společnou attachment service a jediný
+actor-aware kontextový selector. Čtení vynucuje centralizovanou health policy,
+access a aktivní lifecycle vazby i přílohy a `FileStatus.AVAILABLE`; nevydává
+soubor ani URL a nevytváří obecnou cestu podle ID.
+
 #### Následující implementační kroky
 
-1. doplnit explicitní vazby zdravotních záznamů na přílohy a zdroje,
+1. doplnit explicitní vazby zdravotních záznamů na zdroje,
 2. připravit bezpečný aplikační use-case zdravotních záznamů nad existujícími
    službami a selectory,
 3. doplnit audit navazujících zápisových operací,

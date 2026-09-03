@@ -10,6 +10,7 @@ from django.db import IntegrityError, models, transaction
 
 from common.choices import AccessLevel
 from events.models import Event
+from health.models import HealthRecord
 from people.models import Person, Relationship
 from places.models import GraveSite, Place, Residence
 
@@ -19,6 +20,7 @@ from .models import (
     AttachmentRole,
     EventAttachment,
     GraveSiteAttachment,
+    HealthRecordAttachment,
     PersonAttachment,
     PlaceAttachment,
     RelationshipAttachment,
@@ -29,12 +31,14 @@ __all__ = (
     "AttachmentLinkInput",
     "create_event_attachment",
     "create_grave_site_attachment",
+    "create_health_record_attachment",
     "create_person_attachment",
     "create_place_attachment",
     "create_relationship_attachment",
     "create_residence_attachment",
     "update_event_attachment",
     "update_grave_site_attachment",
+    "update_health_record_attachment",
     "update_person_attachment",
     "update_place_attachment",
     "update_relationship_attachment",
@@ -64,6 +68,12 @@ class _LinkSpec:
 
 _PERSON = _LinkSpec(PersonAttachment, Person, "person", "Osoba")
 _EVENT = _LinkSpec(EventAttachment, Event, "event", "Událost")
+_HEALTH_RECORD = _LinkSpec(
+    HealthRecordAttachment,
+    HealthRecord,
+    "health_record",
+    "Zdravotní záznam",
+)
 _RELATIONSHIP = _LinkSpec(
     RelationshipAttachment,
     Relationship,
@@ -359,6 +369,30 @@ def update_event_attachment(
     *, link: EventAttachment, event: Event, data: AttachmentLinkInput,
 ) -> EventAttachment:
     return _update_link(spec=_EVENT, link=link, target=event, data=data)
+
+
+def create_health_record_attachment(
+    *, health_record: HealthRecord, data: AttachmentLinkInput,
+    created_by: AbstractBaseUser | None = None,
+) -> HealthRecordAttachment:
+    return _create_link(
+        spec=_HEALTH_RECORD,
+        target=health_record,
+        data=data,
+        created_by=created_by,
+    )
+
+
+def update_health_record_attachment(
+    *, link: HealthRecordAttachment, health_record: HealthRecord,
+    data: AttachmentLinkInput,
+) -> HealthRecordAttachment:
+    return _update_link(
+        spec=_HEALTH_RECORD,
+        link=link,
+        target=health_record,
+        data=data,
+    )
 
 
 def create_relationship_attachment(

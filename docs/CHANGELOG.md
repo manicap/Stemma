@@ -1,5 +1,15 @@
 # Historie změn dokumentace
 
+## Verze 0.75 – 3. 9. 2026
+
+- přidán explicitní `HealthRecordAttachment` nad společným attachment modelem,
+- přidány create/update služby a strukturální migrace `materials.0007`,
+- jediný veřejný read selector je kontextový a actor-aware; vynucuje úplnou
+  health policy, access a lifecycle vazby i přílohy a stav souboru `available`,
+- znalost ID přílohy či vazby health policy neobchází a selector nevydává
+  storage URL ani obsah,
+- nevznikla Source vazba, HTTP, UI ani nové zdravotní oprávnění.
+
 ## Verze 0.74 – 3. 9. 2026
 
 - přidány kolekční a detailní actor-aware selectory zdravotních záznamů,
