@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.21
+**Verze:** 0.22
 **Stav:** pracovní návrh  
 **Datum revize:** 3. 9. 2026
 
@@ -380,6 +380,16 @@ Výsledný lazy dotaz znovu kontroluje bydliště a osobu a vydává pouze vidit
 nearchivovanou a neodstraněnou vazbu i přílohu ve stavu `available`. Připojené
 `Place` není podle stávající residence policy samostatnou autorizační vrstvou.
 Selector nevydává storage URL a sdílená příloha neodhalí jiné bydliště.
+
+### 5.12.6 Implementované zdroje bydliště
+
+`get_visible_residence_source_links(*, residence, actor)` používá stejnou
+ochranu bydliště a jeho osoby jako přílohový selector. Výsledný lazy dotaz
+znovu kontroluje obě vrstvy a vydává pouze viditelnou, nearchivovanou a
+neodstraněnou zdrojovou vazbu i `Source`.
+
+Připojené `Place` není samostatnou autorizační vrstvou a viditelnost stejného
+zdroje přes jiný kontext nezakládá přístup k chráněnému bydlišti.
 
 ## 6. Zamčený obsah
 

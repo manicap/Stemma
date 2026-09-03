@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.58
+**Verze:** 0.59
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -2188,6 +2188,15 @@ Výsledné SQL znovu filtruje access a lifecycle bydliště a osoby, vazby a
 přílohy a vyžaduje `FileStatus.AVAILABLE`. Selectory přednačítají celý kontext
 bez N+1, jsou omezené konkrétním `residence_id`, nevydávají storage URL a
 sdílená příloha nemůže odhalit jiné chráněné bydliště.
+
+Zdroje bydliště používají `get_residence_source_links(*, residence)` a
+`get_visible_residence_source_links(*, residence, actor)`. Actor-aware varianta
+chrání bydliště a rodičovskou osobu stejnou policy jako přílohový kontext,
+zachovává archivované bydliště a neautorizuje samostatně připojené `Place`.
+
+Výsledné SQL znovu filtruje access a lifecycle bydliště, osoby, vazby a zdroje.
+Selectory přednačítají celý kontext bez N+1 a jsou omezené konkrétním
+`residence_id`, takže sdílený zdroj nemůže potvrdit jiné chráněné bydliště.
 
 Access policy cílového doménového objektu je pro každou vazbu povinná.
 Případná vlastní access úroveň vazby nebo zdroje ji smí pouze zpřísnit a

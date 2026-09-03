@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.45
+**Verze:** 0.46
 **Stav:** koncept  
 **Datum revize:** 3. 9. 2026
 
@@ -1018,6 +1018,11 @@ Pro `ResidenceAttachment` existují `get_residence_attachment_links()` a
 bydliště a jeho osobu. Archivované bydliště se zachovává, odstraněné nikoli;
 lifecycle osoby respektuje její explicitní oprávnění. Vazba i příloha musí být
 viditelné, nearchivované a neodstraněné a soubor musí být `available`.
+
+Pro `ResidenceSource` existují `get_residence_source_links()` a
+`get_visible_residence_source_links()`. Používají stejnou policy bydliště a
+jeho osoby jako přílohy; zdrojová vazba a zdroj musí být viditelné,
+nearchivované a neodstraněné. Sdílený zdroj nevytváří přístup k jinému bydlišti.
 
 ## 10. Zdravotní záznam
 

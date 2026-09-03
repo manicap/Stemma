@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.31
+**Verze:** 0.32
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -170,6 +170,11 @@ varianta chrání bydliště i jeho osobu podle existující residence policy,
 zachovává archivovanou historii a vydává pouze aktivní přílohy ve stavu
 `available`. Připojené místo se samostatně neautorizuje a sdílená příloha
 neodhalí chráněné bydliště.
+
+Čtrnáctý řez přidává kontextové čtení `ResidenceSource`. Používá stejnou
+ochranu bydliště a jeho osoby, zachovává archivovanou historii a vyžaduje
+aktivní viditelnou zdrojovou vazbu i zdroj. Připojené místo se samostatně
+neautorizuje a sdílený zdroj neodhalí chráněné bydliště.
 
 #### Následující implementační kroky
 

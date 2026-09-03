@@ -1,5 +1,13 @@
 # Historie změn dokumentace
 
+## Verze 0.68 – 3. 9. 2026
+
+- přidány permissionless a actor-aware selectory `ResidenceSource`,
+- actor-aware cesta kontroluje bydliště, jeho osobu, zdrojovou vazbu i zdroj,
+- zachovává archivované bydliště, respektuje lifecycle oprávnění osoby a
+  samostatně neautorizuje připojené místo,
+- sdílený zdroj nemůže odhalit chráněné bydliště.
+
 ## Verze 0.67 – 3. 9. 2026
 
 - přidány permissionless a actor-aware selectory `ResidenceAttachment`,

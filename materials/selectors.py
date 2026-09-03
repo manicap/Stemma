@@ -19,6 +19,7 @@ from .models import (
     PersonAttachment,
     PersonNameSource,
     ResidenceAttachment,
+    ResidenceSource,
     RelationshipAttachment,
     RelationshipSource,
 )
@@ -29,6 +30,7 @@ __all__ = (
     "get_person_attachment_links",
     "get_person_name_source_links",
     "get_residence_attachment_links",
+    "get_residence_source_links",
     "get_relationship_attachment_links",
     "get_relationship_source_links",
     "get_visible_event_attachment_links",
@@ -36,6 +38,7 @@ __all__ = (
     "get_visible_person_attachment_links",
     "get_visible_person_name_source_links",
     "get_visible_residence_attachment_links",
+    "get_visible_residence_source_links",
     "get_visible_relationship_attachment_links",
     "get_visible_relationship_source_links",
 )
@@ -393,6 +396,30 @@ def get_residence_attachment_links(
     )
 
 
+def get_residence_source_links(
+    *,
+    residence: Residence,
+) -> QuerySet[ResidenceSource]:
+    """Vrať permissionless historii nesmazaných zdrojů bydliště."""
+
+    current = _load_current_residence(residence)
+    return ResidenceSource.objects.filter(
+        residence_id=current.pk,
+        deleted_at__isnull=True,
+    ).select_related(
+        "residence",
+        "residence__person",
+        "residence__residence_type",
+        "residence__place",
+        "residence__created_by",
+        "source",
+        "source__source_type",
+        "source__created_by",
+        "role",
+        "created_by",
+    )
+
+
 def get_visible_person_attachment_links(
     *,
     person: Person,
@@ -695,4 +722,46 @@ def get_visible_residence_attachment_links(
         attachment__archived_at__isnull=True,
         attachment__deleted_at__isnull=True,
         attachment__file_status=FileStatus.AVAILABLE,
+    )
+
+
+def get_visible_residence_source_links(
+    *,
+    residence: Residence,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[ResidenceSource]:
+    """Vrať zdroje viditelné v kontextu bydliště a jeho osoby."""
+
+    visibility = {
+        level: can_view_access_level(actor=actor, access_level=level)
+        for level in _ACCESS_LEVELS
+    }
+    can_view_archived, can_view_deleted = _get_lifecycle_permissions(actor)
+    current = _load_current_residence(residence)
+    person = current.person
+    if not (
+        visibility.get(person.access_level, False)
+        and (person.archived_at is None or can_view_archived)
+        and (person.deleted_at is None or can_view_deleted)
+        and visibility.get(current.access_level, False)
+        and current.deleted_at is None
+    ):
+        raise PermissionDenied("Nemáte oprávnění zobrazit toto bydliště.")
+
+    visible_levels = tuple(
+        level for level, is_visible in visibility.items() if is_visible
+    )
+    return get_residence_source_links(residence=current).filter(
+        _residence_person_lifecycle_filter(
+            can_view_archived=can_view_archived,
+            can_view_deleted=can_view_deleted,
+        ),
+        access_level__in=visible_levels,
+        archived_at__isnull=True,
+        residence__access_level__in=visible_levels,
+        residence__deleted_at__isnull=True,
+        residence__person__access_level__in=visible_levels,
+        source__access_level__in=visible_levels,
+        source__archived_at__isnull=True,
+        source__deleted_at__isnull=True,
     )
