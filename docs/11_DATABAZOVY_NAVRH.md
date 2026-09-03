@@ -1,8 +1,8 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.61
-**Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
+**Verze:** 0.62
+**Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
 **Datum revize:** 3. 9. 2026
 
 ## 1. Účel
@@ -2233,6 +2233,11 @@ Univerzální systém zdrojování libovolného databázového pole není souč�
 
 Zdravotní záznam patří právě jedné osobě a má samostatný typ.
 
+První realizovaný strukturální řez vytváří pouze konkrétní
+`health.HealthRecordType` nad společným `LookupModel`. Nepřidává vlastní pole,
+seed data ani stabilní systémové kódy. Samotný `HealthRecord` a jeho citlivá
+actor-aware čtecí a zápisová hranice zůstávají odložené do samostatného řezu.
+
 Podporované typy zahrnují:
 
 - diagnózu,
@@ -2431,7 +2436,7 @@ s actorovi viditelnou kohortou. Modely ani migrace se tím nemění.
 
 ## 18. Pořadí migrací
 
-Skutečné pořadí dosavadních a bezprostředně navazujících migrací M2 je:
+Skutečné pořadí dosavadních implementovaných migrací je:
 
 ```text
 accounts.0001_initial
@@ -2464,21 +2469,23 @@ places.0006_grave_site_lookups
 places.0007_initial_grave_site_lookups
 places.0008_gravesite
 places.0009_persongravesite
-```
-
-Následující plánované migrace začínají:
-
-```text
 materials.0001_attachment_lookups
 materials.0002_attachments
 materials.0003_attachment_links
 materials.0004_source_lookups
 materials.0005_sources
 materials.0006_source_links
-health.0001_health_models
-health.0002_material_links
+accounts.0004_person_editor_permissions
+health.0001_health_record_types
+```
+
+Následující plánované migrace začínají:
+
+```text
+health.0002_health_records
+health.0003_material_links
 audit.0001_initial
-accounts.0004_user_profile_person_link
+accounts.0005_user_profile_person_link
 ```
 
 Datové migrace základních číselníků budou malé a rozdělené podle aplikací.

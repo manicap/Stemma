@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.35
-**Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
+**Verze dokumentace:** 0.36
+**Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `health`
 **Datum revize:** 3. 9. 2026
 
 ## Účel balíčku
@@ -39,6 +39,18 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.36
+
+Verze 0.36 zahajuje doménu zdravotních informací bezpečným scaffoldem:
+
+- založena a registrována Django aplikace `health`,
+- `HealthRecordType` je prázdný uživatelsky rozšiřitelný katalog nad společným
+  `LookupModel`,
+- strukturální migrace `health.0001_health_record_types` nevkládá žádné
+  neschválené systémové hodnoty a katalog chrání společný admin guard,
+- citlivý `HealthRecord`, přístupová policy, vazby na materiály, služby,
+  selectory, API a UI zatím záměrně nevznikají.
 
 ## Stav verze 0.35
 

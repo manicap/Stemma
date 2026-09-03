@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.34
-**Stav:** M2 dokončeno; infrastruktura `materials` zahájena
+**Verze:** 0.35
+**Stav:** M2 dokončeno; infrastruktura `health` zahájena
 **Datum revize:** 3. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -187,13 +187,26 @@ ochranu hrobového místa, zachovává jeho archivaci a vyžaduje aktivní vidit
 zdrojovou vazbu i zdroj. Status, typ a připojené místo se samostatně
 neautorizují a sdílený zdroj neodhalí chráněné hrobové místo.
 
+Sedmnáctý řez zahajuje doménu `health` samostatným prázdným katalogem
+`HealthRecordType` a strukturální migrací `health.0001_health_record_types`.
+Katalog je uživatelsky rozšiřitelný, nepřidává neschválené systémové kódy a
+admin chrání identitu případných systémových hodnot. Samotný citlivý
+`HealthRecord`, jeho přístupová policy, materiálové vazby, služby, selectory,
+API a UI zůstávají samostatnými navazujícími řezy.
+
 #### Následující implementační kroky
 
-1. dokončit kontextové actor-aware selectory zbývajících vazeb příloh a
-   zdrojů,
-2. doplnit zdravotní záznamy,
+1. konkretizovat model a actor-aware policy zdravotního záznamu se zachováním
+   výchozí omezené viditelnosti,
+2. doplnit explicitní vazby zdravotních záznamů na přílohy a zdroje,
 3. doplnit audit navazujících zápisových operací,
 4. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic.
+
+`PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
+veřejného selectoru. První z nich čeká na schválený produktový read use-case a
+actor-aware policy obecného `Place`; druhý musí být čten pouze v autorizovaném
+kontextu konkrétního cíle, aby sdílená příloha nebo zdroj neobcházely ochranu
+tohoto cíle.
 
 ## Experimentální cílový průřez – RC 0.1 ✅ připraven na `agent/rc-0.1`
 

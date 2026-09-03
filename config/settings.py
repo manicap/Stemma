@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "places.apps.PlacesConfig",
     "events.apps.EventsConfig",
     "materials.apps.MaterialsConfig",
+    "health.apps.HealthConfig",
 ]
 
 MIDDLEWARE = [

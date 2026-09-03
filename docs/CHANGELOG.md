@@ -1,5 +1,18 @@
 # Historie změn dokumentace
 
+## Verze 0.71 – 3. 9. 2026
+
+- založena a registrována aplikace `health` s prázdným rozšiřitelným
+  katalogem `HealthRecordType`,
+- přidána čistě strukturální migrace `health.0001_health_record_types` bez
+  seed dat a admin se společnou ochranou systémových hodnot,
+- kořenová exekuční pravidla a pořadí migrací nyní rozlišují skutečně
+  založenou aplikaci a implementované kroky od stále plánovaných částí,
+- samotný citlivý `HealthRecord`, jeho přístupová policy, materiálové vazby,
+  služby, selectory, API a UI zůstávají fail-closed navazujícími řezy,
+- obecné čtení `PlaceAttachment` a `AttachmentSource` zůstává odložené do
+  bezpečného kontextu cílového objektu.
+
 ## Verze 0.70 – 3. 9. 2026
 
 - přidány permissionless a actor-aware selectory `GraveSiteSource`,

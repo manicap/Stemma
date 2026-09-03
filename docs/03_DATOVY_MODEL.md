@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.48
+**Verze:** 0.49
 **Stav:** koncept  
 **Datum revize:** 3. 9. 2026
 
@@ -1036,6 +1036,16 @@ místa jako přílohy; zdrojová vazba a zdroj musí být viditelné, nearchivov
 neodstraněné. Sdílený zdroj nevytváří přístup k jinému hrobovému místu.
 
 ## 10. Zdravotní záznam
+
+První implementační řez registruje aplikaci `health` a zavádí pouze
+`HealthRecordType`, uživatelsky rozšiřitelný číselník nad `LookupModel` bez
+vlastních polí a bez počátečních systémových hodnot. Katalog spravuje Django
+Admin se společnou ochranou identity případných systémových řádků.
+
+Samotný citlivý `HealthRecord` v tomto řezu nevzniká. Následující implementace
+musí před vystavením dat konkretizovat dokumentovaný datový kontrakt a
+serverovou actor-aware policy; nevznikají ani vazby na materiály, služby,
+selectory, API nebo UI.
 
 Pole:
 

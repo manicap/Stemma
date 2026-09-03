@@ -47,11 +47,11 @@ Current applications live in the repository root:
 - `places`
 - `events`
 - `materials`
-
-The approved design also plans these domain applications, but their packages
-do not exist yet and must not be treated as implemented:
-
 - `health`
+
+The approved design also plans this domain application, but its package does
+not exist yet and must not be treated as implemented:
+
 - `audit`
 
 `common` contains shared fixed choices, abstract models, validation and helper functions. Business entities belong to their domain applications.
