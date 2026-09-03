@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.46
+**Verze:** 0.47
 **Stav:** koncept  
 **Datum revize:** 3. 9. 2026
 
@@ -1023,6 +1023,12 @@ Pro `ResidenceSource` existují `get_residence_source_links()` a
 `get_visible_residence_source_links()`. Používají stejnou policy bydliště a
 jeho osoby jako přílohy; zdrojová vazba a zdroj musí být viditelné,
 nearchivované a neodstraněné. Sdílený zdroj nevytváří přístup k jinému bydlišti.
+
+Pro `GraveSiteAttachment` existují `get_grave_site_attachment_links()` a
+`get_visible_grave_site_attachment_links()`. Actor-aware cesta vyžaduje
+viditelné, měkce neodstraněné hrobové místo a aktivní viditelnou vazbu i
+přílohu ve stavu `available`. Archivace místa cestu nezavírá; jeho status, typ a
+připojené `Place` se samostatně neautorizují.
 
 ## 10. Zdravotní záznam
 

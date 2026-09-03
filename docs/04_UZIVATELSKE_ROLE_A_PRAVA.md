@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.22
+**Verze:** 0.23
 **Stav:** pracovní návrh  
 **Datum revize:** 3. 9. 2026
 
@@ -390,6 +390,17 @@ neodstraněnou zdrojovou vazbu i `Source`.
 
 Připojené `Place` není samostatnou autorizační vrstvou a viditelnost stejného
 zdroje přes jiný kontext nezakládá přístup k chráněnému bydlišti.
+
+### 5.12.7 Implementované přílohy hrobového místa
+
+`get_visible_grave_site_attachment_links(*, grave_site, actor)` vyžaduje
+viditelné a měkce neodstraněné hrobové místo; archivované místo zůstává
+historicky čitelné. Výsledný lazy dotaz navíc vydává pouze viditelnou,
+nearchivovanou a neodstraněnou vazbu i přílohu ve stavu `available`.
+
+Status, verification, typ a připojené `Place` nejsou samostatnou autorizační
+vrstvou. Selector nevydává storage URL a sdílená příloha neodhalí jiné
+chráněné hrobové místo.
 
 ## 6. Zamčený obsah
 

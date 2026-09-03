@@ -10,12 +10,13 @@ from common.choices import AccessLevel
 from common.permissions import can_view_access_level
 from events.models import Event
 from people.models import Person, PersonName, Relationship
-from places.models import Residence
+from places.models import GraveSite, Residence
 
 from .choices import FileStatus
 from .models import (
     EventAttachment,
     EventSource,
+    GraveSiteAttachment,
     PersonAttachment,
     PersonNameSource,
     ResidenceAttachment,
@@ -27,6 +28,7 @@ from .models import (
 __all__ = (
     "get_event_attachment_links",
     "get_event_source_links",
+    "get_grave_site_attachment_links",
     "get_person_attachment_links",
     "get_person_name_source_links",
     "get_residence_attachment_links",
@@ -35,6 +37,7 @@ __all__ = (
     "get_relationship_source_links",
     "get_visible_event_attachment_links",
     "get_visible_event_source_links",
+    "get_visible_grave_site_attachment_links",
     "get_visible_person_attachment_links",
     "get_visible_person_name_source_links",
     "get_visible_residence_attachment_links",
@@ -108,6 +111,17 @@ def _residence_unsaved_error() -> ValidationError:
     )
 
 
+def _grave_site_unsaved_error() -> ValidationError:
+    return ValidationError(
+        {
+            "grave_site": ValidationError(
+                "Hrobové místo musí být uložené a existovat v databázi.",
+                code="grave_site_unsaved",
+            )
+        }
+    )
+
+
 def _load_current_person(person: Person) -> Person:
     if not isinstance(person, Person) or person.pk is None:
         raise _person_unsaved_error()
@@ -161,6 +175,16 @@ def _load_current_residence(residence: Residence) -> Residence:
         return Residence.objects.select_related("person").get(pk=residence.pk)
     except Residence.DoesNotExist as error:
         raise _residence_unsaved_error() from error
+
+
+def _load_current_grave_site(grave_site: GraveSite) -> GraveSite:
+    if not isinstance(grave_site, GraveSite) or grave_site.pk is None:
+        raise _grave_site_unsaved_error()
+
+    try:
+        return GraveSite.objects.get(pk=grave_site.pk)
+    except GraveSite.DoesNotExist as error:
+        raise _grave_site_unsaved_error() from error
 
 
 def _get_lifecycle_permissions(
@@ -415,6 +439,29 @@ def get_residence_source_links(
         "source",
         "source__source_type",
         "source__created_by",
+        "role",
+        "created_by",
+    )
+
+
+def get_grave_site_attachment_links(
+    *,
+    grave_site: GraveSite,
+) -> QuerySet[GraveSiteAttachment]:
+    """Vrať permissionless historii nesmazaných příloh hrobového místa."""
+
+    current = _load_current_grave_site(grave_site)
+    return GraveSiteAttachment.objects.filter(
+        grave_site_id=current.pk,
+        deleted_at__isnull=True,
+    ).select_related(
+        "grave_site",
+        "grave_site__grave_site_type",
+        "grave_site__place",
+        "grave_site__created_by",
+        "attachment",
+        "attachment__category",
+        "attachment__created_by",
         "role",
         "created_by",
     )
@@ -764,4 +811,37 @@ def get_visible_residence_source_links(
         source__access_level__in=visible_levels,
         source__archived_at__isnull=True,
         source__deleted_at__isnull=True,
+    )
+
+
+def get_visible_grave_site_attachment_links(
+    *,
+    grave_site: GraveSite,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[GraveSiteAttachment]:
+    """Vrať dostupné přílohy viditelné v kontextu hrobového místa."""
+
+    visibility = {
+        level: can_view_access_level(actor=actor, access_level=level)
+        for level in _ACCESS_LEVELS
+    }
+    current = _load_current_grave_site(grave_site)
+    if not (
+        visibility.get(current.access_level, False)
+        and current.deleted_at is None
+    ):
+        raise PermissionDenied("Nemáte oprávnění zobrazit toto hrobové místo.")
+
+    visible_levels = tuple(
+        level for level, is_visible in visibility.items() if is_visible
+    )
+    return get_grave_site_attachment_links(grave_site=current).filter(
+        access_level__in=visible_levels,
+        archived_at__isnull=True,
+        grave_site__access_level__in=visible_levels,
+        grave_site__deleted_at__isnull=True,
+        attachment__access_level__in=visible_levels,
+        attachment__archived_at__isnull=True,
+        attachment__deleted_at__isnull=True,
+        attachment__file_status=FileStatus.AVAILABLE,
     )

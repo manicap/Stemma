@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.32
+**Verze:** 0.33
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -175,6 +175,12 @@ neodhalí chráněné bydliště.
 ochranu bydliště a jeho osoby, zachovává archivovanou historii a vyžaduje
 aktivní viditelnou zdrojovou vazbu i zdroj. Připojené místo se samostatně
 neautorizuje a sdílený zdroj neodhalí chráněné bydliště.
+
+Patnáctý řez přidává kontextové čtení `GraveSiteAttachment`. Actor-aware
+varianta zachovává archivovaná hrobová místa, odmítá odstraněná a vydává pouze
+aktivní viditelné přílohy ve stavu `available`. Status místa a připojené
+`Place` nejsou samostatnou autorizační vrstvou a sdílená příloha neodhalí
+chráněné hrobové místo.
 
 #### Následující implementační kroky
 

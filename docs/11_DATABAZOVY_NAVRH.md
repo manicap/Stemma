@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.59
+**Verze:** 0.60
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -2197,6 +2197,18 @@ zachovává archivované bydliště a neautorizuje samostatně připojené `Plac
 Výsledné SQL znovu filtruje access a lifecycle bydliště, osoby, vazby a zdroje.
 Selectory přednačítají celý kontext bez N+1 a jsou omezené konkrétním
 `residence_id`, takže sdílený zdroj nemůže potvrdit jiné chráněné bydliště.
+
+Přílohy hrobového místa používají
+`get_grave_site_attachment_links(*, grave_site)` a
+`get_visible_grave_site_attachment_links(*, grave_site, actor)`. Actor-aware
+varianta vyžaduje viditelné, měkce neodstraněné hrobové místo a zachovává jeho
+archivaci. Status, verification, typ a připojené `Place` se samostatně
+neautorizují.
+
+Výsledné SQL znovu filtruje access a lifecycle místa, vazby a přílohy a
+vyžaduje `FileStatus.AVAILABLE`. Selectory přednačítají celý kontext bez N+1,
+jsou omezené konkrétním `grave_site_id`, nevydávají storage URL a sdílená
+příloha nemůže odhalit jiné chráněné místo.
 
 Access policy cílového doménového objektu je pro každou vazbu povinná.
 Případná vlastní access úroveň vazby nebo zdroje ji smí pouze zpřísnit a

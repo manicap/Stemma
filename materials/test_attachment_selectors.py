@@ -34,6 +34,7 @@ class PersonAttachmentSelectorApiTests(SimpleTestCase):
             (
                 "get_event_attachment_links",
                 "get_event_source_links",
+                "get_grave_site_attachment_links",
                 "get_person_attachment_links",
                 "get_person_name_source_links",
                 "get_residence_attachment_links",
@@ -42,6 +43,7 @@ class PersonAttachmentSelectorApiTests(SimpleTestCase):
                 "get_relationship_source_links",
                 "get_visible_event_attachment_links",
                 "get_visible_event_source_links",
+                "get_visible_grave_site_attachment_links",
                 "get_visible_person_attachment_links",
                 "get_visible_person_name_source_links",
                 "get_visible_residence_attachment_links",

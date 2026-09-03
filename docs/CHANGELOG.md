@@ -1,5 +1,13 @@
 # Historie změn dokumentace
 
+## Verze 0.69 – 3. 9. 2026
+
+- přidány permissionless a actor-aware selectory `GraveSiteAttachment`,
+- actor-aware cesta kontroluje hrobové místo, přílohovou vazbu i přílohu,
+- zachovává archivované místo a vydává pouze aktivní přílohy ve stavu
+  `available`,
+- status místa ani připojené `Place` nejsou samostatnou autorizační vrstvou.
+
 ## Verze 0.68 – 3. 9. 2026
 
 - přidány permissionless a actor-aware selectory `ResidenceSource`,
