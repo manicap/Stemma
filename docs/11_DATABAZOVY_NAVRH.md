@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.57
+**Verze:** 0.58
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -2176,6 +2176,18 @@ Selectory přednačítají typ vztahu, obě osoby, přílohu a její kategorii, 
 autory. Dotaz je omezen konkrétním `relationship_id`; sdílená příloha proto
 neodhaluje jiné chráněné vztahy. Selector nevydává storage URL a není
 autorizační hranicí budoucího doručení souboru.
+
+Přílohy bydliště používají `get_residence_attachment_links(*, residence)` a
+`get_visible_residence_attachment_links(*, residence, actor)`. Actor-aware
+varianta vyžaduje viditelné měkce neodstraněné bydliště a viditelnou
+rodičovskou osobu; její lifecycle respektuje `people.view_archived_person` a
+`people.view_deleted_person`. Archivované bydliště zůstává zahrnuté a připojené
+`Place` není samostatnou autorizační vrstvou.
+
+Výsledné SQL znovu filtruje access a lifecycle bydliště a osoby, vazby a
+přílohy a vyžaduje `FileStatus.AVAILABLE`. Selectory přednačítají celý kontext
+bez N+1, jsou omezené konkrétním `residence_id`, nevydávají storage URL a
+sdílená příloha nemůže odhalit jiné chráněné bydliště.
 
 Access policy cílového doménového objektu je pro každou vazbu povinná.
 Případná vlastní access úroveň vazby nebo zdroje ji smí pouze zpřísnit a

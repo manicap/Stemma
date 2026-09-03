@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.31
+**Verze dokumentace:** 0.32
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
 **Datum revize:** 3. 9. 2026
 
@@ -39,6 +39,16 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.32
+
+Verze 0.32 přidává actor-aware přílohy konkrétního `Residence`:
+
+- cesta kontroluje bydliště, jeho osobu, vazbu přílohy i přílohu,
+- archivované bydliště zůstává historicky čitelné, odstraněné nikoli; lifecycle
+  osoby respektuje její explicitní oprávnění,
+- vydají se pouze aktivní přílohy ve stavu `available` a sdílená příloha
+  neodhalí chráněné bydliště.
 
 ## Stav verze 0.31
 

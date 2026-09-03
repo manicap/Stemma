@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.20
+**Verze:** 0.21
 **Stav:** pracovní návrh  
 **Datum revize:** 3. 9. 2026
 
@@ -368,6 +368,18 @@ vazbu přílohy i přílohu a stav souboru `available`.
 Permissionless protějšek je pouze interní historie nesmazaných vazeb a
 nezakládá oprávnění k doručení souboru. Sdílená příloha nevytváří cestu zpět
 k jinému chráněnému vztahu.
+
+### 5.12.5 Implementované přílohy bydliště
+
+`get_visible_residence_attachment_links(*, residence, actor)` vyžaduje
+viditelné, měkce neodstraněné bydliště a viditelnou rodičovskou osobu.
+Archivované bydliště zůstává historickým záznamem; archivace a soft-delete osoby
+respektují `people.view_archived_person` a `people.view_deleted_person`.
+
+Výsledný lazy dotaz znovu kontroluje bydliště a osobu a vydává pouze viditelnou,
+nearchivovanou a neodstraněnou vazbu i přílohu ve stavu `available`. Připojené
+`Place` není podle stávající residence policy samostatnou autorizační vrstvou.
+Selector nevydává storage URL a sdílená příloha neodhalí jiné bydliště.
 
 ## 6. Zamčený obsah
 

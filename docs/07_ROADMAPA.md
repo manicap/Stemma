@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.30
+**Verze:** 0.31
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -164,6 +164,12 @@ Dvanáctý řez přidává kontextové čtení `RelationshipAttachment`. Zachov�
 stejnou ochranu vztahu a obou osob a navíc vydává pouze viditelné, aktivní
 přílohové vazby s aktivní přílohou a fyzickým stavem `available`. Selector
 nevydává storage URL a sdílená příloha neodhalí skrytý vztah.
+
+Třináctý řez přidává kontextové čtení `ResidenceAttachment`. Actor-aware
+varianta chrání bydliště i jeho osobu podle existující residence policy,
+zachovává archivovanou historii a vydává pouze aktivní přílohy ve stavu
+`available`. Připojené místo se samostatně neautorizuje a sdílená příloha
+neodhalí chráněné bydliště.
 
 #### Následující implementační kroky
 

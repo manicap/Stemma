@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.44
+**Verze:** 0.45
 **Stav:** koncept  
 **Datum revize:** 3. 9. 2026
 
@@ -1012,6 +1012,12 @@ Pro `RelationshipAttachment` existují `get_relationship_attachment_links()` a
 `get_visible_relationship_attachment_links()`. Actor-aware cesta používá
 stejnou policy vztahu a obou osob; vazba přílohy i příloha musí být viditelné,
 nearchivované a neodstraněné a fyzický soubor musí být ve stavu `available`.
+
+Pro `ResidenceAttachment` existují `get_residence_attachment_links()` a
+`get_visible_residence_attachment_links()`. Actor-aware cesta kontroluje
+bydliště a jeho osobu. Archivované bydliště se zachovává, odstraněné nikoli;
+lifecycle osoby respektuje její explicitní oprávnění. Vazba i příloha musí být
+viditelné, nearchivované a neodstraněné a soubor musí být `available`.
 
 ## 10. Zdravotní záznam
 

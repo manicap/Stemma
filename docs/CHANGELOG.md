@@ -1,5 +1,14 @@
 # Historie změn dokumentace
 
+## Verze 0.67 – 3. 9. 2026
+
+- přidány permissionless a actor-aware selectory `ResidenceAttachment`,
+- actor-aware cesta kontroluje bydliště, jeho osobu, vazbu i přílohu podle
+  existující residence policy,
+- zachovává archivované bydliště, respektuje lifecycle oprávnění osoby a vydává
+  pouze aktivní přílohy ve stavu `available`,
+- sdílená příloha nemůže odhalit chráněné bydliště.
+
 ## Verze 0.66 – 3. 9. 2026
 
 - přidány permissionless a actor-aware selectory `RelationshipAttachment`,

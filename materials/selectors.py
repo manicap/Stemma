@@ -10,6 +10,7 @@ from common.choices import AccessLevel
 from common.permissions import can_view_access_level
 from events.models import Event
 from people.models import Person, PersonName, Relationship
+from places.models import Residence
 
 from .choices import FileStatus
 from .models import (
@@ -17,6 +18,7 @@ from .models import (
     EventSource,
     PersonAttachment,
     PersonNameSource,
+    ResidenceAttachment,
     RelationshipAttachment,
     RelationshipSource,
 )
@@ -26,12 +28,14 @@ __all__ = (
     "get_event_source_links",
     "get_person_attachment_links",
     "get_person_name_source_links",
+    "get_residence_attachment_links",
     "get_relationship_attachment_links",
     "get_relationship_source_links",
     "get_visible_event_attachment_links",
     "get_visible_event_source_links",
     "get_visible_person_attachment_links",
     "get_visible_person_name_source_links",
+    "get_visible_residence_attachment_links",
     "get_visible_relationship_attachment_links",
     "get_visible_relationship_source_links",
 )
@@ -90,6 +94,17 @@ def _relationship_unsaved_error() -> ValidationError:
     )
 
 
+def _residence_unsaved_error() -> ValidationError:
+    return ValidationError(
+        {
+            "residence": ValidationError(
+                "Bydliště musí být uložené a existovat v databázi.",
+                code="residence_unsaved",
+            )
+        }
+    )
+
+
 def _load_current_person(person: Person) -> Person:
     if not isinstance(person, Person) or person.pk is None:
         raise _person_unsaved_error()
@@ -133,6 +148,16 @@ def _load_current_relationship(relationship: Relationship) -> Relationship:
         ).get(pk=relationship.pk)
     except Relationship.DoesNotExist as error:
         raise _relationship_unsaved_error() from error
+
+
+def _load_current_residence(residence: Residence) -> Residence:
+    if not isinstance(residence, Residence) or residence.pk is None:
+        raise _residence_unsaved_error()
+
+    try:
+        return Residence.objects.select_related("person").get(pk=residence.pk)
+    except Residence.DoesNotExist as error:
+        raise _residence_unsaved_error() from error
 
 
 def _get_lifecycle_permissions(
@@ -191,6 +216,19 @@ def _relationship_people_lifecycle_filter(
             relationship__person_a__archived_at__isnull=True,
             relationship__person_b__archived_at__isnull=True,
         )
+    return condition
+
+
+def _residence_person_lifecycle_filter(
+    *,
+    can_view_archived: bool,
+    can_view_deleted: bool,
+) -> Q:
+    condition = Q()
+    if not can_view_archived:
+        condition &= Q(residence__person__archived_at__isnull=True)
+    if not can_view_deleted:
+        condition &= Q(residence__person__deleted_at__isnull=True)
     return condition
 
 
@@ -323,6 +361,30 @@ def get_relationship_attachment_links(
         "relationship__person_a",
         "relationship__person_b",
         "relationship__created_by",
+        "attachment",
+        "attachment__category",
+        "attachment__created_by",
+        "role",
+        "created_by",
+    )
+
+
+def get_residence_attachment_links(
+    *,
+    residence: Residence,
+) -> QuerySet[ResidenceAttachment]:
+    """Vrať permissionless historii nesmazaných příloh bydliště."""
+
+    current = _load_current_residence(residence)
+    return ResidenceAttachment.objects.filter(
+        residence_id=current.pk,
+        deleted_at__isnull=True,
+    ).select_related(
+        "residence",
+        "residence__person",
+        "residence__residence_type",
+        "residence__place",
+        "residence__created_by",
         "attachment",
         "attachment__category",
         "attachment__created_by",
@@ -586,6 +648,49 @@ def get_visible_relationship_attachment_links(
         relationship__deleted_at__isnull=True,
         relationship__person_a__access_level__in=visible_levels,
         relationship__person_b__access_level__in=visible_levels,
+        attachment__access_level__in=visible_levels,
+        attachment__archived_at__isnull=True,
+        attachment__deleted_at__isnull=True,
+        attachment__file_status=FileStatus.AVAILABLE,
+    )
+
+
+def get_visible_residence_attachment_links(
+    *,
+    residence: Residence,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[ResidenceAttachment]:
+    """Vrať dostupné přílohy viditelné v kontextu bydliště a osoby."""
+
+    visibility = {
+        level: can_view_access_level(actor=actor, access_level=level)
+        for level in _ACCESS_LEVELS
+    }
+    can_view_archived, can_view_deleted = _get_lifecycle_permissions(actor)
+    current = _load_current_residence(residence)
+    person = current.person
+    if not (
+        visibility.get(person.access_level, False)
+        and (person.archived_at is None or can_view_archived)
+        and (person.deleted_at is None or can_view_deleted)
+        and visibility.get(current.access_level, False)
+        and current.deleted_at is None
+    ):
+        raise PermissionDenied("Nemáte oprávnění zobrazit toto bydliště.")
+
+    visible_levels = tuple(
+        level for level, is_visible in visibility.items() if is_visible
+    )
+    return get_residence_attachment_links(residence=current).filter(
+        _residence_person_lifecycle_filter(
+            can_view_archived=can_view_archived,
+            can_view_deleted=can_view_deleted,
+        ),
+        access_level__in=visible_levels,
+        archived_at__isnull=True,
+        residence__access_level__in=visible_levels,
+        residence__deleted_at__isnull=True,
+        residence__person__access_level__in=visible_levels,
         attachment__access_level__in=visible_levels,
         attachment__archived_at__isnull=True,
         attachment__deleted_at__isnull=True,
