@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.28
+**Verze:** 0.29
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
-**Datum revize:** 2. 9. 2026
+**Datum revize:** 3. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -153,6 +153,12 @@ filtruje odstraněné vazby a actor-aware varianta vyžaduje viditelnou aktivní
 událost a současně access a lifecycle vazby i zdroje. Lazy výsledkový dotaz
 odolává změně databázového stavu, přednačítá kontext bez N+1 a sdílený zdroj
 neodhalí chráněnou událost.
+
+Jedenáctý řez přidává kontextové čtení `RelationshipSource`. Actor-aware
+varianta chrání vztah i obě osoby a zachovává existující význam lifecycle:
+archivovaný vztah je historicky čitelný, archivovaná osoba vyžaduje permission
+a odstraněný vztah či osoba cestu uzavře. Vazba a zdroj musí být aktivní a
+sdílený zdroj neodhalí skrytý vztah.
 
 #### Následující implementační kroky
 

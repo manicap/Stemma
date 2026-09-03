@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.42
+**Verze:** 0.43
 **Stav:** koncept  
-**Datum revize:** 2. 9. 2026
+**Datum revize:** 3. 9. 2026
 
 ## 1. Základní pilíře
 
@@ -1000,6 +1000,13 @@ Stejný kontextový kontrakt pro událost poskytují
 vyžaduje viditelný, nearchivovaný a neodstraněný `Event` a ve výsledku znovu
 filtruje access a lifecycle události, vazby a zdroje. Jiná eventová vazba ke
 stejnému zdroji se výsledku neúčastní.
+
+Pro `RelationshipSource` existují `get_relationship_source_links()` a
+`get_visible_relationship_source_links()`. Actor-aware cesta vyžaduje viditelný
+vztah i obě propojené osoby. Archivovaný vztah zachovává historický význam,
+měkce odstraněný se nevydá; archivovaná osoba vyžaduje explicitní oprávnění a
+odstraněná osoba cestu vždy uzavře. Vazba a zdroj musí být viditelné,
+nearchivované a neodstraněné.
 
 ## 10. Zdravotní záznam
 

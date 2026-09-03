@@ -1,5 +1,14 @@
 # Historie změn dokumentace
 
+## Verze 0.65 – 3. 9. 2026
+
+- přidány permissionless a actor-aware selectory `RelationshipSource`,
+- actor-aware cesta kontroluje vztah i obě osoby a zachovává schválený
+  lifecycle historického vztahu a propojených osob,
+- výsledný lazy dotaz znovu filtruje všechny vrstvy a přednačítá kontext bez
+  N+1,
+- sdílený zdroj nemůže odhalit chráněný vztah nebo jeho účastníka.
+
 ## Verze 0.64 – 2. 9. 2026
 
 - přidána permissionless historie a actor-aware selector zdrojových vazeb

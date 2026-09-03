@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.55
+**Verze:** 0.56
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
-**Datum revize:** 2. 9. 2026
+**Datum revize:** 3. 9. 2026
 
 ## 1. Účel
 
@@ -2153,6 +2153,18 @@ přes `select_related()` bez N+1.
 Dotaz je omezen konkrétním `event_id`; žádná jiná vazba ke sdílenému zdroji se
 jej neúčastní a nemůže potvrdit chráněnou událost. Obecný selector podle
 `Source.id`, admin, API a UI nevznikají.
+
+Kontext vztahu používá `get_relationship_source_links(*, relationship)` a
+`get_visible_relationship_source_links(*, relationship, actor)`. Actor-aware
+varianta vyžaduje viditelný neodstraněný vztah a obě viditelné propojené osoby.
+Archivovaný vztah zůstává historicky čitelný, archivovaná osoba vyžaduje
+`people.view_archived_person` a odstraněná osoba se nevydá ani superuserovi.
+Výsledek znovu databázově filtruje access a lifecycle vztahu, obou osob,
+zdrojové vazby a zdroje; vazba a zdroj musí být nearchivované a neodstraněné.
+
+Selectory přednačítají typ vztahu, obě osoby, zdroj a jeho typ, roli a autory.
+Dotaz je omezen konkrétním `relationship_id`, takže jiná vazba ke sdílenému
+zdroji nemůže odhalit chráněný vztah ani účastníka.
 
 Access policy cílového doménového objektu je pro každou vazbu povinná.
 Případná vlastní access úroveň vazby nebo zdroje ji smí pouze zpřísnit a

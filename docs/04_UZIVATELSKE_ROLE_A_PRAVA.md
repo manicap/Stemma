@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.18
+**Verze:** 0.19
 **Stav:** pracovní návrh  
-**Datum revize:** 2. 9. 2026
+**Datum revize:** 3. 9. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -345,6 +345,18 @@ protějšek je pouze interní historie nesmazaných eventových vazeb.
 Viditelnost stejného `Source` přes jinou událost nezakládá žádné oprávnění k
 chráněné události ani její vazbě. Neexistuje obecná cesta od zdroje zpět ke
 všem cílům.
+
+### 5.12.3 Implementovaný kontext vztahu
+
+`get_visible_relationship_source_links(*, relationship, actor)` kontroluje
+vlastní access vztahu a access obou propojených osob. Archivovaný vztah je
+historický záznam a smí být čten, měkce odstraněný vztah nikoli. Archivovaná
+osoba vyžaduje `people.view_archived_person`; měkce odstraněná osoba uzavře
+cestu i superuserovi.
+
+Výsledný lazy dotaz opakuje podmínky vztahu a obou osob a navíc vyžaduje
+viditelnou, nearchivovanou a neodstraněnou zdrojovou vazbu i `Source`.
+Permissionless protějšek je pouze interní historie nesmazaných vazeb.
 
 ## 6. Zamčený obsah
 

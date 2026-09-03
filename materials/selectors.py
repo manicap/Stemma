@@ -9,7 +9,7 @@ from django.db.models import Q, QuerySet
 from common.choices import AccessLevel
 from common.permissions import can_view_access_level
 from events.models import Event
-from people.models import Person, PersonName
+from people.models import Person, PersonName, Relationship
 
 from .choices import FileStatus
 from .models import (
@@ -17,6 +17,7 @@ from .models import (
     EventSource,
     PersonAttachment,
     PersonNameSource,
+    RelationshipSource,
 )
 
 __all__ = (
@@ -24,10 +25,12 @@ __all__ = (
     "get_event_source_links",
     "get_person_attachment_links",
     "get_person_name_source_links",
+    "get_relationship_source_links",
     "get_visible_event_attachment_links",
     "get_visible_event_source_links",
     "get_visible_person_attachment_links",
     "get_visible_person_name_source_links",
+    "get_visible_relationship_source_links",
 )
 
 _ACCESS_LEVELS = (
@@ -73,6 +76,17 @@ def _person_name_unsaved_error() -> ValidationError:
     )
 
 
+def _relationship_unsaved_error() -> ValidationError:
+    return ValidationError(
+        {
+            "relationship": ValidationError(
+                "Vazba musí být uložená a existovat v databázi.",
+                code="relationship_unsaved",
+            )
+        }
+    )
+
+
 def _load_current_person(person: Person) -> Person:
     if not isinstance(person, Person) or person.pk is None:
         raise _person_unsaved_error()
@@ -103,6 +117,19 @@ def _load_current_person_name(person_name: PersonName) -> PersonName:
         )
     except PersonName.DoesNotExist as error:
         raise _person_name_unsaved_error() from error
+
+
+def _load_current_relationship(relationship: Relationship) -> Relationship:
+    if not isinstance(relationship, Relationship) or relationship.pk is None:
+        raise _relationship_unsaved_error()
+
+    try:
+        return Relationship.objects.select_related(
+            "person_a",
+            "person_b",
+        ).get(pk=relationship.pk)
+    except Relationship.DoesNotExist as error:
+        raise _relationship_unsaved_error() from error
 
 
 def _get_lifecycle_permissions(
@@ -145,6 +172,22 @@ def _person_name_parent_lifecycle_filter(
         condition &= Q(person_name__person__archived_at__isnull=True)
     if not can_view_deleted:
         condition &= Q(person_name__person__deleted_at__isnull=True)
+    return condition
+
+
+def _relationship_people_lifecycle_filter(
+    *,
+    can_view_archived: bool,
+) -> Q:
+    condition = Q(
+        relationship__person_a__deleted_at__isnull=True,
+        relationship__person_b__deleted_at__isnull=True,
+    )
+    if not can_view_archived:
+        condition &= Q(
+            relationship__person_a__archived_at__isnull=True,
+            relationship__person_b__archived_at__isnull=True,
+        )
     return condition
 
 
@@ -229,6 +272,30 @@ def get_event_source_links(
         "event__event_type",
         "event__place",
         "event__created_by",
+        "source",
+        "source__source_type",
+        "source__created_by",
+        "role",
+        "created_by",
+    )
+
+
+def get_relationship_source_links(
+    *,
+    relationship: Relationship,
+) -> QuerySet[RelationshipSource]:
+    """Vrať permissionless historii nesmazaných zdrojů konkrétní vazby."""
+
+    current = _load_current_relationship(relationship)
+    return RelationshipSource.objects.filter(
+        relationship_id=current.pk,
+        deleted_at__isnull=True,
+    ).select_related(
+        "relationship",
+        "relationship__relationship_type",
+        "relationship__person_a",
+        "relationship__person_b",
+        "relationship__created_by",
         "source",
         "source__source_type",
         "source__created_by",
@@ -403,6 +470,51 @@ def get_visible_event_source_links(
         event__archived_at__isnull=True,
         event__deleted_at__isnull=True,
         source__access_level__in=visible_access_levels,
+        source__archived_at__isnull=True,
+        source__deleted_at__isnull=True,
+    )
+
+
+def get_visible_relationship_source_links(
+    *,
+    relationship: Relationship,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[RelationshipSource]:
+    """Vrať zdroje vazby viditelné přes vazbu i obě propojené osoby."""
+
+    visibility = {
+        level: can_view_access_level(actor=actor, access_level=level)
+        for level in _ACCESS_LEVELS
+    }
+    can_view_archived, _ = _get_lifecycle_permissions(actor)
+    current = _load_current_relationship(relationship)
+    people = (current.person_a, current.person_b)
+    if not (
+        visibility.get(current.access_level, False)
+        and current.deleted_at is None
+        and all(
+            visibility.get(person.access_level, False)
+            and (person.archived_at is None or can_view_archived)
+            and person.deleted_at is None
+            for person in people
+        )
+    ):
+        raise PermissionDenied("Nemáte oprávnění zobrazit tuto vazbu.")
+
+    visible_levels = tuple(
+        level for level, is_visible in visibility.items() if is_visible
+    )
+    return get_relationship_source_links(relationship=current).filter(
+        _relationship_people_lifecycle_filter(
+            can_view_archived=can_view_archived,
+        ),
+        access_level__in=visible_levels,
+        archived_at__isnull=True,
+        relationship__access_level__in=visible_levels,
+        relationship__deleted_at__isnull=True,
+        relationship__person_a__access_level__in=visible_levels,
+        relationship__person_b__access_level__in=visible_levels,
+        source__access_level__in=visible_levels,
         source__archived_at__isnull=True,
         source__deleted_at__isnull=True,
     )
