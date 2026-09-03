@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.29
+**Verze:** 0.30
 **Stav:** M2 dokončeno; infrastruktura `materials` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -159,6 +159,11 @@ varianta chrání vztah i obě osoby a zachovává existující význam lifecycl
 archivovaný vztah je historicky čitelný, archivovaná osoba vyžaduje permission
 a odstraněný vztah či osoba cestu uzavře. Vazba a zdroj musí být aktivní a
 sdílený zdroj neodhalí skrytý vztah.
+
+Dvanáctý řez přidává kontextové čtení `RelationshipAttachment`. Zachovává
+stejnou ochranu vztahu a obou osob a navíc vydává pouze viditelné, aktivní
+přílohové vazby s aktivní přílohou a fyzickým stavem `available`. Selector
+nevydává storage URL a sdílená příloha neodhalí skrytý vztah.
 
 #### Následující implementační kroky
 

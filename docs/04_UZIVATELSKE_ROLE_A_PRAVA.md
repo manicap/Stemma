@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.19
+**Verze:** 0.20
 **Stav:** pracovní návrh  
 **Datum revize:** 3. 9. 2026
 
@@ -357,6 +357,17 @@ cestu i superuserovi.
 Výsledný lazy dotaz opakuje podmínky vztahu a obou osob a navíc vyžaduje
 viditelnou, nearchivovanou a neodstraněnou zdrojovou vazbu i `Source`.
 Permissionless protějšek je pouze interní historie nesmazaných vazeb.
+
+### 5.12.4 Implementované přílohy vztahu
+
+`get_visible_relationship_attachment_links(*, relationship, actor)` používá
+stejnou ochranu vztahu a obou propojených osob jako zdrojový selector.
+Výsledný lazy dotaz navíc vyžaduje viditelnou, nearchivovanou a neodstraněnou
+vazbu přílohy i přílohu a stav souboru `available`.
+
+Permissionless protějšek je pouze interní historie nesmazaných vazeb a
+nezakládá oprávnění k doručení souboru. Sdílená příloha nevytváří cestu zpět
+k jinému chráněnému vztahu.
 
 ## 6. Zamčený obsah
 

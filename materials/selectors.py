@@ -17,6 +17,7 @@ from .models import (
     EventSource,
     PersonAttachment,
     PersonNameSource,
+    RelationshipAttachment,
     RelationshipSource,
 )
 
@@ -25,11 +26,13 @@ __all__ = (
     "get_event_source_links",
     "get_person_attachment_links",
     "get_person_name_source_links",
+    "get_relationship_attachment_links",
     "get_relationship_source_links",
     "get_visible_event_attachment_links",
     "get_visible_event_source_links",
     "get_visible_person_attachment_links",
     "get_visible_person_name_source_links",
+    "get_visible_relationship_attachment_links",
     "get_visible_relationship_source_links",
 )
 
@@ -304,6 +307,30 @@ def get_relationship_source_links(
     )
 
 
+def get_relationship_attachment_links(
+    *,
+    relationship: Relationship,
+) -> QuerySet[RelationshipAttachment]:
+    """Vrať permissionless historii nesmazaných příloh konkrétní vazby."""
+
+    current = _load_current_relationship(relationship)
+    return RelationshipAttachment.objects.filter(
+        relationship_id=current.pk,
+        deleted_at__isnull=True,
+    ).select_related(
+        "relationship",
+        "relationship__relationship_type",
+        "relationship__person_a",
+        "relationship__person_b",
+        "relationship__created_by",
+        "attachment",
+        "attachment__category",
+        "attachment__created_by",
+        "role",
+        "created_by",
+    )
+
+
 def get_visible_person_attachment_links(
     *,
     person: Person,
@@ -517,4 +544,50 @@ def get_visible_relationship_source_links(
         source__access_level__in=visible_levels,
         source__archived_at__isnull=True,
         source__deleted_at__isnull=True,
+    )
+
+
+def get_visible_relationship_attachment_links(
+    *,
+    relationship: Relationship,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[RelationshipAttachment]:
+    """Vrať dostupné přílohy viditelné přes vazbu i obě osoby."""
+
+    visibility = {
+        level: can_view_access_level(actor=actor, access_level=level)
+        for level in _ACCESS_LEVELS
+    }
+    can_view_archived, _ = _get_lifecycle_permissions(actor)
+    current = _load_current_relationship(relationship)
+    people = (current.person_a, current.person_b)
+    if not (
+        visibility.get(current.access_level, False)
+        and current.deleted_at is None
+        and all(
+            visibility.get(person.access_level, False)
+            and (person.archived_at is None or can_view_archived)
+            and person.deleted_at is None
+            for person in people
+        )
+    ):
+        raise PermissionDenied("Nemáte oprávnění zobrazit tuto vazbu.")
+
+    visible_levels = tuple(
+        level for level, is_visible in visibility.items() if is_visible
+    )
+    return get_relationship_attachment_links(relationship=current).filter(
+        _relationship_people_lifecycle_filter(
+            can_view_archived=can_view_archived,
+        ),
+        access_level__in=visible_levels,
+        archived_at__isnull=True,
+        relationship__access_level__in=visible_levels,
+        relationship__deleted_at__isnull=True,
+        relationship__person_a__access_level__in=visible_levels,
+        relationship__person_b__access_level__in=visible_levels,
+        attachment__access_level__in=visible_levels,
+        attachment__archived_at__isnull=True,
+        attachment__deleted_at__isnull=True,
+        attachment__file_status=FileStatus.AVAILABLE,
     )

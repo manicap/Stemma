@@ -1,5 +1,13 @@
 # Historie změn dokumentace
 
+## Verze 0.66 – 3. 9. 2026
+
+- přidány permissionless a actor-aware selectory `RelationshipAttachment`,
+- actor-aware cesta kontroluje vztah, obě osoby, přílohovou vazbu i přílohu,
+- vydává pouze aktivní přílohy ve stavu `available` a zachovává lazy
+  databázovou refiltraci bez N+1,
+- sdílená příloha nemůže odhalit chráněný vztah nebo jeho účastníka.
+
 ## Verze 0.65 – 3. 9. 2026
 
 - přidány permissionless a actor-aware selectory `RelationshipSource`,

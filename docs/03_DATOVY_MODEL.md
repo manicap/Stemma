@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.43
+**Verze:** 0.44
 **Stav:** koncept  
 **Datum revize:** 3. 9. 2026
 
@@ -1007,6 +1007,11 @@ vztah i obě propojené osoby. Archivovaný vztah zachovává historický význa
 měkce odstraněný se nevydá; archivovaná osoba vyžaduje explicitní oprávnění a
 odstraněná osoba cestu vždy uzavře. Vazba a zdroj musí být viditelné,
 nearchivované a neodstraněné.
+
+Pro `RelationshipAttachment` existují `get_relationship_attachment_links()` a
+`get_visible_relationship_attachment_links()`. Actor-aware cesta používá
+stejnou policy vztahu a obou osob; vazba přílohy i příloha musí být viditelné,
+nearchivované a neodstraněné a fyzický soubor musí být ve stavu `available`.
 
 ## 10. Zdravotní záznam
 

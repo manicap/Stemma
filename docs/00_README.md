@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.30
+**Verze dokumentace:** 0.31
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `materials`
 **Datum revize:** 3. 9. 2026
 
@@ -39,6 +39,16 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.31
+
+Verze 0.31 přidává actor-aware přílohy konkrétního `Relationship`:
+
+- cesta kontroluje vztah, obě propojené osoby, vazbu přílohy i přílohu,
+- archivovaný vztah zůstává historicky čitelný, odstraněný vztah nebo osoba
+  cestu uzavře a archivovaná osoba vyžaduje explicitní permission,
+- vydají se pouze aktivní přílohy ve stavu `available` a sdílená příloha
+  neodhalí vztah se skrytým účastníkem.
 
 ## Stav verze 0.30
 

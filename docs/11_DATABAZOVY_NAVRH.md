@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.56
+**Verze:** 0.57
 **Stav:** infrastrukturní milník M2 dokončen; implementace `materials` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -2165,6 +2165,17 @@ zdrojové vazby a zdroje; vazba a zdroj musí být nearchivované a neodstraněn
 Selectory přednačítají typ vztahu, obě osoby, zdroj a jeho typ, roli a autory.
 Dotaz je omezen konkrétním `relationship_id`, takže jiná vazba ke sdílenému
 zdroji nemůže odhalit chráněný vztah ani účastníka.
+
+Přílohy vztahu používají `get_relationship_attachment_links(*, relationship)`
+a `get_visible_relationship_attachment_links(*, relationship, actor)`.
+Actor-aware varianta chrání vztah i obě osoby stejnou policy jako zdrojový
+kontext a výsledné SQL vyžaduje viditelnou, nearchivovanou a neodstraněnou
+vazbu i přílohu a `FileStatus.AVAILABLE`.
+
+Selectory přednačítají typ vztahu, obě osoby, přílohu a její kategorii, roli a
+autory. Dotaz je omezen konkrétním `relationship_id`; sdílená příloha proto
+neodhaluje jiné chráněné vztahy. Selector nevydává storage URL a není
+autorizační hranicí budoucího doručení souboru.
 
 Access policy cílového doménového objektu je pro každou vazbu povinná.
 Případná vlastní access úroveň vazby nebo zdroje ji smí pouze zpřísnit a
