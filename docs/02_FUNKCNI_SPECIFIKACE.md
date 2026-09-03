@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.33
+**Verze:** 0.34
 **Stav:** pracovní návrh  
-**Datum revize:** 30. 8. 2026
+**Datum revize:** 3. 9. 2026
 
 ## 1. Globální aplikační shell a Přehled
 
@@ -505,6 +505,20 @@ Typy zahrnují:
 - alergii,
 - léky,
 - jiný zdravotní záznam.
+
+Implementovaný `HealthRecord` vyžaduje jednu osobu a jeden rozšiřitelný typ.
+Název nebo popis musí obsahovat skutečný text; místo, lékař či zařízení a
+poznámka jsou volitelné a datum používá společný model neúplného času.
+
+V M2 používají zdravotní záznamy pouze existující obecný access-control.
+Výchozí a nejširší povolená viditelnost je `restricted`; přísnější
+`admin_only` je možné, ale `public` ani `authenticated` model nepřijme.
+Nevzniká samostatné zdravotní oprávnění. Každý budoucí aplikační čtecí vstup
+musí rozhodnutí vést přes centralizované
+`health.permissions.can_view_health_record_access()`, které dnes deleguje na
+`common.permissions.can_view_access_level()` a dovoluje pozdější rozšíření
+health policy bez změny doménového modelu. Model zatím není vystaven adminem,
+službou, selectorem, API ani UI.
 
 ## 13. Hrobová místa
 

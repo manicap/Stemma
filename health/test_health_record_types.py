@@ -8,7 +8,7 @@ from django.test import SimpleTestCase, TestCase
 from common.admin import SystemValueAdminMixin
 from common.models import LookupModel
 
-from .models import HealthRecordType
+from .models import HealthRecord, HealthRecordType
 
 
 class HealthRecordTypeModelTests(TestCase):
@@ -77,10 +77,10 @@ class HealthRecordTypeModelTests(TestCase):
             connection.introspection.table_names(),
         )
 
-    def test_health_record_is_not_prematurely_implemented(self) -> None:
+    def test_app_contains_only_approved_models(self) -> None:
         self.assertEqual(
             {model.__name__ for model in apps.get_app_config("health").get_models()},
-            {"HealthRecordType"},
+            {"HealthRecord", "HealthRecordType"},
         )
 
 
@@ -90,6 +90,9 @@ class HealthRecordTypeAdminTests(SimpleTestCase):
             admin.site._registry[HealthRecordType],
             SystemValueAdminMixin,
         )
+
+    def test_sensitive_record_is_not_registered_in_admin(self) -> None:
+        self.assertNotIn(HealthRecord, admin.site._registry)
 
 
 class HealthRecordTypeMigrationTests(SimpleTestCase):

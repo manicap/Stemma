@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.62
+**Verze:** 0.63
 **Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -2233,10 +2233,15 @@ Univerzální systém zdrojování libovolného databázového pole není souč�
 
 Zdravotní záznam patří právě jedné osobě a má samostatný typ.
 
-První realizovaný strukturální řez vytváří pouze konkrétní
+První realizovaný strukturální řez vytváří konkrétní
 `health.HealthRecordType` nad společným `LookupModel`. Nepřidává vlastní pole,
-seed data ani stabilní systémové kódy. Samotný `HealthRecord` a jeho citlivá
-actor-aware čtecí a zápisová hranice zůstávají odložené do samostatného řezu.
+seed data ani stabilní systémové kódy.
+
+Navazující `HealthRecord` dědí timestamp, access, verification, autorství,
+lifecycle a neúplný čas. Povinné `person` a `record_type` i volitelné `place`
+používají `PROTECT`; textová data tvoří `title`, `description`,
+`provider_name` a `note`, přičemž název nebo popis musí být neprázdný.
+Nevzniká unikátnost ani dodatečný index nad obsahem.
 
 Podporované typy zahrnují:
 
@@ -2254,7 +2259,15 @@ Podporované typy zahrnují:
 
 Záznam obsahuje název nebo popis, časový údaj, lékaře či zařízení, volitelné místo, stav ověření, přílohy, zdroje a přístupovou úroveň.
 
-Výchozí viditelnost je `omezené`. Zdravotní záznam se neukládá současně jako obecná událost, ale může se zobrazit v obecné časové ose.
+Výchozí a nejširší povolená viditelnost je `restricted`; databázový constraint
+zakazuje `public` a `authenticated` a dovoluje také přísnější `admin_only`.
+V M2 se nezavádí zdravotní permission. Všechna budoucí actor-aware použití
+musí procházet `health.permissions.can_view_health_record_access()`, který
+dnes deleguje na obecný access helper a zachovává místo pro budoucí rozšíření
+bez změny modelu. Zdravotní záznam se neukládá současně jako obecná událost,
+ale může se zobrazit v obecné časové ose. Strukturální migrace
+`health.0002_health_records` nevystavuje model adminem, službou, selectorem,
+API ani UI.
 
 ## 14. Uživatelé a oprávnění
 
@@ -2477,12 +2490,12 @@ materials.0005_sources
 materials.0006_source_links
 accounts.0004_person_editor_permissions
 health.0001_health_record_types
+health.0002_health_records
 ```
 
 Následující plánované migrace začínají:
 
 ```text
-health.0002_health_records
 health.0003_material_links
 audit.0001_initial
 accounts.0005_user_profile_person_link

@@ -1,5 +1,16 @@
 # Historie změn dokumentace
 
+## Verze 0.72 – 3. 9. 2026
+
+- přidán `HealthRecord` s osobou, typem, volitelným místem, neúplným časem,
+  obsahem, poskytovatelem, ověřením, autorstvím a lifecycle,
+- výchozí `restricted` a databázový constraint zakazují širší `public` a
+  `authenticated`, zatímco `admin_only` zůstává dovolené,
+- M2 nepřidává zdravotní permission; actor-aware rozhodnutí soustřeďuje
+  `health.permissions.can_view_health_record_access()` nad obecným helperem,
+- přidána strukturální migrace `health.0002_health_records`; citlivý model
+  zůstává mimo admin, služby, selectory, API, UI a materiálové vazby.
+
 ## Verze 0.71 – 3. 9. 2026
 
 - založena a registrována aplikace `health` s prázdným rozšiřitelným

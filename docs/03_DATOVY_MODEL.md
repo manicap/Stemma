@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.49
+**Verze:** 0.50
 **Stav:** koncept  
 **Datum revize:** 3. 9. 2026
 
@@ -1042,10 +1042,19 @@ První implementační řez registruje aplikaci `health` a zavádí pouze
 vlastních polí a bez počátečních systémových hodnot. Katalog spravuje Django
 Admin se společnou ochranou identity případných systémových řádků.
 
-Samotný citlivý `HealthRecord` v tomto řezu nevzniká. Následující implementace
-musí před vystavením dat konkretizovat dokumentovaný datový kontrakt a
-serverovou actor-aware policy; nevznikají ani vazby na materiály, služby,
-selectory, API nebo UI.
+Navazující strukturální řez přidává konkrétní `HealthRecord` v pořadí mixinů
+`TimestampedModel`, `AccessControlledModel`, `VerifiableModel`,
+`AuthoredModel`, `LifecycleModel`, `PartialDateModel`, `models.Model`.
+Povinné chráněné cizí klíče vedou na jednu osobu a `HealthRecordType`, volitelný
+chráněný cizí klíč na `Place`. `title` nebo `description` musí po oříznutí
+obsahovat text; `provider_name` a `note` jsou volitelné.
+
+`access_level` má výchozí `restricted`. Modelová validace i databázový
+constraint připouštějí pouze `restricted` a přísnější `admin_only`, nikoli
+`public` nebo `authenticated`. Actor-aware rozhodnutí je soustředěné v
+`health.permissions.can_view_health_record_access()` a v M2 pouze deleguje na
+obecný access-control bez nové zdravotní permission. Model zůstává fail-closed
+mimo admin, služby, selectory, API a UI; vazby na materiály následují zvlášť.
 
 Pole:
 
@@ -1056,11 +1065,15 @@ Pole:
 - typ,
 - popis,
 - lékař nebo zařízení,
+- volitelné místo,
 - poznámka,
 - přístupová úroveň,
+- stav ověření,
+- autor záznamu,
 - datum vytvoření,
 - datum poslední změny,
-- stav archivace.
+- stav a metadata archivace,
+- stav a metadata měkkého odstranění.
 
 Výchozí přístupová úroveň zdravotního záznamu je omezená.
 

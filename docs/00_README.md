@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.36
+**Verze dokumentace:** 0.37
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `health`
 **Datum revize:** 3. 9. 2026
 
@@ -39,6 +39,19 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.37
+
+Verze 0.37 přidává strukturální základ zdravotního záznamu:
+
+- `HealthRecord` váže jednu osobu a typ, podporuje volitelné místo, neúplné
+  datum, obsah, lékaře či zařízení, ověření, autorství a lifecycle,
+- výchozí access je `restricted`; modelová validace i databázový constraint
+  zakazují širší `public` a `authenticated`, ale dovolují přísnější
+  `admin_only`,
+- M2 nepřidává zdravotní permission a actor-aware rozhodnutí vede jediná
+  `health.permissions.can_view_health_record_access()` nad obecným mechanismem,
+- citlivý model zůstává mimo admin, služby, selectory, API a UI.
 
 ## Stav verze 0.36
 

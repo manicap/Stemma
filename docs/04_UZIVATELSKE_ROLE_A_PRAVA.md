@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.24
+**Verze:** 0.25
 **Stav:** pracovní návrh  
 **Datum revize:** 3. 9. 2026
 
@@ -99,6 +99,13 @@ Přístupová úroveň může být nastavena pro:
 Obecnou policy implementuje
 `common.permissions.can_view_access_level(*, actor, access_level)`. Helper
 nezná konkrétní doménové objekty ani lifecycle.
+
+Zdravotní záznam má v M2 nejširší povolenou úroveň `restricted`; může být
+`admin_only`, ale nikdy `public` ani `authenticated`. Samostatná zdravotní
+permission se nezavádí. Doménová actor-aware hranice
+`health.permissions.can_view_health_record_access(*, actor, access_level)`
+dnes deleguje na obecný helper. Budoucí aplikační čtení ji musí použít, aby
+pozdější samostatná zdravotní autorizace nevyžadovala změnu modelu.
 
 ## 5.1 Systémové skupiny a zvýšená oprávnění
 
