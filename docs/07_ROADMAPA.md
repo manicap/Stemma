@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.36
+**Verze:** 0.37
 **Stav:** M2 dokončeno; infrastruktura `health` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -199,13 +199,19 @@ Osmnáctý řez přidává `HealthRecord` a migraci
 výchozí `restricted` a databázově nesmí být širší než `restricted`;
 `admin_only` zůstává možné. M2 nepřidává zdravotní permission a doménová
 actor-aware policy centralizovaně deleguje na obecný access mechanismus.
-Model zůstává mimo admin a bez služeb, selectorů, API, UI a materiálových
-vazeb.
+Tento strukturální řez ponechal model mimo admin a bez služeb, selectorů, API,
+UI a materiálových vazeb.
+
+Devatenáctý řez přidává frozen `HealthRecordInput` a atomické create/update
+služby. Čerstvě načítá FK, chrání aktivitu typu a soft-delete záznamu,
+validuje celý model a zachovává autora i lifecycle při update. Jde o
+permissionless doménovou hranici; actor-aware selector, admin, API a UI
+nevznikají.
 
 #### Následující implementační kroky
 
-1. doplnit transakční zápisové služby a actor-aware selectory zdravotních
-   záznamů přes centralizovanou health policy,
+1. doplnit actor-aware selectory zdravotních záznamů přes centralizovanou
+   health policy,
 2. doplnit explicitní vazby zdravotních záznamů na přílohy a zdroje,
 3. doplnit audit navazujících zápisových operací,
 4. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic.

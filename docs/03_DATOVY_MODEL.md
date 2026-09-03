@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.50
+**Verze:** 0.51
 **Stav:** koncept  
 **Datum revize:** 3. 9. 2026
 
@@ -1054,7 +1054,7 @@ constraint připouštějí pouze `restricted` a přísnější `admin_only`, nik
 `public` nebo `authenticated`. Actor-aware rozhodnutí je soustředěné v
 `health.permissions.can_view_health_record_access()` a v M2 pouze deleguje na
 obecný access-control bez nové zdravotní permission. Model zůstává fail-closed
-mimo admin, služby, selectory, API a UI; vazby na materiály následují zvlášť.
+mimo admin, selectory, API a UI; vazby na materiály následují zvlášť.
 
 Pole:
 
@@ -1076,6 +1076,15 @@ Pole:
 - stav a metadata měkkého odstranění.
 
 Výchozí přístupová úroveň zdravotního záznamu je omezená.
+
+Navazující service řez nemění model ani migrace. `HealthRecordInput` je frozen
+slotted úplný snapshot editovatelných polí. Obě služby znovu načítají a
+zamykají vstupní FK, update navíc měněný záznam; poté volají `full_clean()` a
+zapisují atomicky. Texty ořezávají na okrajích. Nový
+záznam vyžaduje aktivní typ; stejný neaktivní typ lze při update zachovat,
+přechod na jiný neaktivní typ je zakázán. Archivovaný záznam lze opravit,
+měkce odstraněný nikoli. `created_by` se při update nemění. Jde o permissionless
+doménovou službu, nikoli náhradu actor-aware autorizace.
 
 ## 11. Místo
 

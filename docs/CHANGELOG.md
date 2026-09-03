@@ -1,5 +1,15 @@
 # Historie změn dokumentace
 
+## Verze 0.73 – 3. 9. 2026
+
+- přidán frozen slotted `HealthRecordInput` a transakční create/update služby,
+- služby používají čerstvé uzamčené FK, úplnou validaci, bezpečné výchozí
+  `restricted` a vracejí přednačtený aktuální záznam,
+- nový záznam vyžaduje aktivní typ; update zachová stejný neaktivní typ,
+  odmítne jiný neaktivní typ a neumožní změnu měkce odstraněného záznamu,
+- service vrstva je permissionless a nevytváří actor-aware selector, admin,
+  API, UI ani novou migraci.
+
 ## Verze 0.72 – 3. 9. 2026
 
 - přidán `HealthRecord` s osobou, typem, volitelným místem, neúplným časem,

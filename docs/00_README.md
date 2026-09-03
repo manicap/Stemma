@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.37
+**Verze dokumentace:** 0.38
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `health`
 **Datum revize:** 3. 9. 2026
 
@@ -39,6 +39,18 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.38
+
+Verze 0.38 přidává transakční zápis zdravotních záznamů:
+
+- frozen slotted `HealthRecordInput` nese úplný editovatelný snapshot,
+- `create_health_record()` a `update_health_record()` pracují s čerstvými FK,
+  validují celý model a vracejí přednačtený aktuální záznam,
+- nový záznam nepřijme neaktivní typ; update může zachovat stejný neaktivní
+  typ, ale nepřejde na jiný, a měkce odstraněný záznam nelze měnit,
+- služby jsou permissionless doménová hranice, nikoli actor autorizace; UI,
+  API a actor-aware selector stále nevznikají.
 
 ## Stav verze 0.37
 

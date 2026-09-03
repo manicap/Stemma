@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.63
+**Verze:** 0.64
 **Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -2268,6 +2268,13 @@ bez změny modelu. Zdravotní záznam se neukládá současně jako obecná udá
 ale může se zobrazit v obecné časové ose. Strukturální migrace
 `health.0002_health_records` nevystavuje model adminem, službou, selectorem,
 API ani UI.
+
+Transakční create/update služby používají úplný `HealthRecordInput`, čerstvé
+uzamčené FK a `full_clean()`. Nový záznam nepřijme neaktivní typ; update může
+zachovat stejný neaktivní typ, ale nepřejde na jiný. Měkce odstraněný záznam
+nelze měnit, archivovaný ano. Při create lze `created_by` volitelně nastavit;
+update jej ani lifecycle nemění. Služba sama není actor autorizací. Tento řez
+nevytváří další migraci.
 
 ## 14. Uživatelé a oprávnění
 

@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.34
+**Verze:** 0.35
 **Stav:** pracovní návrh  
 **Datum revize:** 3. 9. 2026
 
@@ -518,7 +518,16 @@ musí rozhodnutí vést přes centralizované
 `health.permissions.can_view_health_record_access()`, které dnes deleguje na
 `common.permissions.can_view_access_level()` a dovoluje pozdější rozšíření
 health policy bez změny doménového modelu. Model zatím není vystaven adminem,
-službou, selectorem, API ani UI.
+selectorem, API ani UI.
+
+Interní zápisové API tvoří frozen slotted `HealthRecordInput` a keyword-only
+`create_health_record()` a `update_health_record()`. Služby pracují atomicky,
+znovu načítají záznam, osobu, typ, volitelné místo a autora, ořezávají pouze
+vnější whitespace textů a před uložením volají úplnou modelovou validaci.
+Nový záznam vyžaduje aktivní typ; update smí zachovat stejný mezitím neaktivní
+typ, ale nesmí na jiný neaktivní přejít. Archivovaný záznam lze opravit,
+měkce odstraněný nikoli. Služby samy neověřují actora a nejsou veřejnou
+autorizační hranicí; tu musí budoucí volající uplatnit samostatně.
 
 ## 13. Hrobová místa
 
