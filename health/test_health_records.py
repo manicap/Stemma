@@ -240,7 +240,10 @@ class HealthRecordPermissionApiTests(SimpleTestCase):
     def test_public_api_is_exact_and_keyword_only(self) -> None:
         self.assertEqual(
             permissions.__all__,
-            ("can_view_health_record_access",),
+            (
+                "can_view_health_record_access",
+                "get_health_record_visibility_filter",
+            ),
         )
         parameters = signature(can_view_health_record_access).parameters
         self.assertEqual(tuple(parameters), ("actor", "access_level"))

@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.64
+**Verze:** 0.65
 **Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
 **Datum revize:** 3. 9. 2026
 
@@ -2275,6 +2275,16 @@ zachovat stejný neaktivní typ, ale nepřejde na jiný. Měkce odstraněný zá
 nelze měnit, archivovaný ano. Při create lze `created_by` volitelně nastavit;
 update jej ani lifecycle nemění. Služba sama není actor autorizací. Tento řez
 nevytváří další migraci.
+
+Actor-aware read selectory používají jediný centralizovaný health filtr.
+Záznam se vydá pouze tehdy, když je osoba běžně viditelná a aktivní, jeho
+vlastní access projde health policy, záznam není archivovaný ani odstraněný a
+typ je aktivní. Kolekce i detail staví nad stejným lazy querysetem a
+přednačítají osobu, typ, místo i autora. Neplatný či skrytý detail je jednotně
+nedostupný. Nevzniká nový permission, modelová nebo migrační změna.
+
+Volitelné `Place` je pouze kontext záznamu; jeho access ani lifecycle se v
+health selectoru samostatně neautorizují a nemění viditelnost záznamu.
 
 ## 14. Uživatelé a oprávnění
 

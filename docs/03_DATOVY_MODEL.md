@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.51
+**Verze:** 0.52
 **Stav:** koncept  
 **Datum revize:** 3. 9. 2026
 
@@ -1085,6 +1085,14 @@ záznam vyžaduje aktivní typ; stejný neaktivní typ lze při update zachovat,
 přechod na jiný neaktivní typ je zakázán. Archivovaný záznam lze opravit,
 měkce odstraněný nikoli. `created_by` se při update nemění. Jde o permissionless
 doménovou službu, nikoli náhradu actor-aware autorizace.
+
+Read řez nemění model ani migrace. Centralizovaný health visibility filtr
+kombinuje obecnou access policy osoby s `can_view_health_record_access()` a
+vylučuje archivovanou či odstraněnou osobu, archivovaný či odstraněný záznam a
+neaktivní typ. `get_visible_health_records()` i `get_visible_health_record()`
+staví nad přesně stejným interním querysetem se `select_related()` pro osobu,
+typ, místo a autora. Detail skrytého, chybějícího nebo chybně označeného cíle
+vrací stejné `HealthRecord.DoesNotExist`.
 
 ## 11. Místo
 

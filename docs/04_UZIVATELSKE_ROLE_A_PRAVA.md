@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.25
+**Verze:** 0.26
 **Stav:** pracovní návrh  
 **Datum revize:** 3. 9. 2026
 
@@ -106,6 +106,13 @@ permission se nezavádí. Doménová actor-aware hranice
 `health.permissions.can_view_health_record_access(*, actor, access_level)`
 dnes deleguje na obecný helper. Budoucí aplikační čtení ji musí použít, aby
 pozdější samostatná zdravotní autorizace nevyžadovala změnu modelu.
+
+Konkrétní health read hranice skládá toto rozhodnutí v
+`get_health_record_visibility_filter(*, actor)`. Filtr vyžaduje access osoby i
+záznamu a aktivní lifecycle osoby, zdravotního záznamu a jeho typu. Kolekční i
+detailní selector používají tentýž filtr; znalost ID skrytého záznamu nepřidává
+žádný přístup a detail se chová stejně jako neexistující cíl. Nevzniká nové
+health oprávnění ani paralelní permission mechanismus.
 
 ## 5.1 Systémové skupiny a zvýšená oprávnění
 

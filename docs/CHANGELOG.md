@@ -1,5 +1,16 @@
 # Historie změn dokumentace
 
+## Verze 0.74 – 3. 9. 2026
+
+- přidány kolekční a detailní actor-aware selectory zdravotních záznamů,
+- oba používají jediný health visibility filtr pro access osoby i záznamu a
+  lifecycle osoby, záznamu a typu,
+- archivované či odstraněné záznamy, neaktivní typy a neaktivní nebo
+  nepřístupné osoby se nevydávají,
+- skrytý, chybějící a chybný detail je jednotně nedostupný; nevzniká HTTP,
+  serializace, UI, nový permission ani migrace.
+- volitelné `Place` zůstává kontextem, nikoli další autorizační vrstvou.
+
 ## Verze 0.73 – 3. 9. 2026
 
 - přidán frozen slotted `HealthRecordInput` a transakční create/update služby,

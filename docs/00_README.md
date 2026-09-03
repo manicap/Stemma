@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.38
+**Verze dokumentace:** 0.39
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `health`
 **Datum revize:** 3. 9. 2026
 
@@ -39,6 +39,19 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.39
+
+Verze 0.39 přidává actor-aware čtení zdravotních záznamů:
+
+- centralizovaná health policy skládá access záznamu i osoby a lifecycle
+  osoby, záznamu a jeho typu do jediného databázového filtru,
+- kolekční `get_visible_health_records()` a detailní
+  `get_visible_health_record()` používají stejný viditelný queryset,
+- archivované či měkce odstraněné záznamy, neaktivní typy a neaktivní nebo
+  nepřístupné osoby se nevydávají,
+- skryté, chybějící i chybně identifikované detailní cíle končí jednotně jako
+  nedostupné; nevzniká HTTP, serializace, admin ani nová permission.
 
 ## Stav verze 0.38
 

@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.35
+**Verze:** 0.36
 **Stav:** pracovní návrh  
 **Datum revize:** 3. 9. 2026
 
@@ -528,6 +528,23 @@ Nový záznam vyžaduje aktivní typ; update smí zachovat stejný mezitím neak
 typ, ale nesmí na jiný neaktivní přejít. Archivovaný záznam lze opravit,
 měkce odstraněný nikoli. Služby samy neověřují actora a nejsou veřejnou
 autorizační hranicí; tu musí budoucí volající uplatnit samostatně.
+
+Actor-aware read API tvoří `get_visible_health_records(*, person, actor)` a
+`get_visible_health_record(*, health_record_id, actor)`. Oba používají jeden
+interní queryset filtrovaný výhradně přes centralizovaný
+`get_health_record_visibility_filter()`. Ten vyžaduje současně viditelnou
+aktivní osobu, access zdravotního záznamu schválený health policy, aktivní
+nearchivovaný a neodstraněný záznam a aktivní `HealthRecordType`.
+
+Kolekce a detail proto mají stejné visibility semantics. Skrytý, neaktivní,
+chybějící nebo chybně identifikovaný detail vyvolá jednotné
+`HealthRecord.DoesNotExist`; znalost ID policy neobchází. Selector vrací model
+nebo lazy `QuerySet`, přednačítá doménový kontext a neobsahuje HTTP,
+serializaci ani UI. Nová permission nevzniká.
+
+Volitelné `Place` je kontext zdravotního záznamu a není další autorizační ani
+lifecycle vrstvou; viditelnost zdravotního záznamu proto neodvozuje ani
+nerozšiřuje.
 
 ## 13. Hrobová místa
 
