@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.42
+**Verze dokumentace:** 0.43
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `health`
 **Datum revize:** 4. 9. 2026
 
@@ -39,6 +39,21 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.43
+
+Verze 0.43 uzavírá actor-aware aplikační zápis zdravotních záznamů:
+
+- doménové `create_health_record(*, data, actor)` a
+  `update_health_record(*, health_record, data, actor)` nově samy autorizují
+  čerstvého aktivního actora existujícími standardními Django permissions
+  `health.add_healthrecord` a `health.change_healthrecord`,
+- obsahový přístup dál používá obecný access helper a centralizovanou health
+  policy; update načítá zamčený aktuální cíl přes úplný health visibility filtr,
+- create nastavuje autora na actora, update zachovává autorství i lifecycle a
+  neaktivní typ nelze použít v žádném zápisu,
+- stejnojmenné aplikační use-cases pouze delegují na tyto služby; nevzniká nový
+  permission, model, migrace, HTTP, API, formulář, admin ani UI.
 
 ## Stav verze 0.42
 

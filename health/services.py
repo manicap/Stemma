@@ -5,7 +5,8 @@ from typing import NoReturn
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 
 from common.choices import (
@@ -14,10 +15,15 @@ from common.choices import (
     DateQualifier,
     VerificationStatus,
 )
+from common.permissions import can_view_access_level
 from people.models import Person
 from places.models import Place
 
 from .models import HealthRecord, HealthRecordType
+from .permissions import (
+    can_view_health_record_access,
+    get_health_record_visibility_filter,
+)
 
 __all__ = (
     "HealthRecordInput",
@@ -78,17 +84,55 @@ def _load_place(place: Place | None) -> Place | None:
     return _load(Place, place, key="place", label="Místo")
 
 
-def _load_created_by(
-    created_by: AbstractBaseUser | None,
-) -> AbstractBaseUser | None:
-    if created_by is None:
-        return None
-    return _load(
-        get_user_model(),
-        created_by,
-        key="created_by",
-        label="Autor",
-    )
+def _load_actor(
+    actor: AbstractBaseUser | AnonymousUser,
+    *,
+    permission: str,
+) -> AbstractBaseUser:
+    user_model = get_user_model()
+    if (
+        not isinstance(actor, user_model)
+        or not getattr(actor, "is_authenticated", False)
+        or getattr(actor, "pk", None) is None
+    ):
+        raise PermissionDenied(
+            "K zápisu zdravotního záznamu nemáte oprávnění."
+        )
+    try:
+        current_actor = user_model._default_manager.get(pk=actor.pk)
+    except user_model.DoesNotExist as error:
+        raise PermissionDenied(
+            "K zápisu zdravotního záznamu nemáte oprávnění."
+        ) from error
+    if not current_actor.is_active or not current_actor.has_perm(permission):
+        raise PermissionDenied(
+            "K zápisu zdravotního záznamu nemáte oprávnění."
+        )
+    return current_actor
+
+
+def _authorize_write_access(
+    *,
+    actor: AbstractBaseUser,
+    person: Person,
+    health_access_level: str,
+) -> None:
+    if (
+        person.archived_at is not None
+        or person.deleted_at is not None
+        or not can_view_access_level(
+            actor=actor,
+            access_level=person.access_level,
+        )
+    ):
+        raise Person.DoesNotExist
+    if not can_view_health_record_access(
+        actor=actor,
+        access_level=health_access_level,
+    ):
+        raise PermissionDenied(
+            "K zápisu zdravotního záznamu nemáte oprávnění."
+        )
 
 
 def _apply_input(
@@ -132,11 +176,15 @@ def _reload(record_id: int) -> HealthRecord:
 def create_health_record(
     *,
     data: HealthRecordInput,
-    created_by: AbstractBaseUser | None = None,
+    actor: AbstractBaseUser | AnonymousUser,
 ) -> HealthRecord:
     """Atomicky vytvoř a vrať čerstvě načtený zdravotní záznam."""
 
     with transaction.atomic():
+        current_actor = _load_actor(
+            actor,
+            permission="health.add_healthrecord",
+        )
         person = _load(Person, data.person, key="person", label="Osoba")
         record_type = _load(
             HealthRecordType,
@@ -145,15 +193,19 @@ def create_health_record(
             label="Typ zdravotního záznamu",
         )
         place = _load_place(data.place)
-        current_created_by = _load_created_by(created_by)
         if not record_type.is_active:
             _raise_error(
                 "record_type",
                 "Neaktivní typ nelze použít pro nový zdravotní záznam.",
                 "health_record_type_inactive",
             )
+        _authorize_write_access(
+            actor=current_actor,
+            person=person,
+            health_access_level=data.access_level,
+        )
 
-        candidate = HealthRecord(created_by=current_created_by)
+        candidate = HealthRecord(created_by=current_actor)
         _apply_input(
             candidate,
             data=data,
@@ -170,35 +222,30 @@ def update_health_record(
     *,
     health_record: HealthRecord,
     data: HealthRecordInput,
+    actor: AbstractBaseUser | AnonymousUser,
 ) -> HealthRecord:
     """Atomicky změň a vrať čerstvě načtený zdravotní záznam."""
 
-    if not isinstance(health_record, HealthRecord) or health_record.pk is None:
-        _raise_error(
-            "health_record",
-            "Zdravotní záznam musí být uložený a existovat v databázi.",
-            "health_record_unsaved",
-        )
-
     with transaction.atomic():
-        try:
-            candidate = HealthRecord.objects.select_for_update().get(
-                pk=health_record.pk
-            )
-        except HealthRecord.DoesNotExist:
+        current_actor = _load_actor(
+            actor,
+            permission="health.change_healthrecord",
+        )
+        if (
+            not isinstance(health_record, HealthRecord)
+            or health_record.pk is None
+        ):
             _raise_error(
                 "health_record",
                 "Zdravotní záznam musí být uložený a existovat v databázi.",
                 "health_record_unsaved",
             )
-        if candidate.deleted_at is not None:
-            _raise_error(
-                "health_record",
-                "Měkce odstraněný zdravotní záznam nelze upravit.",
-                "health_record_deleted",
-            )
+        candidate = (
+            HealthRecord.objects.select_for_update()
+            .filter(get_health_record_visibility_filter(actor=current_actor))
+            .get(pk=health_record.pk)
+        )
 
-        original_type_id = candidate.record_type_id
         person = _load(Person, data.person, key="person", label="Osoba")
         record_type = _load(
             HealthRecordType,
@@ -207,12 +254,17 @@ def update_health_record(
             label="Typ zdravotního záznamu",
         )
         place = _load_place(data.place)
-        if not record_type.is_active and record_type.pk != original_type_id:
+        if not record_type.is_active:
             _raise_error(
                 "record_type",
-                "Na jiný neaktivní typ zdravotního záznamu nelze přejít.",
+                "Neaktivní typ nelze použít při změně zdravotního záznamu.",
                 "health_record_type_inactive",
             )
+        _authorize_write_access(
+            actor=current_actor,
+            person=person,
+            health_access_level=data.access_level,
+        )
 
         _apply_input(
             candidate,

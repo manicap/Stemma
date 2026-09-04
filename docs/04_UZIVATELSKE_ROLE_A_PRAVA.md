@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.29
+**Verze:** 0.30
 **Stav:** pracovní návrh  
 **Datum revize:** 4. 9. 2026
 
@@ -130,6 +130,21 @@ pouze předávají konkrétního actora existujícím health selectorům. Nemaj�
 permission, ORM visibility podmínky ani obsluhu výjimek, takže autorizační
 význam kolekce a detailu zůstává soustředěný v centralizované health policy.
 Zdroje a přílohy tento první aplikační kontrakt nečte ani nepřipojuje.
+
+Zápis `HealthRecord` používá již existující standardní Django modelové
+permissions: create vyžaduje `health.add_healthrecord`, update
+`health.change_healthrecord`. Samotná modelová permission přístup nerozšiřuje:
+actor musí být čerstvě ověřený, aktivní a mít obsahový přístup k cílové osobě i
+požadované úrovni zdravotního záznamu. Update navíc načítá současný záznam přes
+úplný centralizovaný health visibility filtr. Nevzniká vlastní
+`health_permission`, `can_edit_health` ani nový permission subsystem.
+
+Aplikační `create_health_record()` a `update_health_record()` pouze delegují na
+tyto actor-aware služby. Neautorizovaný actor končí `PermissionDenied`,
+nepřístupný nebo lifecycle-neplatný update target jako
+`HealthRecord.DoesNotExist` a nepřístupná cílová osoba jako
+`Person.DoesNotExist`; strukturální vstupy a neaktivní typ zachovávají
+`ValidationError` service vrstvy.
 
 ## 5.1 Systémové skupiny a zvýšená oprávnění
 

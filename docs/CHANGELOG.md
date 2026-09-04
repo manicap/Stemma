@@ -1,5 +1,16 @@
 # Historie změn dokumentace
 
+## Verze 0.78 – 4. 9. 2026
+
+- health create/update služby jsou actor-aware a vyžadují existující standardní
+  Django `add_healthrecord`/`change_healthrecord` spolu s obsahovým access,
+- update zamyká pouze aktuální cíl procházející centralizovaným health
+  visibility filtrem; neaktivní typ nelze použít při žádném zápisu,
+- create odvozuje autora z čerstvého actora a update zachovává autorství i
+  lifecycle,
+- aplikační create/update use-cases pouze delegují na doménové služby,
+- nevznikl nový permission, model, migrace, HTTP, API, formulář, admin ani UI.
+
 ## Verze 0.77 – 4. 9. 2026
 
 - přidán transportně neutrální aplikační list/detail use-case zdravotních

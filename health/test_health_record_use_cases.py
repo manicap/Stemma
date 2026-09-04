@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Permission
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import QuerySet
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
@@ -13,6 +13,7 @@ from people.models import Person
 
 from . import use_cases
 from .models import HealthRecord, HealthRecordType
+from .services import HealthRecordInput
 from .use_cases import get_health_record_detail, list_health_records
 
 
@@ -20,11 +21,21 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
     def test_public_contract_is_exact_and_keyword_only(self) -> None:
         self.assertEqual(
             use_cases.__all__,
-            ("get_health_record_detail", "list_health_records"),
+            (
+                "create_health_record",
+                "get_health_record_detail",
+                "list_health_records",
+                "update_health_record",
+            ),
         )
         for callable_object, names in (
+            (use_cases.create_health_record, ("data", "actor")),
             (list_health_records, ("person", "actor")),
             (get_health_record_detail, ("health_record_id", "actor")),
+            (
+                use_cases.update_health_record,
+                ("health_record", "data", "actor"),
+            ),
         ):
             with self.subTest(callable=callable_object.__name__):
                 parameters = signature(callable_object).parameters
@@ -76,6 +87,72 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
 
         self.assertIs(raised.exception, unavailable)
 
+    def test_create_is_an_exact_service_delegation(self) -> None:
+        actor = AnonymousUser()
+        data = HealthRecordInput(person=Person(), record_type=HealthRecordType())
+        sentinel = HealthRecord(pk=37)
+        with patch(
+            "health.use_cases.create_health_record_service",
+            return_value=sentinel,
+        ) as service:
+            result = use_cases.create_health_record(data=data, actor=actor)
+
+        self.assertIs(result, sentinel)
+        service.assert_called_once_with(data=data, actor=actor)
+
+    def test_update_is_an_exact_service_delegation(self) -> None:
+        actor = AnonymousUser()
+        record = HealthRecord(pk=41)
+        data = HealthRecordInput(person=Person(), record_type=HealthRecordType())
+        sentinel = HealthRecord(pk=41)
+        with patch(
+            "health.use_cases.update_health_record_service",
+            return_value=sentinel,
+        ) as service:
+            result = use_cases.update_health_record(
+                health_record=record,
+                data=data,
+                actor=actor,
+            )
+
+        self.assertIs(result, sentinel)
+        service.assert_called_once_with(
+            health_record=record,
+            data=data,
+            actor=actor,
+        )
+
+    def test_write_use_cases_preserve_exact_service_exceptions(self) -> None:
+        actor = AnonymousUser()
+        record = HealthRecord(pk=43)
+        data = HealthRecordInput(person=Person(), record_type=HealthRecordType())
+        cases = (
+            (
+                "health.use_cases.create_health_record_service",
+                use_cases.create_health_record,
+                {"data": data, "actor": actor},
+                PermissionDenied("denied"),
+            ),
+            (
+                "health.use_cases.update_health_record_service",
+                use_cases.update_health_record,
+                {"health_record": record, "data": data, "actor": actor},
+                HealthRecord.DoesNotExist("unavailable"),
+            ),
+            (
+                "health.use_cases.create_health_record_service",
+                use_cases.create_health_record,
+                {"data": data, "actor": actor},
+                ValidationError({"record_type": ["inactive"]}),
+            ),
+        )
+        for target, callable_object, arguments, error in cases:
+            with self.subTest(callable=callable_object.__name__):
+                with patch(target, side_effect=error):
+                    with self.assertRaises(type(error)) as raised:
+                        callable_object(**arguments)
+                self.assertIs(raised.exception, error)
+
 
 class HealthRecordUseCaseIntegrationTests(TestCase):
     def setUp(self) -> None:
@@ -115,6 +192,14 @@ class HealthRecordUseCaseIntegrationTests(TestCase):
         }
         values.update(changes)
         return HealthRecord.objects.create(**values)
+
+    def grant(self, actor, app_label: str, codename: str) -> None:
+        actor.user_permissions.add(
+            Permission.objects.get(
+                content_type__app_label=app_label,
+                codename=codename,
+            )
+        )
 
     def ids(self, *, person: Person | None = None, actor=None) -> set[int]:
         return set(
@@ -246,3 +331,56 @@ class HealthRecordUseCaseIntegrationTests(TestCase):
             detail_error.exception.error_dict["actor"][0].code,
             "actor_invalid",
         )
+
+    def test_authorized_actor_can_create_and_update_through_use_cases(
+        self,
+    ) -> None:
+        self.grant(self.actor, "health", "add_healthrecord")
+        self.grant(self.actor, "health", "change_healthrecord")
+        data = HealthRecordInput(
+            person=self.person,
+            record_type=self.active_type,
+            title="Nový",
+        )
+
+        created = use_cases.create_health_record(data=data, actor=self.actor)
+        updated = use_cases.update_health_record(
+            health_record=created,
+            data=HealthRecordInput(
+                person=self.person,
+                record_type=self.active_type,
+                title="Změněný",
+            ),
+            actor=self.actor,
+        )
+
+        self.assertEqual(created.created_by_id, self.actor.pk)
+        self.assertEqual(updated.title, "Změněný")
+        self.assertEqual(updated.created_by_id, self.actor.pk)
+
+    def test_unauthorized_actor_cannot_create_or_update_through_use_cases(
+        self,
+    ) -> None:
+        data = HealthRecordInput(
+            person=self.person,
+            record_type=self.active_type,
+            title="Zakázaný",
+        )
+        with self.assertRaises(PermissionDenied):
+            use_cases.create_health_record(data=data, actor=self.actor)
+
+        self.grant(self.actor, "health", "add_healthrecord")
+        created = use_cases.create_health_record(data=data, actor=self.actor)
+        with self.assertRaises(PermissionDenied):
+            use_cases.update_health_record(
+                health_record=created,
+                data=HealthRecordInput(
+                    person=self.person,
+                    record_type=self.active_type,
+                    title="Obejití",
+                ),
+                actor=self.actor,
+            )
+
+        created.refresh_from_db()
+        self.assertEqual(created.title, "Zakázaný")

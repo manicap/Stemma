@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.39
+**Verze:** 0.40
 **Stav:** pracovní návrh  
 **Datum revize:** 4. 9. 2026
 
@@ -520,14 +520,23 @@ Nevzniká samostatné zdravotní oprávnění. Každý současný i budoucí apl
 health policy bez změny doménového modelu. Model není vystaven adminem, API ani
 UI; čtení zajišťují actor-aware selectory a na ně navázané aplikační use-cases.
 
-Interní zápisové API tvoří frozen slotted `HealthRecordInput` a keyword-only
-`create_health_record()` a `update_health_record()`. Služby pracují atomicky,
-znovu načítají záznam, osobu, typ, volitelné místo a autora, ořezávají pouze
-vnější whitespace textů a před uložením volají úplnou modelovou validaci.
-Nový záznam vyžaduje aktivní typ; update smí zachovat stejný mezitím neaktivní
-typ, ale nesmí na jiný neaktivní přejít. Archivovaný záznam lze opravit,
-měkce odstraněný nikoli. Služby samy neověřují actora a nejsou veřejnou
-autorizační hranicí; tu musí budoucí volající uplatnit samostatně.
+Zápisové API tvoří frozen slotted `HealthRecordInput` a keyword-only
+`create_health_record(*, data, actor)` a
+`update_health_record(*, health_record, data, actor)`. Služby nejprve znovu
+načtou autentizovaného aktivního actora a vyžadují existující standardní Django
+permission `health.add_healthrecord`, respektive `health.change_healthrecord`.
+Nejde o nové zdravotní oprávnění. Create nastaví `created_by` na čerstvého
+actora. Update zamkne aktuální záznam omezený úplným centralizovaným health
+visibility filtrem; skrytý, archivovaný, odstraněný, chybějící záznam nebo
+záznam s neaktivním typem je jednotně nedostupný.
+
+Obě služby znovu načítají cílovou osobu, typ a volitelné místo, ořezávají pouze
+vnější whitespace a před uložením volají úplnou modelovou validaci. Cílová osoba
+musí být aktivní a actorovi dostupná, požadovaný access záznamu musí projít
+centralizovanou health access policy a typ musí být aktivní při create i update.
+Update zachovává čerstvé autorství a lifecycle. Aplikační
+`create_health_record()` a `update_health_record()` pouze předávají argumenty
+těmto službám a nemají vlastní ORM, authorization ani validation logiku.
 
 Actor-aware read API tvoří `get_visible_health_records(*, person, actor)` a
 `get_visible_health_record(*, health_record_id, actor)`. Oba používají jeden
@@ -569,7 +578,8 @@ výsledek odpovídajícího existujícího health selectoru, neprovádějí vlas
 dotaz ani access či lifecycle filtr a detail nepřekládá
 `HealthRecord.DoesNotExist`. Kolekce a detail proto zachovávají přesně stejnou
 visibility jako doménové read API. Tento minimální use-case nepřipojuje zdroje
-ani přílohy, nečte reverse relations a nevytváří HTTP, API, UI nebo zápis.
+ani přílohy a nečte reverse relations. Stejný modul nyní obsahuje i výše
+uvedené čistě delegující write use-cases; nevytváří HTTP, API ani UI.
 
 ## 13. Hrobová místa
 

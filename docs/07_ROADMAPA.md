@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.41
+**Verze:** 0.42
 **Stav:** M2 dokončeno; infrastruktura `health` zahájena
 **Datum revize:** 4. 9. 2026
 
@@ -231,10 +231,19 @@ actor-aware health selectory, nemají vlastní ORM visibility logiku a zachováv
 jejich výsledky i bezpečné `HealthRecord.DoesNotExist`. Zdroje ani přílohy tento
 minimální kontrakt nepřipojuje; nevzniká HTTP, API, UI, zápis ani migrace.
 
+Dvacátý čtvrtý řez uzavírá actor-aware health write kontrakt. Doménové služby
+nově vyžadují čerstvého aktivního actora se stávající standardní Django
+add/change permission, obsahový access osoby i zdravotního záznamu a aktivní
+typ; update zamyká pouze cíl procházející úplným health visibility filtrem.
+Create odvozuje autora z actora a update zachovává autorství i lifecycle.
+Aplikační create/update jsou pouze delegující wrappery bez ORM či vlastní
+policy; nevzniká migrace, nový permission subsystem, HTTP, API, formulář ani UI.
+
 #### Následující implementační kroky
 
-1. doplnit audit navazujících zápisových operací,
-2. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic.
+1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
+2. připravit další health use-case pouze podle konkrétního schváleného
+   aplikačního nebo uživatelského toku.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a

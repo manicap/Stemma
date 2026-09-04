@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.68
+**Verze:** 0.69
 **Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
 **Datum revize:** 4. 9. 2026
 
@@ -2275,12 +2275,16 @@ ale může se zobrazit v obecné časové ose. Strukturální migrace
 `health.0002_health_records` nevystavuje model adminem, službou, selectorem,
 API ani UI.
 
-Transakční create/update služby používají úplný `HealthRecordInput`, čerstvé
-uzamčené FK a `full_clean()`. Nový záznam nepřijme neaktivní typ; update může
-zachovat stejný neaktivní typ, ale nepřejde na jiný. Měkce odstraněný záznam
-nelze měnit, archivovaný ano. Při create lze `created_by` volitelně nastavit;
-update jej ani lifecycle nemění. Služba sama není actor autorizací. Tento řez
-nevytváří další migraci.
+Transakční create/update služby používají úplný `HealthRecordInput`, explicitní
+actor parametr, čerstvé uzamčené FK a `full_clean()`. Čerstvě načtený aktivní
+actor musí mít existující standardní Django permission
+`health.add_healthrecord`, respektive `health.change_healthrecord`, a obsahový
+přístup k osobě i health access záznamu. Create nastaví `created_by` na actora.
+Update načte zamčený aktuální záznam přes úplný health visibility filtr a
+zachová jeho čerstvé autorství i lifecycle. Skrytý, archivovaný, odstraněný,
+chybějící nebo typově neaktivní aktuální cíl je jednotně nedostupný. Aktivní typ
+je povinný i pro navržený stav; dřívější výjimka pro zachování neaktivního typu
+neplatí. Tento řez nevytváří další migraci ani vlastní permission.
 
 Actor-aware read selectory používají jediný centralizovaný health filtr.
 Záznam se vydá pouze tehdy, když je osoba běžně viditelná a aktivní, jeho
@@ -2328,6 +2332,13 @@ výsledek existujících actor-aware health selectorů, a proto nevytvářejí v
 ORM visibility dotaz ani access/lifecycle pravidla. Detail zachovává původní
 `HealthRecord.DoesNotExist`. Use-case nepřipojuje zdroje či přílohy, nečte
 reverse relations a nemění model ani migrace; nevzniká HTTP, API, UI nebo zápis.
+
+Stejný modul vystavuje také keyword-only
+`create_health_record(*, data, actor)` a
+`update_health_record(*, health_record, data, actor)`. Obě aplikační funkce
+pouze vracejí výsledek stejnojmenné actor-aware doménové služby a nepoužívají
+vlastní ORM, permission, access, lifecycle ani validační podmínky. Výjimky
+service vrstvy propouštějí beze změny.
 
 ## 14. Uživatelé a oprávnění
 

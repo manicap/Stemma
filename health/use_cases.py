@@ -1,4 +1,4 @@
-"""Transportně neutrální aplikační čtení zdravotních záznamů."""
+"""Transportně neutrální aplikační use-cases zdravotních záznamů."""
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import AnonymousUser
@@ -8,11 +8,43 @@ from people.models import Person
 
 from .models import HealthRecord
 from .selectors import get_visible_health_record, get_visible_health_records
+from .services import (
+    HealthRecordInput,
+    create_health_record as create_health_record_service,
+    update_health_record as update_health_record_service,
+)
 
 __all__ = (
+    "create_health_record",
     "get_health_record_detail",
     "list_health_records",
+    "update_health_record",
 )
+
+
+def create_health_record(
+    *,
+    data: HealthRecordInput,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> HealthRecord:
+    """Vytvoř zdravotní záznam přes jedinou autorizovanou write službu."""
+
+    return create_health_record_service(data=data, actor=actor)
+
+
+def update_health_record(
+    *,
+    health_record: HealthRecord,
+    data: HealthRecordInput,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> HealthRecord:
+    """Změň zdravotní záznam přes jedinou autorizovanou write službu."""
+
+    return update_health_record_service(
+        health_record=health_record,
+        data=data,
+        actor=actor,
+    )
 
 
 def list_health_records(

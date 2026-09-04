@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.55
+**Verze:** 0.56
 **Stav:** koncept  
 **Datum revize:** 4. 9. 2026
 
@@ -1080,14 +1080,16 @@ Pole:
 
 Výchozí přístupová úroveň zdravotního záznamu je omezená.
 
-Navazující service řez nemění model ani migrace. `HealthRecordInput` je frozen
-slotted úplný snapshot editovatelných polí. Obě služby znovu načítají a
-zamykají vstupní FK, update navíc měněný záznam; poté volají `full_clean()` a
-zapisují atomicky. Texty ořezávají na okrajích. Nový
-záznam vyžaduje aktivní typ; stejný neaktivní typ lze při update zachovat,
-přechod na jiný neaktivní typ je zakázán. Archivovaný záznam lze opravit,
-měkce odstraněný nikoli. `created_by` se při update nemění. Jde o permissionless
-doménovou službu, nikoli náhradu actor-aware autorizace.
+Actor-aware service kontrakt nemění model ani migrace. `HealthRecordInput` je
+frozen slotted úplný snapshot editovatelných polí. Create/update vyžadují
+čerstvého aktivního actora se standardní Django permission
+`health.add_healthrecord`, respektive `health.change_healthrecord`, a zároveň
+obsahový access cílové osoby i zdravotního záznamu přes existující obecnou a
+health policy. Obě služby znovu načítají a zamykají vstupní FK; update načítá
+měněný záznam zamčený přes úplný health visibility filtr. Poté volají
+`full_clean()` a zapisují atomicky. Texty ořezávají na okrajích. Každý zápis
+vyžaduje aktivní typ. Create nastaví `created_by` na actora, update zachovává
+čerstvé autorství a lifecycle.
 
 Read řez nemění model ani migrace. Centralizovaný health visibility filtr
 kombinuje obecnou access policy osoby s `can_view_health_record_access()` a
@@ -1114,7 +1116,8 @@ Transportně neutrální aplikační modul `health.use_cases` datový model nem�
 Jeho kolekční a detailní funkce pouze delegují na existující actor-aware health
 selectory a vracejí jejich původní doménové objekty či `QuerySet`. V tomto
 minimálním řezu nepřipojují zdroje ani přílohy a nečtou reverse relations;
-nevzniká migrace ani nový prezentační model.
+nevzniká migrace ani nový prezentační model. Stejnojmenné create/update
+use-cases obdobně pouze delegují na autorizované doménové služby.
 
 ## 11. Místo
 
