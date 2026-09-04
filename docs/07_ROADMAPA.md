@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.40
+**Verze:** 0.41
 **Stav:** M2 dokončeno; infrastruktura `health` zahájena
 **Datum revize:** 4. 9. 2026
 
@@ -225,12 +225,16 @@ Dvacátý druhý řez přidává explicitní `HealthRecordSource`, strukturáln�
 kontextový actor-aware selector. Health policy se znovu vynucuje v lazy SQL a
 sdílený zdroj ani znalost ID vazby chráněný zdravotní kontext neodhalí.
 
+Dvacátý třetí řez přidává transportně neutrální aplikační list/detail use-case
+zdravotních záznamů. Obě keyword-only funkce pouze delegují na existující
+actor-aware health selectory, nemají vlastní ORM visibility logiku a zachovávají
+jejich výsledky i bezpečné `HealthRecord.DoesNotExist`. Zdroje ani přílohy tento
+minimální kontrakt nepřipojuje; nevzniká HTTP, API, UI, zápis ani migrace.
+
 #### Následující implementační kroky
 
-1. připravit bezpečný aplikační use-case zdravotních záznamů nad existujícími
-   službami a selectory,
-2. doplnit audit navazujících zápisových operací,
-3. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic.
+1. doplnit audit navazujících zápisových operací,
+2. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a

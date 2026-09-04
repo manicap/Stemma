@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.28
+**Verze:** 0.29
 **Stav:** pracovní návrh  
 **Datum revize:** 4. 9. 2026
 
@@ -104,8 +104,8 @@ Zdravotní záznam má v M2 nejširší povolenou úroveň `restricted`; může 
 `admin_only`, ale nikdy `public` ani `authenticated`. Samostatná zdravotní
 permission se nezavádí. Doménová actor-aware hranice
 `health.permissions.can_view_health_record_access(*, actor, access_level)`
-dnes deleguje na obecný helper. Budoucí aplikační čtení ji musí použít, aby
-pozdější samostatná zdravotní autorizace nevyžadovala změnu modelu.
+dnes deleguje na obecný helper. Současné i budoucí aplikační čtení ji musí
+použít, aby pozdější samostatná zdravotní autorizace nevyžadovala změnu modelu.
 
 Konkrétní health read hranice skládá toto rozhodnutí v
 `get_health_record_visibility_filter(*, actor)`. Filtr vyžaduje access osoby i
@@ -124,6 +124,12 @@ Actor-aware zdroje zdravotního záznamu používají tentýž centrální healt
 řetězec. Výsledek navíc vyžaduje viditelnou, nearchivovanou a neodstraněnou
 zdrojovou vazbu i `Source`. Sdílený zdroj, znalost jeho ID ani ID vazby
 neposkytují přístup k chráněnému zdravotnímu kontextu. Nové oprávnění nevzniká.
+
+Transportně neutrální `list_health_records()` a `get_health_record_detail()`
+pouze předávají konkrétního actora existujícím health selectorům. Nemají vlastní
+permission, ORM visibility podmínky ani obsluhu výjimek, takže autorizační
+význam kolekce a detailu zůstává soustředěný v centralizované health policy.
+Zdroje a přílohy tento první aplikační kontrakt nečte ani nepřipojuje.
 
 ## 5.1 Systémové skupiny a zvýšená oprávnění
 

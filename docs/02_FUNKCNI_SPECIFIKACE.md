@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.38
+**Verze:** 0.39
 **Stav:** pracovní návrh  
 **Datum revize:** 4. 9. 2026
 
@@ -513,12 +513,12 @@ poznámka jsou volitelné a datum používá společný model neúplného času.
 V M2 používají zdravotní záznamy pouze existující obecný access-control.
 Výchozí a nejširší povolená viditelnost je `restricted`; přísnější
 `admin_only` je možné, ale `public` ani `authenticated` model nepřijme.
-Nevzniká samostatné zdravotní oprávnění. Každý budoucí aplikační čtecí vstup
-musí rozhodnutí vést přes centralizované
+Nevzniká samostatné zdravotní oprávnění. Každý současný i budoucí aplikační
+čtecí vstup musí rozhodnutí vést přes centralizované
 `health.permissions.can_view_health_record_access()`, které dnes deleguje na
 `common.permissions.can_view_access_level()` a dovoluje pozdější rozšíření
-health policy bez změny doménového modelu. Model zatím není vystaven adminem,
-selectorem, API ani UI.
+health policy bez změny doménového modelu. Model není vystaven adminem, API ani
+UI; čtení zajišťují actor-aware selectory a na ně navázané aplikační use-cases.
 
 Interní zápisové API tvoří frozen slotted `HealthRecordInput` a keyword-only
 `create_health_record()` a `update_health_record()`. Služby pracují atomicky,
@@ -561,6 +561,15 @@ vyžaduje celý centralizovaný health řetězec a následně viditelnou,
 nearchivovanou a neodstraněnou vazbu i `Source`. Sdílený zdroj ani znalost ID
 vazby neodhalí nepřístupný zdravotní záznam. Obecný selector podle zdroje či
 vazby, HTTP, serializace a UI nevznikají.
+
+První transportně neutrální aplikační kontrakt tvoří keyword-only
+`list_health_records(*, person, actor)` a
+`get_health_record_detail(*, health_record_id, actor)`. Funkce pouze vracejí
+výsledek odpovídajícího existujícího health selectoru, neprovádějí vlastní ORM
+dotaz ani access či lifecycle filtr a detail nepřekládá
+`HealthRecord.DoesNotExist`. Kolekce a detail proto zachovávají přesně stejnou
+visibility jako doménové read API. Tento minimální use-case nepřipojuje zdroje
+ani přílohy, nečte reverse relations a nevytváří HTTP, API, UI nebo zápis.
 
 ## 13. Hrobová místa
 

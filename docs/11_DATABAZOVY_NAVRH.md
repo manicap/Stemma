@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.67
+**Verze:** 0.68
 **Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
 **Datum revize:** 4. 9. 2026
 
@@ -2267,8 +2267,8 @@ Záznam obsahuje název nebo popis, časový údaj, lékaře či zařízení, vo
 
 Výchozí a nejširší povolená viditelnost je `restricted`; databázový constraint
 zakazuje `public` a `authenticated` a dovoluje také přísnější `admin_only`.
-V M2 se nezavádí zdravotní permission. Všechna budoucí actor-aware použití
-musí procházet `health.permissions.can_view_health_record_access()`, který
+V M2 se nezavádí zdravotní permission. Všechna současná i budoucí actor-aware
+použití musí procházet `health.permissions.can_view_health_record_access()`, který
 dnes deleguje na obecný access helper a zachovává místo pro budoucí rozšíření
 bez změny modelu. Zdravotní záznam se neukládá současně jako obecná událost,
 ale může se zobrazit v obecné časové ose. Strukturální migrace
@@ -2320,6 +2320,14 @@ centralizovaným health filtrem a stejnou policy ponechá i v lazy výsledném S
 Zdrojová vazba i zdroj musí projít obecný access a být nearchivované a
 neodstraněné. Selector vrací přednačtený `QuerySet[HealthRecordSource]`; obecná
 cesta podle ID zdroje nebo vazby nevzniká.
+
+První aplikační read-only hranici tvoří `health.use_cases` s keyword-only
+`list_health_records(*, person, actor)` a
+`get_health_record_detail(*, health_record_id, actor)`. Obě funkce pouze vracejí
+výsledek existujících actor-aware health selectorů, a proto nevytvářejí vlastní
+ORM visibility dotaz ani access/lifecycle pravidla. Detail zachovává původní
+`HealthRecord.DoesNotExist`. Use-case nepřipojuje zdroje či přílohy, nečte
+reverse relations a nemění model ani migrace; nevzniká HTTP, API, UI nebo zápis.
 
 ## 14. Uživatelé a oprávnění
 

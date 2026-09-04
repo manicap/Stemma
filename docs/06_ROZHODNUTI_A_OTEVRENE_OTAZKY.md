@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.67
+**Verze:** 0.68
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 4. 9. 2026
 
@@ -127,6 +127,8 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 176. Přílohu zdravotního záznamu propojuje `materials.HealthRecordAttachment`, konkrétní potomek společného `AttachmentLinkModel` s chráněnými FK na `HealthRecord`, `Attachment` a `AttachmentRole`; strukturální migrace je `materials.0007_health_record_attachment`. Permissionless create/update služby používají stávající generickou transakční hranici a odmítají nově připojit archivovaný či odstraněný endpoint. Jediným veřejným čtením této vazby je kontextový actor-aware `get_visible_health_record_attachment_links(*, health_record, actor)`: vstupní záznam i SQL výsledek procházejí centralizovaným health visibility filtrem, vazba i příloha musí projít obecný access, nesmí být archivované ani odstraněné a příloha musí mít `FileStatus.AVAILABLE`. Neaktivní role a kategorie nejsou samostatnou read autorizační vrstvou. Znalost ID přílohy nebo vazby neposkytuje obecný selector ani neobchází health policy. Selector vrací `QuerySet[HealthRecordAttachment]`, nevydává storage URL ani obsah souboru a není autorizační hranicí budoucího fyzického doručení. Nevzniká Source vazba, HTTP, UI, nový health permission ani ACP.
 
 177. Zdroj zdravotního záznamu propojuje `materials.HealthRecordSource`, konkrétní potomek společného `SourceLinkModel` s chráněnými FK na `HealthRecord`, `Source` a `SourceRole`; strukturální migrace je `materials.0008_health_record_source`. Permissionless create/update používají stávající generickou transakční source service. Jediným veřejným čtením je kontextový actor-aware `get_visible_health_record_source_links(*, health_record, actor)`: vstup i lazy SQL procházejí centralizovaným health visibility filtrem a vazba i zdroj musí projít obecný access a být nearchivované a neodstraněné. Neaktivní `SourceType` a `SourceRole` nejsou samostatnou read autorizační vrstvou. Sdílený zdroj ani znalost ID zdroje či vazby neobcházejí health policy. Nevzniká obecný ID selector, admin, HTTP, API, UI, nové zdravotní oprávnění ani ACP.
+
+178. První transportně neutrální aplikační health read kontrakt tvoří keyword-only `list_health_records(*, person, actor)` a `get_health_record_detail(*, health_record_id, actor)` v `health.use_cases`. Obě funkce jsou doslovnou delegací na existující `get_visible_health_records()` a `get_visible_health_record()`: nevytvářejí ORM dotaz, access/lifecycle podmínku ani novou permission a detail beze změny propouští `HealthRecord.DoesNotExist`. Zdroje a přílohy tento minimální use-case nepřipojuje a reverse relations nečte. Nevzniká model, migrace, zápis, admin, HTTP, API, UI ani ACP.
 
 ## 2. Otevřené otázky
 

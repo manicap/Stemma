@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.54
+**Verze:** 0.55
 **Stav:** koncept  
 **Datum revize:** 4. 9. 2026
 
@@ -1055,8 +1055,9 @@ obsahovat text; `provider_name` a `note` jsou volitelné.
 constraint připouštějí pouze `restricted` a přísnější `admin_only`, nikoli
 `public` nebo `authenticated`. Actor-aware rozhodnutí je soustředěné v
 `health.permissions.can_view_health_record_access()` a v M2 pouze deleguje na
-obecný access-control bez nové zdravotní permission. Model zůstává fail-closed
-mimo admin, selectory, API a UI; vazby na materiály následují zvlášť.
+obecný access-control bez nové zdravotní permission. Tento strukturální řez
+ponechal model fail-closed mimo admin, selectory, API a UI; navazující řezy
+doplnily read hranice a explicitní materiálové vazby.
 
 Pole:
 
@@ -1108,6 +1109,12 @@ chráněnými FK propojuje `HealthRecord`, `Source` a `SourceRole`. Nese citovan
 úsek, výňatek, interpretaci, sílu podpory, access, autorství a lifecycle.
 Strukturální migrace `materials.0008_health_record_source` nepřidává seed ani
 jiná data.
+
+Transportně neutrální aplikační modul `health.use_cases` datový model nemění.
+Jeho kolekční a detailní funkce pouze delegují na existující actor-aware health
+selectory a vracejí jejich původní doménové objekty či `QuerySet`. V tomto
+minimálním řezu nepřipojují zdroje ani přílohy a nečtou reverse relations;
+nevzniká migrace ani nový prezentační model.
 
 ## 11. Místo
 

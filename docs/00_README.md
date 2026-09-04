@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.41
+**Verze dokumentace:** 0.42
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `health`
 **Datum revize:** 4. 9. 2026
 
@@ -39,6 +39,20 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.42
+
+Verze 0.42 přidává první transportně neutrální aplikační čtení zdravotních
+záznamů:
+
+- `list_health_records(*, person, actor)` deleguje kolekci výhradně na
+  `get_visible_health_records()`,
+- `get_health_record_detail(*, health_record_id, actor)` deleguje detail
+  výhradně na `get_visible_health_record()` a beze změny zachovává
+  `HealthRecord.DoesNotExist`,
+- aplikační modul nemá vlastní ORM visibility filtr a nepřipojuje zdroje,
+  přílohy ani reverse relations,
+- nevzniká migrace, permission, zápis, HTTP, API ani UI.
 
 ## Stav verze 0.41
 

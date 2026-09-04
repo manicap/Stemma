@@ -1,5 +1,15 @@
 # Historie změn dokumentace
 
+## Verze 0.77 – 4. 9. 2026
+
+- přidán transportně neutrální aplikační list/detail use-case zdravotních
+  záznamů,
+- obě veřejné funkce pouze delegují na existující actor-aware health selectory
+  a nevytvářejí vlastní ORM visibility nebo permission logiku,
+- detail beze změny zachovává bezpečné `HealthRecord.DoesNotExist`,
+- zdroje, přílohy ani reverse relations se nepřipojují; nevzniká migrace, zápis,
+  HTTP, API ani UI.
+
 ## Verze 0.76 – 4. 9. 2026
 
 - přidán explicitní `HealthRecordSource` nad společným source-link modelem,
