@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.37
+**Verze:** 0.38
 **Stav:** pracovní návrh  
-**Datum revize:** 3. 9. 2026
+**Datum revize:** 4. 9. 2026
 
 ## 1. Globální aplikační shell a Přehled
 
@@ -478,7 +478,7 @@ popis kontextu, pořadí, příznak primární přílohy a vlastní access/lifec
 `PersonAttachment.is_primary` zatím označuje pouze primární reprezentaci osoby;
 bez schválené role, kategorie a MIME kontraktu sám nedokazuje, že jde o
 fotografii. Budoucí zobrazení vyžaduje také `available` a autorizaci přílohy,
-vazby i osoby, jinak používá siluetu. Vazba přílohy na zdroj zůstává plánovaná.
+vazby i osoby, jinak používá siluetu.
 
 ## 12. Zdravotní informace
 
@@ -553,6 +553,14 @@ vazby, jejichž zdravotní záznam projde úplnou centralizovanou health policy 
 jejichž vazba i příloha jsou viditelné, nearchivované a neodstraněné; soubor
 musí být ve stavu `available`. Selector je pouze kontextový, nevydává storage
 URL ani obsah a nenabízí obecné čtení podle ID přílohy nebo vazby.
+
+Zdroje zdravotního záznamu používají explicitní `HealthRecordSource` nad
+společným source-link modelem. Kontextový actor-aware
+`get_visible_health_record_source_links(*, health_record, actor)` nejprve
+vyžaduje celý centralizovaný health řetězec a následně viditelnou,
+nearchivovanou a neodstraněnou vazbu i `Source`. Sdílený zdroj ani znalost ID
+vazby neodhalí nepřístupný zdravotní záznam. Obecný selector podle zdroje či
+vazby, HTTP, serializace a UI nevznikají.
 
 ## 13. Hrobová místa
 

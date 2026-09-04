@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.40
+**Verze dokumentace:** 0.41
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `health`
-**Datum revize:** 3. 9. 2026
+**Datum revize:** 4. 9. 2026
 
 ## Účel balíčku
 
@@ -39,6 +39,19 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.41
+
+Verze 0.41 doplňuje explicitní zdroje zdravotních záznamů:
+
+- `HealthRecordSource` rozšiřuje společný `SourceLinkModel` a propojuje jeden
+  zdravotní záznam s jednou existující položkou `Source`,
+- create/update používají stávající generickou transakční source service a
+  tabulku přidává strukturální migrace `materials.0008`,
+- jediný veřejný read selector je kontextový a actor-aware; kombinuje úplnou
+  health policy s access a lifecycle vazby i zdroje,
+- znalost ID sdíleného zdroje či vazby health policy neobchází a nevzniká HTTP,
+  UI, obecný ID selector ani nové zdravotní oprávnění.
 
 ## Stav verze 0.40
 

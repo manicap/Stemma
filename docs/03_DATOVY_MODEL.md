@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.53
+**Verze:** 0.54
 **Stav:** koncept  
-**Datum revize:** 3. 9. 2026
+**Datum revize:** 4. 9. 2026
 
 ## 1. Základní pilíře
 
@@ -934,8 +934,8 @@ společný abstraktní základ timestamp, access, autorství a lifecycle. Každ�
 osobu při `deleted_at IS NULL`; archivace slot neuvolní. Tento příznak je
 obecná primární reprezentace osoby, nikoli tvrzení o fotografickém MIME,
 kategorii, roli nebo ověření. Přímý FK hlavní fotografie na `Person` neexistuje.
-Dosud nevytvořené vazby na zdroje zůstávají plánovanými explicitními modely a
-nesmějí být nahrazeny generickým vztahem.
+Všechny současné vazby příloh a zdrojů zůstávají explicitní a nesmějí být
+nahrazeny generickým vztahem.
 
 ## 9. Zdroj
 
@@ -968,8 +968,9 @@ přístupná vazba ke stejnému zdroji nesmí zpřístupnit ani prozradit chrán
 cílový objekt.
 
 Aktuální explicitní modely jsou `PersonNameSource`, `EventSource`,
-`RelationshipSource`, `ResidenceSource`, `GraveSiteSource` a
-`AttachmentSource`. Jejich společný abstraktní základ `SourceLinkModel` nese
+`RelationshipSource`, `ResidenceSource`, `GraveSiteSource`,
+`AttachmentSource` a `HealthRecordSource`. Jejich společný abstraktní základ
+`SourceLinkModel` nese
 timestamp, access, autorství a lifecycle a povinně propojuje `Source`,
 `SourceRole` a jednu konkrétní cílovou entitu přes chráněné cizí klíče. Dále
 ukládá volitelnou citovanou část, úryvek a výklad a povinnou pevnou sílu podpory
@@ -1101,6 +1102,12 @@ společného `AttachmentLinkModel`. Chráněnými FK propojuje jediný
 autorství, lifecycle, popis kontextu, pořadí a `is_primary`. Nevzniká generická
 relace ani nová kopie souboru. Databázovou tabulku přidává strukturální migrace
 `materials.0007_health_record_attachment` bez datové migrace.
+
+`materials.HealthRecordSource` stejným způsobem dědí ze `SourceLinkModel` a
+chráněnými FK propojuje `HealthRecord`, `Source` a `SourceRole`. Nese citovaný
+úsek, výňatek, interpretaci, sílu podpory, access, autorství a lifecycle.
+Strukturální migrace `materials.0008_health_record_source` nepřidává seed ani
+jiná data.
 
 ## 11. Místo
 

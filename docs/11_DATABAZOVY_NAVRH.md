@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.66
+**Verze:** 0.67
 **Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
-**Datum revize:** 3. 9. 2026
+**Datum revize:** 4. 9. 2026
 
 ## 1. Účel
 
@@ -34,8 +34,10 @@ hrobová místa; RC 0.1 je nad tímto základem rovněž připravené.
   balíček. `AttachmentCategory` a `AttachmentRole` přímo dědí z
   `LookupModel`; migrace `materials.0001_attachment_lookups` nevkládá
   systémová data. `Attachment` a šest explicitních vazeb ke stávajícím
-  doménám vznikají v migracích `materials.0002` a `materials.0003`; zdroje a
-  jejich vazby zůstávají plánované.
+  doménám vznikají v migracích `materials.0002` a `materials.0003`. `Source`,
+  jeho lookupy a explicitní source vazby jsou implementované v migracích
+  `materials.0004` až `materials.0006`; zdravotní přílohy a zdroje doplňují
+  migrace `materials.0007` a `materials.0008`.
 - Základní zápis osoby pro RC používá frozen slotted `PersonInput` a
   transakční `create_person()`, které znovu načítají FK a autora, normalizují
   okraje textů a před uložením volají `full_clean()`. Stejnou hranici používá
@@ -2002,8 +2004,9 @@ vytvoření kontextu; při update existující vazbu v dosavadním kontextu a ka
 měněný endpoint i oprávnění mutace. Budoucí čtení a doručení musí být
 kontextové přes konkrétní vazbu a vyhodnotit nejpřísnější
 access/lifecycle přílohy, vazby a cíle společně s `FileStatus.AVAILABLE`.
-`HealthRecordAttachment` už doplňuje vazbu ke zdravotnímu záznamu; dosud
-nevytvořené vazby na zdroje zůstávají plánovanými samostatnými modely.
+`HealthRecordAttachment` a `HealthRecordSource` doplňují explicitní vazby ke
+zdravotnímu záznamu. Případné další vazby na dosud nepokryté doménové cíle
+zůstávají samostatnými budoucími modely.
 
 První čtecí řez nad vazbami osoby zavádí
 `get_person_attachment_links(*, person)` a
@@ -2103,17 +2106,19 @@ tabulku ani výchozí hodnotu. Společný abstraktní `SourceLinkModel` dědí
 - `support_strength` — povinný `CharField(max_length=20,
   choices=SourceSupport.choices)` bez defaultu.
 
-Konkrétní modely jsou `PersonNameSource`, `EventSource`,
-`RelationshipSource`, `ResidenceSource`, `GraveSiteSource` a
-`AttachmentSource`. Každý používá povinný `ForeignKey` na jediný pojmenovaný
-cíl s `on_delete=models.PROTECT` a `related_name="source_links"`; zdroj i role
-jsou rovněž chráněné. Duplicity nejsou dodatečně zakázané a žádný model
-nepoužívá generický vztah. Migrace `materials.0006_source_links` nevkládá seed
-data. Modely zatím nejsou registrované v adminu ani vystavené službou,
-selectorem, API nebo UI.
+Migrace `materials.0006_source_links` vytvořila modely `PersonNameSource`,
+`EventSource`, `RelationshipSource`, `ResidenceSource`, `GraveSiteSource` a
+`AttachmentSource`; pozdější `materials.0008_health_record_source` přidává
+sedmý model `HealthRecordSource`. Každý používá povinný `ForeignKey` na jediný
+pojmenovaný cíl s `on_delete=models.PROTECT` a
+`related_name="source_links"`; zdroj i role jsou rovněž chráněné. Duplicity
+nejsou dodatečně zakázané a žádný model nepoužívá generický vztah. Strukturální
+migrace nevkládají seed data. Modely nejsou registrované v adminu ani vystavené
+API nebo UI; interní služby a actor-aware selectory vznikají v navazujících
+samostatných řezech.
 
 Interní zápisová hranice používá frozen slotted `SourceLinkInput` a samostatné
-typované create/update funkce pro všech šest modelů. V transakci vždy znovu
+typované create/update funkce pro všech sedm modelů. V transakci vždy znovu
 načte konkrétní cíl, zdroj, roli a volitelného autora a před uložením provede
 `full_clean()`. Create odmítá archivovaný či odstraněný cíl nebo zdroj a
 neaktivní roli. Update odmítá odstraněnou vazbu nebo endpoint, dovoluje však
@@ -2121,11 +2126,11 @@ zachovat stejný mezitím archivovaný cíl či zdroj a stejnou mezitím neaktiv
 roli; na jiný takový endpoint přejít nesmí. Archivovaná vazba zůstává
 editovatelná a textový kontext se ořezává.
 
-Tyto služby neověřují actor oprávnění. Před budoucím aplikačním použitím musí
+Tyto služby neověřují actor oprávnění. Před aplikačním použitím musí
 volající autorizovat create nad cílem, zdrojem a vznikem kontextu; update musí
 nejprve autorizovat dosavadní konkrétní cestu a potom každý měněný endpoint i
-samotnou mutaci. Admin, API, UI a ostatní actor-aware selectory zatím
-nevznikají.
+samotnou mutaci. Pro jednotlivé kontexty existují samostatné actor-aware read
+selectory včetně `HealthRecordSource`; admin, API a UI zatím nevznikají.
 
 První čtecí hranice zdrojů je záměrně kontextová. Permissionless
 `get_person_name_source_links(*, person_name)` vrací lazy historii všech
@@ -2301,6 +2306,20 @@ do výsledného SQL. Dále filtruje access a aktivní lifecycle vazby i příloh
 vyžaduje `FileStatus.AVAILABLE`. Vrací lazy přednačtený
 `QuerySet[HealthRecordAttachment]`; nečte fyzický soubor, nevydává storage URL a
 neexistuje obecný selector podle ID přílohy nebo vazby.
+
+`HealthRecordSource` dědí ze společného `SourceLinkModel` a chráněnými FK
+propojuje `HealthRecord`, `Source` a `SourceRole`. Reverse vazby jsou
+`HealthRecord.source_links` a `Source.healthrecordsource_links`; řazení je podle
+záznamu, pořadí role a PK. Create/update používají stávající `SourceLinkInput` a
+generickou transakční source service. Strukturální migrace
+`materials.0008_health_record_source` nevkládá data.
+
+Jediný veřejný read selector je
+`get_visible_health_record_source_links(*, health_record, actor)`. Vstup ověří
+centralizovaným health filtrem a stejnou policy ponechá i v lazy výsledném SQL.
+Zdrojová vazba i zdroj musí projít obecný access a být nearchivované a
+neodstraněné. Selector vrací přednačtený `QuerySet[HealthRecordSource]`; obecná
+cesta podle ID zdroje nebo vazby nevzniká.
 
 ## 14. Uživatelé a oprávnění
 
@@ -2525,12 +2544,12 @@ accounts.0004_person_editor_permissions
 health.0001_health_record_types
 health.0002_health_records
 materials.0007_health_record_attachment
+materials.0008_health_record_source
 ```
 
 Následující plánované migrace začínají:
 
 ```text
-materials.0008_health_record_source
 audit.0001_initial
 accounts.0005_user_profile_person_link
 ```

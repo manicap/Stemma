@@ -10,6 +10,7 @@ from django.db import models, transaction
 
 from common.choices import AccessLevel
 from events.models import Event
+from health.models import HealthRecord
 from people.models import PersonName, Relationship
 from places.models import GraveSite, Residence
 
@@ -19,6 +20,7 @@ from .models import (
     AttachmentSource,
     EventSource,
     GraveSiteSource,
+    HealthRecordSource,
     PersonNameSource,
     RelationshipSource,
     ResidenceSource,
@@ -32,12 +34,14 @@ __all__ = (
     "create_attachment_source",
     "create_event_source",
     "create_grave_site_source",
+    "create_health_record_source",
     "create_person_name_source",
     "create_relationship_source",
     "create_residence_source",
     "update_attachment_source",
     "update_event_source",
     "update_grave_site_source",
+    "update_health_record_source",
     "update_person_name_source",
     "update_relationship_source",
     "update_residence_source",
@@ -67,6 +71,12 @@ class _LinkSpec:
 
 _PERSON_NAME = _LinkSpec(PersonNameSource, PersonName, "person_name", "Jméno")
 _EVENT = _LinkSpec(EventSource, Event, "event", "Událost")
+_HEALTH_RECORD = _LinkSpec(
+    HealthRecordSource,
+    HealthRecord,
+    "health_record",
+    "Zdravotní záznam",
+)
 _RELATIONSHIP = _LinkSpec(
     RelationshipSource, Relationship, "relationship", "Vazba"
 )
@@ -267,6 +277,30 @@ def update_event_source(
     *, link: EventSource, event: Event, data: SourceLinkInput,
 ) -> EventSource:
     return _update(spec=_EVENT, link=link, target=event, data=data)
+
+
+def create_health_record_source(
+    *, health_record: HealthRecord, data: SourceLinkInput,
+    created_by: AbstractBaseUser | None = None,
+) -> HealthRecordSource:
+    return _create(
+        spec=_HEALTH_RECORD,
+        target=health_record,
+        data=data,
+        created_by=created_by,
+    )
+
+
+def update_health_record_source(
+    *, link: HealthRecordSource, health_record: HealthRecord,
+    data: SourceLinkInput,
+) -> HealthRecordSource:
+    return _update(
+        spec=_HEALTH_RECORD,
+        link=link,
+        target=health_record,
+        data=data,
+    )
 
 
 def create_relationship_source(

@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.27
+**Verze:** 0.28
 **Stav:** pracovní návrh  
-**Datum revize:** 3. 9. 2026
+**Datum revize:** 4. 9. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -119,6 +119,11 @@ Actor-aware čtení zdravotních příloh nejprve vyžaduje celý centrální he
 nearchivovanou a neodstraněnou vazbu i přílohu a stav souboru `available`.
 Znalost ID přílohy či vazby health policy neobchází. Nevzniká nové zdravotní
 oprávnění ani obecná cesta vydání souboru.
+
+Actor-aware zdroje zdravotního záznamu používají tentýž centrální health
+řetězec. Výsledek navíc vyžaduje viditelnou, nearchivovanou a neodstraněnou
+zdrojovou vazbu i `Source`. Sdílený zdroj, znalost jeho ID ani ID vazby
+neposkytují přístup k chráněnému zdravotnímu kontextu. Nové oprávnění nevzniká.
 
 ## 5.1 Systémové skupiny a zvýšená oprávnění
 

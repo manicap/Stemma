@@ -21,6 +21,7 @@ from .models import (
     GraveSiteAttachment,
     GraveSiteSource,
     HealthRecordAttachment,
+    HealthRecordSource,
     PersonAttachment,
     PersonNameSource,
     ResidenceAttachment,
@@ -45,6 +46,7 @@ __all__ = (
     "get_visible_grave_site_attachment_links",
     "get_visible_grave_site_source_links",
     "get_visible_health_record_attachment_links",
+    "get_visible_health_record_source_links",
     "get_visible_person_attachment_links",
     "get_visible_person_name_source_links",
     "get_visible_residence_attachment_links",
@@ -635,6 +637,53 @@ def get_visible_health_record_attachment_links(
             "attachment",
             "attachment__category",
             "attachment__created_by",
+            "role",
+            "created_by",
+        )
+    )
+
+
+def get_visible_health_record_source_links(
+    *,
+    health_record: HealthRecord,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[HealthRecordSource]:
+    """Vrať dostupné zdroje viditelného zdravotního záznamu."""
+
+    if not isinstance(health_record, HealthRecord) or health_record.pk is None:
+        raise _health_record_unsaved_error()
+    if not HealthRecord.objects.filter(pk=health_record.pk).exists():
+        raise _health_record_unsaved_error()
+
+    visible_health_records = HealthRecord.objects.filter(
+        get_health_record_visibility_filter(actor=actor)
+    )
+    current = visible_health_records.get(pk=health_record.pk)
+    visible_levels = tuple(
+        level
+        for level in _ACCESS_LEVELS
+        if can_view_access_level(actor=actor, access_level=level)
+    )
+    return (
+        HealthRecordSource.objects.filter(
+            health_record_id=current.pk,
+            health_record_id__in=visible_health_records.values("pk"),
+            access_level__in=visible_levels,
+            archived_at__isnull=True,
+            deleted_at__isnull=True,
+            source__access_level__in=visible_levels,
+            source__archived_at__isnull=True,
+            source__deleted_at__isnull=True,
+        )
+        .select_related(
+            "health_record",
+            "health_record__person",
+            "health_record__record_type",
+            "health_record__place",
+            "health_record__created_by",
+            "source",
+            "source__source_type",
+            "source__created_by",
             "role",
             "created_by",
         )

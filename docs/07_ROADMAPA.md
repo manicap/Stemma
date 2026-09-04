@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.39
+**Verze:** 0.40
 **Stav:** M2 dokončeno; infrastruktura `health` zahájena
-**Datum revize:** 3. 9. 2026
+**Datum revize:** 4. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -220,13 +220,17 @@ actor-aware kontextový selector. Čtení vynucuje centralizovanou health policy
 access a aktivní lifecycle vazby i přílohy a `FileStatus.AVAILABLE`; nevydává
 soubor ani URL a nevytváří obecnou cestu podle ID.
 
+Dvacátý druhý řez přidává explicitní `HealthRecordSource`, strukturální migraci
+`materials.0008`, create/update přes společnou source service a jediný
+kontextový actor-aware selector. Health policy se znovu vynucuje v lazy SQL a
+sdílený zdroj ani znalost ID vazby chráněný zdravotní kontext neodhalí.
+
 #### Následující implementační kroky
 
-1. doplnit explicitní vazby zdravotních záznamů na zdroje,
-2. připravit bezpečný aplikační use-case zdravotních záznamů nad existujícími
+1. připravit bezpečný aplikační use-case zdravotních záznamů nad existujícími
    službami a selectory,
-3. doplnit audit navazujících zápisových operací,
-4. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic.
+2. doplnit audit navazujících zápisových operací,
+3. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a

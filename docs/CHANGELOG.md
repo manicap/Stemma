@@ -1,5 +1,14 @@
 # Historie změn dokumentace
 
+## Verze 0.76 – 4. 9. 2026
+
+- přidán explicitní `HealthRecordSource` nad společným source-link modelem,
+- přidány create/update služby a strukturální migrace `materials.0008`,
+- jediný veřejný read selector je kontextový a actor-aware; vynucuje úplnou
+  health policy a access i aktivní lifecycle vazby a zdroje,
+- sdílený zdroj ani znalost ID zdroje či vazby health policy neobchází,
+- nevznikl obecný ID selector, HTTP, UI ani nové zdravotní oprávnění.
+
 ## Verze 0.75 – 3. 9. 2026
 
 - přidán explicitní `HealthRecordAttachment` nad společným attachment modelem,

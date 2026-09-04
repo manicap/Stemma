@@ -182,6 +182,24 @@ class EventSource(SourceLinkModel):
         return self._link_text(self.event)
 
 
+class HealthRecordSource(SourceLinkModel):
+    """Explicitní propojení zdravotního záznamu a informačního zdroje."""
+
+    health_record = models.ForeignKey(
+        HealthRecord,
+        on_delete=models.PROTECT,
+        related_name="source_links",
+    )
+
+    class Meta:
+        verbose_name = "Zdroj zdravotního záznamu"
+        verbose_name_plural = "Zdroje zdravotních záznamů"
+        ordering = ("health_record_id", "role__sort_order", "pk")
+
+    def __str__(self) -> str:
+        return self._link_text(self.health_record)
+
+
 class RelationshipSource(SourceLinkModel):
     """Explicitní propojení vztahu a zdroje."""
 

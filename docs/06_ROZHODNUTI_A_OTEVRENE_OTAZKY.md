@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.66
+**Verze:** 0.67
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 3. 9. 2026
+**Datum revize:** 4. 9. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -125,6 +125,8 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 175. Upřesnění rozhodnutí 174: volitelné `HealthRecord.place` je stejně jako připojené `Place` u ostatních strukturovaných domén kontextem, nikoli samostatnou autorizační či lifecycle vrstvou. Viditelnost zdravotního záznamu proto nerozšiřuje ani neomezuje; rozhodující zůstávají výslovně určené vrstvy osoby, `HealthRecord` a `HealthRecordType`. Jde o zdokumentování hranice dvacátého řezu, nikoli o nový permission mechanismus nebo ACP.
 
 176. Přílohu zdravotního záznamu propojuje `materials.HealthRecordAttachment`, konkrétní potomek společného `AttachmentLinkModel` s chráněnými FK na `HealthRecord`, `Attachment` a `AttachmentRole`; strukturální migrace je `materials.0007_health_record_attachment`. Permissionless create/update služby používají stávající generickou transakční hranici a odmítají nově připojit archivovaný či odstraněný endpoint. Jediným veřejným čtením této vazby je kontextový actor-aware `get_visible_health_record_attachment_links(*, health_record, actor)`: vstupní záznam i SQL výsledek procházejí centralizovaným health visibility filtrem, vazba i příloha musí projít obecný access, nesmí být archivované ani odstraněné a příloha musí mít `FileStatus.AVAILABLE`. Neaktivní role a kategorie nejsou samostatnou read autorizační vrstvou. Znalost ID přílohy nebo vazby neposkytuje obecný selector ani neobchází health policy. Selector vrací `QuerySet[HealthRecordAttachment]`, nevydává storage URL ani obsah souboru a není autorizační hranicí budoucího fyzického doručení. Nevzniká Source vazba, HTTP, UI, nový health permission ani ACP.
+
+177. Zdroj zdravotního záznamu propojuje `materials.HealthRecordSource`, konkrétní potomek společného `SourceLinkModel` s chráněnými FK na `HealthRecord`, `Source` a `SourceRole`; strukturální migrace je `materials.0008_health_record_source`. Permissionless create/update používají stávající generickou transakční source service. Jediným veřejným čtením je kontextový actor-aware `get_visible_health_record_source_links(*, health_record, actor)`: vstup i lazy SQL procházejí centralizovaným health visibility filtrem a vazba i zdroj musí projít obecný access a být nearchivované a neodstraněné. Neaktivní `SourceType` a `SourceRole` nejsou samostatnou read autorizační vrstvou. Sdílený zdroj ani znalost ID zdroje či vazby neobcházejí health policy. Nevzniká obecný ID selector, admin, HTTP, API, UI, nové zdravotní oprávnění ani ACP.
 
 ## 2. Otevřené otázky
 
