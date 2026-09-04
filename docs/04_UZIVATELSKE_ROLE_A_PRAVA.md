@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.30
+**Verze:** 0.31
 **Stav:** pracovní návrh  
 **Datum revize:** 4. 9. 2026
 
@@ -145,6 +145,15 @@ nepřístupný nebo lifecycle-neplatný update target jako
 `HealthRecord.DoesNotExist` a nepřístupná cílová osoba jako
 `Person.DoesNotExist`; strukturální vstupy a neaktivní typ zachovávají
 `ValidationError` service vrstvy.
+
+Zápis `HealthRecordAttachment` používá existující standardní permissions
+`materials.add_healthrecordattachment` a
+`materials.change_healthrecordattachment`. Ani ty samy přístup nerozšiřují:
+actor musí být čerstvý a aktivní, současný i navržený zdravotní záznam musí
+projít úplnou centralizovanou health policy a současná vazba, navržený access i
+příloha musí projít obecný access a aktivní lifecycle; příloha musí mít
+`FileStatus.AVAILABLE`. Aplikační wrappery pouze delegují. Nevzniká nové health
+oprávnění ani attachment permission subsystem.
 
 ## 5.1 Systémové skupiny a zvýšená oprávnění
 

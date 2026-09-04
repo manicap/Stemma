@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.69
+**Verze:** 0.70
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 4. 9. 2026
 
@@ -131,6 +131,7 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 178. První transportně neutrální aplikační health read kontrakt tvoří keyword-only `list_health_records(*, person, actor)` a `get_health_record_detail(*, health_record_id, actor)` v `health.use_cases`. Obě funkce jsou doslovnou delegací na existující `get_visible_health_records()` a `get_visible_health_record()`: nevytvářejí ORM dotaz, access/lifecycle podmínku ani novou permission a detail beze změny propouští `HealthRecord.DoesNotExist`. Zdroje a přílohy tento minimální use-case nepřipojuje a reverse relations nečte. Nevzniká model, migrace, zápis, admin, HTTP, API, UI ani ACP.
 
 179. Actor-aware write kontrakt nahrazuje permissionless a lifecycle části rozhodnutí 173. Doménové `create_health_record(*, data, actor)` a `update_health_record(*, health_record, data, actor)` nejprve znovu načtou autentizovaného aktivního actora a vyžadují existující standardní Django permission `health.add_healthrecord`, respektive `health.change_healthrecord`; nejde o nové zdravotní oprávnění. Create autorizuje čerstvou aktivní cílovou osobu přes obecný access helper a požadovanou úroveň přes centralizovanou health access policy, vyžaduje aktivní typ a nastaví autora na actora. Update načte zamčený současný cíl přes úplný `get_health_record_visibility_filter()`, takže skrytý, archivovaný, odstraněný, chybějící záznam nebo záznam s neaktivním typem končí jednotně `HealthRecord.DoesNotExist`; cílová osoba a access se znovu autorizují a neaktivní typ je odmítnut bez dřívější výjimky. Update zachovává čerstvé autorství a lifecycle. Stejnojmenné funkce v `health.use_cases` pouze delegují a zachovávají service výjimky. Nevzniká custom permission, model, migrace, materiálová vazba, HTTP, API, formulář, admin, UI ani ACP.
+180. Actor-aware write kontrakt `HealthRecordAttachment` nahrazuje permissionless write část rozhodnutí 176 pouze pro tuto zdravotní vazbu; obecné attachment služby ostatních kontextů se nemění. Doménové `create_health_record_attachment(*, health_record, data, actor)` a `update_health_record_attachment(*, link, health_record, data, actor)` vyžadují čerstvého aktivního actora se standardní Django permission `materials.add_healthrecordattachment`, respektive `materials.change_healthrecordattachment`. Současný i navržený `HealthRecord` procházejí zamčeným centrálním health visibility filtrem; update načítá současnou vazbu přes tentýž interní vydatelný queryset jako actor-aware selector, a proto známé ID skryté vazby, přílohy nebo záznamu policy neobchází. Vazba i příloha musí projít obecný access a aktivní lifecycle a příloha musí mít `FileStatus.AVAILABLE`; FK a role se načítají čerstvě. Create nastaví autora na actora, update zachová autorství a lifecycle. Funkce v `health.use_cases` pouze delegují a zachovávají výjimky. Nevzniká nové oprávnění, model, migrace, HTTP, API, formulář, admin, UI, storage URL, obsah souboru ani ACP.
 
 ## 2. Otevřené otázky
 

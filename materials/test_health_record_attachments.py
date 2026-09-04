@@ -1,12 +1,13 @@
 from importlib import import_module
 from inspect import Parameter, signature
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Permission
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.storage import default_storage
 from django.db import connection, migrations, models
 from django.db.models import QuerySet
@@ -56,11 +57,11 @@ class HealthRecordAttachmentApiTests(SimpleTestCase):
         expectations = (
             (
                 create_health_record_attachment,
-                ("health_record", "data", "created_by"),
+                ("health_record", "data", "actor"),
             ),
             (
                 update_health_record_attachment,
-                ("link", "health_record", "data"),
+                ("link", "health_record", "data", "actor"),
             ),
             (
                 get_visible_health_record_attachment_links,
@@ -121,7 +122,23 @@ class HealthRecordAttachmentServiceTests(TestCase):
             mime_type="application/pdf",
             size_bytes=100,
             sha256=self.sha256,
+            file_status=FileStatus.AVAILABLE,
         )
+        self.actor = get_user_model().objects.create_user(username="writer")
+        for codename in (
+            "add_healthrecordattachment",
+            "change_healthrecordattachment",
+        ):
+            permission = Permission.objects.get(
+                content_type__app_label="materials",
+                codename=codename,
+            )
+            self.actor.user_permissions.add(permission)
+        restricted = Permission.objects.get(
+            content_type__app_label="accounts",
+            codename="view_restricted_content",
+        )
+        self.actor.user_permissions.add(restricted)
 
     def data(self, **changes: object) -> AttachmentLinkInput:
         values = {
@@ -133,21 +150,42 @@ class HealthRecordAttachmentServiceTests(TestCase):
         values.update(changes)
         return AttachmentLinkInput(**values)
 
-    def test_create_and_update_use_existing_generic_link_service(self) -> None:
-        link = create_health_record_attachment(
-            health_record=self.health_record,
-            data=self.data(),
-        )
+    def user(self, username: str, *permissions: str, **values: object):
+        actor = get_user_model().objects.create_user(username=username, **values)
+        for permission_name in permissions:
+            app_label, codename = permission_name.split(".", maxsplit=1)
+            actor.user_permissions.add(
+                Permission.objects.get(
+                    content_type__app_label=app_label,
+                    codename=codename,
+                )
+            )
+        return actor
+
+    def test_create_and_update_use_actor_aware_health_service(self) -> None:
+        with (
+            patch.object(default_storage, "open") as storage_open,
+            patch.object(default_storage, "url") as storage_url,
+        ):
+            link = create_health_record_attachment(
+                health_record=self.health_record,
+                data=self.data(),
+                actor=self.actor,
+            )
+            updated = update_health_record_attachment(
+                link=link,
+                health_record=self.health_record,
+                data=self.data(context_description="  Aktualizováno  "),
+                actor=self.actor,
+            )
+
+        storage_open.assert_not_called()
+        storage_url.assert_not_called()
         self.assertIsInstance(link, HealthRecordAttachment)
         self.assertEqual(link.health_record, self.health_record)
         self.assertEqual(link.attachment, self.attachment)
         self.assertEqual(link.context_description, "Lékařská zpráva")
 
-        updated = update_health_record_attachment(
-            link=link,
-            health_record=self.health_record,
-            data=self.data(context_description="  Aktualizováno  "),
-        )
         self.assertEqual(updated.pk, link.pk)
         self.assertEqual(updated.context_description, "Aktualizováno")
 
@@ -156,77 +194,392 @@ class HealthRecordAttachmentServiceTests(TestCase):
         HealthRecord.objects.filter(pk=self.health_record.pk).update(
             archived_at=now
         )
-        with self.assertRaises(ValidationError) as archived_error:
+        with self.assertRaises(HealthRecord.DoesNotExist):
             create_health_record_attachment(
                 health_record=self.health_record,
                 data=self.data(),
+                actor=self.actor,
             )
-        self.assertEqual(
-            archived_error.exception.error_dict["health_record"][0].code,
-            "health_record_archived",
-        )
-
         HealthRecord.objects.filter(pk=self.health_record.pk).update(
             archived_at=None,
             deleted_at=now,
         )
-        with self.assertRaises(ValidationError) as deleted_error:
+        with self.assertRaises(HealthRecord.DoesNotExist):
             create_health_record_attachment(
                 health_record=self.health_record,
                 data=self.data(),
+                actor=self.actor,
             )
-        self.assertEqual(
-            deleted_error.exception.error_dict["health_record"][0].code,
-            "health_record_deleted",
-        )
 
-    def test_update_preserves_only_same_archived_target_and_active_link(
+    def test_update_rejects_archived_target_and_deleted_link(
         self,
     ) -> None:
         link = create_health_record_attachment(
             health_record=self.health_record,
             data=self.data(),
+            actor=self.actor,
         )
         HealthRecord.objects.filter(pk=self.health_record.pk).update(
             archived_at=timezone.now()
         )
-        preserved = update_health_record_attachment(
-            link=link,
-            health_record=self.health_record,
-            data=self.data(context_description="Zachováno"),
-        )
-        self.assertEqual(preserved.health_record_id, self.health_record.pk)
-
-        other_record = HealthRecord.objects.create(
-            person=self.person,
-            record_type=self.record_type,
-            title="Jiný archivovaný záznam",
-            archived_at=timezone.now(),
-        )
-        with self.assertRaises(ValidationError) as archived_error:
-            update_health_record_attachment(
-                link=link,
-                health_record=other_record,
-                data=self.data(),
-            )
-        self.assertEqual(
-            archived_error.exception.error_dict["health_record"][0].code,
-            "health_record_archived",
-        )
-
-        HealthRecordAttachment.objects.filter(pk=link.pk).update(
-            deleted_at=timezone.now()
-        )
-        with self.assertRaises(ValidationError) as deleted_link_error:
+        with self.assertRaises(HealthRecordAttachment.DoesNotExist):
             update_health_record_attachment(
                 link=link,
                 health_record=self.health_record,
                 data=self.data(),
+                actor=self.actor,
+            )
+
+    def test_actor_must_be_current_active_and_have_exact_model_permission(
+        self,
+    ) -> None:
+        link = create_health_record_attachment(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        no_permission = self.user(
+            "no-link-permission",
+            "accounts.view_restricted_content",
+        )
+        inactive = self.user(
+            "inactive-link-writer",
+            "accounts.view_restricted_content",
+            "materials.add_healthrecordattachment",
+            "materials.change_healthrecordattachment",
+            is_active=False,
+        )
+        missing = self.user(
+            "missing-link-writer",
+            "accounts.view_restricted_content",
+            "materials.add_healthrecordattachment",
+            "materials.change_healthrecordattachment",
+        )
+        missing_pk = missing.pk
+        missing.delete()
+        missing.pk = missing_pk
+        forged = SimpleNamespace(
+            is_authenticated=True,
+            pk=self.actor.pk,
+        )
+
+        for actor in (
+            AnonymousUser(),
+            no_permission,
+            inactive,
+            missing,
+            forged,
+        ):
+            with self.subTest(actor=actor):
+                with self.assertRaises(PermissionDenied):
+                    create_health_record_attachment(
+                        health_record=self.health_record,
+                        data=self.data(),
+                        actor=actor,
+                    )
+                with self.assertRaises(PermissionDenied):
+                    update_health_record_attachment(
+                        link=link,
+                        health_record=self.health_record,
+                        data=self.data(context_description="Zakázáno"),
+                        actor=actor,
+                    )
+
+        link.refresh_from_db()
+        self.assertEqual(link.context_description, "Lékařská zpráva")
+        self.assertEqual(HealthRecordAttachment.objects.count(), 1)
+
+    def test_model_permission_does_not_bypass_health_or_person_policy(
+        self,
+    ) -> None:
+        link_writer = self.user(
+            "link-only",
+            "materials.add_healthrecordattachment",
+            "materials.change_healthrecordattachment",
+        )
+        with self.assertRaises(HealthRecord.DoesNotExist):
+            create_health_record_attachment(
+                health_record=self.health_record,
+                data=self.data(access_level=AccessLevel.PUBLIC),
+                actor=link_writer,
+            )
+
+        Person.objects.filter(pk=self.person.pk).update(
+            access_level=AccessLevel.ADMIN_ONLY
+        )
+        with self.assertRaises(HealthRecord.DoesNotExist):
+            create_health_record_attachment(
+                health_record=self.health_record,
+                data=self.data(access_level=AccessLevel.PUBLIC),
+                actor=self.actor,
+            )
+
+    def test_create_rejects_fresh_invalid_health_lifecycle(self) -> None:
+        cases = (
+            (Person, "archived_at", timezone.now()),
+            (Person, "deleted_at", timezone.now()),
+            (HealthRecord, "archived_at", timezone.now()),
+            (HealthRecord, "deleted_at", timezone.now()),
+            (HealthRecordType, "is_active", False),
+        )
+        for model, field, value in cases:
+            with self.subTest(model=model.__name__, field=field):
+                model.objects.filter(
+                    pk={
+                        Person: self.person.pk,
+                        HealthRecord: self.health_record.pk,
+                        HealthRecordType: self.record_type.pk,
+                    }[model]
+                ).update(**{field: value})
+                with self.assertRaises(HealthRecord.DoesNotExist):
+                    create_health_record_attachment(
+                        health_record=self.health_record,
+                        data=self.data(),
+                        actor=self.actor,
+                    )
+                model.objects.filter(
+                    pk={
+                        Person: self.person.pk,
+                        HealthRecord: self.health_record.pk,
+                        HealthRecordType: self.record_type.pk,
+                    }[model]
+                ).update(**{field: None if field.endswith("_at") else True})
+
+    def test_create_rejects_invalid_or_unavailable_attachment_fk(self) -> None:
+        with self.assertRaises(ValidationError) as unsaved:
+            create_health_record_attachment(
+                health_record=self.health_record,
+                data=self.data(attachment=Attachment()),
+                actor=self.actor,
             )
         self.assertEqual(
-            deleted_link_error.exception.error_dict["link"][0].code,
-            "attachment_link_deleted",
+            unsaved.exception.error_dict["attachment"][0].code,
+            "attachment_unsaved",
         )
+
+        stale = Attachment.objects.create(
+            category=self.category,
+            original_filename="stale.pdf",
+            storage_key="health/stale.pdf",
+            mime_type="application/pdf",
+            size_bytes=1,
+            sha256="e" * 64,
+            file_status=FileStatus.AVAILABLE,
+        )
+        stale_pk = stale.pk
+        stale.delete()
+        stale.pk = stale_pk
+        with self.assertRaises(Attachment.DoesNotExist):
+            create_health_record_attachment(
+                health_record=self.health_record,
+                data=self.data(attachment=stale),
+                actor=self.actor,
+            )
+
+        changes = (
+            {"archived_at": timezone.now()},
+            {"deleted_at": timezone.now()},
+            {"file_status": FileStatus.PENDING},
+            {"file_status": FileStatus.MISSING},
+            {"file_status": FileStatus.QUARANTINED},
+            {"access_level": AccessLevel.ADMIN_ONLY},
+        )
+        for change in changes:
+            with self.subTest(change=change):
+                values = {
+                    "archived_at": None,
+                    "deleted_at": None,
+                    "file_status": FileStatus.AVAILABLE,
+                    "access_level": AccessLevel.PUBLIC,
+                }
+                values.update(change)
+                Attachment.objects.filter(pk=self.attachment.pk).update(
+                    **values
+                )
+                with self.assertRaises(Attachment.DoesNotExist):
+                    create_health_record_attachment(
+                        health_record=self.health_record,
+                        data=self.data(),
+                        actor=self.actor,
+                    )
+
+    def test_update_requires_current_visible_link_and_endpoints(self) -> None:
+        link = create_health_record_attachment(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        link_changes = (
+            {"archived_at": timezone.now()},
+            {"deleted_at": timezone.now()},
+            {"access_level": AccessLevel.ADMIN_ONLY},
+        )
+        for change in link_changes:
+            with self.subTest(link_change=change):
+                values = {
+                    "archived_at": None,
+                    "deleted_at": None,
+                    "access_level": AccessLevel.RESTRICTED,
+                }
+                values.update(change)
+                HealthRecordAttachment.objects.filter(pk=link.pk).update(
+                    **values
+                )
+                with self.assertRaises(HealthRecordAttachment.DoesNotExist):
+                    update_health_record_attachment(
+                        link=link,
+                        health_record=self.health_record,
+                        data=self.data(),
+                        actor=self.actor,
+                    )
+
+        HealthRecordAttachment.objects.filter(pk=link.pk).update(
+            archived_at=None,
+            deleted_at=None,
+            access_level=AccessLevel.RESTRICTED,
+        )
+        for change in (
+            {"deleted_at": timezone.now()},
+            {"file_status": FileStatus.QUARANTINED},
+            {"access_level": AccessLevel.ADMIN_ONLY},
+        ):
+            with self.subTest(attachment_change=change):
+                values = {
+                    "deleted_at": None,
+                    "file_status": FileStatus.AVAILABLE,
+                    "access_level": AccessLevel.PUBLIC,
+                }
+                values.update(change)
+                Attachment.objects.filter(pk=self.attachment.pk).update(
+                    **values
+                )
+                with self.assertRaises(HealthRecordAttachment.DoesNotExist):
+                    update_health_record_attachment(
+                        link=link,
+                        health_record=self.health_record,
+                        data=self.data(),
+                        actor=self.actor,
+                    )
+
+    def test_update_known_ids_cannot_move_or_reveal_hidden_objects(self) -> None:
+        link = create_health_record_attachment(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        hidden_record = HealthRecord.objects.create(
+            person=self.person,
+            record_type=self.record_type,
+            title="Skrytý",
+            access_level=AccessLevel.ADMIN_ONLY,
+        )
+        forged_link = HealthRecordAttachment(
+            pk=link.pk,
+            health_record=hidden_record,
+            attachment=self.attachment,
+            role=self.role,
+        )
+        with self.assertRaises(HealthRecord.DoesNotExist):
+            update_health_record_attachment(
+                link=forged_link,
+                health_record=hidden_record,
+                data=self.data(context_description="Únik"),
+                actor=self.actor,
+            )
+
+        hidden_attachment = Attachment.objects.create(
+            category=self.category,
+            original_filename="hidden.pdf",
+            storage_key="health/hidden.pdf",
+            mime_type="application/pdf",
+            size_bytes=1,
+            sha256="f" * 64,
+            file_status=FileStatus.AVAILABLE,
+            access_level=AccessLevel.ADMIN_ONLY,
+        )
+        with self.assertRaises(Attachment.DoesNotExist):
+            update_health_record_attachment(
+                link=link,
+                health_record=self.health_record,
+                data=self.data(attachment=hidden_attachment),
+                actor=self.actor,
+            )
+        link.refresh_from_db()
+        self.assertEqual(link.context_description, "Lékařská zpráva")
+        self.assertEqual(link.attachment_id, self.attachment.pk)
+
+    def test_update_preserves_authorship_and_lifecycle_metadata(self) -> None:
+        link = create_health_record_attachment(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        other = self.user(
+            "other-link-writer",
+            "accounts.view_restricted_content",
+            "materials.change_healthrecordattachment",
+        )
+        HealthRecordAttachment.objects.filter(pk=link.pk).update(
+            archived_by=self.actor,
+            archive_reason="Historie",
+            deleted_by=self.actor,
+            deletion_reason="Historie smazání",
+        )
+        updated = update_health_record_attachment(
+            link=link,
+            health_record=self.health_record,
+            data=self.data(context_description="Aktualizováno"),
+            actor=other,
+        )
+        self.assertEqual(updated.created_by_id, self.actor.pk)
+        self.assertIsNone(updated.archived_at)
+        self.assertEqual(updated.archived_by_id, self.actor.pk)
+        self.assertEqual(updated.archive_reason, "Historie")
+        self.assertIsNone(updated.deleted_at)
+        self.assertEqual(updated.deleted_by_id, self.actor.pk)
+        self.assertEqual(updated.deletion_reason, "Historie smazání")
+
+    def test_requested_link_access_is_checked_and_write_is_atomic(self) -> None:
+        with self.assertRaises(PermissionDenied):
+            create_health_record_attachment(
+                health_record=self.health_record,
+                data=self.data(access_level=AccessLevel.ADMIN_ONLY),
+                actor=self.actor,
+            )
+        self.assertFalse(HealthRecordAttachment.objects.exists())
+
+        link = create_health_record_attachment(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        with self.assertRaises(PermissionDenied):
+            update_health_record_attachment(
+                link=link,
+                health_record=self.health_record,
+                data=self.data(
+                    context_description="Nesmí se uložit",
+                    access_level=AccessLevel.ADMIN_ONLY,
+                ),
+                actor=self.actor,
+            )
+        link.refresh_from_db()
+        self.assertEqual(link.context_description, "Lékařská zpráva")
+        self.assertEqual(link.access_level, AccessLevel.RESTRICTED)
+
+        HealthRecord.objects.filter(pk=self.health_record.pk).update(
+            archived_at=None
+        )
+        HealthRecordAttachment.objects.filter(pk=link.pk).update(
+            deleted_at=timezone.now()
+        )
+        with self.assertRaises(HealthRecordAttachment.DoesNotExist):
+            update_health_record_attachment(
+                link=link,
+                health_record=self.health_record,
+                data=self.data(),
+                actor=self.actor,
+            )
 
 
 class HealthRecordAttachmentSelectorTests(TestCase):

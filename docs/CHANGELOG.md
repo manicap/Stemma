@@ -1,5 +1,17 @@
 # Historie změn dokumentace
 
+## Verze 0.79 – 4. 9. 2026
+
+- health attachment create/update služby jsou actor-aware a používají existující
+  standardní `add/change_healthrecordattachment` permissions,
+- současný i navržený health kontext procházejí centrální health policy a update
+  načítá vazbu stejným vydatelným querysetem jako bezpečný selector,
+- vazba a příloha musí projít access a aktivní lifecycle; příloha navíc vyžaduje
+  `FileStatus.AVAILABLE`, create odvozuje autora z actora a update zachovává
+  autorství i lifecycle,
+- aplikační use-cases pouze delegují; nevznikl nový permission, model, migrace,
+  HTTP, API, formulář, admin, UI, storage URL ani obsah souboru.
+
 ## Verze 0.78 – 4. 9. 2026
 
 - health create/update služby jsou actor-aware a vyžadují existující standardní

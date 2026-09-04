@@ -2,27 +2,83 @@ from inspect import Parameter, signature
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Group, Permission
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.test import SimpleTestCase, TestCase
 
 from . import permissions
 from .choices import AccessLevel
-from .permissions import can_view_access_level
+from .permissions import can_view_access_level, require_active_actor_permission
 
 
 class AccessLevelPermissionApiTests(SimpleTestCase):
     """Ověření veřejného kontraktu permission helperu."""
 
     def test_public_api_and_keyword_only_parameters_are_exact(self) -> None:
-        self.assertEqual(permissions.__all__, ("can_view_access_level",))
-        parameters = signature(can_view_access_level).parameters
-        self.assertEqual(tuple(parameters), ("actor", "access_level"))
-        self.assertTrue(
-            all(
-                parameter.kind is Parameter.KEYWORD_ONLY
-                for parameter in parameters.values()
-            )
+        self.assertEqual(
+            permissions.__all__,
+            (
+                "can_view_access_level",
+                "require_active_actor_permission",
+            ),
         )
+        expectations = (
+            (can_view_access_level, ("actor", "access_level")),
+            (
+                require_active_actor_permission,
+                ("actor", "permission", "denial_message"),
+            ),
+        )
+        for callable_object, names in expectations:
+            with self.subTest(callable=callable_object.__name__):
+                parameters = signature(callable_object).parameters
+                self.assertEqual(tuple(parameters), names)
+                self.assertTrue(
+                    all(
+                        parameter.kind is Parameter.KEYWORD_ONLY
+                        for parameter in parameters.values()
+                    )
+                )
+
+
+class ActiveActorPermissionTests(TestCase):
+    def test_returns_fresh_active_actor_with_permission(self) -> None:
+        actor = get_user_model().objects.create_user(username="writer")
+        permission = Permission.objects.get(
+            content_type__app_label="accounts",
+            codename="view_restricted_content",
+        )
+        get_user_model().objects.get(pk=actor.pk).user_permissions.add(
+            permission
+        )
+
+        current = require_active_actor_permission(
+            actor=actor,
+            permission="accounts.view_restricted_content",
+            denial_message="Odmítnuto.",
+        )
+
+        self.assertEqual(current.pk, actor.pk)
+        self.assertIsNot(current, actor)
+
+    def test_rejects_invalid_inactive_missing_or_unprivileged_actor(self) -> None:
+        inactive = get_user_model().objects.create_user(
+            username="inactive-writer",
+            is_active=False,
+        )
+        missing = get_user_model().objects.create_user(username="missing-writer")
+        missing_pk = missing.pk
+        missing.delete()
+        missing.pk = missing_pk
+        ordinary = get_user_model().objects.create_user(username="ordinary")
+
+        for actor in (AnonymousUser(), inactive, missing, ordinary):
+            with self.subTest(actor=getattr(actor, "username", "anonymous")):
+                with self.assertRaisesMessage(PermissionDenied, "Odmítnuto."):
+                    require_active_actor_permission(
+                        actor=actor,
+                        permission="accounts.view_restricted_content",
+                        denial_message="Odmítnuto.",
+                    )
 
 
 class AccessLevelPermissionTests(TestCase):

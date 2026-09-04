@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.56
+**Verze:** 0.57
 **Stav:** koncept  
 **Datum revize:** 4. 9. 2026
 
@@ -1106,6 +1106,13 @@ autorství, lifecycle, popis kontextu, pořadí a `is_primary`. Nevzniká generi
 relace ani nová kopie souboru. Databázovou tabulku přidává strukturální migrace
 `materials.0007_health_record_attachment` bez datové migrace.
 
+Actor-aware create/update kontrakt model nemění. Používá existující
+`AttachmentLinkInput`, standardní add/change permission modelu vazby a
+centralizovanou health policy. Create odvozuje `created_by` z čerstvého actora;
+update mění pouze editovatelný snapshot a zachovává autorství i lifecycle.
+Současná vazba i navržené FK se znovu načítají; nevydatelná příloha se stavem
+jiným než `available` se k health záznamu nepřipojí.
+
 `materials.HealthRecordSource` stejným způsobem dědí ze `SourceLinkModel` a
 chráněnými FK propojuje `HealthRecord`, `Source` a `SourceRole`. Nese citovaný
 úsek, výňatek, interpretaci, sílu podpory, access, autorství a lifecycle.
@@ -1116,8 +1123,9 @@ Transportně neutrální aplikační modul `health.use_cases` datový model nem�
 Jeho kolekční a detailní funkce pouze delegují na existující actor-aware health
 selectory a vracejí jejich původní doménové objekty či `QuerySet`. V tomto
 minimálním řezu nepřipojují zdroje ani přílohy a nečtou reverse relations;
-nevzniká migrace ani nový prezentační model. Stejnojmenné create/update
-use-cases obdobně pouze delegují na autorizované doménové služby.
+nevzniká migrace ani nový prezentační model. Stejnojmenné health-record i
+health-attachment create/update use-cases obdobně pouze delegují na
+autorizované doménové služby.
 
 ## 11. Místo
 

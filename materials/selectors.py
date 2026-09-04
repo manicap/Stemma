@@ -593,24 +593,17 @@ def get_visible_event_attachment_links(
     )
 
 
-def get_visible_health_record_attachment_links(
+def _visible_health_record_attachment_links(
     *,
-    health_record: HealthRecord,
     actor: AbstractBaseUser | AnonymousUser,
+    visible_health_records: QuerySet[HealthRecord] | None = None,
 ) -> QuerySet[HealthRecordAttachment]:
-    """Vrať vydatelné přílohy dostupného zdravotního záznamu."""
+    """Sestav jediný actor-aware queryset vydatelných health vazeb."""
 
-    if not isinstance(health_record, HealthRecord) or health_record.pk is None:
-        raise _health_record_unsaved_error()
-
-    if not HealthRecord.objects.filter(pk=health_record.pk).exists():
-        raise _health_record_unsaved_error()
-
-    visible_health_records = HealthRecord.objects.filter(
-        get_health_record_visibility_filter(actor=actor)
-    )
-    current = visible_health_records.get(pk=health_record.pk)
-
+    if visible_health_records is None:
+        visible_health_records = HealthRecord.objects.filter(
+            get_health_record_visibility_filter(actor=actor)
+        )
     visible_levels = tuple(
         level
         for level in _ACCESS_LEVELS
@@ -618,7 +611,6 @@ def get_visible_health_record_attachment_links(
     )
     return (
         HealthRecordAttachment.objects.filter(
-            health_record_id=current.pk,
             health_record_id__in=visible_health_records.values("pk"),
             access_level__in=visible_levels,
             archived_at__isnull=True,
@@ -640,6 +632,31 @@ def get_visible_health_record_attachment_links(
             "role",
             "created_by",
         )
+    )
+
+
+def get_visible_health_record_attachment_links(
+    *,
+    health_record: HealthRecord,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[HealthRecordAttachment]:
+    """Vrať vydatelné přílohy dostupného zdravotního záznamu."""
+
+    if not isinstance(health_record, HealthRecord) or health_record.pk is None:
+        raise _health_record_unsaved_error()
+
+    if not HealthRecord.objects.filter(pk=health_record.pk).exists():
+        raise _health_record_unsaved_error()
+
+    visible_health_records = HealthRecord.objects.filter(
+        get_health_record_visibility_filter(actor=actor)
+    )
+    current = visible_health_records.get(pk=health_record.pk)
+    return _visible_health_record_attachment_links(
+        actor=actor,
+        visible_health_records=visible_health_records,
+    ).filter(
+        health_record_id=current.pk,
     )
 
 

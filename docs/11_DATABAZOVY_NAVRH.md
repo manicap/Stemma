@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.69
+**Verze:** 0.70
 **Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
 **Datum revize:** 4. 9. 2026
 
@@ -2302,8 +2302,14 @@ obsahuje chráněné FK `health_record`, `attachment` a `role`. Reverse vazby js
 podle záznamu, `sort_order`, pořadí role a PK. Migrace
 `materials.0007_health_record_attachment` je čistě strukturální.
 
-Zápisy používají stávající `AttachmentLinkInput` a generické atomické
-create/update služby. Veřejné čtení je pouze
+Zápisy používají stávající `AttachmentLinkInput`. Konkrétní health attachment
+create/update služby jsou actor-aware: vyžadují čerstvého aktivního actora se
+standardním `materials.add_healthrecordattachment`, respektive
+`materials.change_healthrecordattachment`, a samy vynucují centrální health
+policy, access a aktivní lifecycle vazby i přílohy a
+`FileStatus.AVAILABLE`. Create nastavuje autora na actora a update zachovává
+autorství i lifecycle. Obecné attachment služby jiných kontextů zůstávají
+permissionless podle svého dosavadního kontraktu. Veřejné čtení je pouze
 `get_visible_health_record_attachment_links(*, health_record, actor)`. Selector
 ověří vstup přes `get_health_record_visibility_filter()` a stejný filtr vloží i
 do výsledného SQL. Dále filtruje access a aktivní lifecycle vazby i přílohy a
@@ -2339,6 +2345,12 @@ Stejný modul vystavuje také keyword-only
 pouze vracejí výsledek stejnojmenné actor-aware doménové služby a nepoužívají
 vlastní ORM, permission, access, lifecycle ani validační podmínky. Výjimky
 service vrstvy propouštějí beze změny.
+
+Pro vazbu přílohy modul obdobně vystavuje
+`create_health_record_attachment(*, health_record, data, actor)` a
+`update_health_record_attachment(*, link, health_record, data, actor)`. Jde o
+přesné delegace na autorizované materials služby bez vlastního ORM nebo policy;
+nevydávají storage URL ani obsah souboru.
 
 ## 14. Uživatelé a oprávnění
 

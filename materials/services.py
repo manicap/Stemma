@@ -5,15 +5,22 @@ from typing import Any, NoReturn
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, models, transaction
 
 from common.choices import AccessLevel
+from common.permissions import (
+    can_view_access_level,
+    require_active_actor_permission,
+)
 from events.models import Event
 from health.models import HealthRecord
+from health.permissions import get_health_record_visibility_filter
 from people.models import Person, Relationship
 from places.models import GraveSite, Place, Residence
 
+from .choices import FileStatus
 from .models import (
     Attachment,
     AttachmentLinkModel,
@@ -26,6 +33,7 @@ from .models import (
     RelationshipAttachment,
     ResidenceAttachment,
 )
+from .selectors import _visible_health_record_attachment_links
 
 __all__ = (
     "AttachmentLinkInput",
@@ -242,6 +250,60 @@ def _save(link: AttachmentLinkModel) -> None:
         raise
 
 
+def _load_visible_health_record_for_write(
+    *,
+    health_record: HealthRecord,
+    actor: AbstractBaseUser,
+) -> HealthRecord:
+    if not isinstance(health_record, HealthRecord) or health_record.pk is None:
+        _raise_service_error(
+            "health_record",
+            "Zdravotní záznam musí být uložený v databázi.",
+            "health_record_unsaved",
+        )
+    return (
+        HealthRecord.objects.select_for_update()
+        .filter(get_health_record_visibility_filter(actor=actor))
+        .get(pk=health_record.pk)
+    )
+
+
+def _load_visible_attachment_for_write(
+    *,
+    attachment: Attachment,
+    actor: AbstractBaseUser,
+) -> Attachment:
+    if not isinstance(attachment, Attachment) or attachment.pk is None:
+        _raise_service_error(
+            "attachment",
+            "Příloha musí být uložená v databázi.",
+            "attachment_unsaved",
+        )
+    current = Attachment.objects.select_for_update().get(
+        pk=attachment.pk,
+        archived_at__isnull=True,
+        deleted_at__isnull=True,
+        file_status=FileStatus.AVAILABLE,
+    )
+    if not can_view_access_level(
+        actor=actor,
+        access_level=current.access_level,
+    ):
+        raise Attachment.DoesNotExist
+    return current
+
+
+def _authorize_health_attachment_link_access(
+    *,
+    actor: AbstractBaseUser,
+    access_level: str,
+) -> None:
+    if not can_view_access_level(actor=actor, access_level=access_level):
+        raise PermissionDenied(
+            "K zápisu přílohy zdravotního záznamu nemáte oprávnění."
+        )
+
+
 def _create_link(
     *,
     spec: _LinkSpec,
@@ -372,27 +434,101 @@ def update_event_attachment(
 
 
 def create_health_record_attachment(
-    *, health_record: HealthRecord, data: AttachmentLinkInput,
-    created_by: AbstractBaseUser | None = None,
+    *,
+    health_record: HealthRecord,
+    data: AttachmentLinkInput,
+    actor: AbstractBaseUser | AnonymousUser,
 ) -> HealthRecordAttachment:
-    return _create_link(
-        spec=_HEALTH_RECORD,
-        target=health_record,
-        data=data,
-        created_by=created_by,
-    )
+    """Bezpečně propoj vydatelnou přílohu s dostupným health záznamem."""
+
+    with transaction.atomic():
+        current_actor = require_active_actor_permission(
+            actor=actor,
+            permission="materials.add_healthrecordattachment",
+            denial_message=(
+                "K zápisu přílohy zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        current_health_record = _load_visible_health_record_for_write(
+            health_record=health_record,
+            actor=current_actor,
+        )
+        attachment = _load_visible_attachment_for_write(
+            attachment=data.attachment,
+            actor=current_actor,
+        )
+        role = _load_role(data.role)
+        _authorize_health_attachment_link_access(
+            actor=current_actor,
+            access_level=data.access_level,
+        )
+        link = HealthRecordAttachment(
+            health_record=current_health_record,
+            created_by=current_actor,
+        )
+        _apply_input(
+            link,
+            data=data,
+            attachment=attachment,
+            role=role,
+        )
+        _save(link)
+        return _reload(_HEALTH_RECORD, link.pk)
 
 
 def update_health_record_attachment(
-    *, link: HealthRecordAttachment, health_record: HealthRecord,
+    *,
+    link: HealthRecordAttachment,
+    health_record: HealthRecord,
     data: AttachmentLinkInput,
+    actor: AbstractBaseUser | AnonymousUser,
 ) -> HealthRecordAttachment:
-    return _update_link(
-        spec=_HEALTH_RECORD,
-        link=link,
-        target=health_record,
-        data=data,
-    )
+    """Bezpečně změň actorovi vydatelnou vazbu zdravotní přílohy."""
+
+    with transaction.atomic():
+        current_actor = require_active_actor_permission(
+            actor=actor,
+            permission="materials.change_healthrecordattachment",
+            denial_message=(
+                "K zápisu přílohy zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        if not isinstance(link, HealthRecordAttachment) or link.pk is None:
+            _raise_service_error(
+                "link",
+                "Vazba přílohy musí být uložená v databázi.",
+                "attachment_link_unsaved",
+            )
+        current_link = (
+            _visible_health_record_attachment_links(actor=current_actor)
+            .select_for_update()
+            .get(pk=link.pk)
+        )
+        current_health_record = _load_visible_health_record_for_write(
+            health_record=health_record,
+            actor=current_actor,
+        )
+        attachment = _load_visible_attachment_for_write(
+            attachment=data.attachment,
+            actor=current_actor,
+        )
+        role = _load_role(
+            data.role,
+            allow_inactive_id=current_link.role_id,
+        )
+        _authorize_health_attachment_link_access(
+            actor=current_actor,
+            access_level=data.access_level,
+        )
+        current_link.health_record = current_health_record
+        _apply_input(
+            current_link,
+            data=data,
+            attachment=attachment,
+            role=role,
+        )
+        _save(current_link)
+        return _reload(_HEALTH_RECORD, current_link.pk)
 
 
 def create_relationship_attachment(

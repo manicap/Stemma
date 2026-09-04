@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 from typing import NoReturn
 
-from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -15,7 +14,10 @@ from common.choices import (
     DateQualifier,
     VerificationStatus,
 )
-from common.permissions import can_view_access_level
+from common.permissions import (
+    can_view_access_level,
+    require_active_actor_permission,
+)
 from people.models import Person
 from places.models import Place
 
@@ -82,33 +84,6 @@ def _load_place(place: Place | None) -> Place | None:
     if place is None:
         return None
     return _load(Place, place, key="place", label="Místo")
-
-
-def _load_actor(
-    actor: AbstractBaseUser | AnonymousUser,
-    *,
-    permission: str,
-) -> AbstractBaseUser:
-    user_model = get_user_model()
-    if (
-        not isinstance(actor, user_model)
-        or not getattr(actor, "is_authenticated", False)
-        or getattr(actor, "pk", None) is None
-    ):
-        raise PermissionDenied(
-            "K zápisu zdravotního záznamu nemáte oprávnění."
-        )
-    try:
-        current_actor = user_model._default_manager.get(pk=actor.pk)
-    except user_model.DoesNotExist as error:
-        raise PermissionDenied(
-            "K zápisu zdravotního záznamu nemáte oprávnění."
-        ) from error
-    if not current_actor.is_active or not current_actor.has_perm(permission):
-        raise PermissionDenied(
-            "K zápisu zdravotního záznamu nemáte oprávnění."
-        )
-    return current_actor
 
 
 def _authorize_write_access(
@@ -181,9 +156,12 @@ def create_health_record(
     """Atomicky vytvoř a vrať čerstvě načtený zdravotní záznam."""
 
     with transaction.atomic():
-        current_actor = _load_actor(
-            actor,
+        current_actor = require_active_actor_permission(
+            actor=actor,
             permission="health.add_healthrecord",
+            denial_message=(
+                "K zápisu zdravotního záznamu nemáte oprávnění."
+            ),
         )
         person = _load(Person, data.person, key="person", label="Osoba")
         record_type = _load(
@@ -227,9 +205,12 @@ def update_health_record(
     """Atomicky změň a vrať čerstvě načtený zdravotní záznam."""
 
     with transaction.atomic():
-        current_actor = _load_actor(
-            actor,
+        current_actor = require_active_actor_permission(
+            actor=actor,
             permission="health.change_healthrecord",
+            denial_message=(
+                "K zápisu zdravotního záznamu nemáte oprávnění."
+            ),
         )
         if (
             not isinstance(health_record, HealthRecord)

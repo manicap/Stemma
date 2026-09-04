@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.42
+**Verze:** 0.43
 **Stav:** M2 dokončeno; infrastruktura `health` zahájena
 **Datum revize:** 4. 9. 2026
 
@@ -239,11 +239,20 @@ Create odvozuje autora z actora a update zachovává autorství i lifecycle.
 Aplikační create/update jsou pouze delegující wrappery bez ORM či vlastní
 policy; nevzniká migrace, nový permission subsystem, HTTP, API, formulář ani UI.
 
+Dvacátý pátý řez uzavírá actor-aware zápis `HealthRecordAttachment`. Materials
+služby pro tuto konkrétní vazbu vyžadují čerstvého aktivního actora se
+standardním add/change oprávněním, centrální health policy, vydatelnou současnou
+vazbu a dostupnou aktivní přílohu ve stavu `FileStatus.AVAILABLE`. Create nastaví
+autora z actora, update zachová autorství a lifecycle a aplikační use-cases pouze
+delegují. Obecné attachment write kontrakty ostatních kontextů se nemění;
+nevzniká migrace, nový permission, HTTP, API, formulář, admin ani UI.
+
 #### Následující implementační kroky
 
 1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
 2. připravit další health use-case pouze podle konkrétního schváleného
-   aplikačního nebo uživatelského toku.
+   aplikačního nebo uživatelského toku; nejbližším odděleným kandidátem je
+   actor-aware zápis `HealthRecordSource`.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a

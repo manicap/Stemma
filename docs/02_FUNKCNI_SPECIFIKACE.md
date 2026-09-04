@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.40
+**Verze:** 0.41
 **Stav:** pracovní návrh  
 **Datum revize:** 4. 9. 2026
 
@@ -562,6 +562,18 @@ vazby, jejichž zdravotní záznam projde úplnou centralizovanou health policy 
 jejichž vazba i příloha jsou viditelné, nearchivované a neodstraněné; soubor
 musí být ve stavu `available`. Selector je pouze kontextový, nevydává storage
 URL ani obsah a nenabízí obecné čtení podle ID přílohy nebo vazby.
+
+Zápis této vazby tvoří keyword-only
+`create_health_record_attachment(*, health_record, data, actor)` a
+`update_health_record_attachment(*, link, health_record, data, actor)`.
+Doménové služby vyžadují čerstvého aktivního actora se standardními Django
+permissions `materials.add_healthrecordattachment`, respektive
+`materials.change_healthrecordattachment`. Samotná modelová permission nestačí:
+současný i navržený zdravotní kontext musí projít centralizovanou health policy,
+vazba a příloha obecný access a aktivní lifecycle a příloha také stav
+`FileStatus.AVAILABLE`. Create nastavuje autora na actora, update zachovává
+autorství a lifecycle. Stejnojmenné aplikační use-cases pouze delegují a
+neobsahují ORM, authorization ani validation logiku.
 
 Zdroje zdravotního záznamu používají explicitní `HealthRecordSource` nad
 společným source-link modelem. Kontextový actor-aware

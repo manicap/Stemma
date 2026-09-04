@@ -9,6 +9,12 @@ from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from common.choices import AccessLevel
+from materials.models import (
+    Attachment,
+    AttachmentRole,
+    HealthRecordAttachment,
+)
+from materials.services import AttachmentLinkInput
 from people.models import Person
 
 from . import use_cases
@@ -23,18 +29,28 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
             use_cases.__all__,
             (
                 "create_health_record",
+                "create_health_record_attachment",
                 "get_health_record_detail",
                 "list_health_records",
                 "update_health_record",
+                "update_health_record_attachment",
             ),
         )
         for callable_object, names in (
             (use_cases.create_health_record, ("data", "actor")),
+            (
+                use_cases.create_health_record_attachment,
+                ("health_record", "data", "actor"),
+            ),
             (list_health_records, ("person", "actor")),
             (get_health_record_detail, ("health_record_id", "actor")),
             (
                 use_cases.update_health_record,
                 ("health_record", "data", "actor"),
+            ),
+            (
+                use_cases.update_health_record_attachment,
+                ("link", "health_record", "data", "actor"),
             ),
         ):
             with self.subTest(callable=callable_object.__name__):
@@ -144,6 +160,95 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
                 use_cases.create_health_record,
                 {"data": data, "actor": actor},
                 ValidationError({"record_type": ["inactive"]}),
+            ),
+        )
+        for target, callable_object, arguments, error in cases:
+            with self.subTest(callable=callable_object.__name__):
+                with patch(target, side_effect=error):
+                    with self.assertRaises(type(error)) as raised:
+                        callable_object(**arguments)
+                self.assertIs(raised.exception, error)
+
+    def test_attachment_write_use_cases_are_exact_service_delegations(
+        self,
+    ) -> None:
+        actor = AnonymousUser()
+        record = HealthRecord(pk=47)
+        link = HealthRecordAttachment(pk=53)
+        data = AttachmentLinkInput(
+            attachment=Attachment(),
+            role=AttachmentRole(),
+        )
+        create_sentinel = HealthRecordAttachment(pk=59)
+        update_sentinel = HealthRecordAttachment(pk=61)
+
+        with patch(
+            "health.use_cases.create_attachment_service",
+            return_value=create_sentinel,
+        ) as create_service:
+            created = use_cases.create_health_record_attachment(
+                health_record=record,
+                data=data,
+                actor=actor,
+            )
+        self.assertIs(created, create_sentinel)
+        create_service.assert_called_once_with(
+            health_record=record,
+            data=data,
+            actor=actor,
+        )
+
+        with patch(
+            "health.use_cases.update_attachment_service",
+            return_value=update_sentinel,
+        ) as update_service:
+            updated = use_cases.update_health_record_attachment(
+                link=link,
+                health_record=record,
+                data=data,
+                actor=actor,
+            )
+        self.assertIs(updated, update_sentinel)
+        update_service.assert_called_once_with(
+            link=link,
+            health_record=record,
+            data=data,
+            actor=actor,
+        )
+
+    def test_attachment_write_use_cases_preserve_exact_service_exceptions(
+        self,
+    ) -> None:
+        actor = AnonymousUser()
+        record = HealthRecord(pk=67)
+        link = HealthRecordAttachment(pk=71)
+        data = AttachmentLinkInput(
+            attachment=Attachment(),
+            role=AttachmentRole(),
+        )
+        cases = (
+            (
+                "health.use_cases.create_attachment_service",
+                use_cases.create_health_record_attachment,
+                {"health_record": record, "data": data, "actor": actor},
+                PermissionDenied("denied"),
+            ),
+            (
+                "health.use_cases.update_attachment_service",
+                use_cases.update_health_record_attachment,
+                {
+                    "link": link,
+                    "health_record": record,
+                    "data": data,
+                    "actor": actor,
+                },
+                HealthRecordAttachment.DoesNotExist("unavailable"),
+            ),
+            (
+                "health.use_cases.create_attachment_service",
+                use_cases.create_health_record_attachment,
+                {"health_record": record, "data": data, "actor": actor},
+                ValidationError({"attachment": ["invalid"]}),
             ),
         )
         for target, callable_object, arguments, error in cases:

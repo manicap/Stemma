@@ -5,11 +5,14 @@ from typing import NoReturn
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 
 from .choices import AccessLevel
 
-__all__ = ("can_view_access_level",)
+__all__ = (
+    "can_view_access_level",
+    "require_active_actor_permission",
+)
 
 _REQUIRED_ACTOR_ATTRIBUTES = (
     "has_perm",
@@ -100,3 +103,27 @@ def can_view_access_level(
     return current_actor.has_perm(
         _ACCESS_LEVEL_PERMISSIONS[access_level]
     )
+
+
+def require_active_actor_permission(
+    *,
+    actor: AbstractBaseUser | AnonymousUser,
+    permission: str,
+    denial_message: str,
+) -> AbstractBaseUser:
+    """Vrať čerstvého aktivního actora s požadovaným Django oprávněním."""
+
+    user_model = get_user_model()
+    if (
+        not isinstance(actor, user_model)
+        or not getattr(actor, "is_authenticated", False)
+        or getattr(actor, "pk", None) is None
+    ):
+        raise PermissionDenied(denial_message)
+    try:
+        current_actor = user_model._default_manager.get(pk=actor.pk)
+    except user_model.DoesNotExist as error:
+        raise PermissionDenied(denial_message) from error
+    if not current_actor.is_active or not current_actor.has_perm(permission):
+        raise PermissionDenied(denial_message)
+    return current_actor
