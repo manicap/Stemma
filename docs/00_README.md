@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.45
+**Verze dokumentace:** 0.46
 **Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `health`
 **Datum revize:** 25. 9. 2026
 
@@ -39,6 +39,19 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.46
+
+Verze 0.46 zpřístupňuje bezpečné health materiály aplikační vrstvě:
+
+- `list_health_record_attachments(*, health_record, actor)` deleguje výhradně na
+  `get_visible_health_record_attachment_links()`,
+- `list_health_record_sources(*, health_record, actor)` deleguje výhradně na
+  `get_visible_health_record_source_links()`,
+- oba use-cases zachovávají původní lazy `QuerySet`, access, lifecycle i chybové
+  chování selectoru a nečtou reverse relations,
+- nevzniká storage URL, doručení souboru, zápis, permission, model, migrace,
+  HTTP, API ani UI.
 
 ## Stav verze 0.45
 

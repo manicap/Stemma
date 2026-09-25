@@ -1,7 +1,7 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.44
+**Verze:** 0.45
 **Stav:** M2 dokončeno; infrastruktura `health` zahájena
 **Datum revize:** 25. 9. 2026
 
@@ -255,11 +255,18 @@ update zachová autorství a lifecycle a aplikační use-cases pouze delegují.
 Obecné source write kontrakty ostatních kontextů se nemění; nevzniká migrace,
 nový permission, HTTP, API, formulář, admin ani UI.
 
+Dvacátý sedmý řez zpřístupňuje aplikační vrstvě bezpečné read-only seznamy
+příloh a zdrojů jednoho zdravotního záznamu. Keyword-only use-cases pouze
+delegují na existující contextual actor-aware materials selectory, zachovávají
+jejich lazy `QuerySet`, lifecycle, access i výjimky a nevytvářejí reverse ORM
+cestu. Nevzniká storage URL, doručení souboru, zápis, permission, model,
+migrace, HTTP, API ani UI.
+
 #### Následující implementační kroky
 
 1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
-2. připravit další health use-case pouze podle konkrétního schváleného
-   aplikačního nebo uživatelského toku.
+2. připravit read-only health UI pouze jako samostatný následný řez nad
+   existujícími bezpečnými aplikačními kontrakty.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a

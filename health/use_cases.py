@@ -5,6 +5,10 @@ from django.contrib.auth.models import AnonymousUser
 from django.db.models import QuerySet
 
 from materials.models import HealthRecordAttachment, HealthRecordSource
+from materials.selectors import (
+    get_visible_health_record_attachment_links,
+    get_visible_health_record_source_links,
+)
 from materials.services import (
     AttachmentLinkInput,
     create_health_record_attachment as create_attachment_service,
@@ -30,7 +34,9 @@ __all__ = (
     "create_health_record_attachment",
     "create_health_record_source",
     "get_health_record_detail",
+    "list_health_record_attachments",
     "list_health_records",
+    "list_health_record_sources",
     "update_health_record",
     "update_health_record_attachment",
     "update_health_record_source",
@@ -122,6 +128,32 @@ def update_health_record_source(
         link=link,
         health_record=health_record,
         data=data,
+        actor=actor,
+    )
+
+
+def list_health_record_attachments(
+    *,
+    health_record: HealthRecord,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[HealthRecordAttachment]:
+    """Vrať bezpečné přílohové vazby zdravotního záznamu."""
+
+    return get_visible_health_record_attachment_links(
+        health_record=health_record,
+        actor=actor,
+    )
+
+
+def list_health_record_sources(
+    *,
+    health_record: HealthRecord,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[HealthRecordSource]:
+    """Vrať bezpečné zdrojové vazby zdravotního záznamu."""
+
+    return get_visible_health_record_source_links(
+        health_record=health_record,
         actor=actor,
     )
 

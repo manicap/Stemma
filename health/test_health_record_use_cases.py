@@ -36,7 +36,9 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
                 "create_health_record_attachment",
                 "create_health_record_source",
                 "get_health_record_detail",
+                "list_health_record_attachments",
                 "list_health_records",
+                "list_health_record_sources",
                 "update_health_record",
                 "update_health_record_attachment",
                 "update_health_record_source",
@@ -54,6 +56,14 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
             ),
             (list_health_records, ("person", "actor")),
             (get_health_record_detail, ("health_record_id", "actor")),
+            (
+                use_cases.list_health_record_attachments,
+                ("health_record", "actor"),
+            ),
+            (
+                use_cases.list_health_record_sources,
+                ("health_record", "actor"),
+            ),
             (
                 use_cases.update_health_record,
                 ("health_record", "data", "actor"),
@@ -116,6 +126,69 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
                 get_health_record_detail(health_record_id=31, actor=actor)
 
         self.assertIs(raised.exception, unavailable)
+
+    def test_related_read_use_cases_are_exact_lazy_selector_delegations(
+        self,
+    ) -> None:
+        actor = AnonymousUser()
+        record = HealthRecord(pk=33)
+        attachment_links = HealthRecordAttachment.objects.all()
+        source_links = HealthRecordSource.objects.all()
+
+        with patch(
+            "health.use_cases.get_visible_health_record_attachment_links",
+            return_value=attachment_links,
+        ) as attachment_selector:
+            attachments = use_cases.list_health_record_attachments(
+                health_record=record,
+                actor=actor,
+            )
+
+        with patch(
+            "health.use_cases.get_visible_health_record_source_links",
+            return_value=source_links,
+        ) as source_selector:
+            sources = use_cases.list_health_record_sources(
+                health_record=record,
+                actor=actor,
+            )
+
+        self.assertIs(attachments, attachment_links)
+        self.assertIs(sources, source_links)
+        self.assertIsNone(attachment_links._result_cache)
+        self.assertIsNone(source_links._result_cache)
+        attachment_selector.assert_called_once_with(
+            health_record=record,
+            actor=actor,
+        )
+        source_selector.assert_called_once_with(
+            health_record=record,
+            actor=actor,
+        )
+
+    def test_related_read_use_cases_preserve_exact_selector_exceptions(
+        self,
+    ) -> None:
+        actor = AnonymousUser()
+        record = HealthRecord(pk=35)
+        cases = (
+            (
+                "health.use_cases.get_visible_health_record_attachment_links",
+                use_cases.list_health_record_attachments,
+            ),
+            (
+                "health.use_cases.get_visible_health_record_source_links",
+                use_cases.list_health_record_sources,
+            ),
+        )
+
+        for target, callable_object in cases:
+            unavailable = HealthRecord.DoesNotExist("unavailable")
+            with self.subTest(callable=callable_object.__name__):
+                with patch(target, side_effect=unavailable):
+                    with self.assertRaises(HealthRecord.DoesNotExist) as raised:
+                        callable_object(health_record=record, actor=actor)
+                self.assertIs(raised.exception, unavailable)
 
     def test_create_is_an_exact_service_delegation(self) -> None:
         actor = AnonymousUser()

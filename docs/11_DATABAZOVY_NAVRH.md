@@ -1,7 +1,7 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.71
+**Verze:** 0.72
 **Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
 **Datum revize:** 25. 9. 2026
 
@@ -2346,8 +2346,13 @@ První aplikační read-only hranici tvoří `health.use_cases` s keyword-only
 `get_health_record_detail(*, health_record_id, actor)`. Obě funkce pouze vracejí
 výsledek existujících actor-aware health selectorů, a proto nevytvářejí vlastní
 ORM visibility dotaz ani access/lifecycle pravidla. Detail zachovává původní
-`HealthRecord.DoesNotExist`. Use-case nepřipojuje zdroje či přílohy, nečte
-reverse relations a nemění model ani migrace; nevzniká HTTP, API, UI nebo zápis.
+`HealthRecord.DoesNotExist`. Samostatné
+`list_health_record_attachments(*, health_record, actor)` a
+`list_health_record_sources(*, health_record, actor)` doslovně delegují na
+odpovídající contextual actor-aware materials selectory a vracejí jejich
+původní lazy `QuerySet` bez reverse relations či vlastního ORM. Attachment
+use-case nevydává storage URL ani soubor. Aplikační read vrstva nemění model ani
+migrace; nevzniká HTTP, API, UI nebo zápis.
 
 Stejný modul vystavuje také keyword-only
 `create_health_record(*, data, actor)` a

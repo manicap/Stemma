@@ -1,5 +1,14 @@
 # Historie změn dokumentace
 
+## Verze 0.81 – 25. 9. 2026
+
+- přidány aplikační read use-cases pro přílohy a zdroje jednoho zdravotního
+  záznamu,
+- oba pouze delegují na existující contextual actor-aware materials selectory
+  a zachovávají jejich lazy `QuerySet`, lifecycle, access i výjimky,
+- nevznikl reverse ORM dotaz, storage URL, doručení souboru, zápis, permission,
+  model, migrace, HTTP, API ani UI.
+
 ## Verze 0.80 – 25. 9. 2026
 
 - health source create/update služby jsou actor-aware a používají existující

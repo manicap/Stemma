@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.32
+**Verze:** 0.33
 **Stav:** pracovní návrh  
 **Datum revize:** 25. 9. 2026
 
@@ -129,7 +129,11 @@ Transportně neutrální `list_health_records()` a `get_health_record_detail()`
 pouze předávají konkrétního actora existujícím health selectorům. Nemají vlastní
 permission, ORM visibility podmínky ani obsluhu výjimek, takže autorizační
 význam kolekce a detailu zůstává soustředěný v centralizované health policy.
-Zdroje a přílohy tento první aplikační kontrakt nečte ani nepřipojuje.
+`list_health_record_attachments()` a `list_health_record_sources()` stejným
+způsobem delegují na existující contextual actor-aware materials selectory a
+zachovávají celý jejich health, access a lifecycle řetězec. Aplikační vrstva
+nečte reverse relations, nevytváří další permission rozhodnutí a neposkytuje
+storage URL ani doručení souboru.
 
 Zápis `HealthRecord` používá již existující standardní Django modelové
 permissions: create vyžaduje `health.add_healthrecord`, update

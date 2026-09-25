@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.42
+**Verze:** 0.43
 **Stav:** pracovní návrh  
 **Datum revize:** 25. 9. 2026
 
@@ -602,8 +602,13 @@ výsledek odpovídajícího existujícího health selectoru, neprovádějí vlas
 dotaz ani access či lifecycle filtr a detail nepřekládá
 `HealthRecord.DoesNotExist`. Kolekce a detail proto zachovávají přesně stejnou
 visibility jako doménové read API. Tento minimální use-case nepřipojuje zdroje
-ani přílohy a nečte reverse relations. Stejný modul nyní obsahuje i výše
-uvedené čistě delegující write use-cases; nevytváří HTTP, API ani UI.
+ani přílohy přímo a nečte reverse relations. Samostatné
+`list_health_record_attachments(*, health_record, actor)` a
+`list_health_record_sources(*, health_record, actor)` pouze vracejí původní
+lazy `QuerySet` odpovídajícího contextual actor-aware selectoru. Nepřidávají
+ORM, další autorizaci, storage URL ani cestu k doručení souboru. Stejný modul
+obsahuje i výše uvedené čistě delegující write use-cases; nevytváří HTTP, API
+ani UI.
 
 ## 13. Hrobová místa
 

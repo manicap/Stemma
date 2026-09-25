@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.58
+**Verze:** 0.59
 **Stav:** koncept  
 **Datum revize:** 25. 9. 2026
 
@@ -1132,11 +1132,11 @@ dostupný a `SourceRole` musí být aktivní při create i update.
 
 Transportně neutrální aplikační modul `health.use_cases` datový model nemění.
 Jeho kolekční a detailní funkce pouze delegují na existující actor-aware health
-selectory a vracejí jejich původní doménové objekty či `QuerySet`. V tomto
-minimálním řezu nepřipojují zdroje ani přílohy a nečtou reverse relations;
-nevzniká migrace ani nový prezentační model. Stejnojmenné health-record i
-health-attachment i health-source create/update use-cases obdobně pouze
-delegují na autorizované doménové služby.
+selectory a vracejí jejich původní doménové objekty či lazy `QuerySet`.
+Samostatné read use-cases příloh a zdrojů delegují na jejich contextual
+actor-aware selectory a nečtou reverse relations. Nevzniká migrace ani nový
+prezentační model. Stejnojmenné health-record, health-attachment a health-source
+create/update use-cases obdobně pouze delegují na autorizované doménové služby.
 
 ## 11. Místo
 
