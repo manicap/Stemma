@@ -4,11 +4,16 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import QuerySet
 
-from materials.models import HealthRecordAttachment
+from materials.models import HealthRecordAttachment, HealthRecordSource
 from materials.services import (
     AttachmentLinkInput,
     create_health_record_attachment as create_attachment_service,
     update_health_record_attachment as update_attachment_service,
+)
+from materials.source_services import (
+    SourceLinkInput,
+    create_health_record_source as create_source_service,
+    update_health_record_source as update_source_service,
 )
 from people.models import Person
 
@@ -23,10 +28,12 @@ from .services import (
 __all__ = (
     "create_health_record",
     "create_health_record_attachment",
+    "create_health_record_source",
     "get_health_record_detail",
     "list_health_records",
     "update_health_record",
     "update_health_record_attachment",
+    "update_health_record_source",
 )
 
 
@@ -80,6 +87,38 @@ def update_health_record_attachment(
     """Změň health attachment vazbu přes autorizovanou materials službu."""
 
     return update_attachment_service(
+        link=link,
+        health_record=health_record,
+        data=data,
+        actor=actor,
+    )
+
+
+def create_health_record_source(
+    *,
+    health_record: HealthRecord,
+    data: SourceLinkInput,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> HealthRecordSource:
+    """Vytvoř health source vazbu přes autorizovanou materials službu."""
+
+    return create_source_service(
+        health_record=health_record,
+        data=data,
+        actor=actor,
+    )
+
+
+def update_health_record_source(
+    *,
+    link: HealthRecordSource,
+    health_record: HealthRecord,
+    data: SourceLinkInput,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> HealthRecordSource:
+    """Změň health source vazbu přes autorizovanou materials službu."""
+
+    return update_source_service(
         link=link,
         health_record=health_record,
         data=data,

@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.70
+**Verze:** 0.71
 **Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
-**Datum revize:** 4. 9. 2026
+**Datum revize:** 25. 9. 2026
 
 ## 1. Účel
 
@@ -2121,16 +2121,20 @@ Interní zápisová hranice používá frozen slotted `SourceLinkInput` a samost
 typované create/update funkce pro všech sedm modelů. V transakci vždy znovu
 načte konkrétní cíl, zdroj, roli a volitelného autora a před uložením provede
 `full_clean()`. Create odmítá archivovaný či odstraněný cíl nebo zdroj a
-neaktivní roli. Update odmítá odstraněnou vazbu nebo endpoint, dovoluje však
-zachovat stejný mezitím archivovaný cíl či zdroj a stejnou mezitím neaktivní
-roli; na jiný takový endpoint přejít nesmí. Archivovaná vazba zůstává
-editovatelná a textový kontext se ořezává.
+neaktivní roli. Tento obecný kontrakt ostatních kontextů při update odmítá
+odstraněnou vazbu nebo endpoint, dovoluje však zachovat stejný mezitím
+archivovaný cíl či zdroj a stejnou mezitím neaktivní roli; na jiný takový
+endpoint přejít nesmí. Archivovaná vazba zůstává editovatelná a textový kontext
+se ořezává. `HealthRecordSource` je actor-aware výjimka: vyžaduje aktivní vazbu,
+health cíl, zdroj i roli také při update.
 
-Tyto služby neověřují actor oprávnění. Před aplikačním použitím musí
+Obecné služby ostatních source kontextů neověřují actor oprávnění. Před jejich
+aplikačním použitím musí
 volající autorizovat create nad cílem, zdrojem a vznikem kontextu; update musí
 nejprve autorizovat dosavadní konkrétní cestu a potom každý měněný endpoint i
-samotnou mutaci. Pro jednotlivé kontexty existují samostatné actor-aware read
-selectory včetně `HealthRecordSource`; admin, API a UI zatím nevznikají.
+samotnou mutaci. Health-specific create/update autorizují celý řetězec samy.
+Pro jednotlivé kontexty existují samostatné actor-aware read selectory včetně
+`HealthRecordSource`; admin, API a UI zatím nevznikají.
 
 První čtecí hranice zdrojů je záměrně kontextová. Permissionless
 `get_person_name_source_links(*, person_name)` vrací lazy historii všech
@@ -2320,9 +2324,15 @@ neexistuje obecný selector podle ID přílohy nebo vazby.
 `HealthRecordSource` dědí ze společného `SourceLinkModel` a chráněnými FK
 propojuje `HealthRecord`, `Source` a `SourceRole`. Reverse vazby jsou
 `HealthRecord.source_links` a `Source.healthrecordsource_links`; řazení je podle
-záznamu, pořadí role a PK. Create/update používají stávající `SourceLinkInput` a
-generickou transakční source service. Strukturální migrace
-`materials.0008_health_record_source` nevkládá data.
+záznamu, pořadí role a PK. Create/update používají stávající `SourceLinkInput`.
+Konkrétní health source služby jsou actor-aware: vyžadují čerstvého aktivního
+actora se standardním `materials.add_healthrecordsource`, respektive
+`materials.change_healthrecordsource`, a samy vynucují centrální health policy,
+access a aktivní lifecycle vazby i zdroje a aktivní `SourceRole`. Create
+nastavuje autora na actora a update zachovává autorství i lifecycle. Obecné
+source služby jiných kontextů zůstávají permissionless podle dosavadního
+kontraktu. Strukturální migrace `materials.0008_health_record_source` nevkládá
+data.
 
 Jediný veřejný read selector je
 `get_visible_health_record_source_links(*, health_record, actor)`. Vstup ověří
@@ -2351,6 +2361,11 @@ Pro vazbu přílohy modul obdobně vystavuje
 `update_health_record_attachment(*, link, health_record, data, actor)`. Jde o
 přesné delegace na autorizované materials služby bez vlastního ORM nebo policy;
 nevydávají storage URL ani obsah souboru.
+
+Pro zdrojovou vazbu modul obdobně vystavuje
+`create_health_record_source(*, health_record, data, actor)` a
+`update_health_record_source(*, link, health_record, data, actor)`. Jde o přesné
+delegace na autorizované materials source služby bez vlastního ORM nebo policy.
 
 ## 14. Uživatelé a oprávnění
 

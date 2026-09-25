@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.57
+**Verze:** 0.58
 **Stav:** koncept  
-**Datum revize:** 4. 9. 2026
+**Datum revize:** 25. 9. 2026
 
 ## 1. Základní pilíře
 
@@ -988,6 +988,10 @@ autorizaci: budoucí aplikační volající musí před službou ověřit stáva
 kontext i každý měněný endpoint. Ostatní actor-aware selectory, admin a UI
 stále nejsou součástí řezu.
 
+Tento původní permissionless kontrakt nadále platí pro obecné source kontexty;
+pozdější `HealthRecordSource` create/update tvoří actor-aware výjimku popsanou
+níže a autorizaci nenechává aplikačnímu volajícímu.
+
 První čtecí řez tvoří `get_person_name_source_links(*, person_name)` pro
 interní historii nesmazaných vazeb a
 `get_visible_person_name_source_links(*, person_name, actor)` pro běžné
@@ -1119,13 +1123,20 @@ chráněnými FK propojuje `HealthRecord`, `Source` a `SourceRole`. Nese citovan
 Strukturální migrace `materials.0008_health_record_source` nepřidává seed ani
 jiná data.
 
+Actor-aware create/update kontrakt model nemění. Používá existující
+`SourceLinkInput`, standardní add/change permission modelu vazby a
+centralizovanou health policy. Create odvozuje `created_by` z čerstvého actora;
+update mění pouze editovatelný snapshot a zachovává autorství i lifecycle.
+Současná vazba i navržené FK se znovu načítají, zdroj musí být aktivní a
+dostupný a `SourceRole` musí být aktivní při create i update.
+
 Transportně neutrální aplikační modul `health.use_cases` datový model nemění.
 Jeho kolekční a detailní funkce pouze delegují na existující actor-aware health
 selectory a vracejí jejich původní doménové objekty či `QuerySet`. V tomto
 minimálním řezu nepřipojují zdroje ani přílohy a nečtou reverse relations;
 nevzniká migrace ani nový prezentační model. Stejnojmenné health-record i
-health-attachment create/update use-cases obdobně pouze delegují na
-autorizované doménové služby.
+health-attachment i health-source create/update use-cases obdobně pouze
+delegují na autorizované doménové služby.
 
 ## 11. Místo
 

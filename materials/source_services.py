@@ -5,12 +5,18 @@ from typing import NoReturn
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models, transaction
 
 from common.choices import AccessLevel
+from common.permissions import (
+    can_view_access_level,
+    require_active_actor_permission,
+)
 from events.models import Event
 from health.models import HealthRecord
+from health.permissions import get_health_record_visibility_filter
 from people.models import PersonName, Relationship
 from places.models import GraveSite, Residence
 
@@ -28,6 +34,7 @@ from .models import (
     SourceLinkModel,
     SourceRole,
 )
+from .selectors import _visible_health_record_source_links
 
 __all__ = (
     "SourceLinkInput",
@@ -170,6 +177,59 @@ def _reload(spec: _LinkSpec, link_id: int) -> SourceLinkModel:
     ).get(pk=link_id)
 
 
+def _load_visible_health_record_for_write(
+    *,
+    health_record: HealthRecord,
+    actor: AbstractBaseUser,
+) -> HealthRecord:
+    if not isinstance(health_record, HealthRecord) or health_record.pk is None:
+        _error(
+            "health_record",
+            "Zdravotní záznam musí být uložený v databázi.",
+            "health_record_unsaved",
+        )
+    return (
+        HealthRecord.objects.select_for_update()
+        .filter(get_health_record_visibility_filter(actor=actor))
+        .get(pk=health_record.pk)
+    )
+
+
+def _load_visible_source_for_write(
+    *,
+    source: Source,
+    actor: AbstractBaseUser,
+) -> Source:
+    if not isinstance(source, Source) or source.pk is None:
+        _error(
+            "source",
+            "Zdroj musí být uložený v databázi.",
+            "source_unsaved",
+        )
+    current = Source.objects.select_for_update().get(
+        pk=source.pk,
+        archived_at__isnull=True,
+        deleted_at__isnull=True,
+    )
+    if not can_view_access_level(
+        actor=actor,
+        access_level=current.access_level,
+    ):
+        raise Source.DoesNotExist
+    return current
+
+
+def _authorize_health_source_link_access(
+    *,
+    actor: AbstractBaseUser,
+    access_level: str,
+) -> None:
+    if not can_view_access_level(actor=actor, access_level=access_level):
+        raise PermissionDenied(
+            "K zápisu zdroje zdravotního záznamu nemáte oprávnění."
+        )
+
+
 def _create(
     *,
     spec: _LinkSpec,
@@ -280,27 +340,90 @@ def update_event_source(
 
 
 def create_health_record_source(
-    *, health_record: HealthRecord, data: SourceLinkInput,
-    created_by: AbstractBaseUser | None = None,
+    *,
+    health_record: HealthRecord,
+    data: SourceLinkInput,
+    actor: AbstractBaseUser | AnonymousUser,
 ) -> HealthRecordSource:
-    return _create(
-        spec=_HEALTH_RECORD,
-        target=health_record,
-        data=data,
-        created_by=created_by,
-    )
+    """Bezpečně propoj dostupný zdroj s dostupným health záznamem."""
+
+    with transaction.atomic():
+        current_actor = require_active_actor_permission(
+            actor=actor,
+            permission="materials.add_healthrecordsource",
+            denial_message=(
+                "K zápisu zdroje zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        current_health_record = _load_visible_health_record_for_write(
+            health_record=health_record,
+            actor=current_actor,
+        )
+        source = _load_visible_source_for_write(
+            source=data.source,
+            actor=current_actor,
+        )
+        role = _load_role(data.role)
+        _authorize_health_source_link_access(
+            actor=current_actor,
+            access_level=data.access_level,
+        )
+        link = HealthRecordSource(
+            health_record=current_health_record,
+            created_by=current_actor,
+        )
+        _apply(link, data=data, source=source, role=role)
+        link.full_clean()
+        link.save()
+        return _reload(_HEALTH_RECORD, link.pk)
 
 
 def update_health_record_source(
-    *, link: HealthRecordSource, health_record: HealthRecord,
+    *,
+    link: HealthRecordSource,
+    health_record: HealthRecord,
     data: SourceLinkInput,
+    actor: AbstractBaseUser | AnonymousUser,
 ) -> HealthRecordSource:
-    return _update(
-        spec=_HEALTH_RECORD,
-        link=link,
-        target=health_record,
-        data=data,
-    )
+    """Bezpečně změň actorovi dostupnou vazbu zdravotního zdroje."""
+
+    with transaction.atomic():
+        current_actor = require_active_actor_permission(
+            actor=actor,
+            permission="materials.change_healthrecordsource",
+            denial_message=(
+                "K zápisu zdroje zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        if not isinstance(link, HealthRecordSource) or link.pk is None:
+            _error(
+                "link",
+                "Vazba zdroje musí být uložená.",
+                "source_link_unsaved",
+            )
+        current_link = (
+            _visible_health_record_source_links(actor=current_actor)
+            .select_for_update()
+            .get(pk=link.pk)
+        )
+        current_health_record = _load_visible_health_record_for_write(
+            health_record=health_record,
+            actor=current_actor,
+        )
+        source = _load_visible_source_for_write(
+            source=data.source,
+            actor=current_actor,
+        )
+        role = _load_role(data.role)
+        _authorize_health_source_link_access(
+            actor=current_actor,
+            access_level=data.access_level,
+        )
+        current_link.health_record = current_health_record
+        _apply(current_link, data=data, source=source, role=role)
+        current_link.full_clean()
+        current_link.save()
+        return _reload(_HEALTH_RECORD, current_link.pk)
 
 
 def create_relationship_source(

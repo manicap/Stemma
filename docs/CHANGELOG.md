@@ -1,5 +1,16 @@
 # Historie změn dokumentace
 
+## Verze 0.80 – 25. 9. 2026
+
+- health source create/update služby jsou actor-aware a používají existující
+  standardní `add/change_healthrecordsource` permissions,
+- současný i navržený health kontext procházejí centrální health policy a update
+  načítá vazbu stejným dostupným querysetem jako bezpečný selector,
+- vazba a zdroj musí projít access a aktivní lifecycle, role musí být aktivní;
+  create odvozuje autora z actora a update zachovává autorství i lifecycle,
+- aplikační use-cases pouze delegují; nevznikl nový permission, model, migrace,
+  HTTP, API, formulář, admin ani UI.
+
 ## Verze 0.79 – 4. 9. 2026
 
 - health attachment create/update služby jsou actor-aware a používají existující

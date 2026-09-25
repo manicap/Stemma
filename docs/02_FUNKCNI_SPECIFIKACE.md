@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.41
+**Verze:** 0.42
 **Stav:** pracovní návrh  
-**Datum revize:** 4. 9. 2026
+**Datum revize:** 25. 9. 2026
 
 ## 1. Globální aplikační shell a Přehled
 
@@ -582,6 +582,18 @@ vyžaduje celý centralizovaný health řetězec a následně viditelnou,
 nearchivovanou a neodstraněnou vazbu i `Source`. Sdílený zdroj ani znalost ID
 vazby neodhalí nepřístupný zdravotní záznam. Obecný selector podle zdroje či
 vazby, HTTP, serializace a UI nevznikají.
+
+Zápis této vazby tvoří keyword-only
+`create_health_record_source(*, health_record, data, actor)` a
+`update_health_record_source(*, link, health_record, data, actor)`.
+Doménové služby vyžadují čerstvého aktivního actora se standardními Django
+permissions `materials.add_healthrecordsource`, respektive
+`materials.change_healthrecordsource`. Samotná modelová permission nestačí:
+současný i navržený zdravotní kontext musí projít centralizovanou health policy,
+současná vazba i zdroj obecný access a aktivní lifecycle a navržená
+`SourceRole` musí být aktivní a platná. Create nastavuje autora na actora,
+update zachovává autorství a lifecycle. Stejnojmenné aplikační use-cases pouze
+delegují a neobsahují ORM, authorization ani validation logiku.
 
 První transportně neutrální aplikační kontrakt tvoří keyword-only
 `list_health_records(*, person, actor)` a

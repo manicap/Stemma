@@ -13,8 +13,12 @@ from materials.models import (
     Attachment,
     AttachmentRole,
     HealthRecordAttachment,
+    HealthRecordSource,
+    Source,
+    SourceRole,
 )
 from materials.services import AttachmentLinkInput
+from materials.source_services import SourceLinkInput
 from people.models import Person
 
 from . import use_cases
@@ -30,16 +34,22 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
             (
                 "create_health_record",
                 "create_health_record_attachment",
+                "create_health_record_source",
                 "get_health_record_detail",
                 "list_health_records",
                 "update_health_record",
                 "update_health_record_attachment",
+                "update_health_record_source",
             ),
         )
         for callable_object, names in (
             (use_cases.create_health_record, ("data", "actor")),
             (
                 use_cases.create_health_record_attachment,
+                ("health_record", "data", "actor"),
+            ),
+            (
+                use_cases.create_health_record_source,
                 ("health_record", "data", "actor"),
             ),
             (list_health_records, ("person", "actor")),
@@ -50,6 +60,10 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
             ),
             (
                 use_cases.update_health_record_attachment,
+                ("link", "health_record", "data", "actor"),
+            ),
+            (
+                use_cases.update_health_record_source,
                 ("link", "health_record", "data", "actor"),
             ),
         ):
@@ -249,6 +263,95 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
                 use_cases.create_health_record_attachment,
                 {"health_record": record, "data": data, "actor": actor},
                 ValidationError({"attachment": ["invalid"]}),
+            ),
+        )
+        for target, callable_object, arguments, error in cases:
+            with self.subTest(callable=callable_object.__name__):
+                with patch(target, side_effect=error):
+                    with self.assertRaises(type(error)) as raised:
+                        callable_object(**arguments)
+                self.assertIs(raised.exception, error)
+
+    def test_source_write_use_cases_are_exact_service_delegations(self) -> None:
+        actor = AnonymousUser()
+        record = HealthRecord(pk=73)
+        link = HealthRecordSource(pk=79)
+        data = SourceLinkInput(
+            source=Source(),
+            role=SourceRole(),
+            support_strength="confirms",
+        )
+        create_sentinel = HealthRecordSource(pk=83)
+        update_sentinel = HealthRecordSource(pk=89)
+
+        with patch(
+            "health.use_cases.create_source_service",
+            return_value=create_sentinel,
+        ) as create_service:
+            created = use_cases.create_health_record_source(
+                health_record=record,
+                data=data,
+                actor=actor,
+            )
+        self.assertIs(created, create_sentinel)
+        create_service.assert_called_once_with(
+            health_record=record,
+            data=data,
+            actor=actor,
+        )
+
+        with patch(
+            "health.use_cases.update_source_service",
+            return_value=update_sentinel,
+        ) as update_service:
+            updated = use_cases.update_health_record_source(
+                link=link,
+                health_record=record,
+                data=data,
+                actor=actor,
+            )
+        self.assertIs(updated, update_sentinel)
+        update_service.assert_called_once_with(
+            link=link,
+            health_record=record,
+            data=data,
+            actor=actor,
+        )
+
+    def test_source_write_use_cases_preserve_exact_service_exceptions(
+        self,
+    ) -> None:
+        actor = AnonymousUser()
+        record = HealthRecord(pk=97)
+        link = HealthRecordSource(pk=101)
+        data = SourceLinkInput(
+            source=Source(),
+            role=SourceRole(),
+            support_strength="confirms",
+        )
+        cases = (
+            (
+                "health.use_cases.create_source_service",
+                use_cases.create_health_record_source,
+                {"health_record": record, "data": data, "actor": actor},
+                PermissionDenied("denied"),
+            ),
+            (
+                "health.use_cases.update_source_service",
+                use_cases.update_health_record_source,
+                {
+                    "link": link,
+                    "health_record": record,
+                    "data": data,
+                    "actor": actor,
+                },
+                HealthRecordSource.DoesNotExist("unavailable"),
+            ),
+            (
+                "health.use_cases.create_source_service",
+                use_cases.create_health_record_source,
+                {"health_record": record, "data": data, "actor": actor},
+                ValidationError({"source": ["invalid"]}),
             ),
         )
         for target, callable_object, arguments, error in cases:

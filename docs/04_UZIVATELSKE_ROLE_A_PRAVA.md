@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.31
+**Verze:** 0.32
 **Stav:** pracovní návrh  
-**Datum revize:** 4. 9. 2026
+**Datum revize:** 25. 9. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -154,6 +154,14 @@ projít úplnou centralizovanou health policy a současná vazba, navržený acc
 příloha musí projít obecný access a aktivní lifecycle; příloha musí mít
 `FileStatus.AVAILABLE`. Aplikační wrappery pouze delegují. Nevzniká nové health
 oprávnění ani attachment permission subsystem.
+
+Zápis `HealthRecordSource` používá existující standardní permissions
+`materials.add_healthrecordsource` a `materials.change_healthrecordsource`.
+Ani ty samy přístup nerozšiřují: actor musí být čerstvý a aktivní, současný i
+navržený zdravotní záznam musí projít úplnou centralizovanou health policy a
+současná vazba, navržený access i zdroj musí projít obecný access a aktivní
+lifecycle. Navržená `SourceRole` musí být aktivní. Aplikační wrappery pouze
+delegují; nevzniká nové health oprávnění ani source permission subsystem.
 
 ## 5.1 Systémové skupiny a zvýšená oprávnění
 

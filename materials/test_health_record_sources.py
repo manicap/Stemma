@@ -1,12 +1,13 @@
 from importlib import import_module
 from inspect import Parameter, signature
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Permission
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import connection, migrations, models
 from django.db.models import QuerySet
 from django.test import SimpleTestCase, TestCase
@@ -55,11 +56,11 @@ class HealthRecordSourceApiTests(SimpleTestCase):
         expectations = (
             (
                 create_health_record_source,
-                ("health_record", "data", "created_by"),
+                ("health_record", "data", "actor"),
             ),
             (
                 update_health_record_source,
-                ("link", "health_record", "data"),
+                ("link", "health_record", "data", "actor"),
             ),
             (
                 get_visible_health_record_source_links,
@@ -112,6 +113,18 @@ class HealthRecordSourceServiceTests(TestCase):
             source_type=self.source_type,
             title="Lékařská zpráva",
         )
+        self.actor = get_user_model().objects.create_user(username="writer")
+        for app_label, codename in (
+            ("materials", "add_healthrecordsource"),
+            ("materials", "change_healthrecordsource"),
+            ("accounts", "view_restricted_content"),
+        ):
+            self.actor.user_permissions.add(
+                Permission.objects.get(
+                    content_type__app_label=app_label,
+                    codename=codename,
+                )
+            )
 
     def data(self, **changes: object) -> SourceLinkInput:
         values = {
@@ -126,10 +139,23 @@ class HealthRecordSourceServiceTests(TestCase):
         values.update(changes)
         return SourceLinkInput(**values)
 
-    def test_create_and_update_use_existing_generic_source_service(self) -> None:
+    def user(self, username: str, *permissions: str, **values: object):
+        actor = get_user_model().objects.create_user(username=username, **values)
+        for permission_name in permissions:
+            app_label, codename = permission_name.split(".", maxsplit=1)
+            actor.user_permissions.add(
+                Permission.objects.get(
+                    content_type__app_label=app_label,
+                    codename=codename,
+                )
+            )
+        return actor
+
+    def test_create_and_update_use_actor_aware_health_service(self) -> None:
         link = create_health_record_source(
             health_record=self.health_record,
             data=self.data(),
+            actor=self.actor,
         )
         self.assertIsInstance(link, HealthRecordSource)
         self.assertEqual(link.health_record, self.health_record)
@@ -141,6 +167,7 @@ class HealthRecordSourceServiceTests(TestCase):
             link=link,
             health_record=self.health_record,
             data=self.data(cited_part="  strana 3  "),
+            actor=self.actor,
         )
         self.assertEqual(updated.pk, link.pk)
         self.assertEqual(updated.cited_part, "strana 3")
@@ -150,77 +177,483 @@ class HealthRecordSourceServiceTests(TestCase):
         HealthRecord.objects.filter(pk=self.health_record.pk).update(
             archived_at=now
         )
-        with self.assertRaises(ValidationError) as archived_error:
+        with self.assertRaises(HealthRecord.DoesNotExist):
             create_health_record_source(
                 health_record=self.health_record,
                 data=self.data(),
+                actor=self.actor,
             )
-        self.assertEqual(
-            archived_error.exception.error_dict["health_record"][0].code,
-            "health_record_archived",
-        )
 
         HealthRecord.objects.filter(pk=self.health_record.pk).update(
             archived_at=None,
             deleted_at=now,
         )
-        with self.assertRaises(ValidationError) as deleted_error:
+        with self.assertRaises(HealthRecord.DoesNotExist):
             create_health_record_source(
                 health_record=self.health_record,
                 data=self.data(),
+                actor=self.actor,
             )
-        self.assertEqual(
-            deleted_error.exception.error_dict["health_record"][0].code,
-            "health_record_deleted",
-        )
 
-    def test_update_preserves_only_same_archived_target_and_active_link(
+    def test_update_rejects_archived_target_and_deleted_link(
         self,
     ) -> None:
         link = create_health_record_source(
             health_record=self.health_record,
             data=self.data(),
+            actor=self.actor,
         )
         HealthRecord.objects.filter(pk=self.health_record.pk).update(
             archived_at=timezone.now()
         )
-        preserved = update_health_record_source(
-            link=link,
-            health_record=self.health_record,
-            data=self.data(),
-        )
-        self.assertEqual(preserved.health_record_id, self.health_record.pk)
-
-        other = HealthRecord.objects.create(
-            person=self.person,
-            record_type=self.record_type,
-            title="Jiný",
-            archived_at=timezone.now(),
-        )
-        with self.assertRaises(ValidationError) as archived_error:
-            update_health_record_source(
-                link=link,
-                health_record=other,
-                data=self.data(),
-            )
-        self.assertEqual(
-            archived_error.exception.error_dict["health_record"][0].code,
-            "health_record_archived",
-        )
-
-        HealthRecordSource.objects.filter(pk=link.pk).update(
-            deleted_at=timezone.now()
-        )
-        with self.assertRaises(ValidationError) as deleted_link_error:
+        with self.assertRaises(HealthRecordSource.DoesNotExist):
             update_health_record_source(
                 link=link,
                 health_record=self.health_record,
                 data=self.data(),
+                actor=self.actor,
+            )
+
+    def test_actor_must_be_current_active_and_have_exact_permission(self) -> None:
+        link = create_health_record_source(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        no_permission = self.user(
+            "no-source-permission",
+            "accounts.view_restricted_content",
+        )
+        inactive = self.user(
+            "inactive-source-writer",
+            "accounts.view_restricted_content",
+            "materials.add_healthrecordsource",
+            "materials.change_healthrecordsource",
+            is_active=False,
+        )
+        missing = self.user(
+            "missing-source-writer",
+            "accounts.view_restricted_content",
+            "materials.add_healthrecordsource",
+            "materials.change_healthrecordsource",
+        )
+        missing_pk = missing.pk
+        missing.delete()
+        missing.pk = missing_pk
+        forged = SimpleNamespace(is_authenticated=True, pk=self.actor.pk)
+
+        for actor in (
+            AnonymousUser(),
+            no_permission,
+            inactive,
+            missing,
+            forged,
+        ):
+            with self.subTest(actor=actor):
+                with self.assertRaises(PermissionDenied):
+                    create_health_record_source(
+                        health_record=self.health_record,
+                        data=self.data(),
+                        actor=actor,
+                    )
+                with self.assertRaises(PermissionDenied):
+                    update_health_record_source(
+                        link=link,
+                        health_record=self.health_record,
+                        data=self.data(cited_part="Zakázáno"),
+                        actor=actor,
+                    )
+
+        link.refresh_from_db()
+        self.assertEqual(link.cited_part, "strana 2")
+        self.assertEqual(HealthRecordSource.objects.count(), 1)
+
+    def test_model_permission_does_not_bypass_health_or_person_policy(
+        self,
+    ) -> None:
+        link_writer = self.user(
+            "source-link-only",
+            "materials.add_healthrecordsource",
+            "materials.change_healthrecordsource",
+        )
+        with self.assertRaises(HealthRecord.DoesNotExist):
+            create_health_record_source(
+                health_record=self.health_record,
+                data=self.data(access_level=AccessLevel.PUBLIC),
+                actor=link_writer,
+            )
+
+        Person.objects.filter(pk=self.person.pk).update(
+            access_level=AccessLevel.ADMIN_ONLY
+        )
+        with self.assertRaises(HealthRecord.DoesNotExist):
+            create_health_record_source(
+                health_record=self.health_record,
+                data=self.data(),
+                actor=self.actor,
+            )
+
+    def test_create_rejects_fresh_invalid_health_lifecycle(self) -> None:
+        cases = (
+            (Person, "archived_at", timezone.now()),
+            (Person, "deleted_at", timezone.now()),
+            (HealthRecord, "archived_at", timezone.now()),
+            (HealthRecord, "deleted_at", timezone.now()),
+            (HealthRecordType, "is_active", False),
+        )
+        ids = {
+            Person: self.person.pk,
+            HealthRecord: self.health_record.pk,
+            HealthRecordType: self.record_type.pk,
+        }
+        for model, field, value in cases:
+            with self.subTest(model=model.__name__, field=field):
+                model.objects.filter(pk=ids[model]).update(**{field: value})
+                with self.assertRaises(HealthRecord.DoesNotExist):
+                    create_health_record_source(
+                        health_record=self.health_record,
+                        data=self.data(),
+                        actor=self.actor,
+                    )
+                reset = None if field.endswith("_at") else True
+                model.objects.filter(pk=ids[model]).update(**{field: reset})
+
+    def test_create_rejects_invalid_or_unavailable_source_fk(self) -> None:
+        with self.assertRaises(ValidationError) as unsaved:
+            create_health_record_source(
+                health_record=self.health_record,
+                data=self.data(source=Source()),
+                actor=self.actor,
             )
         self.assertEqual(
-            deleted_link_error.exception.error_dict["link"][0].code,
-            "source_link_deleted",
+            unsaved.exception.error_dict["source"][0].code,
+            "source_unsaved",
         )
+
+        stale = Source.objects.create(
+            source_type=self.source_type,
+            title="Stale source",
+        )
+        stale_pk = stale.pk
+        stale.delete()
+        stale.pk = stale_pk
+        with self.assertRaises(Source.DoesNotExist):
+            create_health_record_source(
+                health_record=self.health_record,
+                data=self.data(source=stale),
+                actor=self.actor,
+            )
+
+        for change in (
+            {"archived_at": timezone.now()},
+            {"deleted_at": timezone.now()},
+            {"access_level": AccessLevel.ADMIN_ONLY},
+        ):
+            with self.subTest(change=change):
+                values = {
+                    "archived_at": None,
+                    "deleted_at": None,
+                    "access_level": AccessLevel.PUBLIC,
+                }
+                values.update(change)
+                Source.objects.filter(pk=self.source.pk).update(**values)
+                with self.assertRaises(Source.DoesNotExist):
+                    create_health_record_source(
+                        health_record=self.health_record,
+                        data=self.data(),
+                        actor=self.actor,
+                    )
+
+    def test_source_role_must_be_fresh_and_active_for_create_and_update(
+        self,
+    ) -> None:
+        inactive = SourceRole.objects.create(
+            code="inactive",
+            name="Neaktivní",
+            is_active=False,
+        )
+        for role in (SourceRole(), inactive):
+            with self.subTest(role=role):
+                with self.assertRaises(ValidationError):
+                    create_health_record_source(
+                        health_record=self.health_record,
+                        data=self.data(role=role),
+                        actor=self.actor,
+                    )
+
+        link = create_health_record_source(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        SourceRole.objects.filter(pk=self.role.pk).update(is_active=False)
+        with self.assertRaises(ValidationError) as error:
+            update_health_record_source(
+                link=link,
+                health_record=self.health_record,
+                data=self.data(),
+                actor=self.actor,
+            )
+        self.assertEqual(
+            error.exception.error_dict["role"][0].code,
+            "role_inactive",
+        )
+
+    def test_update_requires_current_visible_link_and_source(self) -> None:
+        link = create_health_record_source(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        for change in (
+            {"archived_at": timezone.now()},
+            {"deleted_at": timezone.now()},
+            {"access_level": AccessLevel.ADMIN_ONLY},
+        ):
+            with self.subTest(link_change=change):
+                values = {
+                    "archived_at": None,
+                    "deleted_at": None,
+                    "access_level": AccessLevel.RESTRICTED,
+                }
+                values.update(change)
+                HealthRecordSource.objects.filter(pk=link.pk).update(**values)
+                with self.assertRaises(HealthRecordSource.DoesNotExist):
+                    update_health_record_source(
+                        link=link,
+                        health_record=self.health_record,
+                        data=self.data(),
+                        actor=self.actor,
+                    )
+
+        HealthRecordSource.objects.filter(pk=link.pk).update(
+            archived_at=None,
+            deleted_at=None,
+            access_level=AccessLevel.RESTRICTED,
+        )
+        for change in (
+            {"archived_at": timezone.now()},
+            {"deleted_at": timezone.now()},
+            {"access_level": AccessLevel.ADMIN_ONLY},
+        ):
+            with self.subTest(source_change=change):
+                values = {
+                    "archived_at": None,
+                    "deleted_at": None,
+                    "access_level": AccessLevel.PUBLIC,
+                }
+                values.update(change)
+                Source.objects.filter(pk=self.source.pk).update(**values)
+                with self.assertRaises(HealthRecordSource.DoesNotExist):
+                    update_health_record_source(
+                        link=link,
+                        health_record=self.health_record,
+                        data=self.data(),
+                        actor=self.actor,
+                    )
+
+    def test_shared_source_and_known_ids_do_not_bypass_health_policy(self) -> None:
+        visible_link = create_health_record_source(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        hidden_record = HealthRecord.objects.create(
+            person=self.person,
+            record_type=self.record_type,
+            title="Skrytý",
+            access_level=AccessLevel.ADMIN_ONLY,
+        )
+        hidden_link = HealthRecordSource.objects.create(
+            health_record=hidden_record,
+            source=self.source,
+            role=self.role,
+            support_strength=SourceSupport.CONFIRMS,
+            access_level=AccessLevel.PUBLIC,
+        )
+        with self.assertRaises(HealthRecord.DoesNotExist):
+            create_health_record_source(
+                health_record=hidden_record,
+                data=self.data(access_level=AccessLevel.PUBLIC),
+                actor=self.actor,
+            )
+        with self.assertRaises(HealthRecordSource.DoesNotExist):
+            update_health_record_source(
+                link=HealthRecordSource(pk=hidden_link.pk),
+                health_record=self.health_record,
+                data=self.data(),
+                actor=self.actor,
+            )
+        with self.assertRaises(HealthRecord.DoesNotExist):
+            update_health_record_source(
+                link=visible_link,
+                health_record=hidden_record,
+                data=self.data(cited_part="Únik"),
+                actor=self.actor,
+            )
+        visible_link.refresh_from_db()
+        self.assertEqual(visible_link.cited_part, "strana 2")
+
+    def test_write_services_use_central_health_and_link_visibility(self) -> None:
+        with patch(
+            "materials.source_services.get_health_record_visibility_filter",
+            wraps=get_health_record_visibility_filter,
+        ) as health_policy:
+            link = create_health_record_source(
+                health_record=self.health_record,
+                data=self.data(),
+                actor=self.actor,
+            )
+        health_policy.assert_called_once_with(actor=self.actor)
+
+        with (
+            patch(
+                "materials.source_services._visible_health_record_source_links",
+                wraps=source_services._visible_health_record_source_links,
+            ) as link_policy,
+            patch(
+                "materials.source_services.get_health_record_visibility_filter",
+                wraps=get_health_record_visibility_filter,
+            ) as target_policy,
+        ):
+            update_health_record_source(
+                link=link,
+                health_record=self.health_record,
+                data=self.data(cited_part="Policy"),
+                actor=self.actor,
+            )
+        link_policy.assert_called_once_with(actor=self.actor)
+        target_policy.assert_called_once_with(actor=self.actor)
+
+    def test_update_rejects_unavailable_proposed_source_atomically(self) -> None:
+        link = create_health_record_source(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        replacement = Source.objects.create(
+            source_type=self.source_type,
+            title="Náhradní zdroj",
+        )
+        changes = (
+            {"archived_at": timezone.now()},
+            {"deleted_at": timezone.now()},
+            {"access_level": AccessLevel.ADMIN_ONLY},
+        )
+        for change in changes:
+            with self.subTest(change=change):
+                values = {
+                    "archived_at": None,
+                    "deleted_at": None,
+                    "access_level": AccessLevel.PUBLIC,
+                }
+                values.update(change)
+                Source.objects.filter(pk=replacement.pk).update(**values)
+                with self.assertRaises(Source.DoesNotExist):
+                    update_health_record_source(
+                        link=link,
+                        health_record=self.health_record,
+                        data=self.data(
+                            source=replacement,
+                            cited_part="Nesmí se uložit",
+                        ),
+                        actor=self.actor,
+                    )
+
+        stale = Source.objects.create(
+            source_type=self.source_type,
+            title="Smazaný zdroj",
+        )
+        stale_pk = stale.pk
+        stale.delete()
+        stale.pk = stale_pk
+        with self.assertRaises(Source.DoesNotExist):
+            update_health_record_source(
+                link=link,
+                health_record=self.health_record,
+                data=self.data(
+                    source=stale,
+                    cited_part="Nesmí se uložit",
+                ),
+                actor=self.actor,
+            )
+
+        link.refresh_from_db()
+        self.assertEqual(link.source_id, self.source.pk)
+        self.assertEqual(link.cited_part, "strana 2")
+
+    def test_update_preserves_authorship_and_lifecycle_metadata(self) -> None:
+        link = create_health_record_source(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        other = self.user(
+            "other-source-writer",
+            "accounts.view_restricted_content",
+            "materials.change_healthrecordsource",
+        )
+        HealthRecordSource.objects.filter(pk=link.pk).update(
+            archived_by=self.actor,
+            archive_reason="Historie",
+            deleted_by=self.actor,
+            deletion_reason="Historie smazání",
+        )
+        updated = update_health_record_source(
+            link=link,
+            health_record=self.health_record,
+            data=self.data(cited_part="Aktualizováno"),
+            actor=other,
+        )
+        self.assertEqual(updated.created_by_id, self.actor.pk)
+        self.assertIsNone(updated.archived_at)
+        self.assertEqual(updated.archived_by_id, self.actor.pk)
+        self.assertEqual(updated.archive_reason, "Historie")
+        self.assertIsNone(updated.deleted_at)
+        self.assertEqual(updated.deleted_by_id, self.actor.pk)
+        self.assertEqual(updated.deletion_reason, "Historie smazání")
+
+    def test_requested_link_access_is_checked_and_write_is_atomic(self) -> None:
+        with self.assertRaises(PermissionDenied):
+            create_health_record_source(
+                health_record=self.health_record,
+                data=self.data(access_level=AccessLevel.ADMIN_ONLY),
+                actor=self.actor,
+            )
+        self.assertFalse(HealthRecordSource.objects.exists())
+
+        link = create_health_record_source(
+            health_record=self.health_record,
+            data=self.data(),
+            actor=self.actor,
+        )
+        with self.assertRaises(PermissionDenied):
+            update_health_record_source(
+                link=link,
+                health_record=self.health_record,
+                data=self.data(
+                    cited_part="Nesmí se uložit",
+                    access_level=AccessLevel.ADMIN_ONLY,
+                ),
+                actor=self.actor,
+            )
+        link.refresh_from_db()
+        self.assertEqual(link.cited_part, "strana 2")
+        self.assertEqual(link.access_level, AccessLevel.RESTRICTED)
+
+        HealthRecord.objects.filter(pk=self.health_record.pk).update(
+            archived_at=None
+        )
+        HealthRecordSource.objects.filter(pk=link.pk).update(
+            deleted_at=timezone.now()
+        )
+        with self.assertRaises(HealthRecordSource.DoesNotExist):
+            update_health_record_source(
+                link=link,
+                health_record=self.health_record,
+                data=self.data(),
+                actor=self.actor,
+            )
 
 
 class HealthRecordSourceSelectorTests(TestCase):
