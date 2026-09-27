@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.45
-**Stav:** M2 dokončeno; infrastruktura `health` zahájena
-**Datum revize:** 25. 9. 2026
+**Verze:** 0.46
+**Stav:** M2 dokončeno; první read-only Health UI dokončeno
+**Datum revize:** 27. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -89,10 +89,10 @@ Audit skutečné implementace z 30. 8. 2026 potvrzuje dokončení M2:
   `manage.py check`, kontrolou migrací a nezávislým QA, security a
   dokumentačním review.
 
-#### Nejbližší další infrastrukturní milník
+#### Dokončené navazující infrastrukturní řezy
 
-Podle skutečných závislostí je dalším krokem doména materiálů: jednou uložené
-přílohy a zdroje a jejich explicitní propojení se stabilním M2 jádrem.
+Po dokončení M2 navázala doména materiálů: jednou uložené přílohy a zdroje a
+jejich explicitní propojení se stabilním M2 jádrem.
 Registrovaná aplikace `materials` a prázdné katalogy `AttachmentCategory` a
 `AttachmentRole` ve strukturální migraci `materials.0001_attachment_lookups`
 tvoří první samostatný řez. Nevznikají systémové hodnoty, přílohy, zdroje,
@@ -262,11 +262,21 @@ jejich lazy `QuerySet`, lifecycle, access i výjimky a nevytvářejí reverse OR
 cestu. Nevzniká storage URL, doručení souboru, zápis, permission, model,
 migrace, HTTP, API ani UI.
 
+Dvacátý osmý řez přidává první read-only Health UI přímo do existujícího
+person-centric shellu. Karta Zdraví a detail záznamu podporují full-page i
+stávající HTMX režim a získávají seznam, detail, přílohy i zdroje výhradně přes
+actor-aware aplikační use-cases. Přímé ID skrytého nebo cizího záznamu vrací
+stejnou 404 jako chybějící cíl; příloha nemá storage URL ani download. Seznam a
+detail mají konstantní dotazový profil bez N+1. DEBUG-only seed přidává
+syntetický health průchod bez fyzického souboru. Nevzniká migrace, permission,
+write UI, API ani ACP.
+
 #### Následující implementační kroky
 
 1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
-2. připravit read-only health UI pouze jako samostatný následný řez nad
-   existujícími bezpečnými aplikačními kontrakty.
+2. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
+   bezpečnými aplikačními kontrakty; nejbližší write UI není součástí tohoto
+   read-only řezu.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a
@@ -373,7 +383,7 @@ Pokud následující funkce nejsou nutné jako závislost výše uvedeného prů
 - kompletní editace vztahů,
 - kompletní UI bydlišť a hrobových míst,
 - materiály, fotografie a zdroje v plném rozsahu,
-- zdravotní UI,
+- kompletní zdravotní UI,
 - PDF export osoby,
 - samostatný rodokmen,
 - kompletní časová osa,
@@ -396,6 +406,10 @@ Oblast A má implementovaný reprodukovatelný lokální postup:
   přístupové úrovně, při zachování markerů je idempotentní, podporuje
   `--dry-run`, nic nemaže ani nepřepisuje a neobsahuje demo hesla nebo jiná
   tajemství; při `DEBUG=False` selže bez zápisu.
+- stejný seed poskytuje jeden restricted zdravotní záznam a bezpečná metadata
+  přílohy a zdroje bez fyzického souboru pro reprodukovatelný Health UI průchod;
+  health business zápisy vedou existující actor-aware use-cases pod stabilním
+  neinteraktivním actorem bez použitelného hesla a bez zvýšené role,
 - dvě další veřejné demo osoby a tři označené životní události umožňují ručně
   ověřit narození, úmrtí, věk, stav a viditelné římské pořadí,
 - interaktivní `bootstrap_demo_accounts` vytvoří nebo resetuje lokálního

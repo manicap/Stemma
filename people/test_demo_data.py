@@ -3,12 +3,22 @@ from io import StringIO
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
 from django.core.management import CommandError, call_command
 from django.test import SimpleTestCase, TestCase, override_settings
+from django.urls import reverse
 
 from common.choices import AccessLevel, Gender, VerificationStatus
 from events.models import Event, EventParticipant, EventType
+from health import use_cases as health_use_cases
+from health.models import HealthRecord
+from materials.models import (
+    Attachment,
+    HealthRecordAttachment,
+    HealthRecordSource,
+    Source,
+)
 
 from . import services
 from .models import Person, PersonCategory
@@ -114,6 +124,7 @@ class SeedDemoDataCommandTests(TestCase):
 
         self.assertIn("osoby nové 5", output)
         self.assertIn("události nové 3", output)
+        self.assertIn("health ukázky nové 1", output)
         self.assertEqual(Person.objects.count(), 5)
         self.assertEqual(
             set(Person.objects.values_list("access_level", flat=True)),
@@ -125,6 +136,22 @@ class SeedDemoDataCommandTests(TestCase):
         )
         self.assertEqual(Event.objects.count(), 3)
         self.assertEqual(EventParticipant.objects.count(), 3)
+        self.assertEqual(HealthRecord.objects.count(), 1)
+        self.assertEqual(Attachment.objects.count(), 1)
+        self.assertEqual(Source.objects.count(), 1)
+        self.assertEqual(HealthRecordAttachment.objects.count(), 1)
+        self.assertEqual(HealthRecordSource.objects.count(), 1)
+        seed_actor = get_user_model().objects.get(
+            username="stemma-demo-health-writer"
+        )
+        self.assertFalse(seed_actor.has_usable_password())
+        self.assertTrue(seed_actor.is_active)
+        self.assertFalse(seed_actor.is_staff)
+        self.assertFalse(seed_actor.is_superuser)
+        self.assertEqual(
+            HealthRecord.objects.get().created_by_id,
+            seed_actor.pk,
+        )
         self.assertEqual(
             set(
                 EventParticipant.objects.values_list(
@@ -161,8 +188,19 @@ class SeedDemoDataCommandTests(TestCase):
         self.assertIn("osoby existující 5", output)
         self.assertIn("události nové 0", output)
         self.assertIn("události existující 3", output)
+        self.assertIn("health ukázky nové 0", output)
+        self.assertIn("health ukázky existující 1", output)
         self.assertEqual(Person.objects.count(), 5)
         self.assertEqual(Event.objects.count(), 3)
+        self.assertEqual(HealthRecord.objects.count(), 1)
+        self.assertEqual(HealthRecordAttachment.objects.count(), 1)
+        self.assertEqual(HealthRecordSource.objects.count(), 1)
+        self.assertEqual(
+            get_user_model().objects.filter(
+                username="stemma-demo-health-writer"
+            ).count(),
+            1,
+        )
         person.refresh_from_db()
         self.assertEqual(person.first_name, "Uživatelská změna")
         self.assertTrue(person.notes.endswith("Uživatelský dodatek."))
@@ -209,8 +247,12 @@ class SeedDemoDataCommandTests(TestCase):
 
         self.assertIn("Plán: osoby nové 5", output)
         self.assertIn("události nové 3", output)
+        self.assertIn("health ukázky nové 1", output)
         self.assertFalse(Person.objects.exists())
         self.assertFalse(Event.objects.exists())
+        self.assertFalse(HealthRecord.objects.exists())
+        self.assertFalse(Attachment.objects.exists())
+        self.assertFalse(Source.objects.exists())
 
     def test_missing_life_event_catalog_rolls_back_people(self) -> None:
         EventType.objects.filter(code="birth").update(code="missing-birth")
@@ -233,3 +275,97 @@ class SeedDemoDataCommandTests(TestCase):
         self.assertContains(response, "Narození:</strong> 1. 1. 1900")
         self.assertContains(response, "Úmrtí:</strong> 1. 1. 1980")
         self.assertContains(response, "80 let")
+
+    def test_seeded_health_data_is_visible_in_real_read_only_flow(self) -> None:
+        self.run_command()
+        person = Person.objects.get(notes__contains="stemma-demo:restricted")
+        actor = get_user_model().objects.create_user(username="health-reader")
+        actor.user_permissions.add(
+            Permission.objects.get(
+                content_type__app_label="accounts",
+                codename="view_restricted_content",
+            )
+        )
+        self.client.force_login(actor)
+
+        list_response = self.client.get(
+            reverse("people:health", args=(person.pk,))
+        )
+        health_record = HealthRecord.objects.get(person=person)
+        detail_response = self.client.get(
+            reverse(
+                "people:health-record-detail",
+                args=(person.pk, health_record.pk),
+            )
+        )
+
+        self.assertContains(list_response, "Preventivní prohlídka")
+        self.assertContains(detail_response, "Ukázková zpráva z prohlídky")
+        self.assertContains(detail_response, "Ukázková karta pacienta")
+        self.assertNotContains(
+            detail_response,
+            "stemma-demo/health/preventive-checkup.pdf",
+        )
+
+    def test_health_business_writes_use_actor_aware_use_cases(self) -> None:
+        with (
+            patch(
+                "people.management.commands.seed_demo_data.create_health_record",
+                wraps=health_use_cases.create_health_record,
+            ) as create_record,
+            patch(
+                "people.management.commands.seed_demo_data."
+                "create_health_record_attachment",
+                wraps=health_use_cases.create_health_record_attachment,
+            ) as create_attachment_link,
+            patch(
+                "people.management.commands.seed_demo_data."
+                "create_health_record_source",
+                wraps=health_use_cases.create_health_record_source,
+            ) as create_source_link,
+        ):
+            self.run_command()
+
+        create_record.assert_called_once()
+        create_attachment_link.assert_called_once()
+        create_source_link.assert_called_once()
+        seed_actor = get_user_model().objects.get(
+            username="stemma-demo-health-writer"
+        )
+        self.assertFalse(seed_actor.has_usable_password())
+        self.assertEqual(
+            set(seed_actor.get_all_permissions()),
+            {
+                "accounts.view_restricted_content",
+                "health.add_healthrecord",
+                "materials.add_healthrecordattachment",
+                "materials.add_healthrecordsource",
+            },
+        )
+
+    def test_health_seed_actor_rejects_extra_direct_permission(self) -> None:
+        seed_actor = get_user_model().objects.create_user(
+            username="stemma-demo-health-writer"
+        )
+        seed_actor.user_permissions.add(
+            Permission.objects.get(
+                content_type__app_label="people",
+                codename="change_person",
+            )
+        )
+
+        with self.assertRaisesMessage(CommandError, "neočekávaná oprávnění"):
+            self.run_command()
+
+        self.assertFalse(HealthRecord.objects.exists())
+
+    def test_health_seed_actor_rejects_group_membership(self) -> None:
+        seed_actor = get_user_model().objects.create_user(
+            username="stemma-demo-health-writer"
+        )
+        seed_actor.groups.add(Group.objects.create(name="Unexpected seed role"))
+
+        with self.assertRaisesMessage(CommandError, "neočekávaná oprávnění"):
+            self.run_command()
+
+        self.assertFalse(HealthRecord.objects.exists())

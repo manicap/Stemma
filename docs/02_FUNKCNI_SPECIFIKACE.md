@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.43
+**Verze:** 0.44
 **Stav:** pracovní návrh  
-**Datum revize:** 25. 9. 2026
+**Datum revize:** 27. 9. 2026
 
 ## 1. Globální aplikační shell a Přehled
 
@@ -517,8 +517,9 @@ Nevzniká samostatné zdravotní oprávnění. Každý současný i budoucí apl
 čtecí vstup musí rozhodnutí vést přes centralizované
 `health.permissions.can_view_health_record_access()`, které dnes deleguje na
 `common.permissions.can_view_access_level()` a dovoluje pozdější rozšíření
-health policy bez změny doménového modelu. Model není vystaven adminem, API ani
-UI; čtení zajišťují actor-aware selectory a na ně navázané aplikační use-cases.
+health policy bez změny doménového modelu. Model není vystaven adminem ani API;
+produktové read-only UI jej čte výhradně přes actor-aware selectory a na ně
+navázané aplikační use-cases.
 
 Zápisové API tvoří frozen slotted `HealthRecordInput` a keyword-only
 `create_health_record(*, data, actor)` a
@@ -609,6 +610,15 @@ lazy `QuerySet` odpovídajícího contextual actor-aware selectoru. Nepřidávaj
 ORM, další autorizaci, storage URL ani cestu k doručení souboru. Stejný modul
 obsahuje i výše uvedené čistě delegující write use-cases; nevytváří HTTP, API
 ani UI.
+
+První read-only Health UI je součástí stávajícího person-centric detailu. URL
+osoby zpřístupňuje kartu Zdraví se seznamem dostupných záznamů a kontextový
+detail jednoho záznamu; oba endpointy podporují plnou stránku i stejný HTMX
+fragmentový kontrakt jako Přehled. Views volají pouze výše uvedené aplikační
+use-cases. Detail přílohy neexistuje a UI z přílohy zobrazuje pouze bezpečná
+metadata bez `storage_key`, storage URL, obsahu nebo download odkazu. Skrytá
+osoba, záznam jiné osoby, neviditelný a neexistující záznam se zvenčí chovají
+stejně jako nenalezený obsah. UI nic nezapisuje a nepřidává permission ani API.
 
 ## 13. Hrobová místa
 

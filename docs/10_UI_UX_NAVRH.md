@@ -1,9 +1,9 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.3
+**Verze:** 0.4
 **Stav:** schválený pracovní základ  
-**Datum revize:** 17. 8. 2026
+**Datum revize:** 27. 9. 2026
 
 ## 1. Účel dokumentu
 
@@ -385,6 +385,13 @@ Aktivní záložka bude označena kombinací:
 
 Obsah každé karty bude mít vlastní nadpis a může obsahovat velmi jemný tematický piktogram v pozadí. Piktogram je pouze dekorativní a nesmí rušit text.
 
+První implementovaný tabový řez zpřístupňuje Přehled a read-only Zdraví;
+ostatní karty jsou ve společné navigaci jasně označené jako plánované. Obě
+funkční karty používají stejný person header, full-page fallback a HTMX výměnu
+v `#person-detail`. Karta Zdraví zobrazuje seznam záznamů a jejich detail s
+bezpečnými metadaty příloh a zdrojů. Příloha zde není odkazem ke stažení a UI
+nezobrazuje storage klíč ani stav, který by suploval autorizační rozhodnutí.
+
 ## 10. Karta Přehled
 
 Karta Přehled není tabulka. Je to stylizovaný životní profil osoby.
@@ -457,7 +464,9 @@ Oprávněný uživatel může přímo v kartě otevřít mini formulář pomocí
 
 ## 14. Karta Zdraví
 
-Karta Zdraví je dostupná pouze uživateli s příslušným oprávněním.
+Karta Zdraví je dostupná u každé osoby, kterou actor smí vidět. Její obsah vždy
+pochází z actor-aware health hranice; bez oprávnění k jednotlivým záznamům karta
+zobrazí bezpečný prázdný stav a neprozradí jejich existenci ani počet.
 
 Obsahuje chráněnou chronologickou časovou osu zdravotních záznamů, například:
 

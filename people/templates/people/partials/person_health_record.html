@@ -1,0 +1,65 @@
+<article class="person-detail">
+  {% include "people/partials/person_header.html" %}
+  {% include "people/partials/person_tabs.html" %}
+  <section class="person-overview health-section" aria-labelledby="health-record-heading">
+    <a
+      class="back-link"
+      href="{% url 'people:health' selected_person.pk %}"
+      hx-get="{% url 'people:health' selected_person.pk %}"
+      hx-target="#person-detail"
+      hx-push-url="true"
+    >← Zpět na zdravotní záznamy</a>
+    <div class="health-record-heading">
+      <div>
+        <p class="eyebrow">{{ selected_health_record.record_type.name }}</p>
+        <h3 id="health-record-heading">{{ selected_health_record.title|default:"Zdravotní záznam" }}</h3>
+      </div>
+      <p class="health-record-date">{% include "people/partials/health_record_date.html" with health_record=selected_health_record %}</p>
+    </div>
+
+    <dl class="health-metadata">
+      {% if selected_health_record.provider_name %}<div><dt>Poskytovatel</dt><dd>{{ selected_health_record.provider_name }}</dd></div>{% endif %}
+      {% if selected_health_record.place %}<div><dt>Místo</dt><dd>{{ selected_health_record.place }}</dd></div>{% endif %}
+      <div><dt>Ověření</dt><dd>{{ selected_health_record.get_verification_status_display }}</dd></div>
+    </dl>
+    {% if selected_health_record.description %}
+      <div class="health-copy"><h4>Popis</h4><p>{{ selected_health_record.description|linebreaksbr }}</p></div>
+    {% endif %}
+    {% if selected_health_record.note %}
+      <div class="health-copy"><h4>Poznámka</h4><p>{{ selected_health_record.note|linebreaksbr }}</p></div>
+    {% endif %}
+
+    <div class="health-related-grid">
+      <section aria-labelledby="health-attachments-heading">
+        <h4 id="health-attachments-heading">Přílohy</h4>
+        <div class="related-list">
+          {% for link in health_attachment_links %}
+            <article class="related-card">
+              <strong>{% firstof link.attachment.display_name link.attachment.original_filename "Příloha" %}</strong>
+              <span>{{ link.role.name }}</span>
+              {% if link.context_description %}<p>{{ link.context_description|linebreaksbr }}</p>{% endif %}
+              <small>{{ link.attachment.mime_type }} · {{ link.attachment.size_bytes|filesizeformat }}</small>
+            </article>
+          {% empty %}
+            <p class="empty-state">K tomuto záznamu nejsou dostupné žádné přílohy.</p>
+          {% endfor %}
+        </div>
+      </section>
+      <section aria-labelledby="health-sources-heading">
+        <h4 id="health-sources-heading">Zdroje</h4>
+        <div class="related-list">
+          {% for link in health_source_links %}
+            <article class="related-card">
+              <strong>{{ link.source.title }}</strong>
+              <span>{{ link.role.name }} · {{ link.get_support_strength_display }}</span>
+              {% if link.cited_part %}<p><b>Citovaná část:</b> {{ link.cited_part }}</p>{% endif %}
+              {% if link.source.full_citation %}<p>{{ link.source.full_citation|linebreaksbr }}</p>{% endif %}
+            </article>
+          {% empty %}
+            <p class="empty-state">K tomuto záznamu nejsou dostupné žádné zdroje.</p>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+  </section>
+</article>

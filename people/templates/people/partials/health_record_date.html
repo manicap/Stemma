@@ -1,0 +1,7 @@
+{% if health_record.original_date_text %}
+  {{ health_record.original_date_text }}
+{% elif health_record.start_year %}
+  {% if health_record.date_qualifier == "approximate" %}přibližně {% elif health_record.date_qualifier == "before" %}před {% elif health_record.date_qualifier == "after" %}po {% endif %}{% if health_record.start_day %}{{ health_record.start_day }}. {{ health_record.start_month }}. {{ health_record.start_year }}{% elif health_record.start_month %}{{ health_record.start_month }}/{{ health_record.start_year }}{% else %}{{ health_record.start_year }}{% endif %}{% if health_record.date_precision == "range" and health_record.end_year %}–{% if health_record.end_day %}{{ health_record.end_day }}. {{ health_record.end_month }}. {{ health_record.end_year }}{% elif health_record.end_month %}{{ health_record.end_month }}/{{ health_record.end_year }}{% else %}{{ health_record.end_year }}{% endif %}{% endif %}
+{% else %}
+  Datum neuvedeno
+{% endif %}

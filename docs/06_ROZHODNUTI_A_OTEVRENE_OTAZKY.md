@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.72
+**Verze:** 0.73
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 25. 9. 2026
+**Datum revize:** 27. 9. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -135,6 +135,8 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 181. Actor-aware write kontrakt `HealthRecordSource` nahrazuje permissionless write část rozhodnutí 177 pouze pro tuto zdravotní vazbu; obecné source služby ostatních kontextů se nemění. Doménové `create_health_record_source(*, health_record, data, actor)` a `update_health_record_source(*, link, health_record, data, actor)` vyžadují čerstvého aktivního actora se standardní Django permission `materials.add_healthrecordsource`, respektive `materials.change_healthrecordsource`. Současný i navržený `HealthRecord` procházejí zamčeným centrálním health visibility filtrem; update načítá současnou vazbu přes tentýž interní dostupný queryset jako actor-aware selector, a proto známé ID skryté vazby, zdroje nebo záznamu policy neobchází. Vazba i zdroj musí projít obecný access a aktivní lifecycle, FK se načítají čerstvě a `SourceRole` musí být aktivní při create i update. Create nastaví autora na actora, update zachová autorství a lifecycle. Funkce v `health.use_cases` pouze delegují a zachovávají výjimky. Nevzniká nové oprávnění, model, migrace, HTTP, API, formulář, admin, UI ani ACP.
 
 182. Aplikační read-only kontrakt zdravotních materiálů tvoří keyword-only `list_health_record_attachments(*, health_record, actor)` a `list_health_record_sources(*, health_record, actor)` v `health.use_cases`. Funkce doslovně delegují na existující contextual actor-aware `get_visible_health_record_attachment_links()` a `get_visible_health_record_source_links()`, zachovávají identitu a laziness vráceného `QuerySet` i původní výjimky a nevytvářejí ORM dotaz, reverse-relation cestu ani vlastní autorizaci. Attachment use-case nevydává storage URL, obsah ani cestu k fyzickému doručení. Nevzniká zápis, permission, model, migrace, HTTP, API, UI ani ACP.
+
+183. První read-only Health UI používá schválený person-centric shell a tabový model: `/osoby/<person_id>/zdravi/` zobrazuje actor-visible seznam a `/osoby/<person_id>/zdravi/<health_record_id>/` bezpečný detail s přílohami a zdroji. Views pouze orchestrují existující health use-cases, podporují plnou stránku i stávající HTMX target a nečtou health ani materials modely přes ORM či reverse relations. Skrytý, chybějící, lifecycle-neplatný a k jiné osobě patřící záznam končí jednotnou 404. Příloha nemá veřejnou URL ani download; šablona nevydává `storage_key` nebo obsah. Lokální DEBUG-only seed doplňuje syntetická metadata bez fyzického souboru; health záznam a vazby vytváří přes actor-aware use-cases pod stabilním neinteraktivním actorem bez použitelného hesla, bez `is_staff`/`is_superuser` a pouze s nutnými existujícími permissions. Nevzniká model, migrace, permission, write UI, API ani ACP.
 
 ## 2. Otevřené otázky
 

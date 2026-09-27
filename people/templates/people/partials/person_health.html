@@ -1,0 +1,31 @@
+<article class="person-detail">
+  {% include "people/partials/person_header.html" %}
+  {% include "people/partials/person_tabs.html" %}
+  <section class="person-overview health-section" aria-labelledby="health-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Citlivé údaje</p>
+        <h3 id="health-heading">Zdravotní záznamy</h3>
+      </div>
+      <p class="muted-copy">Zobrazeny jsou pouze záznamy dostupné vašemu účtu.</p>
+    </div>
+    <div class="health-record-list">
+      {% for health_record in health_records %}
+        <a
+          class="health-record-card"
+          href="{% url 'people:health-record-detail' selected_person.pk health_record.pk %}"
+          hx-get="{% url 'people:health-record-detail' selected_person.pk health_record.pk %}"
+          hx-target="#person-detail"
+          hx-push-url="true"
+        >
+          <span class="health-record-type">{{ health_record.record_type.name }}</span>
+          <strong>{{ health_record.title|default:"Zdravotní záznam" }}</strong>
+          <span class="muted-copy">{% include "people/partials/health_record_date.html" %}</span>
+          {% if health_record.provider_name %}<span>{{ health_record.provider_name }}</span>{% endif %}
+        </a>
+      {% empty %}
+        <p class="empty-state">Pro tuto osobu nemáte dostupné žádné zdravotní záznamy.</p>
+      {% endfor %}
+    </div>
+  </section>
+</article>

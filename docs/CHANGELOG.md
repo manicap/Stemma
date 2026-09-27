@@ -1,5 +1,21 @@
 # Historie změn dokumentace
 
+## Verze 0.82 – 27. 9. 2026
+
+- přidána první read-only karta Zdraví do existujícího detailu osoby včetně
+  full-page a HTMX varianty,
+- seznam, detail, přílohy a zdroje používají výhradně existující actor-aware
+  aplikační use-cases; skryté, cizí a chybějící cíle končí jednotnou 404,
+- přílohy zobrazují pouze bezpečná metadata bez storage URL, klíče, downloadu či
+  fyzického obsahu a query profil zůstává bez N+1,
+- `seed_demo_data` nově poskytuje syntetický restricted health průchod bez
+  fyzického souboru; health záznam a jeho vazby vytváří přes existující
+  actor-aware write use-cases pod stabilním neinteraktivním actorem bez
+  použitelného hesla, `is_staff` či `is_superuser`,
+- HTTP regresní testy potvrzují fail-closed detail pro restricted i admin-only
+  záznam, neaktivního uživatele, samotný `is_staff` a aktivního superusera,
+- nevznikla migrace, permission, write UI, API ani ACP.
+
 ## Verze 0.81 – 25. 9. 2026
 
 - přidány aplikační read use-cases pro přílohy a zdroje jednoho zdravotního

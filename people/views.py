@@ -1,10 +1,21 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    PermissionDenied,
+    ValidationError,
+)
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
+
+from health.use_cases import (
+    get_health_record_detail,
+    list_health_record_attachments,
+    list_health_record_sources,
+    list_health_records,
+)
 
 from .derived_selectors import (
     PersonPresentation,
@@ -39,6 +50,49 @@ def _shell_context(
     }
 
 
+def _visible_person_page(
+    request: HttpRequest,
+    person_id: int,
+) -> tuple[tuple[PersonPresentation, ...], PersonPresentation]:
+    presentations = get_visible_person_presentations(actor=request.user)
+    presentation = next(
+        (item for item in presentations if item.person.pk == person_id),
+        None,
+    )
+    if presentation is None:
+        raise Http404("Osoba nebyla nalezena.")
+    return presentations, presentation
+
+
+def _render_person_content(
+    request: HttpRequest,
+    *,
+    presentations: tuple[PersonPresentation, ...],
+    presentation: PersonPresentation,
+    template_name: str,
+    context: dict[str, object] | None = None,
+) -> HttpResponse:
+    content_context = {
+        "selected_person": presentation.person,
+        "selected_facts": presentation.facts,
+    }
+    if context is not None:
+        content_context.update(context)
+    if request.headers.get("HX-Request") == "true":
+        return render(request, template_name, content_context)
+    return render(
+        request,
+        "people/person_shell.html",
+        _shell_context(
+            request,
+            selected_person=presentation.person,
+            presentations=presentations,
+        )
+        | content_context
+        | {"person_content_template": template_name},
+    )
+
+
 @require_GET
 def person_index(request: HttpRequest) -> HttpResponse:
     """Zobraz hlavní obrazovku se seznamem skutečných osob."""
@@ -57,36 +111,75 @@ def person_detail(
 ) -> HttpResponse:
     """Zobraz bezpečně autorizovaný detail osoby."""
 
-    presentations = get_visible_person_presentations(actor=request.user)
-    presentation = next(
-        (
-            item
-            for item in presentations
-            if item.person.pk == person_id
-        ),
-        None,
-    )
-    if presentation is None:
-        raise Http404("Osoba nebyla nalezena.")
-    person = presentation.person
-
-    if request.headers.get("HX-Request") == "true":
-        return render(
-            request,
-            "people/partials/person_detail.html",
-            {
-                "selected_person": person,
-                "selected_facts": presentation.facts,
-            },
-        )
-    return render(
+    presentations, presentation = _visible_person_page(request, person_id)
+    return _render_person_content(
         request,
-        "people/person_shell.html",
-        _shell_context(
-            request,
-            selected_person=person,
-            presentations=presentations,
-        ),
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_detail.html",
+        context={"active_person_tab": "overview"},
+    )
+
+
+@require_GET
+def person_health(request: HttpRequest, person_id: int) -> HttpResponse:
+    """Zobraz bezpečný read-only seznam zdravotních záznamů osoby."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    health_records = list_health_records(
+        person=presentation.person,
+        actor=request.user,
+    )
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_health.html",
+        context={
+            "active_person_tab": "health",
+            "health_records": health_records,
+        },
+    )
+
+
+@require_GET
+def person_health_record_detail(
+    request: HttpRequest,
+    person_id: int,
+    health_record_id: int,
+) -> HttpResponse:
+    """Zobraz bezpečný read-only detail zdravotního záznamu."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    try:
+        health_record = get_health_record_detail(
+            health_record_id=health_record_id,
+            actor=request.user,
+        )
+        if health_record.person_id != presentation.person.pk:
+            raise Http404("Zdravotní záznam nebyl nalezen.")
+        attachment_links = list_health_record_attachments(
+            health_record=health_record,
+            actor=request.user,
+        )
+        source_links = list_health_record_sources(
+            health_record=health_record,
+            actor=request.user,
+        )
+    except ObjectDoesNotExist as exc:
+        raise Http404("Zdravotní záznam nebyl nalezen.") from exc
+
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_health_record.html",
+        context={
+            "active_person_tab": "health",
+            "selected_health_record": health_record,
+            "health_attachment_links": attachment_links,
+            "health_source_links": source_links,
+        },
     )
 
 

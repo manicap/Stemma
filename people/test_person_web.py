@@ -218,7 +218,7 @@ class PersonWebFlowTests(TestCase):
         self.assertEqual(hidden_response.content, missing_response.content)
         self.assertContains(
             hidden_response,
-            "Osoba neexistuje nebo k jejím údajům nemáte přístup.",
+            "Obsah neexistuje nebo k němu nemáte přístup.",
             status_code=404,
         )
 
@@ -231,7 +231,7 @@ class PersonWebFlowTests(TestCase):
 
         self.assertContains(
             response,
-            "Osobu se nepodařilo najít.",
+            "Požadovaný obsah se nepodařilo najít.",
             status_code=404,
         )
         self.assertNotContains(response, "<!doctype html>", status_code=404)

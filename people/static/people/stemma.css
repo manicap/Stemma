@@ -217,6 +217,29 @@ h1, h2, h3, .brand, .app-sidebar-title {
 .life-dates { display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin: .4rem 0 0; color: var(--muted); }
 .portrait { width: 5.5rem; height: 5.5rem; flex: 0 0 auto; font-size: 1.4rem; }
 .person-overview { margin-top: 1rem; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; }
+.person-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .25rem; margin-top: 1rem; border-bottom: 1px solid var(--border); }
+.person-tab { min-width: 0; padding: .7rem .45rem; color: var(--muted); border-bottom: .2rem solid transparent; text-align: center; text-decoration: none; }
+.person-tab:hover, .person-tab:focus-visible { color: var(--text); outline: none; }
+.person-tab.is-active { color: var(--text); background: var(--surface); border-bottom-color: var(--primary); font-weight: 700; }
+.person-tab.is-disabled { opacity: .62; cursor: default; }
+.person-tab small { display: block; margin-top: .15rem; font-size: .65rem; }
+.section-heading, .health-record-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.section-heading h3, .health-record-heading h3 { margin: .2rem 0; }
+.health-record-list, .related-list { display: grid; gap: .75rem; margin-top: 1rem; }
+.health-record-card, .related-card { display: grid; gap: .3rem; padding: 1rem; color: var(--text); background: var(--surface-muted); border: 1px solid var(--border); border-radius: .65rem; text-decoration: none; }
+.health-record-card:hover, .health-record-card:focus-visible { border-color: var(--primary); outline: none; }
+.health-record-type { color: var(--primary); font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.back-link { display: inline-block; margin-bottom: 1rem; color: var(--primary); }
+.health-record-date { margin: .2rem 0; color: var(--muted); }
+.health-metadata { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: .75rem; margin: 1rem 0; }
+.health-metadata div { padding: .75rem; background: var(--surface-muted); border-radius: .55rem; }
+.health-metadata dt { color: var(--muted); font-size: .78rem; }
+.health-metadata dd { margin: .25rem 0 0; }
+.health-copy { margin-top: 1rem; }
+.health-copy h4, .health-related-grid h4 { margin-bottom: .5rem; }
+.health-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.related-card p { margin: .15rem 0; }
+.related-card small { color: var(--muted); }
 .detail-empty { max-width: 32rem; margin: 12vh auto; text-align: center; }
 .empty-state { color: var(--muted); }
 .drawer-scrim { display: none; }
@@ -292,6 +315,11 @@ h1, h2, h3, .brand, .app-sidebar-title {
   .detail-panel { padding: 1rem; }
   .person-header { align-items: flex-start; padding: 1rem; }
   .portrait { width: 4rem; height: 4rem; }
+  .person-tabs { display: flex; overflow-x: auto; }
+  .person-tab { min-width: max-content; padding-inline: .75rem; }
+  .person-tab small { display: inline; margin: 0 0 0 .25rem; }
+  .section-heading, .health-record-heading { display: block; }
+  .health-related-grid { grid-template-columns: 1fr; }
   .overview-page { padding: 1.25rem 1rem 2rem; }
   .overview-grid { grid-template-columns: 1fr; }
   .overview-card-primary { grid-row: auto; }

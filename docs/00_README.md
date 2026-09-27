@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.46
-**Stav:** RC 0.1 a M2 dokončeny; zahájena infrastruktura `health`
-**Datum revize:** 25. 9. 2026
+**Verze dokumentace:** 0.47
+**Stav:** RC 0.1 a M2 dokončeny; první read-only Health UI dokončeno
+**Datum revize:** 27. 9. 2026
 
 ## Účel balíčku
 
@@ -39,6 +39,22 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.47
+
+Verze 0.47 přidává první read-only Health UI do existujícího detailu osoby:
+
+- karta Zdraví používá stávající person shell, HTMX fragmenty i full-page
+  fallback a zobrazuje pouze actor-visible zdravotní záznamy,
+- detail záznamu získává záznam, přílohy a zdroje výhradně přes existující
+  actor-aware health use-cases; skrytý, chybějící i cizí cíl končí stejnou 404,
+- přílohy zobrazují pouze bezpečná metadata bez storage klíče, URL, downloadu či
+  čtení fyzického souboru a dotazový profil neroste s počtem položek,
+- lokální `seed_demo_data` doplňuje označený syntetický restricted health záznam
+  s metadaty přílohy a zdroje pro ruční ověření Správcem; health záznam a jeho
+  vazby vznikají přes existující actor-aware write use-cases pod stabilním
+  neinteraktivním actorem bez použitelného hesla a pouze s nutnými existujícími
+  permissions; nevzniká migrace, permission, zápisové UI, API ani ACP.
 
 ## Stav verze 0.46
 
@@ -658,6 +674,10 @@ Aplikace je poté dostupná na `http://127.0.0.1:8000/`.
 veřejnou, přihlášenou a omezenou úroveň. Dvě veřejné osoby jménem Josef
 Dvořák mají tři označené životní události, takže v seznamu a detailu lze
 ověřit římské pořadí, narození, úmrtí, stav i spolehlivě odvozený věk.
+Omezený profil Kláry obsahuje také jeden syntetický zdravotní záznam s
+bezpečnými metadaty přílohy a zdroje. Po přihlášení lokálního Správce lze ověřit
+kartu Zdraví, detail záznamu i absenci downloadu; žádný fyzický soubor se
+nevytváří.
 Příkaz funguje pouze s lokálním
 `DEBUG=True`; mimo tento režim selže bez zápisu. Opakované spuštění při
 zachování vložených markerů nevytváří duplicity, existující ukázkové záznamy

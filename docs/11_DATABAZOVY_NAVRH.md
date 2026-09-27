@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.72
-**Stav:** infrastrukturní milník M2 dokončen; implementace `health` zahájena
-**Datum revize:** 25. 9. 2026
+**Verze:** 0.73
+**Stav:** M2 dokončen; první read-only Health UI dokončeno
+**Datum revize:** 27. 9. 2026
 
 ## 1. Účel
 
@@ -2134,7 +2134,8 @@ volající autorizovat create nad cílem, zdrojem a vznikem kontextu; update mus
 nejprve autorizovat dosavadní konkrétní cestu a potom každý měněný endpoint i
 samotnou mutaci. Health-specific create/update autorizují celý řetězec samy.
 Pro jednotlivé kontexty existují samostatné actor-aware read selectory včetně
-`HealthRecordSource`; admin, API a UI zatím nevznikají.
+`HealthRecordSource`; obecné admin ani API nevznikají. Read-only health UI tuto
+vazbu čte pouze v kontextu již autorizovaného zdravotního záznamu.
 
 První čtecí hranice zdrojů je záměrně kontextová. Permissionless
 `get_person_name_source_links(*, person_name)` vrací lazy historii všech
@@ -2352,7 +2353,9 @@ ORM visibility dotaz ani access/lifecycle pravidla. Detail zachovává původní
 odpovídající contextual actor-aware materials selectory a vracejí jejich
 původní lazy `QuerySet` bez reverse relations či vlastního ORM. Attachment
 use-case nevydává storage URL ani soubor. Aplikační read vrstva nemění model ani
-migrace; nevzniká HTTP, API, UI nebo zápis.
+migrace; nevzniká API nebo zápis. Person-centric HTTP vrstva nad těmito
+use-cases přidává pouze read-only kartu a detail a neprovádí vlastní health či
+materials ORM dotazy.
 
 Stejný modul vystavuje také keyword-only
 `create_health_record(*, data, actor)` a

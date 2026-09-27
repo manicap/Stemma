@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.33
+**Verze:** 0.34
 **Stav:** pracovní návrh  
-**Datum revize:** 25. 9. 2026
+**Datum revize:** 27. 9. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -134,6 +134,14 @@ způsobem delegují na existující contextual actor-aware materials selectory a
 zachovávají celý jejich health, access a lifecycle řetězec. Aplikační vrstva
 nečte reverse relations, nevytváří další permission rozhodnutí a neposkytuje
 storage URL ani doručení souboru.
+
+Read-only karta Zdraví v detailu osoby nepřidává vlastní permission rozhodnutí.
+Seznam volá `list_health_records()` a detail nejprve
+`get_health_record_detail()`, následně contextual use-cases příloh a zdrojů.
+URL s ID skrytého, cizího nebo lifecycle-neplatného záznamu končí stejnou 404
+jako chybějící ID; počet položek, příloha ani zdroj skrytý kontext neprozradí.
+`is_staff` sám přístup nerozšiřuje, neaktivní actor zachovává anonymní
+viditelnost a aktivní superuser zůstává řízen centrálním kontraktem.
 
 Zápis `HealthRecord` používá již existující standardní Django modelové
 permissions: create vyžaduje `health.add_healthrecord`, update

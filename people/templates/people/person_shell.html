@@ -30,7 +30,7 @@
       {% if person_form %}
         {% include "people/partials/person_form.html" %}
       {% elif selected_person %}
-        {% include "people/partials/person_detail.html" %}
+        {% include person_content_template|default:"people/partials/person_detail.html" %}
       {% else %}
         {% include "people/partials/person_empty.html" %}
       {% endif %}
