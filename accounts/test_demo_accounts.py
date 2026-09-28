@@ -36,6 +36,8 @@ class BootstrapDemoAccountsCommandTests(TestCase):
             "stemma-demo-editor": {"people.change_person"},
             "stemma-demo-administrator": {
                 "people.change_person",
+                "health.add_healthrecord",
+                "health.change_healthrecord",
                 "accounts.view_restricted_content",
                 "accounts.view_admin_only_content",
                 "people.view_archived_person",
@@ -68,6 +70,24 @@ class BootstrapDemoAccountsCommandTests(TestCase):
                         if user.has_perm(permission)
                     },
                     expected_permissions[username],
+                )
+                expected_direct_permissions = (
+                    {
+                        "health.add_healthrecord",
+                        "health.change_healthrecord",
+                    }
+                    if username == "stemma-demo-administrator"
+                    else set()
+                )
+                self.assertEqual(
+                    {
+                        f"{permission.content_type.app_label}."
+                        f"{permission.codename}"
+                        for permission in user.user_permissions.select_related(
+                            "content_type"
+                        )
+                    },
+                    expected_direct_permissions,
                 )
                 self.assertIn(username, output)
         self.assertNotIn(self.password, output)

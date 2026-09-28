@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.73
-**Stav:** M2 dokončen; první read-only Health UI dokončeno
-**Datum revize:** 27. 9. 2026
+**Verze:** 0.74
+**Stav:** M2 dokončen; Health create/update UI dokončeno
+**Datum revize:** 28. 9. 2026
 
 ## 1. Účel
 
@@ -30,6 +30,12 @@ hrobová místa; RC 0.1 je nad tímto základem rovněž připravené.
 - RC 0.1 používá autorizovaný výchozí seznam a detail osoby nad skutečnými
   daty včetně actor-specific odvozených životních údajů a římského pořadí;
   automatická i browser brána jsou dokončené.
+- Doména `health` má model, centralizovanou access/lifecycle policy, actor-aware
+  read a write use-cases a person-centric seznam, detail i create/update UI pro
+  full-page a HTMX režim. Formulář nepřijímá osobu ani místo; create používá
+  osobu z URL a `place=None`, update zachovává existující místo, autorství i
+  lifecycle. Materials vazby zůstávají pouze read-only a tento řez nevytváří
+  migraci ani nové oprávnění.
 - Aplikace `materials` je založena a registrována jako samostatný doménový
   balíček. `AttachmentCategory` a `AttachmentRole` přímo dědí z
   `LookupModel`; migrace `materials.0001_attachment_lookups` nevkládá
@@ -2363,6 +2369,13 @@ Stejný modul vystavuje také keyword-only
 pouze vracejí výsledek stejnojmenné actor-aware doménové služby a nepoužívají
 vlastní ORM, permission, access, lifecycle ani validační podmínky. Výjimky
 service vrstvy propouštějí beze změny.
+
+Person-centric create/update HTTP vrstva tyto dvě funkce přímo orchestruje.
+Osoba je vždy odvozena z URL; formulář ji ani místo nevystavuje. Create předává
+`place=None`, zatímco update zachovává místo načteného autorizovaného záznamu.
+Formulář nemění autorství, timestampy, lifecycle ani vazby Materials. Aktivní
+typy načítá pouze pro volbu uživatele a povolené access hodnoty omezuje
+centralizovanou health policy. Žádná modelová nebo migrační změna nevzniká.
 
 Pro vazbu přílohy modul obdobně vystavuje
 `create_health_record_attachment(*, health_record, data, actor)` a

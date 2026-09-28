@@ -18,6 +18,16 @@ urlpatterns = [
         name="health-record-detail",
     ),
     path(
+        "<int:person_id>/zdravi/novy/",
+        views.person_health_record_create,
+        name="health-record-create",
+    ),
+    path(
+        "<int:person_id>/zdravi/<int:health_record_id>/upravit/",
+        views.person_health_record_edit,
+        name="health-record-edit",
+    ),
+    path(
         "<int:person_id>/upravit/",
         views.person_edit,
         name="edit",

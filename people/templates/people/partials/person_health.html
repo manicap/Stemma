@@ -7,7 +7,11 @@
         <p class="eyebrow">Citlivé údaje</p>
         <h3 id="health-heading">Zdravotní záznamy</h3>
       </div>
-      <p class="muted-copy">Zobrazeny jsou pouze záznamy dostupné vašemu účtu.</p>
+      {% if can_add_health_record %}
+        <a class="primary-button" href="{% url 'people:health-record-create' selected_person.pk %}" hx-get="{% url 'people:health-record-create' selected_person.pk %}" hx-target="#person-detail" hx-push-url="true">Přidat zdravotní záznam</a>
+      {% else %}
+        <p class="muted-copy">Zobrazeny jsou pouze záznamy dostupné vašemu účtu.</p>
+      {% endif %}
     </div>
     <div class="health-record-list">
       {% for health_record in health_records %}

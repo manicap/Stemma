@@ -49,7 +49,15 @@ _ELEVATED_PERMISSIONS = (
     ("people", "view_archived_person"),
     ("people", "view_deleted_person"),
 )
-_ROLE_PERMISSIONS = (_PERSON_EDITOR_PERMISSION, *_ELEVATED_PERMISSIONS)
+_HEALTH_WRITER_PERMISSIONS = (
+    ("health", "add_healthrecord"),
+    ("health", "change_healthrecord"),
+)
+_REQUIRED_PERMISSIONS = (
+    _PERSON_EDITOR_PERMISSION,
+    *_ELEVATED_PERMISSIONS,
+    *_HEALTH_WRITER_PERMISSIONS,
+)
 
 
 class Command(BaseCommand):
@@ -86,18 +94,20 @@ class Command(BaseCommand):
                 "content_type"
             ).filter(
                 content_type__app_label__in={
-                    app_label for app_label, _ in _ROLE_PERMISSIONS
+                    app_label for app_label, _ in _REQUIRED_PERMISSIONS
                 },
                 codename__in={
-                    codename for _, codename in _ROLE_PERMISSIONS
+                    codename for _, codename in _REQUIRED_PERMISSIONS
                 },
             )
             if (
                 permission.content_type.app_label,
                 permission.codename,
-            ) in _ROLE_PERMISSIONS
+            ) in _REQUIRED_PERMISSIONS
         }
-        missing_permissions = sorted(set(_ROLE_PERMISSIONS) - permissions.keys())
+        missing_permissions = sorted(
+            set(_REQUIRED_PERMISSIONS) - permissions.keys()
+        )
         if missing_permissions:
             formatted = ", ".join(
                 f"{app_label}.{codename}"
@@ -145,7 +155,13 @@ class Command(BaseCommand):
         created_count = 0
         reset_count = 0
         with transaction.atomic():
-            all_role_permissions = tuple(permissions.values())
+            all_role_permissions = tuple(
+                permissions[key]
+                for key in (
+                    _PERSON_EDITOR_PERMISSION,
+                    *_ELEVATED_PERMISSIONS,
+                )
+            )
             elevated_permissions = tuple(
                 permissions[key] for key in _ELEVATED_PERMISSIONS
             )
@@ -174,6 +190,13 @@ class Command(BaseCommand):
                 user.save()
                 user.groups.set((groups[account.group_name],))
                 user.user_permissions.clear()
+                if account.username == "stemma-demo-administrator":
+                    user.user_permissions.add(
+                        *(
+                            permissions[key]
+                            for key in _HEALTH_WRITER_PERMISSIONS
+                        )
+                    )
                 if created:
                     created_count += 1
                 else:

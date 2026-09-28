@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.44
+**Verze:** 0.45
 **Stav:** pracovní návrh  
-**Datum revize:** 27. 9. 2026
+**Datum revize:** 28. 9. 2026
 
 ## 1. Globální aplikační shell a Přehled
 
@@ -619,6 +619,17 @@ use-cases. Detail přílohy neexistuje a UI z přílohy zobrazuje pouze bezpečn
 metadata bez `storage_key`, storage URL, obsahu nebo download odkazu. Skrytá
 osoba, záznam jiné osoby, neviditelný a neexistující záznam se zvenčí chovají
 stejně jako nenalezený obsah. UI nic nezapisuje a nepřidává permission ani API.
+
+Navazující samostatný write řez zpřístupňuje oprávněnému actorovi vytvoření a
+úpravu zdravotního záznamu. URL určuje osobu a podstrčený formulář ji nemůže
+změnit. Formulář nabízí aktivní typy, obsahová pole, omezenou nebo podle actora
+administrátorskou viditelnost, ověření a neúplné datum. Místo se při create
+nenastavuje a při update se zachová, protože obecný actor-aware selector míst
+zatím neexistuje. Autorství, lifecycle, přílohy a zdroje nejsou editovatelné.
+Full-page úspěch přesměruje na detail; HTMX vrátí stejný detailní fragment a
+kanonickou URL. Zápis vždy používá existující actor-aware health use-cases a
+stávající standardní modelová oprávnění; nevzniká permission, API ani lifecycle
+operace.
 
 ## 13. Hrobová místa
 

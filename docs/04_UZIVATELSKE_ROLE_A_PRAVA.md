@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.34
+**Verze:** 0.35
 **Stav:** pracovní návrh  
-**Datum revize:** 27. 9. 2026
+**Datum revize:** 28. 9. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -191,6 +191,12 @@ Databázové skupiny jsou `Čtenář`, `Editor` a `Správce`.
 Správce tím nezískává všechna standardní add/change/delete/view oprávnění,
 `is_staff` ani `is_superuser`. Konkrétní permission lze uživateli nebo jiné
 schválené skupině přidělit samostatně.
+
+Lokální DEBUG-only příkaz `bootstrap_demo_accounts` přiděluje přímo účtu
+`stemma-demo-administrator` existující `health.add_healthrecord` a
+`health.change_healthrecord`, aby byl create/update Health UI reprodukovatelně
+ověřitelný. Jde pouze o resetovatelnou lokální testovací identitu; oprávnění se
+nepřidávají skupině Správce ani produkční roli.
 
 Přihlášení ani samotné členství ve skupině nemění význam přístupových
 úrovní. Čtenář a Editor vidí `authenticated`, nikoli automaticky

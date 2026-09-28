@@ -1,9 +1,9 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.4
+**Verze:** 0.5
 **Stav:** schválený pracovní základ  
-**Datum revize:** 27. 9. 2026
+**Datum revize:** 28. 9. 2026
 
 ## 1. Účel dokumentu
 
@@ -391,6 +391,12 @@ funkční karty používají stejný person header, full-page fallback a HTMX v�
 v `#person-detail`. Karta Zdraví zobrazuje seznam záznamů a jejich detail s
 bezpečnými metadaty příloh a zdrojů. Příloha zde není odkazem ke stažení a UI
 nezobrazuje storage klíč ani stav, který by suploval autorizační rozhodnutí.
+
+Samostatný navazující řez přidává oprávněnému uživateli tlačítka pro vytvoření
+a úpravu zdravotního záznamu. Formulář používá stejné rozvržení, chybový souhrn,
+ochranu neuložených změn, full-page fallback a HTMX výměnu jako editace osoby.
+Po uložení zobrazí detail záznamu a aktualizuje kanonickou URL. Neobsahuje
+lifecycle akce, správu příloh či zdrojů ani upload nebo download souborů.
 
 ## 10. Karta Přehled
 

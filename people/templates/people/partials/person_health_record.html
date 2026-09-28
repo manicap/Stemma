@@ -16,6 +16,10 @@
       </div>
       <p class="health-record-date">{% include "people/partials/health_record_date.html" with health_record=selected_health_record %}</p>
     </div>
+    {% if health_record_saved %}<p class="success-message" role="status">Zdravotní záznam byl uložen.</p>{% endif %}
+    {% if can_change_health_record %}
+      <p><a class="secondary-button" href="{% url 'people:health-record-edit' selected_person.pk selected_health_record.pk %}" hx-get="{% url 'people:health-record-edit' selected_person.pk selected_health_record.pk %}" hx-target="#person-detail" hx-push-url="true">Upravit</a></p>
+    {% endif %}
 
     <dl class="health-metadata">
       {% if selected_health_record.provider_name %}<div><dt>Poskytovatel</dt><dd>{{ selected_health_record.provider_name }}</dd></div>{% endif %}

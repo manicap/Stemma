@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.46
-**Stav:** M2 dokončeno; první read-only Health UI dokončeno
-**Datum revize:** 27. 9. 2026
+**Verze:** 0.47
+**Stav:** M2 dokončeno; Health create/update UI dokončeno
+**Datum revize:** 28. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -271,12 +271,20 @@ detail mají konstantní dotazový profil bez N+1. DEBUG-only seed přidává
 syntetický health průchod bez fyzického souboru. Nevzniká migrace, permission,
 write UI, API ani ACP.
 
+Dvacátý devátý řez přidává samostatné create/update Health UI nad existujícími
+actor-aware write use-cases. Oprávněný actor vytváří záznam osoby určené URL a
+upravuje pouze viditelný aktivní záznam; full-page i HTMX režim používají
+stávající person shell. Formulář nemění osobu, místo, autorství, lifecycle,
+přílohy ani zdroje. Lokální demo Správce získává potřebné existující add/change
+permissions přímo na účtu bez změny skupinové policy. Nevzniká migrace, nové
+oprávnění, Materials zápis, download, API ani ACP.
+
 #### Následující implementační kroky
 
 1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
 2. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
-   bezpečnými aplikačními kontrakty; nejbližší write UI není součástí tohoto
-   read-only řezu.
+   bezpečnými aplikačními kontrakty; lifecycle, Materials zápisy a doručení
+   souborů nejsou součástí dokončeného create/update řezu.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a

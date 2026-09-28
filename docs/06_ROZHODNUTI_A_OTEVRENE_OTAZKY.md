@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.73
+**Verze:** 0.74
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 27. 9. 2026
+**Datum revize:** 28. 9. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -137,6 +137,8 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 182. Aplikační read-only kontrakt zdravotních materiálů tvoří keyword-only `list_health_record_attachments(*, health_record, actor)` a `list_health_record_sources(*, health_record, actor)` v `health.use_cases`. Funkce doslovně delegují na existující contextual actor-aware `get_visible_health_record_attachment_links()` a `get_visible_health_record_source_links()`, zachovávají identitu a laziness vráceného `QuerySet` i původní výjimky a nevytvářejí ORM dotaz, reverse-relation cestu ani vlastní autorizaci. Attachment use-case nevydává storage URL, obsah ani cestu k fyzickému doručení. Nevzniká zápis, permission, model, migrace, HTTP, API, UI ani ACP.
 
 183. První read-only Health UI používá schválený person-centric shell a tabový model: `/osoby/<person_id>/zdravi/` zobrazuje actor-visible seznam a `/osoby/<person_id>/zdravi/<health_record_id>/` bezpečný detail s přílohami a zdroji. Views pouze orchestrují existující health use-cases, podporují plnou stránku i stávající HTMX target a nečtou health ani materials modely přes ORM či reverse relations. Skrytý, chybějící, lifecycle-neplatný a k jiné osobě patřící záznam končí jednotnou 404. Příloha nemá veřejnou URL ani download; šablona nevydává `storage_key` nebo obsah. Lokální DEBUG-only seed doplňuje syntetická metadata bez fyzického souboru; health záznam a vazby vytváří přes actor-aware use-cases pod stabilním neinteraktivním actorem bez použitelného hesla, bez `is_staff`/`is_superuser` a pouze s nutnými existujícími permissions. Nevzniká model, migrace, permission, write UI, API ani ACP.
+
+184. Samostatný Health create/update UI řez používá existující person-centric shell, HTMX target a actor-aware `create_health_record()` a `update_health_record()`. Create URL určuje osobu a nepřijímá ji z formuláře; obecný actor-aware výběr míst neexistuje, proto create místo nenastavuje a update zachovává dosavadní místo. Formulář mění pouze obsahová, access, verification a neúplná časová pole, nabízí aktivní typy a nejvýše takovou zdravotní access úroveň, kterou actor smí vidět. Server vyžaduje existující standardní `health.add_healthrecord` nebo `health.change_healthrecord` spolu s centralizovaným obsahovým přístupem; skrytý, cizí a lifecycle-neplatný update cíl zůstává jednotně nedostupný. Přílohy, zdroje, soubory, autorství a lifecycle nejsou součástí zápisu. Lokální DEBUG-only demo Správce získává tato dvě existující modelová oprávnění přímo na účtu, nikoli změnou systémové skupiny. Nevzniká model, migrace, nové oprávnění, API ani ACP.
 
 ## 2. Otevřené otázky
 

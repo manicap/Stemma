@@ -1,5 +1,19 @@
 # Historie změn dokumentace
 
+## Verze 0.83 – 28. 9. 2026
+
+- přidán samostatný create/update Health UI řez v existujícím person-centric
+  shellu s full-page i HTMX režimem,
+- zápisy delegují výhradně na existující actor-aware health use-cases; osoba
+  pochází z URL, create nenastavuje místo a update zachovává místo, autorství i
+  lifecycle,
+- formulář neobsahuje Materials zápisy, upload, download ani lifecycle operace
+  a skryté, cizí či neaktivní cíle zůstávají fail-closed,
+- DEBUG-only demo Správce získává přímo existující
+  `health.add_healthrecord`/`health.change_healthrecord`; skupinová policy se
+  nemění,
+- nevznikl model, migrace, permission, API ani ACP.
+
 ## Verze 0.82 – 27. 9. 2026
 
 - přidána první read-only karta Zdraví do existujícího detailu osoby včetně

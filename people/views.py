@@ -10,12 +10,20 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
+from common.choices import AccessLevel
+from health.forms import HealthRecordForm
+from health.models import HealthRecord
+from health.permissions import can_view_health_record_access
+from health.services import HealthRecordInput
 from health.use_cases import (
+    create_health_record,
     get_health_record_detail,
     list_health_record_attachments,
     list_health_record_sources,
     list_health_records,
+    update_health_record,
 )
+from places.models import Place
 
 from .derived_selectors import (
     PersonPresentation,
@@ -138,6 +146,10 @@ def person_health(request: HttpRequest, person_id: int) -> HttpResponse:
         context={
             "active_person_tab": "health",
             "health_records": health_records,
+            "can_add_health_record": _current_actor_can_write_health(
+                request,
+                permission="health.add_healthrecord",
+            ),
         },
     )
 
@@ -151,24 +163,45 @@ def person_health_record_detail(
     """Zobraz bezpečný read-only detail zdravotního záznamu."""
 
     presentations, presentation = _visible_person_page(request, person_id)
+    health_record = _visible_health_record_or_404(
+        request,
+        person=presentation.person,
+        health_record_id=health_record_id,
+    )
+    return _render_health_record_detail(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        health_record=health_record,
+    )
+
+
+def _visible_health_record_or_404(
+    request: HttpRequest,
+    *,
+    person: Person,
+    health_record_id: int,
+) -> HealthRecord:
     try:
         health_record = get_health_record_detail(
             health_record_id=health_record_id,
             actor=request.user,
         )
-        if health_record.person_id != presentation.person.pk:
-            raise Http404("Zdravotní záznam nebyl nalezen.")
-        attachment_links = list_health_record_attachments(
-            health_record=health_record,
-            actor=request.user,
-        )
-        source_links = list_health_record_sources(
-            health_record=health_record,
-            actor=request.user,
-        )
     except ObjectDoesNotExist as exc:
         raise Http404("Zdravotní záznam nebyl nalezen.") from exc
+    if health_record.person_id != person.pk:
+        raise Http404("Zdravotní záznam nebyl nalezen.")
+    return health_record
 
+
+def _render_health_record_detail(
+    request: HttpRequest,
+    *,
+    presentations: tuple[PersonPresentation, ...],
+    presentation: PersonPresentation,
+    health_record: HealthRecord,
+    saved: bool = False,
+) -> HttpResponse:
     return _render_person_content(
         request,
         presentations=presentations,
@@ -177,9 +210,234 @@ def person_health_record_detail(
         context={
             "active_person_tab": "health",
             "selected_health_record": health_record,
-            "health_attachment_links": attachment_links,
-            "health_source_links": source_links,
+            "health_attachment_links": list_health_record_attachments(
+                health_record=health_record,
+                actor=request.user,
+            ),
+            "health_source_links": list_health_record_sources(
+                health_record=health_record,
+                actor=request.user,
+            ),
+            "can_change_health_record": _current_actor_can_write_health(
+                request,
+                permission="health.change_healthrecord",
+                access_level=health_record.access_level,
+            ),
+            "health_record_saved": saved,
         },
+    )
+
+
+def _current_actor_can_write_health(
+    request: HttpRequest,
+    *,
+    permission: str,
+    access_level: str | None = None,
+) -> bool:
+    actor = request.user
+    if not actor.is_authenticated or actor.pk is None:
+        return False
+    user_model = get_user_model()
+    try:
+        current_actor = user_model._default_manager.get(pk=actor.pk)
+    except user_model.DoesNotExist:
+        return False
+    if not current_actor.is_active or not current_actor.has_perm(permission):
+        return False
+    permitted_levels = (
+        (access_level,)
+        if access_level is not None
+        else (AccessLevel.RESTRICTED, AccessLevel.ADMIN_ONLY)
+    )
+    return any(
+        can_view_health_record_access(
+            actor=current_actor,
+            access_level=permitted_level,
+        )
+        for permitted_level in permitted_levels
+    )
+
+
+def _health_input_from_form(
+    *,
+    form: HealthRecordForm,
+    person: Person,
+    place: Place | None,
+) -> HealthRecordInput:
+    values = form.cleaned_data
+    return HealthRecordInput(
+        person=person,
+        record_type=values["record_type"],
+        place=place,
+        title=values["title"],
+        description=values["description"],
+        provider_name=values["provider_name"],
+        note=values["note"],
+        access_level=values["access_level"],
+        verification_status=values["verification_status"],
+        date_precision=values["date_precision"],
+        date_qualifier=values["date_qualifier"],
+        start_year=values["start_year"],
+        start_month=values["start_month"],
+        start_day=values["start_day"],
+        end_year=values["end_year"],
+        end_month=values["end_month"],
+        end_day=values["end_day"],
+        original_date_text=values["original_date_text"],
+        date_note=values["date_note"],
+    )
+
+
+def _render_health_form(
+    request: HttpRequest,
+    *,
+    presentations: tuple[PersonPresentation, ...],
+    presentation: PersonPresentation,
+    form: HealthRecordForm,
+    mode: str,
+    health_record: HealthRecord | None = None,
+) -> HttpResponse:
+    _prepare_accessible_form_errors(form)
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/health_record_form.html",
+        context={
+            "active_person_tab": "health",
+            "health_record_form": form,
+            "health_form_mode": mode,
+            "selected_health_record": health_record,
+            "form_submitted": request.method == "POST",
+        },
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def person_health_record_create(
+    request: HttpRequest,
+    person_id: int,
+) -> HttpResponse:
+    presentations, presentation = _visible_person_page(request, person_id)
+    if not _current_actor_can_write_health(
+        request,
+        permission="health.add_healthrecord",
+    ):
+        raise PermissionDenied("K vytvoření zdravotního záznamu nemáte oprávnění.")
+    candidate = HealthRecord(person=presentation.person)
+    form = HealthRecordForm(
+        request.POST or None,
+        instance=candidate,
+        actor=request.user,
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            health_record = create_health_record(
+                data=_health_input_from_form(
+                    form=form,
+                    person=presentation.person,
+                    place=None,
+                ),
+                actor=request.user,
+            )
+        except Person.DoesNotExist as exc:
+            raise Http404("Osoba nebyla nalezena.") from exc
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            if request.headers.get("HX-Request") == "true":
+                response = _render_health_record_detail(
+                    request,
+                    presentations=presentations,
+                    presentation=presentation,
+                    health_record=health_record,
+                    saved=True,
+                )
+                response["HX-Push-Url"] = reverse(
+                    "people:health-record-detail",
+                    args=(presentation.person.pk, health_record.pk),
+                )
+                return response
+            messages.success(request, "Zdravotní záznam byl uložen.")
+            return redirect(
+                "people:health-record-detail",
+                person_id=presentation.person.pk,
+                health_record_id=health_record.pk,
+            )
+    return _render_health_form(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        form=form,
+        mode="create",
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def person_health_record_edit(
+    request: HttpRequest,
+    person_id: int,
+    health_record_id: int,
+) -> HttpResponse:
+    presentations, presentation = _visible_person_page(request, person_id)
+    health_record = _visible_health_record_or_404(
+        request,
+        person=presentation.person,
+        health_record_id=health_record_id,
+    )
+    if not _current_actor_can_write_health(
+        request,
+        permission="health.change_healthrecord",
+    ):
+        raise PermissionDenied("K úpravě zdravotního záznamu nemáte oprávnění.")
+    preserved_place = health_record.place
+    form = HealthRecordForm(
+        request.POST or None,
+        instance=health_record,
+        actor=request.user,
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            updated_record = update_health_record(
+                health_record=health_record,
+                data=_health_input_from_form(
+                    form=form,
+                    person=presentation.person,
+                    place=preserved_place,
+                ),
+                actor=request.user,
+            )
+        except (Person.DoesNotExist, HealthRecord.DoesNotExist) as exc:
+            raise Http404("Zdravotní záznam nebyl nalezen.") from exc
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            if request.headers.get("HX-Request") == "true":
+                response = _render_health_record_detail(
+                    request,
+                    presentations=presentations,
+                    presentation=presentation,
+                    health_record=updated_record,
+                    saved=True,
+                )
+                response["HX-Push-Url"] = reverse(
+                    "people:health-record-detail",
+                    args=(presentation.person.pk, updated_record.pk),
+                )
+                return response
+            messages.success(request, "Zdravotní záznam byl uložen.")
+            return redirect(
+                "people:health-record-detail",
+                person_id=presentation.person.pk,
+                health_record_id=updated_record.pk,
+            )
+    return _render_health_form(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        form=form,
+        mode="edit",
+        health_record=health_record,
     )
 
 

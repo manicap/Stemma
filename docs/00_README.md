@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.47
-**Stav:** RC 0.1 a M2 dokončeny; první read-only Health UI dokončeno
-**Datum revize:** 27. 9. 2026
+**Verze dokumentace:** 0.48
+**Stav:** RC 0.1 a M2 dokončeny; Health create/update UI dokončeno
+**Datum revize:** 28. 9. 2026
 
 ## Účel balíčku
 
@@ -39,6 +39,21 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.48
+
+Verze 0.48 přidává samostatný create/update řez zdravotních záznamů:
+
+- oprávněný actor může v existující kartě Zdraví vytvořit záznam a upravit
+  viditelný aktivní záznam v režimu full-page i HTMX,
+- HTTP vrstva deleguje výhradně na existující actor-aware
+  `create_health_record()` a `update_health_record()`; osoba pochází z URL,
+  update zachovává místo, autorství i lifecycle,
+- formulář neobsahuje správu příloh, zdrojů, souborů ani lifecycle operace a
+  nevydává storage URL,
+- DEBUG-only bootstrap přiděluje existující add/change oprávnění přímo pouze
+  lokálnímu demo Správci; skupinová produkční policy se nemění,
+- nevzniká model, migrace, permission, API ani ACP.
 
 ## Stav verze 0.47
 
