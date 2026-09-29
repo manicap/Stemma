@@ -1,10 +1,10 @@
 # Architektonická rozhodnutí
 
 **Dokument:** 12  
-**Verze:** 0.5
+**Verze:** 0.6
 **Stav:** platný registr rozhodnutí  
 **Datum vytvoření:** 15. 7. 2026  
-**Datum revize:** 17. 8. 2026
+**Datum revize:** 29. 9. 2026
 
 ## Účel
 
@@ -293,3 +293,73 @@ vedle sebe.
 - výchozí motiv je tmavý; explicitní dark/light volba se zatím ukládá lokálně
   v prohlížeči a později se začlení do uživatelského Nastavení,
 - ACP nemění datový model, přístupovou policy ani význam doménových hodnot.
+
+---
+
+## ACP-009 — Invalidačně řízená vývojová brána
+
+**Stav:** Schváleno
+
+### Kontext
+
+ACP-006 schválil autonomní agentní režim na větvi `agent/rc-0.1`, ale jeho
+původní provedení vedlo k plošnému opakování celé testovací sady, systémové a
+migrační kontroly i všech review po každém dílčím kroku. Pořadí workflow samo o
+sobě přitom nemění vstupy již úspěšné kontroly. Opakování bez změny relevantního
+vstupu prodlužuje zpětnou vazbu, aniž by zvyšovalo průkaznost výsledku.
+
+Projekt zatím nemá CI ani samostatný nástroj pro sestavení gate. Závazný
+prováděcí kontrakt proto zůstává v `AGENTS.md` a musí být s tímto rozhodnutím
+konzistentní.
+
+### Rozhodnutí
+
+Validační a review část ACP-006 se mění na stupňovitou invalidation-based gate:
+
+- úspěšný výsledek kontroly zůstává platný, dokud se nezmění její relevantní
+  vstup,
+- kontrola se neopakuje pouze kvůli pořadí kroků workflow,
+- nejdražší kontroly běží až nad stabilním diffem,
+- klasifikace změny určuje povinné testy, systémové kontroly a review,
+- nejasný nebo sdílený dopad se klasifikuje přísněji,
+- explicitní acceptance kritérium nebo pokyn uživatele může vždy požadovat
+  přísnější bránu.
+
+Podrobné úrovně 0–5, invalidační matice a review matice jsou závazně popsány v
+`AGENTS.md`. Bezpečnostní review a odpovídající testy zůstávají povinné pro
+permissions, actor-aware API, health data, auth/session/CSRF, lifecycle,
+file/storage delivery, chráněné přímé HTTP URL a visibility filtry.
+
+Finální acceptance brána RC 0.1 v `07_ROADMAPA.md` se tímto rozhodnutím nemění.
+Optimalizace se týká průběžných řezů a oprav; nesnižuje požadavky stanovené pro
+uzavření release nebo milníku.
+
+### Důvod
+
+- zachovat stejnou bezpečnostní a testovací jistotu s menším počtem redundantních
+  běhů,
+- zkrátit zpětnou vazbu během implementace,
+- oddělit levné focused ověření od jedné finální brány nad stabilním diffem,
+- provádět specializované review tehdy, když je skutečně invaliduje obsah změny.
+
+### Dopady
+
+- ACP-009 upravuje pouze validační a review orchestraci ACP-006; jeho rozsah
+  autonomie, eskalační hranice, ochrana větví a zákaz neautorizovaných změn
+  zůstávají v platnosti,
+- pro autonomní workflow nahrazuje starší dopad ACP-005, který požadoval v
+  každém dokumentačním balíčku Git příkaz a označoval hlavní větev za jediný
+  platný konečný stav; autoritativní je pushnutý stav aktuální schválené pracovní
+  větve a příkazy se ve výstupu uvádějí jen na vyžádání,
+- Markdown-only změna sama neinvaliduje Django testy, systémovou ani migrační
+  kontrolu; dokumentační oprava po review neruší dřívější PASS executable diffu,
+- test-only změna vyžaduje celou sadu jen při dopadu na sdílené fixtures,
+  helpery, settings, discovery nebo globální stav,
+- změna modelu invaliduje migrační kontrolu, změna permissions bezpečnostní
+  review a změna query shape query-count/N+1 ověření,
+- po lokální opravě se opakuje pouze dotčená kontrola a relevantní reviewer,
+  pokud oprava nezasáhne další doménu,
+- samostatný `docs/13_PRACOVNI_POSTUP_LLM.md` nevzniká, protože by duplikoval
+  závazný kontrakt v `AGENTS.md`, tento registr a existující procesní dokumenty,
+- automatizace gate, CI, test tags, Ruff a nový test runner zůstávají možnými
+  budoucími optimalizacemi a nejsou součástí tohoto rozhodnutí ani řezu.

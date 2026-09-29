@@ -1,9 +1,9 @@
 # Coding standard
 
 **Dokument:** 09  
-**Verze:** 0.4  
-**Stav:** platná pravidla pro začátek implementace  
-**Datum revize:** 15. 7. 2026
+**Verze:** 0.5
+**Stav:** platná pravidla implementace
+**Datum revize:** 29. 9. 2026
 
 ## 1. Účel
 
@@ -34,8 +34,10 @@ places/        místa, bydliště a hrobová místa
 events/        události a účastníci
 materials/     přílohy, zdroje a propojení
 health/        zdravotní záznamy
-audit/         historie změn
 ```
+
+Plánovaná doménová aplikace `audit/` má zajišťovat historii změn, ale její
+package v repozitáři zatím neexistuje a nesmí být považován za implementovaný.
 
 Obchodní logika se nesmí přesouvat do šablon.
 
@@ -191,5 +193,18 @@ Minimálně testovat:
 - Jeden commit má představovat jednu srozumitelnou změnu.
 - Commit message má být stručná a věcná.
 - Změna modelu musí obsahovat migraci a testy.
-- Review musí kontrolovat integritu, oprávnění, dopad na migrace, N+1 dotazy a audit.
+- Review se vybírá podle skutečného dopadu změny. Integrita, oprávnění, migrace,
+  N+1 dotazy a audit se kontrolují vždy, když je změna může ovlivnit; neměnné
+  oblasti se bez invalidující změny znovu neposuzují.
 - Významná změna architektury vyžaduje před implementací schválené ACP.
+
+## 16. Validační workflow
+
+Stupňovitou invalidation-based gate, klasifikaci změn a review matici určuje
+`AGENTS.md` podle ACP-009. Nejmenší focused kontroly slouží jako průběžná zpětná
+vazba a nejdražší povinné kontroly běží jednou nad stabilním diffem. Nejasný nebo
+sdílený dopad se posuzuje přísnější branou.
+
+Toto pravidlo nesnižuje bezpečnostní požadavky ani finální acceptance kritéria
+release. Úspěšná kontrola se neopakuje jen kvůli pořadí workflow, ale musí se
+zopakovat po změně jejího relevantního vstupu.

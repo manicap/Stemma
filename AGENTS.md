@@ -112,20 +112,23 @@ When escalating, provide one concise message containing: the blocking fact, the 
 
 The main agent is the implementation owner and should execute this loop autonomously:
 
-1. Inspect the current branch, working tree, recent changes, tests, and relevant documentation.
-2. Determine the current actual implementation state rather than trusting milestone labels alone.
-3. Select the smallest next vertical slice that advances the current documented goal and has clear acceptance conditions.
-4. State the short internal plan, but do not wait for approval unless the escalation policy applies.
-5. Implement only the files required for that slice.
-6. Add or update tests for every new behavior.
-7. Run focused tests first, then the required project checks.
-8. Perform an independent review pass using subagents when available.
-9. Fix valid findings and rerun the affected checks. Repeat until the slice passes its acceptance conditions or escalation is required.
-10. Update existing documentation when the implemented behavior or project state materially changed.
-11. Inspect the final diff for unrelated changes, secrets, generated artifacts, database files, and accidental weakening of tests or permissions.
-12. Commit and push the accepted coherent slice to `agent/rc-0.1` when all required checks pass.
-13. Verify that the pushed commit is present on `origin/agent/rc-0.1` and that the working tree is clean except for explicitly ignored local artifacts.
-14. Only then continue with the next slice without waiting for another user prompt, until a documented target is reached or the escalation policy applies.
+1. Complete Level 0: verify repository state, classify the change, and read the
+   relevant current documentation.
+2. Determine the actual implementation state rather than trusting milestone
+   labels alone, then choose the smallest coherent slice with clear acceptance
+   conditions.
+3. State a short internal plan and implement only the required files. Add or
+   update tests for changed behavior.
+4. Complete Levels 1 and 2: use focused feedback during implementation, finish
+   the behavior and documentation, then inspect the whole affected diff.
+5. Complete Level 3 reviews selected by the review matrix.
+6. Fix valid findings. Rerun only checks and reviews invalidated by the fix,
+   unless the fix expands the impact classification.
+7. Complete the Level 4 final gate once over the stable diff.
+8. Complete Level 5: record the result, commit and push the accepted coherent
+   slice, verify remote equality, and verify a clean tracked tree.
+9. Continue only when an explicit current goal remains. Stop autonomous feature
+   expansion once its documented target has been reached.
 
 Do not solve a failing test by deleting it, weakening its assertion, bypassing authorization, hiding an error, or reducing documented guarantees unless the test is demonstrably incorrect according to authoritative documentation.
 
@@ -167,6 +170,101 @@ Use whenever user-facing views, templates, forms, HTMX interactions, responsive 
 Subagents should normally report findings rather than modify shared files. If an isolated worktree is explicitly used for parallel implementation, the lead agent must review and integrate the result and must prevent overlapping writes to the same files.
 
 If subagents are unavailable, perform the same review roles sequentially as independent review passes before accepting the slice.
+
+## Staged invalidation-based gate
+
+ACP-009 refines the validation and review orchestration authorized by ACP-006.
+A successful check remains valid until a relevant input changes. Workflow order
+alone does not invalidate it. Run the most expensive checks only after the diff
+is stable; when impact is uncertain or shared across applications, use the
+stricter gate. Explicit acceptance criteria or user instructions may always
+require more than these minimums.
+
+### Level 0 - entry
+
+- Verify the branch, HEAD, tracked working-tree state, and repository identity.
+- Fetch and compare with the expected remote once. Repeat only if remote state
+  may have changed or the final push needs verification.
+- Classify the change by affected files, behavior, applications, security
+  footprint, query shape, UI surface, and documentation impact.
+- Read the relevant current documentation and inspect existing implementation
+  evidence before editing.
+
+### Level 1 - implementation feedback
+
+- Run the smallest focused tests that give useful feedback for the current edit.
+- Run an application suite only when the change affects that application's
+  behavior or shared fixtures used by it.
+- Check migration drift only for model, migration, application registry, or
+  schema-affecting settings changes.
+- Run Django's system check only for relevant Django Python, URL, template,
+  settings, application registry, or configuration changes.
+
+### Level 2 - functionally complete slice
+
+- Run the affected application or cross-application regression set selected by
+  the impact classification.
+- Complete the documentation impact analysis and all required documentation
+  updates, including metadata and changelog, before documentation review.
+- Inspect the complete diff for scope, accidental weakening, and unrelated
+  changes.
+- Run query-count/N+1 or browser/UI checks only when query shape or user-visible
+  behavior is affected.
+
+### Level 3 - impact-based review
+
+- Request QA review for behavioral changes, HTTP/UI flows, validation, test
+  contracts, and shared services or use-cases.
+- Request security review for permissions, actor-aware APIs, health data,
+  authentication/session/CSRF, lifecycle, file/storage delivery, protected
+  direct URLs, and visibility filtering.
+- Request documentation review for changed documentation or changes to models,
+  behavior, permissions, workflow, milestones, or decisions. It runs only after
+  the documentation impact analysis and documentation edits are complete.
+- Request UI/UX review when views, templates, forms, HTMX, navigation,
+  responsive layout, or user-visible failure and empty states change.
+- After a local finding, repeat only the affected checks and relevant reviewer.
+  Expand the review set only when the fix reaches another domain.
+
+### Level 4 - final gate over a stable diff
+
+- Run the full test suite once for executable or shared Python changes, or for a
+  cross-application change. A later documentation-only correction does not
+  invalidate that PASS.
+- Run Django's system check and migration drift check only when the impact rules
+  above require them.
+- Perform final diff, whitespace, secret, generated-artifact, database-file, and
+  tracked-status inspection.
+
+### Level 5 - closure
+
+- Confirm that required document metadata and the changelog were completed and
+  reviewed at Level 2 and Level 3.
+- Verify the tracked working-tree state, then stage only explicit relevant files.
+- Create one coherent commit and push it to `origin/agent/rc-0.1`.
+- Verify local and remote HEAD equality and a clean tracked working tree.
+
+Do not routinely repeat the full suite, fetch, system check, migration check, or
+all reviewers without an invalidating change. A failed check is not a reusable
+PASS; diagnose it and rerun the affected check after the fix.
+
+### Invalidation matrix
+
+| Change type | Required invalidation |
+| --- | --- |
+| Production Python | Focused and affected regression tests; full suite once on the stable diff. Add system check when Django wiring or configuration is affected. |
+| Model | Model/application tests, migration drift check, system check, full suite, QA review, documentation review, and security review if access semantics are touched. |
+| Migration | Migration/application tests, migration drift check, system check, full suite, and documentation review when schema or required data state changes. |
+| Selector or query shape | Selector/consumer tests and query-count or N+1 coverage; full suite for shared or cross-app impact. Add security review for visibility filtering. |
+| Permission or visibility logic | Focused authorization and protected HTTP tests, affected regressions, full suite, and security plus documentation review. |
+| Use-case delegation, including actor-aware | Use-case and caller boundary tests; QA review, and security review whenever protected data or writes are involved. |
+| HTTP view or template | Focused HTTP/HTMX tests and QA review; browser and UI/UX review for changed user flows. Add security review for protected objects or actions. |
+| Test-only | Run the changed tests and their direct consumers. Full suite is required only when shared fixtures, helpers, settings, discovery, or global state changed. |
+| Markdown-only | Documentation consistency, documentation review, final diff and whitespace checks. Documentation alone does not invalidate Django tests, system check, or migration drift. Add QA only if application behavior or a test contract changes; add security only if application security or access-control policy changes. |
+| Demo seed | Seed tests and affected domain tests; full suite for shared bootstrap changes. Add security review if identities, permissions, or protected sample data change. |
+| Settings or app registry | Focused configuration tests, system check, and usually the full suite; add migration drift when schema discovery can change. |
+| CSS or JavaScript | Relevant static/UI tests and browser or UI/UX verification; no Django full suite unless templates, shared behavior, or server contracts also change. |
+| Documentation correction after review | Repeat documentation consistency and documentation review for the corrected scope. Preserve earlier test PASS results unless executable inputs changed. |
 
 ## Migrations
 
@@ -246,29 +344,19 @@ After an autonomous slice is accepted and pushed, record enough information in t
 
 ## Required checks
 
-Run at least:
+Select checks from the staged gate and invalidation matrix; do not use one
+unconditional list for every change. Every coherent change still requires final
+diff, whitespace, artifact, and tracked-status inspection.
 
-```text
-python manage.py check
-python manage.py test
-python manage.py makemigrations --check --dry-run
-```
+Executable or shared Python and cross-application changes require the full test
+suite once over the stable diff. Django's system check, migration drift check,
+focused security tests, query-count checks, and browser/UI verification are
+mandatory when their documented impact condition applies.
 
-For a single application, also run its focused tests first, for example:
-
-```text
-python manage.py test common
-```
-
-Before accepting a coherent change, also check:
-
-```text
-git diff --check
-git status --short
-git diff
-```
-
-Run additional targeted tests, security checks, or browser/UI verification whenever the changed behavior requires them.
+The final RC 0.1 acceptance gate in `docs/07_ROADMAPA.md` remains absolute and
+includes the complete suite and all checks and evidence stated there. The
+invalidation rules optimize intermediate slices; they do not weaken a release
+or milestone acceptance contract.
 
 ## Testability gate
 
@@ -287,7 +375,7 @@ Any feature that requires authentication or specific permissions must include a 
 
 ## RC 0.1 acceptance contract
 
-The authoritative RC 0.1 acceptance criteria and explicit non-goals are defined in `docs/07_ROADMAPA.md`. ACP-006 in `docs/12_ARCHITEKTONICKA_ROZHODNUTI.md` authorizes this autonomous execution mode only on `agent/rc-0.1`.
+The authoritative RC 0.1 acceptance criteria and explicit non-goals are defined in `docs/07_ROADMAPA.md`. ACP-006 in `docs/12_ARCHITEKTONICKA_ROZHODNUTI.md` authorizes this autonomous execution mode only on `agent/rc-0.1`; ACP-009 refines its validation and review workflow.
 
 The lead agent must treat those acceptance criteria as a contract, not as suggestions:
 
@@ -304,8 +392,14 @@ When all RC 0.1 criteria pass, stop autonomous feature expansion and produce a f
 
 The active autonomous-development branch is `agent/rc-0.1`.
 
-Milestones M0 and M1 are complete. The original documented implementation sequence is in M2, but the active experiment is the RC 0.1 vertical target defined in `docs/07_ROADMAPA.md` and governed by ACP-006.
+Milestones M0, M1, and M2 are complete. All RC 0.1 acceptance areas A-H are
+recorded as complete in `docs/07_ROADMAPA.md`. Autonomous feature expansion
+toward RC 0.1 has therefore stopped.
 
-The agent must first verify the actual repository state against all RC 0.1 acceptance criteria, identify the smallest current gap, and then execute the lead-agent loop autonomously until RC 0.1 is demonstrably ready or the escalation policy applies.
+Continue only with an explicit user-approved goal, maintenance task, or
+documentation/process correction that stays within the approved architecture.
+Use the ACP-006 autonomous boundaries and the ACP-009 invalidation-based gate.
 
-Do not declare Stemma production-ready merely because roadmap items or automated tests are complete. RC 0.1 requires the documented user-visible end-to-end evidence, and production deployment remains a separate explicitly authorized action.
+Do not declare Stemma production-ready merely because roadmap items or automated
+tests are complete. Production deployment, integration into `feature/mvp` or
+`main`, and any later roadmap target remain separately authorized actions.

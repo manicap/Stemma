@@ -1,9 +1,9 @@
 # Pravidla dokumentace projektu
 
 **Dokument:** 05  
-**Verze:** 0.3
+**Verze:** 0.4
 **Stav:** platné pracovní pravidlo  
-**Datum revize:** 14. 7. 2026
+**Datum revize:** 29. 9. 2026
 
 ## 1. Základní pravidlo
 
@@ -70,6 +70,12 @@ Postup:
 5. případná implementace.
 
 Již schválené rozhodnutí se nemění bez upozornění uživatele.
+
+Schválené ACP může pro vymezenou větev povolit autonomní provádění vratných
+změn v rámci již schválené architektury. Na `agent/rc-0.1` tuto výjimku vymezuje
+ACP-006 a ACP-009 upřesňuje její validační a review workflow; nová architektura,
+bezpečnostní policy nebo význam systémové hodnoty nadále vyžadují explicitní
+schválení.
 
 ## 8. Kontrola konzistence
 
@@ -177,12 +183,22 @@ Oficiální repozitář projektu je:
 
 - GitHub uchovává autoritativní aktuální stav, historii dokumentace a zdrojového kódu.
 - Zdroje projektu v ChatGPT obsahují pouze aktuální pracovní kopii dokumentace potřebnou pro danou etapu.
-- Při nové verzi zdrojů asistent připraví kopírovatelný blok příkazů pro commit a push.
+- V autonomním workflow asistent provede commit a push podle `AGENTS.md` a ve
+  výsledném souhrnu uvede větev, commit a stav ověření. Kopírovatelný blok
+  příkazů připraví jen tehdy, když jej uživatel výslovně požaduje nebo když
+  commit a push nemůže bezpečně provést sám.
 - Verze dokumentace a aplikace se evidují odděleně.
 
 ## 16. Výstup nové verze dokumentace
 
-Každý balíček obsahuje aktuální dokumenty, přehled změn, seznam dotčených souborů, doporučený commit, Git příkazy a stručný orientační údaj o náročnosti.
+Každý významný dokumentační balíček obsahuje aktuální dokumenty, přehled změn,
+seznam dotčených souborů a identifikaci výsledného commitu, pokud jej autonomní
+workflow vytvořil. Git ani shellové příkazy nejsou povinnou součástí výstupu.
+
+Dokumentační review probíhá až po dokončení impact analýzy a všech souvisejících
+úprav. Oprava čistě dokumentačního nálezu invaliduje dokumentační consistency
+kontrolu a dokumentační review, nikoli beze změny zdrojového kódu již úspěšné
+aplikační testy. Podrobnosti určuje ACP-009 a `AGENTS.md`.
 
 
 ## 17. Evidence architektonických rozhodnutí

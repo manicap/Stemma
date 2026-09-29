@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.74
+**Verze:** 0.75
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 28. 9. 2026
+**Datum revize:** 29. 9. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -139,6 +139,8 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 183. První read-only Health UI používá schválený person-centric shell a tabový model: `/osoby/<person_id>/zdravi/` zobrazuje actor-visible seznam a `/osoby/<person_id>/zdravi/<health_record_id>/` bezpečný detail s přílohami a zdroji. Views pouze orchestrují existující health use-cases, podporují plnou stránku i stávající HTMX target a nečtou health ani materials modely přes ORM či reverse relations. Skrytý, chybějící, lifecycle-neplatný a k jiné osobě patřící záznam končí jednotnou 404. Příloha nemá veřejnou URL ani download; šablona nevydává `storage_key` nebo obsah. Lokální DEBUG-only seed doplňuje syntetická metadata bez fyzického souboru; health záznam a vazby vytváří přes actor-aware use-cases pod stabilním neinteraktivním actorem bez použitelného hesla, bez `is_staff`/`is_superuser` a pouze s nutnými existujícími permissions. Nevzniká model, migrace, permission, write UI, API ani ACP.
 
 184. Samostatný Health create/update UI řez používá existující person-centric shell, HTMX target a actor-aware `create_health_record()` a `update_health_record()`. Create URL určuje osobu a nepřijímá ji z formuláře; obecný actor-aware výběr míst neexistuje, proto create místo nenastavuje a update zachovává dosavadní místo. Formulář mění pouze obsahová, access, verification a neúplná časová pole, nabízí aktivní typy a nejvýše takovou zdravotní access úroveň, kterou actor smí vidět. Server vyžaduje existující standardní `health.add_healthrecord` nebo `health.change_healthrecord` spolu s centralizovaným obsahovým přístupem; skrytý, cizí a lifecycle-neplatný update cíl zůstává jednotně nedostupný. Přílohy, zdroje, soubory, autorství a lifecycle nejsou součástí zápisu. Lokální DEBUG-only demo Správce získává tato dvě existující modelová oprávnění přímo na účtu, nikoli změnou systémové skupiny. Nevzniká model, migrace, nové oprávnění, API ani ACP.
+
+185. ACP-009 mění validační a review orchestraci ACP-006 na stupňovitou invalidačně řízenou gate. PASS zůstává platný do změny relevantního vstupu, drahé kontroly běží nad stabilním diffem a klasifikace dopadu určuje testy i review; nejasný nebo shared dopad používá přísnější bránu. Přísné security oblasti a finální acceptance gate RC 0.1 se nemění. Závazné úrovně 0–5 a matice jsou v `AGENTS.md`; samostatný dokument 13 ani automatizační nástroje v tomto řezu nevznikají.
 
 ## 2. Otevřené otázky
 

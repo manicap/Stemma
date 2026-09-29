@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.47
-**Stav:** M2 dokončeno; Health create/update UI dokončeno
-**Datum revize:** 28. 9. 2026
+**Verze:** 0.48
+**Stav:** M2 a RC 0.1 dokončeny; workflow gate upřesněna ACP-009
+**Datum revize:** 29. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -296,7 +296,7 @@ tohoto cíle.
 
 RC 0.1 je pracovní označení prvního skutečně použitelného kandidáta aplikace. Neznamená dokončení celé roadmapy ani schválení produkčního nasazení. Jeho účelem je co nejdříve ověřit jeden úplný uživatelský průchod od databáze přes oprávnění až po skutečné UI.
 
-Na experimentální větvi `agent/rc-0.1` smí hlavní agent podle ACP-006 volit nejmenší bezpečné vertikální řezy přes více níže uvedených fází, pokud zachová schválené závislosti, datový model, oprávnění a UI/UX principy. Stav původních milníků se tím nemění, dokud nejsou jejich vlastní podmínky skutečně splněny.
+Na experimentální větvi `agent/rc-0.1` smí hlavní agent podle ACP-006 volit nejmenší bezpečné vertikální řezy přes více níže uvedených fází, pokud zachová schválené závislosti, datový model, oprávnění a UI/UX principy. ACP-009 upřesňuje průběžnou validační a review gate podle skutečného dopadu změny. Stav původních milníků se tím nemění, dokud nejsou jejich vlastní podmínky skutečně splněny.
 
 ### RC 0.1 – povinná acceptance kritéria
 
@@ -517,6 +517,11 @@ kontrolou dokumentace, diffu, tajemství a lokálních artefaktů.
 Všechna povinná acceptance kritéria A–H jsou splněna. RC 0.1 je připraven
 na větvi `agent/rc-0.1`; nejde o schválení produkčního nasazení, merge do
 `feature/mvp` nebo `main` ani o dokončení pozdějších fází roadmapy.
+
+ACP-009 nemění výše uvedenou finální bránu ani její důkazy. Invalidačně řízená
+gate optimalizuje pouze průběžné řezy: PASS zůstává platný do změny relevantního
+vstupu a kompletní release kontrola se nadále provede vždy, když ji acceptance
+kontrakt vyžaduje.
 
 ## Fáze 4 – Interaktivní prototyp
 

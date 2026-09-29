@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 0.84 – 29. 9. 2026
+
+- schváleno ACP-009, které upřesňuje validační a review část ACP-006 zavedením
+  invalidačně řízené gate bez změny produkční aplikace,
+- `AGENTS.md` nově definuje úrovně 0–5, invalidační matici, dopadovou review
+  matici a zákaz redundantního opakování kontrol bez změny relevantního vstupu,
+- registr přijatých rozhodnutí doplňuje stručný záznam ACP-009,
+- finální acceptance brána RC 0.1 a přísné bezpečnostní požadavky zůstávají
+  beze změny,
+- opravena zastaralá current mission, evidence dosud neexistující aplikace
+  `audit/` a povinnost připravovat Git či shellové příkazy po každém
+  dokumentačním balíčku,
+- samostatný dokument 13 nevznikl, protože by duplikoval závazný kontrakt v
+  `AGENTS.md`, ACP registru a existující procesní dokumentaci,
+- automatizace gate, CI, test tags, Ruff a nový test runner zůstávají pouze
+  možnými budoucími optimalizacemi.
+
 ## Verze 0.83 – 28. 9. 2026
 
 - přidán samostatný create/update Health UI řez v existujícím person-centric

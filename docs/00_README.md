@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.48
-**Stav:** RC 0.1 a M2 dokončeny; Health create/update UI dokončeno
-**Datum revize:** 28. 9. 2026
+**Verze dokumentace:** 0.49
+**Stav:** RC 0.1 a M2 dokončeny; workflow gate upřesněna ACP-009
+**Datum revize:** 29. 9. 2026
 
 ## Účel balíčku
 
@@ -39,6 +39,22 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.49
+
+Verze 0.49 zavádí invalidačně řízenou vývojovou bránu bez změny aplikace:
+
+- ACP-009 upřesňuje validační a review orchestraci ACP-006; úspěšná kontrola
+  zůstává platná do změny relevantního vstupu a drahé kontroly běží nad
+  stabilním diffem,
+- `AGENTS.md` definuje úrovně 0–5, invalidační matici a dopadovou review matici
+  při zachování všech bezpečnostních hranic a finální RC acceptance brány,
+- opravuje se zastaralá current mission, evidence plánované aplikace `audit/` a
+  povinnost vypisovat Git či shellové příkazy po každém dokumentačním balíčku,
+- samostatný dokument 13 nevzniká, protože workflow je jednoznačně pokryto
+  `AGENTS.md`, ACP registrem a existujícími procesními dokumenty,
+- nástroje gate, CI, test tags, Ruff ani nový test runner nejsou implementovány;
+  zůstávají pouze možnými budoucími optimalizacemi.
 
 ## Stav verze 0.48
 
@@ -720,7 +736,8 @@ v produkčním prostředí.
 - Databázový a technický návrh je dokončen jako schválený pracovní základ.
 - M0, M1 a M2 jsou na `agent/rc-0.1` skutečně dokončené; `feature/mvp`
   zůstává nedotčeným pre-agentním integračním základem.
-- Pro ověření autonomního agentního vývoje běží oddělený experiment v `agent/rc-0.1` podle ACP-006.
+- Autonomní režim na `agent/rc-0.1` vymezuje ACP-006; jeho validační a review
+  workflow upřesňuje ACP-009.
 - RC 0.1 je na experimentální větvi připravené podle `07_ROADMAPA.md`; tento
   stav ani dokončení M2 nepovolují produkční nasazení nebo merge.
 - `backup/pre-agent-2026-08-17` je návratový bod před zahájením agentního experimentu a neslouží k vývoji.
