@@ -33,6 +33,8 @@ __all__ = (
     "archive_health_record",
     "create_health_record",
     "restore_archived_health_record",
+    "restore_soft_deleted_health_record",
+    "soft_delete_health_record",
     "update_health_record",
 )
 
@@ -209,14 +211,14 @@ def _preauthorize_lifecycle_person(
         raise HealthRecord.DoesNotExist
 
 
-def _authorize_lifecycle_target(
+def _authorize_lifecycle_context(
     *,
     candidate: HealthRecord,
     person: Person,
     record_type: HealthRecordType,
     actor: AbstractBaseUser,
 ) -> None:
-    """Uplatni fail-closed content a lifecycle policy na uzamčený cíl."""
+    """Uplatni fail-closed content policy na uzamčený lifecycle cíl."""
 
     try:
         person_visible = can_view_access_level(
@@ -236,9 +238,36 @@ def _authorize_lifecycle_target(
         or not person_visible
         or not record_visible
         or not record_type.is_active
-        or candidate.deleted_at is not None
     ):
         raise HealthRecord.DoesNotExist
+
+
+def _authorize_lifecycle_target(
+    *,
+    candidate: HealthRecord,
+    person: Person,
+    record_type: HealthRecordType,
+    actor: AbstractBaseUser,
+) -> None:
+    """Autorizuj cíl ACP-010, který nesmí být měkce odstraněný."""
+
+    _authorize_lifecycle_context(
+        candidate=candidate,
+        person=person,
+        record_type=record_type,
+        actor=actor,
+    )
+    if candidate.deleted_at is not None:
+        raise HealthRecord.DoesNotExist
+
+
+def _reject_combined_lifecycle(candidate: HealthRecord) -> None:
+    if candidate.archived_at is not None and candidate.deleted_at is not None:
+        _raise_error(
+            "health_record",
+            "Zdravotní záznam má neplatnou kombinaci lifecycle stavů.",
+            "health_record_lifecycle_invalid",
+        )
 
 
 def archive_health_record(
@@ -352,6 +381,132 @@ def restore_archived_health_record(
                 "archived_at",
                 "archived_by",
                 "archive_reason",
+                "updated_at",
+            )
+        )
+        return _reload(candidate.pk)
+
+
+def soft_delete_health_record(
+    *,
+    health_record: HealthRecord,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+    reason: str,
+) -> HealthRecord:
+    """Atomicky měkce odstraň aktivní, actorovi dostupný zdravotní záznam."""
+
+    with transaction.atomic():
+        initial_actor = require_active_actor_permission(
+            actor=actor,
+            permission="health.delete_healthrecord",
+            denial_message=(
+                "K odstranění zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        _preauthorize_lifecycle_person(
+            person=person,
+            actor=initial_actor,
+        )
+        candidate, current_person, current_type = _load_lifecycle_target(
+            health_record=health_record,
+            person=person,
+        )
+        current_actor = require_active_actor_permission(
+            actor=actor,
+            permission="health.delete_healthrecord",
+            denial_message=(
+                "K odstranění zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        _authorize_lifecycle_context(
+            candidate=candidate,
+            person=current_person,
+            record_type=current_type,
+            actor=current_actor,
+        )
+        _reject_combined_lifecycle(candidate)
+        if candidate.archived_at is not None or candidate.deleted_at is not None:
+            _raise_error(
+                "health_record",
+                "Měkce odstranit lze pouze aktivní zdravotní záznam.",
+                "health_record_not_active",
+            )
+        normalized_reason = reason.strip()
+        if not normalized_reason:
+            _raise_error(
+                "deletion_reason",
+                "Důvod odstranění zdravotního záznamu je povinný.",
+                "health_record_deletion_reason_required",
+            )
+
+        candidate.deleted_at = timezone.now()
+        candidate.deleted_by = current_actor
+        candidate.deletion_reason = normalized_reason
+        candidate.save(
+            update_fields=(
+                "deleted_at",
+                "deleted_by",
+                "deletion_reason",
+                "updated_at",
+            )
+        )
+        return _reload(candidate.pk)
+
+
+def restore_soft_deleted_health_record(
+    *,
+    health_record: HealthRecord,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> HealthRecord:
+    """Atomicky obnov měkce odstraněný, actorovi dostupný zdravotní záznam."""
+
+    with transaction.atomic():
+        initial_actor = require_active_actor_permission(
+            actor=actor,
+            permission="health.delete_healthrecord",
+            denial_message=(
+                "K obnovení odstraněného zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        _preauthorize_lifecycle_person(
+            person=person,
+            actor=initial_actor,
+        )
+        candidate, current_person, current_type = _load_lifecycle_target(
+            health_record=health_record,
+            person=person,
+        )
+        current_actor = require_active_actor_permission(
+            actor=actor,
+            permission="health.delete_healthrecord",
+            denial_message=(
+                "K obnovení odstraněného zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        _authorize_lifecycle_context(
+            candidate=candidate,
+            person=current_person,
+            record_type=current_type,
+            actor=current_actor,
+        )
+        _reject_combined_lifecycle(candidate)
+        if candidate.deleted_at is None or candidate.archived_at is not None:
+            _raise_error(
+                "health_record",
+                "Obnovit lze pouze měkce odstraněný zdravotní záznam.",
+                "health_record_not_soft_deleted",
+            )
+
+        candidate.deleted_at = None
+        candidate.deleted_by = None
+        candidate.deletion_reason = ""
+        candidate.save(
+            update_fields=(
+                "deleted_at",
+                "deleted_by",
+                "deletion_reason",
                 "updated_at",
             )
         )

@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.49
+**Verze:** 0.50
 **Stav:** pracovní návrh  
 **Datum revize:** 29. 9. 2026
 
@@ -664,7 +664,7 @@ actora s `health.change_healthrecord` a u každého výsledku znovu uplatňuje
 centrální content policy. Nečte přílohy ani zdroje. Běžné Health list/detail API
 archivované záznamy nadále nevydává.
 
-ACP-011 schvaluje pro navazující backendový řez ne-idempotentní
+Implementovaný backend ACP-011 poskytuje ne-idempotentní
 `soft_delete_health_record()` pouze pro `ACTIVE -> SOFT_DELETED` a
 `restore_soft_deleted_health_record()` pouze pro `SOFT_DELETED -> ACTIVE`.
 Obě operace vyžadují existující `health.delete_healthrecord`, aktivního actora,
@@ -678,7 +678,8 @@ Odstraněný záznam se nevydává běžným listem, detailem, archivním manage
 editací ani related-data API. Případná budoucí deleted-management read hranice
 musí být samostatná, actor-aware a omezená stejnou permission a content policy;
 běžné selectory se nerozšíří. Produktová aplikační vrstva HealthRecord fyzicky
-nemaže. Backend, HTTP/UI a auditní historie zatím nejsou implementovány.
+nemaže. HTTP/UI, deleted-management read hranice a auditní historie nejsou
+implementovány.
 
 Konkrétní URL jsou `/osoby/<person_id>/zdravi/archiv/`,
 `/osoby/<person_id>/zdravi/<health_record_id>/archivovat/` a

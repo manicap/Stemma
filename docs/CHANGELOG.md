@@ -1,5 +1,21 @@
 # Historie změn dokumentace
 
+## Verze 0.89 – 29. 9. 2026
+
+- implementovány actor-aware `soft_delete_health_record()` a
+  `restore_soft_deleted_health_record()` přesně podle ACP-011 včetně
+  delegujících use-cases,
+- operace používají existující `health.delete_healthrecord`, čerstvou actor a
+  content autorizaci, aktivní osobu a typ, uzamčený čerstvý stav a stabilní
+  fail-closed chybové rozhraní,
+- soft-delete vyžaduje oříznutý neprázdný důvod; restore čistí delete metadata a
+  obě operace zachovávají autorství i business data,
+- focused/security testy ověřují stavový automat, neprozrazující hranici,
+  revokaci permission, TOCTOU recheck, rollback a striktní non-cascade chování
+  Health Materials,
+- nevznikl HTTP/UI, deleted-management read, hard delete, model, migrace,
+  DB constraint, permission ani nový ACP.
+
 ## Verze 0.88 – 29. 9. 2026
 
 - schváleno ACP-011 s přesným HealthRecord soft-delete a restore-soft-deleted

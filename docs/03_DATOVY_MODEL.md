@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.62
+**Verze:** 0.63
 **Stav:** koncept  
 **Datum revize:** 29. 9. 2026
 
@@ -1154,7 +1154,7 @@ Lifecycle zdravotního záznamu je non-cascade. `HealthRecordAttachment`,
 archivaci či obnovení nemění. Jejich běžná viditelnost pouze následuje
 viditelnost rodičovského zdravotního záznamu.
 
-ACP-011 doplňuje nad stejnými poli budoucí ne-idempotentní přechody
+ACP-011 je nad stejnými poli implementovaný dvěma ne-idempotentními přechody
 `ACTIVE -> SOFT_DELETED` a `SOFT_DELETED -> ACTIVE`. Přechody mezi
 `ARCHIVED` a `SOFT_DELETED` jsou zakázané a kombinovaný stav je neplatný.
 Soft-delete nastaví aktuální `deleted_at`, `deleted_by`, povinný oříznutý
@@ -1164,9 +1164,9 @@ Soft-delete nastaví aktuální `deleted_at`, `deleted_by`, povinný oříznutý
 Aktivní vazby se po obnově pouze znovu posoudí svými běžnými selectory.
 
 Databázový constraint ani model override se nepřidává. Produktová aplikační
-vrstva `HealthRecord` fyzicky nemaže. Schválený kontrakt soft-delete a restore
-soft-deleted zatím nemá implementovanou service, use-case, read management ani
-transportní vrstvu.
+vrstva `HealthRecord` fyzicky nemaže. Kontrakt soft-delete a restore
+soft-deleted má implementované actor-aware služby a přesně delegující use-cases;
+deleted-management read ani transportní vrstva nevznikly.
 
 ## 11. Místo
 

@@ -43,6 +43,8 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
                 "list_health_records",
                 "list_health_record_sources",
                 "restore_archived_health_record",
+                "restore_soft_deleted_health_record",
+                "soft_delete_health_record",
                 "update_health_record",
                 "update_health_record_attachment",
                 "update_health_record_source",
@@ -80,6 +82,14 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
             (
                 use_cases.restore_archived_health_record,
                 ("health_record", "person", "actor"),
+            ),
+            (
+                use_cases.restore_soft_deleted_health_record,
+                ("health_record", "person", "actor"),
+            ),
+            (
+                use_cases.soft_delete_health_record,
+                ("health_record", "person", "actor", "reason"),
             ),
             (
                 use_cases.update_health_record,
@@ -259,6 +269,8 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
         record = HealthRecord(pk=41)
         archived = HealthRecord(pk=43)
         restored = HealthRecord(pk=47)
+        soft_deleted = HealthRecord(pk=53)
+        undeleted = HealthRecord(pk=59)
         with patch(
             "health.use_cases.archive_health_record_service",
             return_value=archived,
@@ -278,9 +290,32 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
                 person=person,
                 actor=actor,
             )
+        with patch(
+            "health.use_cases.soft_delete_health_record_service",
+            return_value=soft_deleted,
+        ) as soft_delete_service:
+            soft_delete_result = use_cases.soft_delete_health_record(
+                health_record=record,
+                person=person,
+                actor=actor,
+                reason="Důvod odstranění",
+            )
+        with patch(
+            "health.use_cases.restore_soft_deleted_service",
+            return_value=undeleted,
+        ) as restore_soft_deleted_service:
+            restore_soft_deleted_result = (
+                use_cases.restore_soft_deleted_health_record(
+                    health_record=soft_deleted,
+                    person=person,
+                    actor=actor,
+                )
+            )
 
         self.assertIs(archive_result, archived)
         self.assertIs(restore_result, restored)
+        self.assertIs(soft_delete_result, soft_deleted)
+        self.assertIs(restore_soft_deleted_result, undeleted)
         archive_service.assert_called_once_with(
             health_record=record,
             person=person,
@@ -289,6 +324,17 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
         )
         restore_service.assert_called_once_with(
             health_record=archived,
+            person=person,
+            actor=actor,
+        )
+        soft_delete_service.assert_called_once_with(
+            health_record=record,
+            person=person,
+            actor=actor,
+            reason="Důvod odstranění",
+        )
+        restore_soft_deleted_service.assert_called_once_with(
+            health_record=soft_deleted,
             person=person,
             actor=actor,
         )
@@ -351,6 +397,27 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
                     "actor": actor,
                 },
                 ValidationError({"health_record": ["invalid"]}),
+            ),
+            (
+                "health.use_cases.soft_delete_health_record_service",
+                use_cases.soft_delete_health_record,
+                {
+                    "health_record": record,
+                    "person": Person(pk=45),
+                    "actor": actor,
+                    "reason": "Důvod",
+                },
+                PermissionDenied("denied"),
+            ),
+            (
+                "health.use_cases.restore_soft_deleted_service",
+                use_cases.restore_soft_deleted_health_record,
+                {
+                    "health_record": record,
+                    "person": Person(pk=45),
+                    "actor": actor,
+                },
+                HealthRecord.DoesNotExist("unavailable"),
             ),
             (
                 "health.use_cases.create_health_record_service",

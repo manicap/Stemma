@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.53
-**Stav:** RC 0.1 a M2 dokončeny; Health soft-delete kontrakt schválen
+**Verze dokumentace:** 0.54
+**Stav:** RC 0.1 a M2 dokončeny; Health soft-delete backend implementován
 **Datum revize:** 29. 9. 2026
 
 ## Účel balíčku
@@ -39,6 +39,24 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.54
+
+Verze 0.54 implementuje backendový kontrakt ACP-011 bez transportního nebo UI
+rozšíření:
+
+- actor-aware `soft_delete_health_record()` provádí pouze
+  `ACTIVE -> SOFT_DELETED` a `restore_soft_deleted_health_record()` pouze
+  `SOFT_DELETED -> ACTIVE`,
+- obě služby vyžadují existující `health.delete_healthrecord`, úplnou Health
+  content policy, aktivní osobu a typ a čerstvý uzamčený stav s opakovanou
+  autorizací,
+- soft-delete ukládá povinný oříznutý důvod a delete metadata; restore je
+  vyčistí, přičemž autorství a business data zůstávají zachované,
+- přílohy, zdroje a vazby se nemění kaskádou a běžná read API odstraněný záznam
+  nadále nevydávají,
+- nevzniká HTTP/UI, deleted-management read API, hard delete, model, migrace,
+  DB constraint, permission ani nový ACP.
 
 ## Stav verze 0.53
 

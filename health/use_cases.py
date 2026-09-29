@@ -33,6 +33,8 @@ from .services import (
     archive_health_record as archive_health_record_service,
     create_health_record as create_health_record_service,
     restore_archived_health_record as restore_archived_health_record_service,
+    restore_soft_deleted_health_record as restore_soft_deleted_service,
+    soft_delete_health_record as soft_delete_health_record_service,
     update_health_record as update_health_record_service,
 )
 
@@ -48,6 +50,8 @@ __all__ = (
     "list_health_records",
     "list_health_record_sources",
     "restore_archived_health_record",
+    "restore_soft_deleted_health_record",
+    "soft_delete_health_record",
     "update_health_record",
     "update_health_record_attachment",
     "update_health_record_source",
@@ -80,6 +84,38 @@ def restore_archived_health_record(
     """Obnov archivovaný záznam přes autorizovanou lifecycle službu."""
 
     return restore_archived_health_record_service(
+        health_record=health_record,
+        person=person,
+        actor=actor,
+    )
+
+
+def soft_delete_health_record(
+    *,
+    health_record: HealthRecord,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+    reason: str,
+) -> HealthRecord:
+    """Měkce odstraň záznam přes autorizovanou lifecycle službu."""
+
+    return soft_delete_health_record_service(
+        health_record=health_record,
+        person=person,
+        actor=actor,
+        reason=reason,
+    )
+
+
+def restore_soft_deleted_health_record(
+    *,
+    health_record: HealthRecord,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> HealthRecord:
+    """Obnov měkce odstraněný záznam přes autorizovanou lifecycle službu."""
+
+    return restore_soft_deleted_service(
         health_record=health_record,
         person=person,
         actor=actor,

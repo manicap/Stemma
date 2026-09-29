@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.52
-**Stav:** M2 a RC 0.1 dokončeny; Health soft-delete kontrakt schválen
+**Verze:** 0.53
+**Stav:** M2 a RC 0.1 dokončeny; Health soft-delete backend implementován
 **Datum revize:** 29. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -319,12 +319,20 @@ stavem jsou zakázané, Materials se nemění kaskádou a produktový hard delet
 HealthRecord nevznikne. V tomto řezu není backend, HTTP/UI, model, migrace, DB
 constraint ani nová permission.
 
+Třicátý čtvrtý řez implementuje backend ACP-011 bez transportního rozšíření.
+Actor-aware služby a přesně delegující use-cases poskytují pouze
+`ACTIVE -> SOFT_DELETED` s povinným oříznutým důvodem a
+`SOFT_DELETED -> ACTIVE`. Používají existující
+`health.delete_healthrecord`, úplnou Health content policy, aktivní osobu a typ,
+fresh locked state a opakovanou autorizaci po zámcích. Zachovávají fail-closed
+error kontrakt, business data a striktně non-cascade Materials chování. Běžná
+read API odstraněný záznam nevydají. Nevzniká HTTP/UI, deleted-management read,
+hard delete, model, migrace, DB constraint, permission ani nový ACP.
+
 #### Následující implementační kroky
 
-1. implementovat samostatný backendový řez ACP-011: obě actor-aware služby,
-   přesně delegující use-cases a focused/security testy, bez HTTP/UI,
-2. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
-3. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
+1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
+2. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
    bezpečnými aplikačními kontrakty; soft-delete transport, Materials zápisy a
    doručení souborů zůstávají mimo dokončené Health UI řezy.
 

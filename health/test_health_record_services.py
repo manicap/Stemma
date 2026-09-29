@@ -26,6 +26,8 @@ from .services import (
     archive_health_record,
     create_health_record,
     restore_archived_health_record,
+    restore_soft_deleted_health_record,
+    soft_delete_health_record,
     update_health_record,
 )
 
@@ -39,6 +41,8 @@ class HealthRecordServiceApiTests(SimpleTestCase):
                 "archive_health_record",
                 "create_health_record",
                 "restore_archived_health_record",
+                "restore_soft_deleted_health_record",
+                "soft_delete_health_record",
                 "update_health_record",
             ),
         )
@@ -58,10 +62,20 @@ class HealthRecordServiceApiTests(SimpleTestCase):
             tuple(signature(restore_archived_health_record).parameters),
             ("health_record", "person", "actor"),
         )
+        self.assertEqual(
+            tuple(signature(restore_soft_deleted_health_record).parameters),
+            ("health_record", "person", "actor"),
+        )
+        self.assertEqual(
+            tuple(signature(soft_delete_health_record).parameters),
+            ("health_record", "person", "actor", "reason"),
+        )
         for function in (
             archive_health_record,
             create_health_record,
             restore_archived_health_record,
+            restore_soft_deleted_health_record,
+            soft_delete_health_record,
             update_health_record,
         ):
             self.assertTrue(

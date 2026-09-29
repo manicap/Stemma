@@ -1,8 +1,8 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.78
-**Stav:** M2 dokončen; Health soft-delete kontrakt schválen
+**Verze:** 0.79
+**Stav:** M2 dokončen; Health soft-delete backend implementován
 **Datum revize:** 29. 9. 2026
 
 ## 1. Účel
@@ -2418,8 +2418,8 @@ selectory zůstávají active-only. Archivní seznam nečte Materials, POST
 archive/restore je nemění kaskádou a databázová migrace ani nové permission
 nevznikají.
 
-ACP-011 schvaluje nad nezměněným schématem další dvě budoucí actor-aware
-operace. `soft_delete_health_record()` přijme pouze `ACTIVE` a nastaví
+ACP-011 je nad nezměněným schématem implementovaný dvěma actor-aware
+operacemi. `soft_delete_health_record()` přijme pouze `ACTIVE` a nastaví
 `deleted_at`, `deleted_by`, povinný oříznutý `deletion_reason` a `updated_at`.
 `restore_soft_deleted_health_record()` přijme pouze `SOFT_DELETED` bez archive
 timestampu, vyčistí delete timestamp a actora na `NULL`, důvod na `""` a
@@ -2440,9 +2440,10 @@ Soft-delete a restore soft-deleted jsou striktně non-cascade vůči Health
 Materials. Odstraněný rodič je skryje; po obnovení se znovu vydají pouze stále
 aktivní vazby a materiály procházející současnými selectory. Běžné a archivní
 selectory se o odstraněné záznamy nerozšiřují. Produktová vrstva HealthRecord
-fyzicky nemaže a nedostane hard-delete service ani endpoint. Toto rozhodnutí
-nemění model, migrace, DB constraint ani permission a zatím nemá backendovou či
-transportní implementaci.
+fyzicky nemaže a nedostane hard-delete service ani endpoint. Implementované
+služby mají přesně delegující use-cases; model, migrace, DB constraint ani
+permission se nemění a deleted-management read ani transportní vrstva
+nevznikly.
 
 Pro vazbu přílohy modul obdobně vystavuje
 `create_health_record_attachment(*, health_record, data, actor)` a

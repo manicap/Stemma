@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.39
+**Verze:** 0.40
 **Stav:** pracovní návrh  
 **Datum revize:** 29. 9. 2026
 
@@ -188,9 +188,10 @@ jsou pouze presentation pomůcka; autoritu zachovává server a existující
 actor-aware archive/restore use-case. Soft-delete a undelete nejsou součástí
 tohoto UI kontraktu.
 
-ACP-011 schvaluje pro budoucí `soft_delete_health_record()` i
-`restore_soft_deleted_health_record()` existující standardní Django permission
-`health.delete_healthrecord`; nová custom permission nevzniká. Stejná permission
+Implementované operace ACP-011 `soft_delete_health_record()` a
+`restore_soft_deleted_health_record()` používají existující
+standardní Django permission `health.delete_healthrecord`; nová custom
+permission nevzniká. Stejná permission
 spravuje oba směry deletion lifecycle, ale ACP-011 ji nově nepřiděluje žádné
 systémové skupině ani demo účtu a sama nikdy nestačí. Actor musí být čerstvě
 ověřený, uložený a aktivní, projít centrální actor policy, mít content access k
@@ -206,8 +207,8 @@ Actor nebo permission chyba je `PermissionDenied`; skrytý či cizí target je
 Odstraněné záznamy zůstávají mimo běžné čtení, archivní management, editaci a
 related-data API. Budoucí deleted-management read hranice musí samostatně
 vyžadovat `health.delete_healthrecord` i content policy. Produktový hard delete
-HealthRecord není povolen. Backend ani HTTP/UI tohoto kontraktu zatím nejsou
-implementovány.
+HealthRecord není povolen. Backendové služby a přesně delegující use-cases jsou
+implementované; deleted-management read ani HTTP/UI tohoto kontraktu nevznikly.
 
 Zápis `HealthRecordAttachment` používá existující standardní permissions
 `materials.add_healthrecordattachment` a

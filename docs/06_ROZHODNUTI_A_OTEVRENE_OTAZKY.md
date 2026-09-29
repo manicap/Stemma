@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.79
+**Verze:** 0.80
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 29. 9. 2026
 
@@ -149,6 +149,8 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 188. Health lifecycle HTTP/UI používá existující person-centric shell a ACP-010 backend. `/osoby/<person_id>/zdravi/<health_record_id>/archivovat/` potvrzuje a POSTem archivuje aktivní cíl, `/osoby/<person_id>/zdravi/archiv/` zobrazuje samostatný management seznam a `/osoby/<person_id>/zdravi/<health_record_id>/obnovit/` potvrzuje a POSTem obnovuje archivovaný cíl. Actor-aware `list_archived_health_records(*, person, actor)` a `get_archived_health_record_for_management(*, health_record_id, person, actor)` vydají jen archivované, neodstraněné záznamy aktivní dostupné osoby actorovi s `health.change_healthrecord` a odpovídajícím content accessem. GET nemění stav, POST chrání CSRF a deleguje na schválené use-cases; full-page i HTMX tok po archivaci vrací běžný Health seznam a po obnově běžný detail. Běžné selectory zůstávají active-only, archivní seznam nečte Materials a lifecycle operace je nemění kaskádou. Soft-delete a undelete zůstávají odloženy; nevzniká model, migrace, permission ani nové ACP.
 
 189. ACP-011 schvaluje přesný backendový kontrakt ne-idempotentních operací `soft_delete_health_record()` pro `ACTIVE -> SOFT_DELETED` a `restore_soft_deleted_health_record()` pro `SOFT_DELETED -> ACTIVE`; přechody mezi `ARCHIVED` a `SOFT_DELETED` jsou zakázané a kombinovaný stav je neplatný. Obě operace používají existující `health.delete_healthrecord`, čerstvého aktivního actora, centrální Health content policy, aktivní a dostupnou osobu, aktivní typ a fresh locked stav s opakovanou autorizací po zámcích. Soft-delete vyžaduje povinný oříznutý důvod a nastaví delete metadata; restore je vyčistí. `created_by` a business data zůstávají zachované, `updated_at` se mění a Materials zůstávají striktně non-cascade. Běžné, archivní a related-data selectory odstraněný záznam nevydají; budoucí deleted management musí mít samostatnou actor-aware hranici. Produktový hard delete HealthRecord je zakázán. Stabilní kódy jsou `health_record_not_active`, `health_record_not_soft_deleted`, `health_record_lifecycle_invalid` a `health_record_deletion_reason_required`. V tomto řezu nevzniká executable změna, model, migrace, DB constraint, nová permission ani HTTP/UI.
+
+190. Backendový řez implementuje ACP-011 v `health.services` a přesně delegujících `health.use_cases`. Veřejné keyword-only operace provádějí pouze `ACTIVE -> SOFT_DELETED` s povinným oříznutým důvodem a `SOFT_DELETED -> ACTIVE`; používají existující `health.delete_healthrecord`, čerstvého aktivního actora, úplnou content policy, aktivní osobu a typ a uzamčený čerstvý stav s opakovanou autorizací. Zachovávají fail-closed rozhraní, stabilní lifecycle kódy, autorství a business data a jsou striktně non-cascade vůči Materials. Běžná read API odstraněný záznam nadále nevydají. Nevzniká HTTP/UI, deleted-management read, hard delete, model, migrace, DB constraint, permission ani nový ACP.
 
 ## 2. Otevřené otázky
 
