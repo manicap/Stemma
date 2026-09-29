@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.51
-**Stav:** M2 a RC 0.1 dokončeny; Health archive/restore UI implementováno
+**Verze:** 0.52
+**Stav:** M2 a RC 0.1 dokončeny; Health soft-delete kontrakt schválen
 **Datum revize:** 29. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -308,12 +308,25 @@ záznamu; běžný Health list/detail archivované cíle nadále nevydává. Mat
 nemění kaskádou ani se v archivu nenačítají. Soft-delete a undelete zůstávají
 odloženy; nevzniká model, migrace, permission ani ACP.
 
+Třicátý třetí řez je pouze architektonický a dokumentační. ACP-011 schvaluje
+budoucí actor-aware `soft_delete_health_record()` pro
+`ACTIVE -> SOFT_DELETED` a `restore_soft_deleted_health_record()` pro
+`SOFT_DELETED -> ACTIVE`. Obě operace použijí existující
+`health.delete_healthrecord`, úplnou Health content policy, aktivní osobu a typ,
+fresh locked state a fail-closed hranici. Soft-delete vyžaduje povinný oříznutý
+důvod; restore delete metadata vyčistí. Přechody mezi archivovaným a odstraněným
+stavem jsou zakázané, Materials se nemění kaskádou a produktový hard delete
+HealthRecord nevznikne. V tomto řezu není backend, HTTP/UI, model, migrace, DB
+constraint ani nová permission.
+
 #### Následující implementační kroky
 
-1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
-2. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
-   bezpečnými aplikačními kontrakty; soft-delete, Materials zápisy a doručení
-   souborů zůstávají mimo dokončené Health UI řezy.
+1. implementovat samostatný backendový řez ACP-011: obě actor-aware služby,
+   přesně delegující use-cases a focused/security testy, bez HTTP/UI,
+2. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
+3. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
+   bezpečnými aplikačními kontrakty; soft-delete transport, Materials zápisy a
+   doručení souborů zůstávají mimo dokončené Health UI řezy.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a

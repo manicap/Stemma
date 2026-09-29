@@ -1,8 +1,8 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.77
-**Stav:** M2 dokončen; Health archive/restore HTTP/UI implementováno
+**Verze:** 0.78
+**Stav:** M2 dokončen; Health soft-delete kontrakt schválen
 **Datum revize:** 29. 9. 2026
 
 ## 1. Účel
@@ -2381,10 +2381,10 @@ ACP-010 schvaluje nad existujícími poli tři vzájemně výlučné aplikační
 `ACTIVE` (`archived_at` i `deleted_at` jsou `NULL`), `ARCHIVED` (vyplněn je jen
 `archived_at`) a `SOFT_DELETED` (vyplněn je jen `deleted_at`). Současné schéma
 kombinovaný stav databázově nezakazuje, ale nové lifecycle API jej nesmí
-vytvořit. Implementační scope nyní tvoří pouze ne-idempotentní
+vytvořit. Implementační scope ACP-010 tvořily pouze ne-idempotentní
 `archive_health_record()` pro `ACTIVE -> ARCHIVED` a přesně pojmenované
-`restore_archived_health_record()` pro `ARCHIVED -> ACTIVE`; ostatní přechody
-včetně soft-delete a undelete zůstávají odloženy.
+`restore_archived_health_record()` pro `ARCHIVED -> ACTIVE`; ACP-011 níže
+doplňuje samostatný kontrakt soft-delete a obnovy odstraněného záznamu.
 
 Obě implementované actor-aware služby a jejich přesně delegující use-cases
 přijímají explicitní osobu a actora, vyžádají
@@ -2417,6 +2417,32 @@ vydají pouze `ARCHIVED` a neodstraněné záznamy aktivní dostupné osoby acto
 selectory zůstávají active-only. Archivní seznam nečte Materials, POST
 archive/restore je nemění kaskádou a databázová migrace ani nové permission
 nevznikají.
+
+ACP-011 schvaluje nad nezměněným schématem další dvě budoucí actor-aware
+operace. `soft_delete_health_record()` přijme pouze `ACTIVE` a nastaví
+`deleted_at`, `deleted_by`, povinný oříznutý `deletion_reason` a `updated_at`.
+`restore_soft_deleted_health_record()` přijme pouze `SOFT_DELETED` bez archive
+timestampu, vyčistí delete timestamp a actora na `NULL`, důvod na `""` a
+aktualizuje `updated_at`. Obě zachovají `created_by` a všechna business data.
+Přechody mezi `ARCHIVED` a `SOFT_DELETED` jsou zakázané; kombinace obou
+timestampů je neplatný stav odmítaný aplikační vrstvou, přestože jej databáze
+nadále technicky dovoluje.
+
+Obě operace používají existující `health.delete_healthrecord`, fresh locked
+target, osobu a typ a po zámcích opakují úplnou actor/content autorizaci. Actor
+nebo permission chyba je `PermissionDenied`, skrytý či cizí cíl
+`HealthRecord.DoesNotExist`; až autorizované lifecycle chyby používají
+`health_record_not_active`, `health_record_not_soft_deleted` nebo pro kombinovaný
+stav `health_record_lifecycle_invalid`. Prázdný důvod platného soft-delete má
+kód `health_record_deletion_reason_required`.
+
+Soft-delete a restore soft-deleted jsou striktně non-cascade vůči Health
+Materials. Odstraněný rodič je skryje; po obnovení se znovu vydají pouze stále
+aktivní vazby a materiály procházející současnými selectory. Běžné a archivní
+selectory se o odstraněné záznamy nerozšiřují. Produktová vrstva HealthRecord
+fyzicky nemaže a nedostane hard-delete service ani endpoint. Toto rozhodnutí
+nemění model, migrace, DB constraint ani permission a zatím nemá backendovou či
+transportní implementaci.
 
 Pro vazbu přílohy modul obdobně vystavuje
 `create_health_record_attachment(*, health_record, data, actor)` a

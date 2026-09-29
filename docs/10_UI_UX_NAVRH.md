@@ -1,7 +1,7 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.7
+**Verze:** 0.8
 **Stav:** schválený pracovní základ  
 **Datum revize:** 29. 9. 2026
 
@@ -568,9 +568,11 @@ Běžný Health seznam nabízí oprávněnému uživateli samostatnou cestu
 údaje archivovaných záznamů a akci **Obnovit**. Obnova má vlastní potvrzení,
 stav mění pouze POST a po úspěchu otevře full-page nebo HTMX běžný aktivní
 detail s kanonickou URL. Empty state jasně říká, že archiv neobsahuje dostupné
-záznamy. Běžný seznam a detail archivované záznamy nezobrazují. Soft-delete
-HealthRecord je samostatné odložené rozhodnutí. Celá osoba se nikdy běžně
-nemaže, ale pouze archivuje.
+záznamy. Běžný seznam a detail archivované záznamy nezobrazují. ACP-011
+schvaluje backendový kontrakt soft-delete a obnovy odstraněného HealthRecord,
+ale jejich URL, deleted management, potvrzení, HTMX, redirecty a tlačítka zatím
+nejsou navrženy ani implementovány. Celá osoba se nikdy běžně nemaže, ale pouze
+archivuje.
 
 Archivace osoby:
 

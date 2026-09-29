@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.48
+**Verze:** 0.49
 **Stav:** pracovní návrh  
 **Datum revize:** 29. 9. 2026
 
@@ -662,8 +662,23 @@ Vydává jen `ARCHIVED`, nikoli
 soft-deleted záznamy konkrétní aktivní a dostupné osoby, vyžaduje aktivního
 actora s `health.change_healthrecord` a u každého výsledku znovu uplatňuje
 centrální content policy. Nečte přílohy ani zdroje. Běžné Health list/detail API
-archivované záznamy nadále nevydává. Soft-delete a undelete nejsou
-implementovány a vyžadují samostatný řez.
+archivované záznamy nadále nevydává.
+
+ACP-011 schvaluje pro navazující backendový řez ne-idempotentní
+`soft_delete_health_record()` pouze pro `ACTIVE -> SOFT_DELETED` a
+`restore_soft_deleted_health_record()` pouze pro `SOFT_DELETED -> ACTIVE`.
+Obě operace vyžadují existující `health.delete_healthrecord`, aktivního actora,
+aktivní a dostupnou osobu, content access, aktivní typ a čerstvý uzamčený stav.
+Soft-delete vyžaduje povinný oříznutý důvod; restore vyčistí všechna delete
+metadata. Přechody mezi archivovaným a odstraněným stavem jsou zakázané a
+kombinovaný stav je neplatný. Operace zachovají business data i `created_by`,
+aktualizují `updated_at` a nemění kaskádou přílohy, zdroje ani vazby.
+
+Odstraněný záznam se nevydává běžným listem, detailem, archivním managementem,
+editací ani related-data API. Případná budoucí deleted-management read hranice
+musí být samostatná, actor-aware a omezená stejnou permission a content policy;
+běžné selectory se nerozšíří. Produktová aplikační vrstva HealthRecord fyzicky
+nemaže. Backend, HTTP/UI a auditní historie zatím nejsou implementovány.
 
 Konkrétní URL jsou `/osoby/<person_id>/zdravi/archiv/`,
 `/osoby/<person_id>/zdravi/<health_record_id>/archivovat/` a

@@ -1,7 +1,7 @@
 # Architektonická rozhodnutí
 
 **Dokument:** 12  
-**Verze:** 0.8
+**Verze:** 0.9
 **Stav:** platný registr rozhodnutí  
 **Datum vytvoření:** 15. 7. 2026  
 **Datum revize:** 29. 9. 2026
@@ -470,3 +470,123 @@ POST endpoint, HTMX odpověď, redirect, tlačítko ani potvrzovací dialog.
   nevznikají,
 - soft-delete a jeho případná obnova zůstávají explicitně odloženým
   architektonickým rozhodnutím.
+
+---
+
+## ACP-011 — Měkké odstranění a obnovení odstraněného zdravotního záznamu
+
+**Stav:** Schváleno
+
+### Kontext
+
+ACP-010 rozlišil pro `HealthRecord` stavy `ACTIVE`, `ARCHIVED` a
+`SOFT_DELETED`, schválil však pouze archivaci a obnovu archivovaného záznamu.
+Následný audit potvrdil, že společný `LifecycleModel` poskytuje technická delete
+metadata, ale projekt nemá obecnou soft-delete nebo undelete operaci, permission
+kontrakt ani bezpečnou read hranici odstraněných zdravotních záznamů. Bez
+samostatného rozhodnutí by implementace musela domýšlet stavové přechody,
+oprávnění, chybové rozhraní, vazbu na osobu a dopad na Materials.
+
+### Rozhodnutí
+
+ACP-011 doplňuje stavový model ACP-010 o dvě přesně pojmenované,
+ne-idempotentní operace:
+
+- `soft_delete_health_record(...)` provádí pouze
+  `ACTIVE -> SOFT_DELETED`,
+- `restore_soft_deleted_health_record(...)` provádí pouze
+  `SOFT_DELETED -> ACTIVE`.
+
+Přechody `ARCHIVED -> SOFT_DELETED` a `SOFT_DELETED -> ARCHIVED` nejsou
+podporované. Archive operace z ACP-010 a soft-delete operace z ACP-011 se
+neslučují pod obecný název `restore` nebo `delete`. Nové aplikační API nikdy
+nesmí vytvořit stav, v němž jsou současně vyplněny `archived_at` a `deleted_at`.
+Současné schéma může tuto kombinaci stále obsahovat jako legacy nebo přímým ORM
+zápisem vytvořený neplatný stav; Health aplikační vrstva jej odmítne fail-closed.
+
+Obě operace vyžadují čerstvě načteného uloženého aktivního actora se stávající
+standardní Django permission `health.delete_healthrecord`. Nové custom
+oprávnění nevzniká a toto rozhodnutí permission nově nepřiděluje systémové
+skupině ani demo účtu. Permission sama nestačí: actor musí projít centrální
+actor a Health content policy, cílová `Person` musí být aktivní a actorovi
+přístupná, záznam musí patřit právě této osobě a jeho `HealthRecordType` musí být
+aktivní. Samotné `is_staff` ani autorství přístup nerozšiřují; aktivní superuser
+se řídí stávající centrální permission policy. Archivovaná, měkce odstraněná
+nebo neviditelná osoba a neaktivní typ obě operace uzavřou bez speciálního
+bypassu.
+
+Operace proběhnou atomicky nad čerstvým uzamčeným záznamem, osobou a typem.
+Po získání zámků znovu ověří actora, permission, vazbu na osobu, content policy,
+typ a lifecycle preconditions. Interní lifecycle-aware loader nebo rovnocenná
+hranice smí načíst skrytý fyzický řádek pouze v předem autorizovaném kontextu
+konkrétní osoby. Actor nebo permission chyba je `PermissionDenied`; skrytý,
+cizí, fyzicky chybějící nebo jinak neautorizovatelný cíl je jednotně
+`HealthRecord.DoesNotExist`. Teprve po bezpečné autorizaci se chybné lifecycle
+preconditions vracejí jako `ValidationError`:
+
+- `health_record_not_active`, pokud soft-delete nedostal přesně `ACTIVE`,
+- `health_record_not_soft_deleted`, pokud restore soft-deleted nedostal přesně
+  `SOFT_DELETED`,
+- `health_record_lifecycle_invalid`, pokud jsou současně vyplněny archive i
+  delete timestampy.
+
+Soft-delete vyžaduje povinný `deletion_reason`. Po oříznutí vnějšího whitespace
+nesmí být prázdný; jinak po bezpečné autorizaci platného aktivního cíle vznikne
+`ValidationError` s kódem `health_record_deletion_reason_required`. Operace
+nastaví `deleted_at`, `deleted_by` na čerstvého actora, oříznutý důvod a
+`updated_at`. Zachová `created_by`, obsah, access, verification, neúplné datum,
+místo a ostatní business data.
+
+Restore soft-deleted přijímá pouze stav s prázdným `archived_at` a vyplněným
+`deleted_at`. Vyčistí `deleted_at` a `deleted_by` na `NULL`, nastaví
+`deletion_reason = ""` a aktualizuje `updated_at`; `created_by` a business data
+zachová. Delete metadata popisují jen aktuální soft-delete stav, nikoli auditní
+historii. Historie přechodů patří do budoucí auditní infrastruktury.
+
+Obě operace jsou striktně non-cascade vůči `HealthRecordAttachment`,
+`HealthRecordSource`, `Attachment`, `Source` a jejich lifecycle polím. Po
+soft-delete je skryje běžná viditelnost rodiče. Po obnovení se mohou znovu vydat
+jen stále aktivní vazby a materiály, které projdou svými současnými selectory;
+automatická obnova odstraněných vazeb nevzniká.
+
+`SOFT_DELETED` se nevydává běžným Health listem, detailem, archivním seznamem,
+editací ani related-data API. Budoucí obnova může použít pouze samostatnou
+actor-aware deleted-management read hranici omezenou
+`health.delete_healthrecord` a plnou content policy; běžné selectory se kvůli
+tomu nerozšíří.
+
+`HealthRecord` se v produktové aplikační vrstvě fyzicky nemaže. Nevznikne
+veřejná hard-delete service, use-case ani HTTP/UI endpoint a soft-delete nesmí
+být implementován přes ORM `.delete()`. Technické možnosti současného modelu a
+databáze se tímto rozhodnutím nemění; model override ani DB constraint nejsou
+součástí tohoto řezu.
+
+### Důvod
+
+- jednoznačně oddělit archivaci historicky platného záznamu od odstranění,
+- umožnit opravu chybného odstranění bez směšování archive a delete metadata,
+- využít existující deletion-management permission bez nového permission
+  subsystému,
+- zachovat centrální Health content policy a neprozrazující direct-object
+  hranici,
+- zabránit TOCTOU a skrytému cascade do sdílených materiálů,
+- zakázat produktový hard delete citlivých zdravotních údajů.
+
+### Nevýhody
+
+- stejná permission dovoluje soft-delete i jeho obnovu, takže tyto dvě
+  capability nyní nelze přidělovat odděleně,
+- bezpečné načtení odstraněného cíle vyžaduje zvláštní citlivou interní hranici
+  a rozsáhlé autorizační regresní testy,
+- databáze nadále technicky nezakazuje kombinovaný neplatný stav,
+- vyčištění delete metadata při obnově samo nezachovává historii přechodů.
+
+### Dopady
+
+- navazující první implementační řez bude pouze backendový a doplní obě služby,
+  přesně delegující actor-aware use-cases a focused/security testy,
+- nevzniká nová permission, model, migrace, DB constraint ani auditní aplikace,
+- URL, POST endpointy, deleted seznam, potvrzení, HTMX, redirecty a tlačítka
+  zůstávají samostatným pozdějším transportním/UI rozhodnutím,
+- ACP-010 zůstává autoritou pro archive/restore archived; ACP-011 nahrazuje jen
+  jeho odklad soft-delete a případné obnovy.

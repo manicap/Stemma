@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.38
+**Verze:** 0.39
 **Stav:** pracovní návrh  
 **Datum revize:** 29. 9. 2026
 
@@ -175,9 +175,7 @@ osoby a nesoulad záznamu s danou osobou. Až po bezpečné autorizaci cíle sm�
 ne-idempotentní přechod vrátit `ValidationError` s kódem
 `health_record_not_active` pro archive nebo `health_record_not_archived` pro
 restore archived. Archivovaný cíl proto načítá zvláštní actor-aware interní
-loader; běžný health selector jej záměrně nevydává. Soft-delete má mít vlastní
-budoucí operaci a permission teprve projde samostatným rozhodnutím;
-`health.delete_healthrecord` je pouze kandidát, ne schválené oprávnění.
+loader; běžný health selector jej záměrně nevydává.
 
 Archivní HTTP/UI management používá stejné oprávnění a policy. Samostatné
 actor-aware `list_archived_health_records()` a
@@ -189,6 +187,27 @@ nemůže archiv spravovat a aktivní superuser prochází centrální policy. Tl
 jsou pouze presentation pomůcka; autoritu zachovává server a existující
 actor-aware archive/restore use-case. Soft-delete a undelete nejsou součástí
 tohoto UI kontraktu.
+
+ACP-011 schvaluje pro budoucí `soft_delete_health_record()` i
+`restore_soft_deleted_health_record()` existující standardní Django permission
+`health.delete_healthrecord`; nová custom permission nevzniká. Stejná permission
+spravuje oba směry deletion lifecycle, ale ACP-011 ji nově nepřiděluje žádné
+systémové skupině ani demo účtu a sama nikdy nestačí. Actor musí být čerstvě
+ověřený, uložený a aktivní, projít centrální actor policy, mít content access k
+aktivní osobě i HealthRecord a pracovat se záznamem patřícím právě této osobě a
+s aktivním typem. `is_staff` ani autorství přístup nerozšiřují a aktivní
+superuser se řídí centrální policy.
+
+Soft-delete přijímá pouze `ACTIVE`; restore soft-deleted pouze přesný
+`SOFT_DELETED` bez archive metadata. Archivovaná, odstraněná či neviditelná
+osoba, neaktivní typ, cizí záznam nebo neautorizovatelný cíl operaci uzavřou.
+Actor nebo permission chyba je `PermissionDenied`; skrytý či cizí target je
+`HealthRecord.DoesNotExist`. Chybný stav lze rozlišit až po bezpečné autorizaci.
+Odstraněné záznamy zůstávají mimo běžné čtení, archivní management, editaci a
+related-data API. Budoucí deleted-management read hranice musí samostatně
+vyžadovat `health.delete_healthrecord` i content policy. Produktový hard delete
+HealthRecord není povolen. Backend ani HTTP/UI tohoto kontraktu zatím nejsou
+implementovány.
 
 Zápis `HealthRecordAttachment` používá existující standardní permissions
 `materials.add_healthrecordattachment` a

@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 0.88 – 29. 9. 2026
+
+- schváleno ACP-011 s přesným HealthRecord soft-delete a restore-soft-deleted
+  kontraktem bez produkční implementace,
+- stavový model nově povoluje pouze `ACTIVE -> SOFT_DELETED -> ACTIVE`; přechody
+  mezi `ARCHIVED` a `SOFT_DELETED` zůstávají zakázané a kombinovaný stav je
+  neplatný,
+- obě operace používají existující `health.delete_healthrecord`, centrální
+  actor/content policy, aktivní osobu a typ, fresh locked state a fail-closed
+  chybovou hranici,
+- soft-delete vyžaduje povinný oříznutý důvod; restore delete metadata vyčistí,
+  `created_by` a business data zachová a obě operace aktualizují `updated_at`,
+- Health Materials zůstávají striktně non-cascade, běžné selectory se o deleted
+  záznamy nerozšiřují a produktový hard delete HealthRecord je zakázán,
+- backend, read management a HTTP/UI zůstávají navazujícími samostatnými řezy;
+  nevzniká executable změna, model, migrace, DB constraint ani nová permission.
+
 ## Verze 0.87 – 29. 9. 2026
 
 - přidán person-centric HTTP/UI tok archivace aktivního a obnovy archivovaného
