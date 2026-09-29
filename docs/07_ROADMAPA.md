@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.48
-**Stav:** M2 a RC 0.1 dokončeny; workflow gate upřesněna ACP-009
+**Verze:** 0.49
+**Stav:** M2 a RC 0.1 dokončeny; Health lifecycle kontrakt schválen ACP-010
 **Datum revize:** 29. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -279,12 +279,24 @@ přílohy ani zdroje. Lokální demo Správce získává potřebné existující
 permissions přímo na účtu bez změny skupinové policy. Nevzniká migrace, nové
 oprávnění, Materials zápis, download, API ani ACP.
 
+Třicátý řez je pouze architektonický a dokumentační. ACP-010 schvaluje pro
+`HealthRecord` stavy `ACTIVE`, `ARCHIVED` a `SOFT_DELETED`, ale k navazující
+implementaci uvolňuje jen ne-idempotentní `ACTIVE -> ARCHIVED` a
+`ARCHIVED -> ACTIVE`. Archive i jednoznačně pojmenované restore archived použijí
+existující `health.change_healthrecord`, úplnou actor-aware health policy,
+aktivní osobu a typ, fresh locked state a neprozrazující chybovou hranici.
+Přílohy a zdroje se nemění kaskádou. Soft-delete, undelete a transportní/UI
+kontrakt zůstávají samostatnými budoucími řezy. V tomto kroku nevzniká kód,
+migrace ani permission.
+
 #### Následující implementační kroky
 
 1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
-2. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
-   bezpečnými aplikačními kontrakty; lifecycle, Materials zápisy a doručení
-   souborů nejsou součástí dokončeného create/update řezu.
+2. implementovat backend archivace a `restore_archived_health_record()` jako
+   samostatný řez přesně podle ACP-010, bez soft-delete a transportu,
+3. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
+   bezpečnými aplikačními kontrakty; lifecycle transport, Materials zápisy a
+   doručení souborů nejsou součástí dokončeného create/update řezu.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a

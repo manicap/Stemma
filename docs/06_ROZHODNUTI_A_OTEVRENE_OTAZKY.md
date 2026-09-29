@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.75
+**Verze:** 0.76
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 29. 9. 2026
 
@@ -141,6 +141,8 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 184. Samostatný Health create/update UI řez používá existující person-centric shell, HTMX target a actor-aware `create_health_record()` a `update_health_record()`. Create URL určuje osobu a nepřijímá ji z formuláře; obecný actor-aware výběr míst neexistuje, proto create místo nenastavuje a update zachovává dosavadní místo. Formulář mění pouze obsahová, access, verification a neúplná časová pole, nabízí aktivní typy a nejvýše takovou zdravotní access úroveň, kterou actor smí vidět. Server vyžaduje existující standardní `health.add_healthrecord` nebo `health.change_healthrecord` spolu s centralizovaným obsahovým přístupem; skrytý, cizí a lifecycle-neplatný update cíl zůstává jednotně nedostupný. Přílohy, zdroje, soubory, autorství a lifecycle nejsou součástí zápisu. Lokální DEBUG-only demo Správce získává tato dvě existující modelová oprávnění přímo na účtu, nikoli změnou systémové skupiny. Nevzniká model, migrace, nové oprávnění, API ani ACP.
 
 185. ACP-009 mění validační a review orchestraci ACP-006 na stupňovitou invalidačně řízenou gate. PASS zůstává platný do změny relevantního vstupu, drahé kontroly běží nad stabilním diffem a klasifikace dopadu určuje testy i review; nejasný nebo shared dopad používá přísnější bránu. Přísné security oblasti a finální acceptance gate RC 0.1 se nemění. Závazné úrovně 0–5 a matice jsou v `AGENTS.md`; samostatný dokument 13 ani automatizační nástroje v tomto řezu nevznikají.
+
+186. ACP-010 schvaluje pro `HealthRecord` vzájemně výlučné aplikační stavy `ACTIVE`, `ARCHIVED` a `SOFT_DELETED`, ale nyní pouze ne-idempotentní přechody `ACTIVE -> ARCHIVED` přes `archive_health_record()` a `ARCHIVED -> ACTIVE` přes `restore_archived_health_record()`. Obě operace použijí existující `health.change_healthrecord`, centrální actor/content policy, aktivní osobu a typ, čerstvý uzamčený stav a fail-closed rozhraní; nesprávný stav po bezpečné autorizaci nese kód `health_record_not_active` nebo `health_record_not_archived`. Metadata archivace se při obnovení čistí, `created_by` se nemění a přílohy ani zdroje se nemění kaskádou. Soft-delete, undelete a transport zůstávají odloženy; nevzniká migrace ani nové oprávnění.
 
 ## 2. Otevřené otázky
 

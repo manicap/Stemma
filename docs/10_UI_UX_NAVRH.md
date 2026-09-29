@@ -1,9 +1,9 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.5
+**Verze:** 0.6
 **Stav:** schválený pracovní základ  
-**Datum revize:** 28. 9. 2026
+**Datum revize:** 29. 9. 2026
 
 ## 1. Účel dokumentu
 
@@ -548,14 +548,20 @@ Tlačítko **Upravit osobu** v záhlaví upravuje základní údaje osoby a záh
 
 ## 17. Editace jednotlivých záznamů
 
-U jednotlivých položek v kartách jsou pro oprávněného uživatele malé ikony:
+U jednotlivých položek v kartách mohou být podle schváleného doménového
+kontraktu pro oprávněného uživatele dostupné malé akce, například:
 
 - Upravit,
 - Odstranit.
 
 Před odstraněním se vždy zobrazí potvrzovací dialog.
 
-Jednotlivé záznamy se technicky odstraňují měkce. Celá osoba se nikdy běžně nemaže, ale pouze archivuje.
+Lifecycle jednotlivých záznamů se řídí jejich doménovým kontraktem; nelze obecně
+zaměňovat archivaci a měkké odstranění. Pro `HealthRecord` ACP-010 schvaluje
+samostatnou archivaci a obnovení archivovaného záznamu, ale jejich URL,
+tlačítka, potvrzení, redirect a HTMX chování zatím nejsou navrženy. Soft-delete
+HealthRecord je samostatné odložené rozhodnutí. Celá osoba se nikdy běžně
+nemaže, ale pouze archivuje.
 
 Archivace osoby:
 

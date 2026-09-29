@@ -1,7 +1,7 @@
 # Architektonická rozhodnutí
 
 **Dokument:** 12  
-**Verze:** 0.6
+**Verze:** 0.7
 **Stav:** platný registr rozhodnutí  
 **Datum vytvoření:** 15. 7. 2026  
 **Datum revize:** 29. 9. 2026
@@ -363,3 +363,109 @@ uzavření release nebo milníku.
   závazný kontrakt v `AGENTS.md`, tento registr a existující procesní dokumenty,
 - automatizace gate, CI, test tags, Ruff a nový test runner zůstávají možnými
   budoucími optimalizacemi a nejsou součástí tohoto rozhodnutí ani řezu.
+
+---
+
+## ACP-010 — Archivace a obnovení archivovaného zdravotního záznamu
+
+**Stav:** Schváleno
+
+### Kontext
+
+Společný `LifecycleModel` poskytuje technická pole archivace a měkkého
+odstranění, ale neurčuje povolené přechody jednotlivých domén. `HealthRecord`
+dosud nemá zapisovací lifecycle API a běžné actor-aware selectory archivované i
+měkce odstraněné záznamy záměrně skrývají. Bez výslovného kontraktu by budoucí
+implementace musela domýšlet význam obnovy, oprávnění, chybové rozhraní,
+concurrency i dopad na zdravotní přílohy a zdroje.
+
+### Rozhodnutí
+
+Obecným principem zůstává, že archivace a měkké odstranění jsou odlišné
+lifecycle operace a metadata aktuálního stavu nejsou historickým auditním
+logem. Pro `HealthRecord` se schvalují tři vzájemně výlučné logické stavy:
+
+- `ACTIVE`: `archived_at IS NULL` a `deleted_at IS NULL`,
+- `ARCHIVED`: `archived_at IS NOT NULL` a `deleted_at IS NULL`,
+- `SOFT_DELETED`: `archived_at IS NULL` a `deleted_at IS NOT NULL`.
+
+Nové health lifecycle API nesmí vytvořit stav s oběma časovými poli
+neprázdnými, přestože jej současné databázové schéma technicky nezakazuje.
+Nyní jsou schváleny pouze ne-idempotentní přechody `ACTIVE -> ARCHIVED` přes
+`archive_health_record(...)` a `ARCHIVED -> ACTIVE` přes jednoznačně nazvané
+`restore_archived_health_record(...)`. Obecné neurčité označení `restore` se
+pro health nepoužije.
+
+Obě budoucí operace musí přijmout explicitní kontext osoby a actora. Vyžadují
+čerstvě načteného uloženého aktivního actora se stávající permission
+`health.change_healthrecord`, platnou aktivní a actorovi dostupnou osobu,
+záznam patřící právě této osobě, obsahový přístup podle centralizované health
+policy a aktivní `HealthRecordType`. Samotná modelová permission, autorství ani
+`is_staff` přístup nerozšiřují; aktivní superuser se řídí stávající centrální
+policy. Archivovaná, měkce odstraněná nebo neviditelná osoba lifecycle zápis
+neumožní.
+
+Operace musí proběhnout atomicky nad čerstvým uzamčeným řádkem a před zápisem
+znovu ověřit authorization i lifecycle preconditions. Interní lifecycle-aware
+loader nebo rovnocenná bezpečná hranice smí načíst skrytý fyzický řádek jen v
+již autorizovaném kontextu konkrétní osoby; běžný selector není loaderem
+archivovaného cíle. Actor nebo chybějící permission vedou k
+`PermissionDenied`. Skrytý, cizí, fyzicky chybějící nebo jinak
+neautorizovatelný cíl vede jednotně k `HealthRecord.DoesNotExist`; stejně se
+na této lifecycle hranici normalizuje neplatný, neaktivní nebo nepřístupný
+kontext osoby a nesoulad osoby se záznamem. Teprve po
+bezpečné autorizaci cíle vrací nesprávný výchozí stav `ValidationError` se
+stabilním kódem `health_record_not_active` pro archive nebo
+`health_record_not_archived` pro restore archived. Tím se existence cíle
+neprozrazuje.
+
+Archive smí měnit pouze `archived_at`, `archived_by`, volitelný
+`archive_reason` a standardní `updated_at`. Důvod se ukládá po oříznutí
+vnějšího whitespace; chybějící nebo prázdný důvod je `""`.
+`restore_archived_health_record(...)` přijímá pouze přesně stav `ARCHIVED`,
+nastaví `archived_at = NULL`, `archived_by = NULL`, `archive_reason = ""` a
+aktualizuje `updated_at`. `archived_by` označuje actora aktuální archivace,
+nikoli historii; `created_by` se nikdy nemění.
+
+Oba přechody jsou vůči `HealthRecordAttachment`, `HealthRecordSource`,
+`Attachment` a `Source` striktně non-cascade: nemění jejich pole ani lifecycle,
+nevytvářejí a nemažou vazby. Po archivaci běžné health selectory skryjí rodiče,
+a proto přes běžnou prezentaci také jeho materiály. Po obnovení se záznam i
+nezměněné aktivní vazby znovu řídí standardními selectory.
+
+Přechody `ACTIVE -> SOFT_DELETED`, `ARCHIVED -> SOFT_DELETED`,
+`SOFT_DELETED -> ACTIVE` a `SOFT_DELETED -> ARCHIVED` nejsou schváleným
+implementačním scope. Soft-delete bude případná samostatná operace s vlastním
+názvem, permission a rozhodnutím o vratnosti; `health.delete_healthrecord` je
+jen předběžný kandidát, nikoli schválený kontrakt. Toto ACP nedefinuje URL,
+POST endpoint, HTMX odpověď, redirect, tlačítko ani potvrzovací dialog.
+
+### Důvod
+
+- oddělit archivaci od měkkého odstranění a odstranit nejednoznačnost obnovy,
+- zachovat existující centralizovanou health access policy i fail-closed
+  chování přímých identifikátorů,
+- zabránit konfliktům a TOCTOU při souběžných lifecycle zápisech,
+- zachovat přílohy a zdroje jako samostatné objekty bez skrytého cascade,
+- připravit přesný backendový kontrakt bez předčasného návrhu transportu.
+
+### Nevýhody
+
+- vzájemná výlučnost stavů zůstává do případného samostatně schváleného
+  databázového constraintu vynucená pouze novým aplikačním API; starší přímý
+  ORM zápis může stále vytvořit kombinovaný neplatný stav,
+- bezpečný lifecycle-aware loader skrytého cíle zvyšuje citlivost a testovací
+  náročnost backendové implementace oproti použití běžného selectoru.
+
+### Dopady
+
+- navazující backendový řez musí vytvořit actor-aware use-cases a bezpečnou
+  interní hranici pro skrytý lifecycle target podle tohoto kontraktu,
+- běžné create/update Health UI ani read selectory se tímto dokumentačním
+  rozhodnutím nemění,
+- historie přechodů bude patřit do budoucí auditní infrastruktury, nikoli do
+  aktuálních archive metadata,
+- databázový constraint, migrace, nové permission, HTTP a UI v tomto řezu
+  nevznikají,
+- soft-delete a jeho případná obnova zůstávají explicitně odloženým
+  architektonickým rozhodnutím.

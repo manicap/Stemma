@@ -1,5 +1,23 @@
 # Historie změn dokumentace
 
+## Verze 0.85 – 29. 9. 2026
+
+- schváleno ACP-010 s přesným actor-aware kontraktem archivace a obnovení
+  archivovaného `HealthRecord`,
+- lifecycle rozlišuje vzájemně výlučné `ACTIVE`, `ARCHIVED` a `SOFT_DELETED`,
+  ale nyní povoluje pouze ne-idempotentní přechody `ACTIVE -> ARCHIVED` a
+  `ARCHIVED -> ACTIVE`,
+- archive i restore archived používají existující
+  `health.change_healthrecord`, aktivní osobu a typ, centralizovanou health
+  policy, fresh locked state a fail-closed rozhraní bez existence leak,
+- sjednoceny stabilní validační kódy `health_record_not_active` a
+  `health_record_not_archived`, pravidla archive metadata, `updated_at`,
+  zachování `created_by` a striktní non-cascade chování příloh a zdrojů,
+- soft-delete, undelete a HTTP/HTMX/UI transport zůstávají odloženy; opravena
+  příliš obecná UI formulace, která zaměňovala lifecycle všech záznamů s
+  měkkým odstraněním,
+- změna je pouze dokumentační: nevzniká executable kód, migrace ani permission.
+
 ## Verze 0.84 – 29. 9. 2026
 
 - schváleno ACP-009, které upřesňuje validační a review část ACP-006 zavedením

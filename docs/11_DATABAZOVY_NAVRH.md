@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.74
-**Stav:** M2 dokončen; Health create/update UI dokončeno
-**Datum revize:** 28. 9. 2026
+**Verze:** 0.75
+**Stav:** M2 dokončen; Health archive/restore-archived kontrakt schválen
+**Datum revize:** 29. 9. 2026
 
 ## 1. Účel
 
@@ -2376,6 +2376,36 @@ Osoba je vždy odvozena z URL; formulář ji ani místo nevystavuje. Create pře
 Formulář nemění autorství, timestampy, lifecycle ani vazby Materials. Aktivní
 typy načítá pouze pro volbu uživatele a povolené access hodnoty omezuje
 centralizovanou health policy. Žádná modelová nebo migrační změna nevzniká.
+
+ACP-010 schvaluje nad existujícími poli tři vzájemně výlučné aplikační stavy:
+`ACTIVE` (`archived_at` i `deleted_at` jsou `NULL`), `ARCHIVED` (vyplněn je jen
+`archived_at`) a `SOFT_DELETED` (vyplněn je jen `deleted_at`). Současné schéma
+kombinovaný stav databázově nezakazuje, ale nové lifecycle API jej nesmí
+vytvořit. Implementační scope nyní tvoří pouze ne-idempotentní
+`archive_health_record()` pro `ACTIVE -> ARCHIVED` a přesně pojmenované
+`restore_archived_health_record()` pro `ARCHIVED -> ACTIVE`; ostatní přechody
+včetně soft-delete a undelete zůstávají odloženy.
+
+Oba budoucí actor-aware use-cases přijmou explicitní osobu a actora, vyžádají
+`health.change_healthrecord` a v transakci načtou čerstvý záznam se zámkem.
+Před zápisem znovu ověří aktivního uloženého actora, centrální actor/content
+policy, aktivní a dostupnou osobu, přesnou vazbu záznamu na tuto osobu,
+health access a aktivní `HealthRecordType`. Lifecycle-aware interní loader smí
+obejít běžné skrytí archivovaného řádku pouze pro toto bezpečné vyhodnocení.
+Actor či permission chyba je `PermissionDenied`; skrytý, cizí, chybějící nebo
+jinak neautorizovatelný target je `HealthRecord.DoesNotExist`. Teprve
+autorizovaný nesprávný stav je `ValidationError` s kódem
+`health_record_not_active` nebo `health_record_not_archived`.
+
+Archive nastaví aktuální čas a actora archivace, uloží volitelný oříznutý důvod
+nebo `""` a aktualizuje `updated_at`. Restore archived vyčistí čas i actora na
+`NULL`, důvod na `""` a aktualizuje `updated_at`. `created_by` a všechna ostatní
+business data zůstávají beze změny. Operace jsou non-cascade vůči
+`HealthRecordAttachment`, `HealthRecordSource`, `Attachment` i `Source`; po
+archivaci je skryje běžná viditelnost rodiče a po obnovení se nezměněné aktivní
+vazby znovu posoudí standardními selectory. Archivovaná, odstraněná nebo
+neviditelná osoba operaci vždy uzavře. Transportní URL, formuláře a HTMX nejsou
+součástí tohoto kontraktu a databázová migrace ani nové permission nevznikají.
 
 Pro vazbu přílohy modul obdobně vystavuje
 `create_health_record_attachment(*, health_record, data, actor)` a

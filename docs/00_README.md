@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.49
-**Stav:** RC 0.1 a M2 dokončeny; workflow gate upřesněna ACP-009
+**Verze dokumentace:** 0.50
+**Stav:** RC 0.1 a M2 dokončeny; Health lifecycle kontrakt schválen ACP-010
 **Datum revize:** 29. 9. 2026
 
 ## Účel balíčku
@@ -39,6 +39,26 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.50
+
+Verze 0.50 schvaluje přesný kontrakt archivace a obnovení archivovaného
+zdravotního záznamu bez
+produkční implementace:
+
+- ACP-010 rozlišuje vzájemně výlučné stavy `ACTIVE`, `ARCHIVED` a
+  `SOFT_DELETED`; nyní schvaluje pouze `ACTIVE -> ARCHIVED` a jednoznačné
+  `ARCHIVED -> ACTIVE`,
+- obě budoucí ne-idempotentní operace použijí existující
+  `health.change_healthrecord`, úplnou actor-aware health policy, aktivní osobu
+  a typ a čerstvý uzamčený stav,
+- fail-closed kontrakt rozlišuje `PermissionDenied`, neprozrazující
+  `HealthRecord.DoesNotExist` a až po autorizaci stabilní validační kódy
+  `health_record_not_active` a `health_record_not_archived`,
+- archive metadata popisují jen aktuální stav, při obnovení se čistí;
+  `created_by`, business data, přílohy a zdroje zůstávají beze změny,
+- soft-delete, undelete a HTTP/HTMX/UI transport zůstávají odloženy; nevzniká
+  executable změna, migrace ani nové permission.
 
 ## Stav verze 0.49
 
