@@ -11,16 +11,24 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
 from common.choices import AccessLevel
-from health.forms import HealthRecordForm
+from health.forms import (
+    HealthRecordArchiveForm,
+    HealthRecordForm,
+    HealthRecordRestoreForm,
+)
 from health.models import HealthRecord
 from health.permissions import can_view_health_record_access
 from health.services import HealthRecordInput
 from health.use_cases import (
+    archive_health_record,
     create_health_record,
+    get_archived_health_record_for_management,
     get_health_record_detail,
+    list_archived_health_records,
     list_health_record_attachments,
     list_health_record_sources,
     list_health_records,
+    restore_archived_health_record,
     update_health_record,
 )
 from places.models import Place
@@ -138,6 +146,22 @@ def person_health(request: HttpRequest, person_id: int) -> HttpResponse:
         person=presentation.person,
         actor=request.user,
     )
+    return _render_health_list(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        health_records=health_records,
+    )
+
+
+def _render_health_list(
+    request: HttpRequest,
+    *,
+    presentations: tuple[PersonPresentation, ...],
+    presentation: PersonPresentation,
+    health_records,
+    archived: bool = False,
+) -> HttpResponse:
     return _render_person_content(
         request,
         presentations=presentations,
@@ -150,6 +174,38 @@ def person_health(request: HttpRequest, person_id: int) -> HttpResponse:
                 request,
                 permission="health.add_healthrecord",
             ),
+            "can_manage_health_archive": _current_actor_can_write_health(
+                request,
+                permission="health.change_healthrecord",
+            ),
+            "health_record_archived": archived,
+        },
+    )
+
+
+@require_GET
+def person_health_archive(
+    request: HttpRequest,
+    person_id: int,
+) -> HttpResponse:
+    """Zobraz bezpečný management seznam archivovaných health záznamů."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    try:
+        archived_records = list_archived_health_records(
+            person=presentation.person,
+            actor=request.user,
+        )
+    except Person.DoesNotExist as exc:
+        raise Http404("Osoba nebyla nalezena.") from exc
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_health_archive.html",
+        context={
+            "active_person_tab": "health",
+            "archived_health_records": archived_records,
         },
     )
 
@@ -225,6 +281,172 @@ def _render_health_record_detail(
             ),
             "health_record_saved": saved,
         },
+    )
+
+
+def _archived_health_record_or_404(
+    request: HttpRequest,
+    *,
+    person: Person,
+    health_record_id: int,
+) -> HealthRecord:
+    try:
+        return get_archived_health_record_for_management(
+            health_record_id=health_record_id,
+            person=person,
+            actor=request.user,
+        )
+    except (Person.DoesNotExist, HealthRecord.DoesNotExist) as exc:
+        raise Http404("Zdravotní záznam nebyl nalezen.") from exc
+
+
+def _render_health_lifecycle_confirmation(
+    request: HttpRequest,
+    *,
+    presentations: tuple[PersonPresentation, ...],
+    presentation: PersonPresentation,
+    health_record: HealthRecord,
+    form: HealthRecordArchiveForm | HealthRecordRestoreForm,
+    mode: str,
+) -> HttpResponse:
+    _prepare_accessible_form_errors(form)
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name=(
+            "people/partials/health_record_archive_confirm.html"
+            if mode == "archive"
+            else "people/partials/health_record_restore_confirm.html"
+        ),
+        context={
+            "active_person_tab": "health",
+            "selected_health_record": health_record,
+            "health_lifecycle_form": form,
+        },
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def person_health_record_archive(
+    request: HttpRequest,
+    person_id: int,
+    health_record_id: int,
+) -> HttpResponse:
+    """Potvrď a proveď archivaci aktivního zdravotního záznamu."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    health_record = _visible_health_record_or_404(
+        request,
+        person=presentation.person,
+        health_record_id=health_record_id,
+    )
+    if not _current_actor_can_write_health(
+        request,
+        permission="health.change_healthrecord",
+        access_level=health_record.access_level,
+    ):
+        raise PermissionDenied(
+            "K archivaci zdravotního záznamu nemáte oprávnění."
+        )
+    form = HealthRecordArchiveForm(
+        request.POST if request.method == "POST" else None
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            archive_health_record(
+                health_record=health_record,
+                person=presentation.person,
+                actor=request.user,
+                reason=form.cleaned_data["reason"],
+            )
+        except (Person.DoesNotExist, HealthRecord.DoesNotExist) as exc:
+            raise Http404("Zdravotní záznam nebyl nalezen.") from exc
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            if request.headers.get("HX-Request") == "true":
+                response = _render_health_list(
+                    request,
+                    presentations=presentations,
+                    presentation=presentation,
+                    health_records=list_health_records(
+                        person=presentation.person,
+                        actor=request.user,
+                    ),
+                    archived=True,
+                )
+                response["HX-Push-Url"] = reverse(
+                    "people:health",
+                    args=(presentation.person.pk,),
+                )
+                return response
+            messages.success(request, "Zdravotní záznam byl archivován.")
+            return redirect("people:health", person_id=presentation.person.pk)
+    return _render_health_lifecycle_confirmation(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        health_record=health_record,
+        form=form,
+        mode="archive",
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def person_health_record_restore(
+    request: HttpRequest,
+    person_id: int,
+    health_record_id: int,
+) -> HttpResponse:
+    """Potvrď a proveď obnovení archivovaného zdravotního záznamu."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    health_record = _archived_health_record_or_404(
+        request,
+        person=presentation.person,
+        health_record_id=health_record_id,
+    )
+    form = HealthRecordRestoreForm(
+        request.POST if request.method == "POST" else None
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            restored_record = restore_archived_health_record(
+                health_record=health_record,
+                person=presentation.person,
+                actor=request.user,
+            )
+        except (Person.DoesNotExist, HealthRecord.DoesNotExist) as exc:
+            raise Http404("Zdravotní záznam nebyl nalezen.") from exc
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            if request.headers.get("HX-Request") == "true":
+                response = _render_health_record_detail(
+                    request,
+                    presentations=presentations,
+                    presentation=presentation,
+                    health_record=restored_record,
+                )
+                response["HX-Push-Url"] = reverse(
+                    "people:health-record-detail",
+                    args=(presentation.person.pk, restored_record.pk),
+                )
+                return response
+            messages.success(request, "Zdravotní záznam byl obnoven.")
+            return redirect(
+                "people:health-record-detail",
+                person_id=presentation.person.pk,
+                health_record_id=restored_record.pk,
+            )
+    return _render_health_lifecycle_confirmation(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        health_record=health_record,
+        form=form,
+        mode="restore",
     )
 
 

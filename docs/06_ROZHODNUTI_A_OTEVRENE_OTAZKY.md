@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.77
+**Verze:** 0.78
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 29. 9. 2026
 
@@ -145,6 +145,8 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 186. ACP-010 schvaluje pro `HealthRecord` vzájemně výlučné aplikační stavy `ACTIVE`, `ARCHIVED` a `SOFT_DELETED`, ale nyní pouze ne-idempotentní přechody `ACTIVE -> ARCHIVED` přes `archive_health_record()` a `ARCHIVED -> ACTIVE` přes `restore_archived_health_record()`. Obě operace použijí existující `health.change_healthrecord`, centrální actor/content policy, aktivní osobu a typ, čerstvý uzamčený stav a fail-closed rozhraní; nesprávný stav po bezpečné autorizaci nese kód `health_record_not_active` nebo `health_record_not_archived`. Metadata archivace se při obnovení čistí, `created_by` se nemění a přílohy ani zdroje se nemění kaskádou. Soft-delete, undelete a transport zůstávají odloženy; nevzniká migrace ani nové oprávnění.
 
 187. Backendový řez implementuje ACP-010 v `health.services` a přesných delegacích `health.use_cases`. Veřejné keyword-only signatury jsou `archive_health_record(*, health_record, person, actor, reason="")` a `restore_archived_health_record(*, health_record, person, actor)`. Obě operace vyžadují `health.change_healthrecord`, zamykají fresh target, osobu a typ, zachovávají fail-closed pořadí a non-cascade Materials kontrakt a mění pouze aktuální archive metadata a `updated_at`. Soft-delete, undelete, HTTP a UI nevznikají; model, migrace, permission ani ACP se nemění.
+
+188. Health lifecycle HTTP/UI používá existující person-centric shell a ACP-010 backend. `/osoby/<person_id>/zdravi/<health_record_id>/archivovat/` potvrzuje a POSTem archivuje aktivní cíl, `/osoby/<person_id>/zdravi/archiv/` zobrazuje samostatný management seznam a `/osoby/<person_id>/zdravi/<health_record_id>/obnovit/` potvrzuje a POSTem obnovuje archivovaný cíl. Actor-aware `list_archived_health_records(*, person, actor)` a `get_archived_health_record_for_management(*, health_record_id, person, actor)` vydají jen archivované, neodstraněné záznamy aktivní dostupné osoby actorovi s `health.change_healthrecord` a odpovídajícím content accessem. GET nemění stav, POST chrání CSRF a deleguje na schválené use-cases; full-page i HTMX tok po archivaci vrací běžný Health seznam a po obnově běžný detail. Běžné selectory zůstávají active-only, archivní seznam nečte Materials a lifecycle operace je nemění kaskádou. Soft-delete a undelete zůstávají odloženy; nevzniká model, migrace, permission ani nové ACP.
 
 ## 2. Otevřené otázky
 

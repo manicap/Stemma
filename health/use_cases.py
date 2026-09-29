@@ -22,7 +22,12 @@ from materials.source_services import (
 from people.models import Person
 
 from .models import HealthRecord
-from .selectors import get_visible_health_record, get_visible_health_records
+from .selectors import (
+    get_archived_health_record_for_management as get_archived_record,
+    get_visible_health_record,
+    get_visible_health_records,
+    list_archived_health_records_for_management,
+)
 from .services import (
     HealthRecordInput,
     archive_health_record as archive_health_record_service,
@@ -36,7 +41,9 @@ __all__ = (
     "create_health_record",
     "create_health_record_attachment",
     "create_health_record_source",
+    "get_archived_health_record_for_management",
     "get_health_record_detail",
+    "list_archived_health_records",
     "list_health_record_attachments",
     "list_health_records",
     "list_health_record_sources",
@@ -202,6 +209,34 @@ def list_health_records(
     """Vrať actorovi dostupné zdravotní záznamy konkrétní osoby."""
 
     return get_visible_health_records(person=person, actor=actor)
+
+
+def list_archived_health_records(
+    *,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[HealthRecord]:
+    """Vrať archivované záznamy dostupné pro lifecycle management."""
+
+    return list_archived_health_records_for_management(
+        person=person,
+        actor=actor,
+    )
+
+
+def get_archived_health_record_for_management(
+    *,
+    health_record_id: int,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> HealthRecord:
+    """Vrať jeden archivovaný cíl pro potvrzení bezpečné obnovy."""
+
+    return get_archived_record(
+        health_record_id=health_record_id,
+        person=person,
+        actor=actor,
+    )
 
 
 def get_health_record_detail(

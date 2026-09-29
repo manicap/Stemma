@@ -1,8 +1,8 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.76
-**Stav:** M2 dokončen; Health archive/restore-archived backend implementován
+**Verze:** 0.77
+**Stav:** M2 dokončen; Health archive/restore HTTP/UI implementováno
 **Datum revize:** 29. 9. 2026
 
 ## 1. Účel
@@ -2405,8 +2405,18 @@ business data zůstávají beze změny. Operace jsou non-cascade vůči
 `HealthRecordAttachment`, `HealthRecordSource`, `Attachment` i `Source`; po
 archivaci je skryje běžná viditelnost rodiče a po obnovení se nezměněné aktivní
 vazby znovu posoudí standardními selectory. Archivovaná, odstraněná nebo
-neviditelná osoba operaci vždy uzavře. Transportní URL, formuláře a HTMX nejsou
-součástí implementace a databázová migrace ani nové permission nevznikají.
+neviditelná osoba operaci vždy uzavře. Tento backendový řez sám transportní URL,
+formuláře ani HTMX neobsahoval.
+
+Navazující HTTP/UI řez používá beze změny stejné lifecycle služby. Samostatné
+actor-aware read hranice
+`list_archived_health_records(*, person, actor)` a
+`get_archived_health_record_for_management(*, health_record_id, person, actor)`
+vydají pouze `ARCHIVED` a neodstraněné záznamy aktivní dostupné osoby actorovi s
+`health.change_healthrecord` a odpovídajícím content accessem. Běžné Health
+selectory zůstávají active-only. Archivní seznam nečte Materials, POST
+archive/restore je nemění kaskádou a databázová migrace ani nové permission
+nevznikají.
 
 Pro vazbu přílohy modul obdobně vystavuje
 `create_health_record_attachment(*, health_record, data, actor)` a

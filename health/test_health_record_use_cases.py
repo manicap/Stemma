@@ -36,7 +36,9 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
                 "create_health_record",
                 "create_health_record_attachment",
                 "create_health_record_source",
+                "get_archived_health_record_for_management",
                 "get_health_record_detail",
+                "list_archived_health_records",
                 "list_health_record_attachments",
                 "list_health_records",
                 "list_health_record_sources",
@@ -60,7 +62,12 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
                 use_cases.create_health_record_source,
                 ("health_record", "data", "actor"),
             ),
+            (
+                use_cases.get_archived_health_record_for_management,
+                ("health_record_id", "person", "actor"),
+            ),
             (list_health_records, ("person", "actor")),
+            (use_cases.list_archived_health_records, ("person", "actor")),
             (get_health_record_detail, ("health_record_id", "actor")),
             (
                 use_cases.list_health_record_attachments,
@@ -124,6 +131,39 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
 
         self.assertIs(result, sentinel)
         selector.assert_called_once_with(health_record_id=29, actor=actor)
+
+    def test_archive_management_reads_are_exact_selector_delegations(self) -> None:
+        person = Person(pk=17)
+        actor = AnonymousUser()
+        sentinel = HealthRecord(pk=29)
+        with patch(
+            "health.use_cases.list_archived_health_records_for_management",
+            return_value=sentinel,
+        ) as list_selector:
+            list_result = use_cases.list_archived_health_records(
+                person=person,
+                actor=actor,
+            )
+        with patch(
+            "health.use_cases.get_archived_record",
+            return_value=sentinel,
+        ) as detail_selector:
+            detail_result = (
+                use_cases.get_archived_health_record_for_management(
+                    health_record_id=29,
+                    person=person,
+                    actor=actor,
+                )
+            )
+
+        self.assertIs(list_result, sentinel)
+        self.assertIs(detail_result, sentinel)
+        list_selector.assert_called_once_with(person=person, actor=actor)
+        detail_selector.assert_called_once_with(
+            health_record_id=29,
+            person=person,
+            actor=actor,
+        )
 
     def test_detail_preserves_the_exact_selector_exception(self) -> None:
         actor = AnonymousUser()

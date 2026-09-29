@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.47
+**Verze:** 0.48
 **Stav:** pracovní návrh  
 **Datum revize:** 29. 9. 2026
 
@@ -648,8 +648,26 @@ Archivace nastaví aktuální archive metadata a volitelný oříznutý důvod, 
 je všechna vyčistí; obě aktualizují `updated_at`, zachovávají `created_by` i
 veškerá business data a nemění kaskádou přílohy, zdroje ani jejich vazby.
 Archivovaný, odstraněný nebo neviditelný rodičovský `Person` operaci blokuje.
-Soft-delete, undelete a HTTP/HTMX/UI transport nejsou implementovány a vyžadují
-samostatné řezy.
+HTTP/UI vrstva zpřístupňuje tyto dvě existující lifecycle operace uvnitř
+person-centric Health sekce. Aktivní detail vede přes potvrzení a POST do
+archivace, samostatný archivní seznam přes potvrzení a POST do obnovy. Full-page
+tok po archivaci přesměruje na běžný Health seznam a po obnově na běžný detail;
+HTMX vrací stejné fragmenty a nastavuje jejich kanonické URL. GET nikdy stav
+nemění a POST podléhá CSRF ochraně.
+
+Archivní management čte přes actor-aware
+`list_archived_health_records(*, person, actor)` a úzce zaměřený
+`get_archived_health_record_for_management(*, health_record_id, person, actor)`.
+Vydává jen `ARCHIVED`, nikoli
+soft-deleted záznamy konkrétní aktivní a dostupné osoby, vyžaduje aktivního
+actora s `health.change_healthrecord` a u každého výsledku znovu uplatňuje
+centrální content policy. Nečte přílohy ani zdroje. Běžné Health list/detail API
+archivované záznamy nadále nevydává. Soft-delete a undelete nejsou
+implementovány a vyžadují samostatný řez.
+
+Konkrétní URL jsou `/osoby/<person_id>/zdravi/archiv/`,
+`/osoby/<person_id>/zdravi/<health_record_id>/archivovat/` a
+`/osoby/<person_id>/zdravi/<health_record_id>/obnovit/`.
 
 ## 13. Hrobová místa
 

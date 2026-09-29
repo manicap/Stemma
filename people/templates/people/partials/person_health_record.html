@@ -18,7 +18,10 @@
     </div>
     {% if health_record_saved %}<p class="success-message" role="status">Zdravotní záznam byl uložen.</p>{% endif %}
     {% if can_change_health_record %}
-      <p><a class="secondary-button" href="{% url 'people:health-record-edit' selected_person.pk selected_health_record.pk %}" hx-get="{% url 'people:health-record-edit' selected_person.pk selected_health_record.pk %}" hx-target="#person-detail" hx-push-url="true">Upravit</a></p>
+      <div class="form-actions">
+        <a class="secondary-button" href="{% url 'people:health-record-edit' selected_person.pk selected_health_record.pk %}" hx-get="{% url 'people:health-record-edit' selected_person.pk selected_health_record.pk %}" hx-target="#person-detail" hx-push-url="true">Upravit</a>
+        <a class="secondary-button" href="{% url 'people:health-record-archive' selected_person.pk selected_health_record.pk %}" hx-get="{% url 'people:health-record-archive' selected_person.pk selected_health_record.pk %}" hx-target="#person-detail" hx-push-url="true">Archivovat</a>
+      </div>
     {% endif %}
 
     <dl class="health-metadata">

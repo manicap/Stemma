@@ -242,6 +242,7 @@ class HealthRecordPermissionApiTests(SimpleTestCase):
             permissions.__all__,
             (
                 "can_view_health_record_access",
+                "get_archived_health_record_management_filter",
                 "get_health_record_visibility_filter",
             ),
         )
@@ -253,6 +254,16 @@ class HealthRecordPermissionApiTests(SimpleTestCase):
                 for parameter in parameters.values()
             )
         )
+        for filter_function in (
+            permissions.get_archived_health_record_management_filter,
+            permissions.get_health_record_visibility_filter,
+        ):
+            filter_parameters = signature(filter_function).parameters
+            self.assertEqual(tuple(filter_parameters), ("actor",))
+            self.assertIs(
+                filter_parameters["actor"].kind,
+                Parameter.KEYWORD_ONLY,
+            )
 
 
 class HealthRecordPermissionTests(TestCase):

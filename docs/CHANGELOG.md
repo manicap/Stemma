@@ -1,5 +1,19 @@
 # Historie změn dokumentace
 
+## Verze 0.87 – 29. 9. 2026
+
+- přidán person-centric HTTP/UI tok archivace aktivního a obnovy archivovaného
+  `HealthRecord` přes existující actor-aware lifecycle use-cases,
+- vznikl samostatný archivní seznam a úzké actor-aware read use-cases pro
+  archivované, neodstraněné záznamy aktivní dostupné osoby; vyžadují existující
+  `health.change_healthrecord` a centrální content policy,
+- full-page i HTMX potvrzení používají POST s CSRF; po archivaci se vrací běžný
+  Health seznam a po obnově běžný detail s kanonickou URL,
+- běžné Health list/detail API nadále archivované záznamy nevydává, archivní
+  management nenačítá Materials a archive/restore je nemění kaskádou,
+- soft-delete a undelete zůstávají neimplementované; nevznikl model, migrace,
+  permission ani nové ACP.
+
 ## Verze 0.86 – 29. 9. 2026
 
 - implementovány backendové actor-aware operace `archive_health_record()` a

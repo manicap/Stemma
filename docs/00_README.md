@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.51
-**Stav:** RC 0.1 a M2 dokončeny; Health archive/restore backend implementován
+**Verze dokumentace:** 0.52
+**Stav:** RC 0.1 a M2 dokončeny; Health archive/restore UI implementováno
 **Datum revize:** 29. 9. 2026
 
 ## Účel balíčku
@@ -39,6 +39,22 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.52
+
+Verze 0.52 zpřístupňuje existující Health archive/restore backend v bezpečném
+person-centric HTTP/UI toku:
+
+- aktivní detail nabízí potvrzovanou POST archivaci s volitelným důvodem a
+  archivovaný management seznam nabízí potvrzovanou POST obnovu,
+- samostatné actor-aware read use-cases vydávají pouze archivované,
+  neodstraněné záznamy aktivní dostupné osoby actorovi s existujícím
+  `health.change_healthrecord` a odpovídajícím content access,
+- full-page i HTMX tok po archivaci vrací běžný Health seznam a po obnově běžný
+  Health detail; standardní list/detail archivované záznamy nadále nevydávají,
+- Materials se nemění kaskádou a archivní seznam je nenačítá,
+- soft-delete a undelete zůstávají neimplementované; nevzniká model, migrace,
+  permission ani nové ACP.
 
 ## Stav verze 0.51
 

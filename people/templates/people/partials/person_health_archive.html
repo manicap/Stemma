@@ -1,0 +1,26 @@
+<article class="person-detail">
+  {% include "people/partials/person_header.html" %}
+  {% include "people/partials/person_tabs.html" %}
+  <section class="person-overview health-section" aria-labelledby="health-archive-heading">
+    <a class="back-link" href="{% url 'people:health' selected_person.pk %}" hx-get="{% url 'people:health' selected_person.pk %}" hx-target="#person-detail" hx-push-url="true">← Zpět na zdravotní záznamy</a>
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Zdraví</p>
+        <h3 id="health-archive-heading">Archivované zdravotní záznamy</h3>
+      </div>
+    </div>
+    <div class="health-record-list">
+      {% for health_record in archived_health_records %}
+        <article class="health-record-card">
+          <span class="health-record-type">{{ health_record.record_type.name }}</span>
+          <strong>{{ health_record.title|default:"Zdravotní záznam" }}</strong>
+          <span class="muted-copy">{% include "people/partials/health_record_date.html" %}</span>
+          {% if health_record.provider_name %}<span>{{ health_record.provider_name }}</span>{% endif %}
+          <a class="secondary-button" href="{% url 'people:health-record-restore' selected_person.pk health_record.pk %}" hx-get="{% url 'people:health-record-restore' selected_person.pk health_record.pk %}" hx-target="#person-detail" hx-push-url="true">Obnovit</a>
+        </article>
+      {% empty %}
+        <p class="empty-state">Pro tuto osobu nejsou dostupné žádné archivované zdravotní záznamy.</p>
+      {% endfor %}
+    </div>
+  </section>
+</article>

@@ -6,6 +6,21 @@ from .models import HealthRecord, HealthRecordType
 from .permissions import can_view_health_record_access
 
 
+class HealthRecordArchiveForm(forms.Form):
+    """Transportní formulář volitelného důvodu archivace."""
+
+    reason = forms.CharField(
+        label="Důvod archivace",
+        required=False,
+        strip=False,
+        widget=forms.Textarea(attrs={"rows": 3}),
+    )
+
+
+class HealthRecordRestoreForm(forms.Form):
+    """Prázdný potvrzovací formulář obnovy archivovaného záznamu."""
+
+
 class HealthRecordForm(forms.ModelForm):
     """HTTP validation for the user-editable HealthRecord snapshot."""
 

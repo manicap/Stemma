@@ -1,7 +1,7 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.6
+**Verze:** 0.7
 **Stav:** schválený pracovní základ  
 **Datum revize:** 29. 9. 2026
 
@@ -558,8 +558,17 @@ Před odstraněním se vždy zobrazí potvrzovací dialog.
 
 Lifecycle jednotlivých záznamů se řídí jejich doménovým kontraktem; nelze obecně
 zaměňovat archivaci a měkké odstranění. Pro `HealthRecord` ACP-010 schvaluje
-samostatnou archivaci a obnovení archivovaného záznamu, ale jejich URL,
-tlačítka, potvrzení, redirect a HTMX chování zatím nejsou navrženy. Soft-delete
+samostatnou archivaci a obnovení archivovaného záznamu. Aktivní Health detail
+nabízí oprávněnému uživateli akci **Archivovat**, po níž následuje potvrzení s
+volitelným důvodem a stav mění pouze POST. Po úspěchu se full-page i HTMX tok
+vrací do běžného Health seznamu osoby.
+
+Běžný Health seznam nabízí oprávněnému uživateli samostatnou cestu
+**Archivované záznamy**. Tento management seznam ukazuje pouze bezpečné základní
+údaje archivovaných záznamů a akci **Obnovit**. Obnova má vlastní potvrzení,
+stav mění pouze POST a po úspěchu otevře full-page nebo HTMX běžný aktivní
+detail s kanonickou URL. Empty state jasně říká, že archiv neobsahuje dostupné
+záznamy. Běžný seznam a detail archivované záznamy nezobrazují. Soft-delete
 HealthRecord je samostatné odložené rozhodnutí. Celá osoba se nikdy běžně
 nemaže, ale pouze archivuje.
 

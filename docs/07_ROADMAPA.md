@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.50
-**Stav:** M2 a RC 0.1 dokončeny; Health archive/restore backend implementován
+**Verze:** 0.51
+**Stav:** M2 a RC 0.1 dokončeny; Health archive/restore UI implementováno
 **Datum revize:** 29. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -298,12 +298,22 @@ a `updated_at` se mění bez zásahu do autorství, business dat, příloh nebo 
 Soft-delete, undelete, HTTP, HTMX a UI nejsou implementovány; nevzniká model,
 migrace, permission ani ACP.
 
+Třicátý druhý řez zpřístupňuje backend ACP-010 v existujícím person-centric
+Health UI. Přidává potvrzovanou POST archivaci aktivního detailu, samostatný
+actor-aware seznam archivovaných záznamů osoby a potvrzovanou POST obnovu.
+Full-page i HTMX tok používají stávající shell a po změně vracejí kanonický
+aktivní seznam nebo detail. Archivní read API vyžaduje aktivního actora,
+`health.change_healthrecord`, dostupnou aktivní osobu a content access každého
+záznamu; běžný Health list/detail archivované cíle nadále nevydává. Materials se
+nemění kaskádou ani se v archivu nenačítají. Soft-delete a undelete zůstávají
+odloženy; nevzniká model, migrace, permission ani ACP.
+
 #### Následující implementační kroky
 
 1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
 2. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
-   bezpečnými aplikačními kontrakty; lifecycle transport, Materials zápisy a
-   doručení souborů nejsou součástí dokončeného create/update řezu.
+   bezpečnými aplikačními kontrakty; soft-delete, Materials zápisy a doručení
+   souborů zůstávají mimo dokončené Health UI řezy.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a

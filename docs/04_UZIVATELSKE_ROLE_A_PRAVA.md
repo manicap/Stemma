@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.37
+**Verze:** 0.38
 **Stav:** pracovní návrh  
 **Datum revize:** 29. 9. 2026
 
@@ -178,6 +178,17 @@ restore archived. Archivovaný cíl proto načítá zvláštní actor-aware inte
 loader; běžný health selector jej záměrně nevydává. Soft-delete má mít vlastní
 budoucí operaci a permission teprve projde samostatným rozhodnutím;
 `health.delete_healthrecord` je pouze kandidát, ne schválené oprávnění.
+
+Archivní HTTP/UI management používá stejné oprávnění a policy. Samostatné
+actor-aware `list_archived_health_records()` a
+`get_archived_health_record_for_management()` vydávají pouze archivované,
+neodstraněné záznamy aktivní dostupné osoby. Výsledek je omezen content accessem
+každého HealthRecord; skrytý, cizí, soft-deleted nebo lifecycle-neplatný cíl se
+na přímé URL nerozliší od chybějícího. `is_staff` samo nestačí, neaktivní actor
+nemůže archiv spravovat a aktivní superuser prochází centrální policy. Tlačítka
+jsou pouze presentation pomůcka; autoritu zachovává server a existující
+actor-aware archive/restore use-case. Soft-delete a undelete nejsou součástí
+tohoto UI kontraktu.
 
 Zápis `HealthRecordAttachment` používá existující standardní permissions
 `materials.add_healthrecordattachment` a

@@ -13,6 +13,10 @@
         <p class="muted-copy">Zobrazeny jsou pouze záznamy dostupné vašemu účtu.</p>
       {% endif %}
     </div>
+    {% if health_record_archived %}<p class="success-message" role="status">Zdravotní záznam byl archivován.</p>{% endif %}
+    {% if can_manage_health_archive %}
+      <p><a class="secondary-button" href="{% url 'people:health-archive' selected_person.pk %}" hx-get="{% url 'people:health-archive' selected_person.pk %}" hx-target="#person-detail" hx-push-url="true">Archivované záznamy</a></p>
+    {% endif %}
     <div class="health-record-list">
       {% for health_record in health_records %}
         <a
