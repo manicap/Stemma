@@ -7,6 +7,7 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
+from django.utils import timezone
 
 from common.choices import (
     AccessLevel,
@@ -29,7 +30,9 @@ from .permissions import (
 
 __all__ = (
     "HealthRecordInput",
+    "archive_health_record",
     "create_health_record",
+    "restore_archived_health_record",
     "update_health_record",
 )
 
@@ -146,6 +149,213 @@ def _reload(record_id: int) -> HealthRecord:
         "place",
         "created_by",
     ).get(pk=record_id)
+
+
+def _load_lifecycle_target(
+    *,
+    health_record: HealthRecord,
+    person: Person,
+) -> tuple[HealthRecord, Person, HealthRecordType]:
+    """Načti uzamčený skrytý cíl a jeho autorizační kontext."""
+
+    if (
+        not isinstance(health_record, HealthRecord)
+        or health_record.pk is None
+        or not isinstance(person, Person)
+        or person.pk is None
+    ):
+        raise HealthRecord.DoesNotExist
+    try:
+        candidate = (
+            HealthRecord.objects.select_for_update()
+            .select_related("person", "record_type")
+            .get(pk=health_record.pk, person_id=person.pk)
+        )
+        current_person = Person.objects.select_for_update().get(pk=person.pk)
+        current_type = HealthRecordType.objects.select_for_update().get(
+            pk=candidate.record_type_id
+        )
+    except (
+        HealthRecord.DoesNotExist,
+        HealthRecordType.DoesNotExist,
+        Person.DoesNotExist,
+    ):
+        raise HealthRecord.DoesNotExist from None
+    return candidate, current_person, current_type
+
+
+def _preauthorize_lifecycle_person(
+    *,
+    person: Person,
+    actor: AbstractBaseUser,
+) -> None:
+    """Ověř kontext osoby před načtením skrytého zdravotního cíle."""
+
+    if not isinstance(person, Person) or person.pk is None:
+        raise HealthRecord.DoesNotExist
+    try:
+        current_person = Person.objects.get(pk=person.pk)
+        person_visible = can_view_access_level(
+            actor=actor,
+            access_level=current_person.access_level,
+        )
+    except (Person.DoesNotExist, ValidationError):
+        raise HealthRecord.DoesNotExist from None
+    if (
+        current_person.archived_at is not None
+        or current_person.deleted_at is not None
+        or not person_visible
+    ):
+        raise HealthRecord.DoesNotExist
+
+
+def _authorize_lifecycle_target(
+    *,
+    candidate: HealthRecord,
+    person: Person,
+    record_type: HealthRecordType,
+    actor: AbstractBaseUser,
+) -> None:
+    """Uplatni fail-closed content a lifecycle policy na uzamčený cíl."""
+
+    try:
+        person_visible = can_view_access_level(
+            actor=actor,
+            access_level=person.access_level,
+        )
+        record_visible = can_view_health_record_access(
+            actor=actor,
+            access_level=candidate.access_level,
+        )
+    except ValidationError:
+        raise HealthRecord.DoesNotExist from None
+
+    if (
+        person.archived_at is not None
+        or person.deleted_at is not None
+        or not person_visible
+        or not record_visible
+        or not record_type.is_active
+        or candidate.deleted_at is not None
+    ):
+        raise HealthRecord.DoesNotExist
+
+
+def archive_health_record(
+    *,
+    health_record: HealthRecord,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+    reason: str = "",
+) -> HealthRecord:
+    """Atomicky archivuj aktivní, actorovi dostupný zdravotní záznam."""
+
+    with transaction.atomic():
+        initial_actor = require_active_actor_permission(
+            actor=actor,
+            permission="health.change_healthrecord",
+            denial_message=(
+                "K archivaci zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        _preauthorize_lifecycle_person(
+            person=person,
+            actor=initial_actor,
+        )
+        candidate, current_person, current_type = _load_lifecycle_target(
+            health_record=health_record,
+            person=person,
+        )
+        current_actor = require_active_actor_permission(
+            actor=actor,
+            permission="health.change_healthrecord",
+            denial_message=(
+                "K archivaci zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        _authorize_lifecycle_target(
+            candidate=candidate,
+            person=current_person,
+            record_type=current_type,
+            actor=current_actor,
+        )
+        if candidate.archived_at is not None:
+            _raise_error(
+                "health_record",
+                "Archivovat lze pouze aktivní zdravotní záznam.",
+                "health_record_not_active",
+            )
+
+        candidate.archived_at = timezone.now()
+        candidate.archived_by = current_actor
+        candidate.archive_reason = reason.strip()
+        candidate.save(
+            update_fields=(
+                "archived_at",
+                "archived_by",
+                "archive_reason",
+                "updated_at",
+            )
+        )
+        return _reload(candidate.pk)
+
+
+def restore_archived_health_record(
+    *,
+    health_record: HealthRecord,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> HealthRecord:
+    """Atomicky obnov archivovaný, actorovi dostupný zdravotní záznam."""
+
+    with transaction.atomic():
+        initial_actor = require_active_actor_permission(
+            actor=actor,
+            permission="health.change_healthrecord",
+            denial_message=(
+                "K obnovení zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        _preauthorize_lifecycle_person(
+            person=person,
+            actor=initial_actor,
+        )
+        candidate, current_person, current_type = _load_lifecycle_target(
+            health_record=health_record,
+            person=person,
+        )
+        current_actor = require_active_actor_permission(
+            actor=actor,
+            permission="health.change_healthrecord",
+            denial_message=(
+                "K obnovení zdravotního záznamu nemáte oprávnění."
+            ),
+        )
+        _authorize_lifecycle_target(
+            candidate=candidate,
+            person=current_person,
+            record_type=current_type,
+            actor=current_actor,
+        )
+        if candidate.archived_at is None:
+            _raise_error(
+                "health_record",
+                "Obnovit lze pouze archivovaný zdravotní záznam.",
+                "health_record_not_archived",
+            )
+
+        candidate.archived_at = None
+        candidate.archived_by = None
+        candidate.archive_reason = ""
+        candidate.save(
+            update_fields=(
+                "archived_at",
+                "archived_by",
+                "archive_reason",
+                "updated_at",
+            )
+        )
+        return _reload(candidate.pk)
 
 
 def create_health_record(

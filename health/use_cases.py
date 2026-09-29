@@ -25,11 +25,14 @@ from .models import HealthRecord
 from .selectors import get_visible_health_record, get_visible_health_records
 from .services import (
     HealthRecordInput,
+    archive_health_record as archive_health_record_service,
     create_health_record as create_health_record_service,
+    restore_archived_health_record as restore_archived_health_record_service,
     update_health_record as update_health_record_service,
 )
 
 __all__ = (
+    "archive_health_record",
     "create_health_record",
     "create_health_record_attachment",
     "create_health_record_source",
@@ -37,10 +40,43 @@ __all__ = (
     "list_health_record_attachments",
     "list_health_records",
     "list_health_record_sources",
+    "restore_archived_health_record",
     "update_health_record",
     "update_health_record_attachment",
     "update_health_record_source",
 )
+
+
+def archive_health_record(
+    *,
+    health_record: HealthRecord,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+    reason: str = "",
+) -> HealthRecord:
+    """Archivuj zdravotní záznam přes autorizovanou lifecycle službu."""
+
+    return archive_health_record_service(
+        health_record=health_record,
+        person=person,
+        actor=actor,
+        reason=reason,
+    )
+
+
+def restore_archived_health_record(
+    *,
+    health_record: HealthRecord,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> HealthRecord:
+    """Obnov archivovaný záznam přes autorizovanou lifecycle službu."""
+
+    return restore_archived_health_record_service(
+        health_record=health_record,
+        person=person,
+        actor=actor,
+    )
 
 
 def create_health_record(

@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.46
+**Verze:** 0.47
 **Stav:** pracovní návrh  
 **Datum revize:** 29. 9. 2026
 
@@ -631,11 +631,13 @@ kanonickou URL. Zápis vždy používá existující actor-aware health use-case
 stávající standardní modelová oprávnění; nevzniká permission, API ani lifecycle
 operace.
 
-Schválený navazující lifecycle kontrakt rozlišuje vzájemně výlučné stavy
+Implementovaný backendový lifecycle kontrakt rozlišuje vzájemně výlučné stavy
 `ACTIVE`, `ARCHIVED` a `SOFT_DELETED`; nové API nesmí vytvořit současně
-archivovaný a měkce odstraněný záznam. Nyní jsou určeny pouze
-`archive_health_record()` pro `ACTIVE -> ARCHIVED` a
-`restore_archived_health_record()` pro `ARCHIVED -> ACTIVE`. Obě operace jsou
+archivovaný a měkce odstraněný záznam. Veřejné service i use-case API tvoří
+`archive_health_record(*, health_record, person, actor, reason="")` pro
+`ACTIVE -> ARCHIVED` a
+`restore_archived_health_record(*, health_record, person, actor)` pro
+`ARCHIVED -> ACTIVE`. Obě operace jsou
 ne-idempotentní, používají existující `health.change_healthrecord`, čerstvý
 uzamčený stav a úplnou actor-aware health policy včetně aktivní osoby a typu.
 Skrytý, cizí nebo jinak neautorizovatelný cíl zůstává nerozlišitelný od
@@ -646,8 +648,8 @@ Archivace nastaví aktuální archive metadata a volitelný oříznutý důvod, 
 je všechna vyčistí; obě aktualizují `updated_at`, zachovávají `created_by` i
 veškerá business data a nemění kaskádou přílohy, zdroje ani jejich vazby.
 Archivovaný, odstraněný nebo neviditelný rodičovský `Person` operaci blokuje.
-Soft-delete, undelete a HTTP/HTMX/UI transport nejsou tímto kontraktem
-schváleny a vyžadují samostatné řezy.
+Soft-delete, undelete a HTTP/HTMX/UI transport nejsou implementovány a vyžadují
+samostatné řezy.
 
 ## 13. Hrobová místa
 

@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.49
-**Stav:** M2 a RC 0.1 dokončeny; Health lifecycle kontrakt schválen ACP-010
+**Verze:** 0.50
+**Stav:** M2 a RC 0.1 dokončeny; Health archive/restore backend implementován
 **Datum revize:** 29. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -289,12 +289,19 @@ Přílohy a zdroje se nemění kaskádou. Soft-delete, undelete a transportní/U
 kontrakt zůstávají samostatnými budoucími řezy. V tomto kroku nevzniká kód,
 migrace ani permission.
 
+Třicátý první řez implementuje backend ACP-010. Actor-aware service a přesně
+delegující use-case vrstva poskytují pouze `archive_health_record()` a
+`restore_archived_health_record()` s explicitním kontextem osoby. Operace
+vyžadují stávající `health.change_healthrecord`, fresh locked target, aktivní a
+dostupnou osobu i typ a zachovávají fail-closed error kontrakt. Archive metadata
+a `updated_at` se mění bez zásahu do autorství, business dat, příloh nebo zdrojů.
+Soft-delete, undelete, HTTP, HTMX a UI nejsou implementovány; nevzniká model,
+migrace, permission ani ACP.
+
 #### Následující implementační kroky
 
 1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
-2. implementovat backend archivace a `restore_archived_health_record()` jako
-   samostatný řez přesně podle ACP-010, bez soft-delete a transportu,
-3. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
+2. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
    bezpečnými aplikačními kontrakty; lifecycle transport, Materials zápisy a
    doručení souborů nejsou součástí dokončeného create/update řezu.
 

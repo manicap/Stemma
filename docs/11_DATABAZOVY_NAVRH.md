@@ -1,8 +1,8 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.75
-**Stav:** M2 dokončen; Health archive/restore-archived kontrakt schválen
+**Verze:** 0.76
+**Stav:** M2 dokončen; Health archive/restore-archived backend implementován
 **Datum revize:** 29. 9. 2026
 
 ## 1. Účel
@@ -2386,7 +2386,8 @@ vytvořit. Implementační scope nyní tvoří pouze ne-idempotentní
 `restore_archived_health_record()` pro `ARCHIVED -> ACTIVE`; ostatní přechody
 včetně soft-delete a undelete zůstávají odloženy.
 
-Oba budoucí actor-aware use-cases přijmou explicitní osobu a actora, vyžádají
+Obě implementované actor-aware služby a jejich přesně delegující use-cases
+přijímají explicitní osobu a actora, vyžádají
 `health.change_healthrecord` a v transakci načtou čerstvý záznam se zámkem.
 Před zápisem znovu ověří aktivního uloženého actora, centrální actor/content
 policy, aktivní a dostupnou osobu, přesnou vazbu záznamu na tuto osobu,
@@ -2405,7 +2406,7 @@ business data zůstávají beze změny. Operace jsou non-cascade vůči
 archivaci je skryje běžná viditelnost rodiče a po obnovení se nezměněné aktivní
 vazby znovu posoudí standardními selectory. Archivovaná, odstraněná nebo
 neviditelná osoba operaci vždy uzavře. Transportní URL, formuláře a HTMX nejsou
-součástí tohoto kontraktu a databázová migrace ani nové permission nevznikají.
+součástí implementace a databázová migrace ani nové permission nevznikají.
 
 Pro vazbu přílohy modul obdobně vystavuje
 `create_health_record_attachment(*, health_record, data, actor)` a

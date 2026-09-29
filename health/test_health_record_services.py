@@ -23,7 +23,9 @@ from .models import HealthRecord, HealthRecordType
 from .permissions import get_health_record_visibility_filter
 from .services import (
     HealthRecordInput,
+    archive_health_record,
     create_health_record,
+    restore_archived_health_record,
     update_health_record,
 )
 
@@ -34,9 +36,15 @@ class HealthRecordServiceApiTests(SimpleTestCase):
             services.__all__,
             (
                 "HealthRecordInput",
+                "archive_health_record",
                 "create_health_record",
+                "restore_archived_health_record",
                 "update_health_record",
             ),
+        )
+        self.assertEqual(
+            tuple(signature(archive_health_record).parameters),
+            ("health_record", "person", "actor", "reason"),
         )
         self.assertEqual(
             tuple(signature(create_health_record).parameters),
@@ -46,7 +54,16 @@ class HealthRecordServiceApiTests(SimpleTestCase):
             tuple(signature(update_health_record).parameters),
             ("health_record", "data", "actor"),
         )
-        for function in (create_health_record, update_health_record):
+        self.assertEqual(
+            tuple(signature(restore_archived_health_record).parameters),
+            ("health_record", "person", "actor"),
+        )
+        for function in (
+            archive_health_record,
+            create_health_record,
+            restore_archived_health_record,
+            update_health_record,
+        ):
             self.assertTrue(
                 all(
                     value.kind is Parameter.KEYWORD_ONLY

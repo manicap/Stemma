@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.36
+**Verze:** 0.37
 **Stav:** pracovní návrh  
 **Datum revize:** 29. 9. 2026
 
@@ -158,8 +158,9 @@ nepřístupný nebo lifecycle-neplatný update target jako
 `Person.DoesNotExist`; strukturální vstupy a neaktivní typ zachovávají
 `ValidationError` service vrstvy.
 
-Budoucí `archive_health_record()` a `restore_archived_health_record()` používají
-stejné existující `health.change_healthrecord`; nevzniká lifecycle permission.
+Implementované `archive_health_record(*, health_record, person, actor,
+reason="")` a `restore_archived_health_record(*, health_record, person, actor)`
+používají stejné existující `health.change_healthrecord`; nevzniká lifecycle permission.
 Modelová permission sama nestačí: uložený aktivní actor musí projít centrální
 actor policy, mít obsahový přístup k aktivní osobě a zdravotnímu záznamu, záznam
 musí patřit právě zadané osobě a mít aktivní typ. `is_staff` přístup
@@ -173,7 +174,7 @@ chybějící nebo jinak neautorizovatelný cíl vrací jednotně
 osoby a nesoulad záznamu s danou osobou. Až po bezpečné autorizaci cíle smí neplatný
 ne-idempotentní přechod vrátit `ValidationError` s kódem
 `health_record_not_active` pro archive nebo `health_record_not_archived` pro
-restore archived. Archivovaný cíl proto vyžaduje zvláštní actor-aware interní
+restore archived. Archivovaný cíl proto načítá zvláštní actor-aware interní
 loader; běžný health selector jej záměrně nevydává. Soft-delete má mít vlastní
 budoucí operaci a permission teprve projde samostatným rozhodnutím;
 `health.delete_healthrecord` je pouze kandidát, ne schválené oprávnění.

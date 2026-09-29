@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.50
-**Stav:** RC 0.1 a M2 dokončeny; Health lifecycle kontrakt schválen ACP-010
+**Verze dokumentace:** 0.51
+**Stav:** RC 0.1 a M2 dokončeny; Health archive/restore backend implementován
 **Datum revize:** 29. 9. 2026
 
 ## Účel balíčku
@@ -39,6 +39,21 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.51
+
+Verze 0.51 implementuje backendový kontrakt ACP-010 bez transportního rozšíření:
+
+- actor-aware `archive_health_record()` provádí pouze `ACTIVE -> ARCHIVED` a
+  `restore_archived_health_record()` pouze `ARCHIVED -> ACTIVE`,
+- service i delegující use-case přijímají explicitní zdravotní záznam, osobu a
+  actora; archive navíc volitelný důvod,
+- operace používají existující `health.change_healthrecord`, fresh locked stav,
+  centrální content policy a neprozrazující chybovou hranici,
+- archive metadata se nastaví nebo vyčistí, `updated_at` se aktualizuje a
+  `created_by`, business data, přílohy i zdroje zůstávají beze změny,
+- soft-delete, undelete a HTTP/HTMX/UI lifecycle nadále nejsou implementovány;
+  nevzniká model, migrace, permission ani nové ACP.
 
 ## Stav verze 0.50
 

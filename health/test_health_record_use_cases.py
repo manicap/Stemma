@@ -32,6 +32,7 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
         self.assertEqual(
             use_cases.__all__,
             (
+                "archive_health_record",
                 "create_health_record",
                 "create_health_record_attachment",
                 "create_health_record_source",
@@ -39,12 +40,17 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
                 "list_health_record_attachments",
                 "list_health_records",
                 "list_health_record_sources",
+                "restore_archived_health_record",
                 "update_health_record",
                 "update_health_record_attachment",
                 "update_health_record_source",
             ),
         )
         for callable_object, names in (
+            (
+                use_cases.archive_health_record,
+                ("health_record", "person", "actor", "reason"),
+            ),
             (use_cases.create_health_record, ("data", "actor")),
             (
                 use_cases.create_health_record_attachment,
@@ -63,6 +69,10 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
             (
                 use_cases.list_health_record_sources,
                 ("health_record", "actor"),
+            ),
+            (
+                use_cases.restore_archived_health_record,
+                ("health_record", "person", "actor"),
             ),
             (
                 use_cases.update_health_record,
@@ -203,6 +213,46 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
         self.assertIs(result, sentinel)
         service.assert_called_once_with(data=data, actor=actor)
 
+    def test_lifecycle_writes_are_exact_service_delegations(self) -> None:
+        actor = AnonymousUser()
+        person = Person(pk=39)
+        record = HealthRecord(pk=41)
+        archived = HealthRecord(pk=43)
+        restored = HealthRecord(pk=47)
+        with patch(
+            "health.use_cases.archive_health_record_service",
+            return_value=archived,
+        ) as archive_service:
+            archive_result = use_cases.archive_health_record(
+                health_record=record,
+                person=person,
+                actor=actor,
+                reason="Důvod",
+            )
+        with patch(
+            "health.use_cases.restore_archived_health_record_service",
+            return_value=restored,
+        ) as restore_service:
+            restore_result = use_cases.restore_archived_health_record(
+                health_record=archived,
+                person=person,
+                actor=actor,
+            )
+
+        self.assertIs(archive_result, archived)
+        self.assertIs(restore_result, restored)
+        archive_service.assert_called_once_with(
+            health_record=record,
+            person=person,
+            actor=actor,
+            reason="Důvod",
+        )
+        restore_service.assert_called_once_with(
+            health_record=archived,
+            person=person,
+            actor=actor,
+        )
+
     def test_update_is_an_exact_service_delegation(self) -> None:
         actor = AnonymousUser()
         record = HealthRecord(pk=41)
@@ -231,6 +281,16 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
         data = HealthRecordInput(person=Person(), record_type=HealthRecordType())
         cases = (
             (
+                "health.use_cases.archive_health_record_service",
+                use_cases.archive_health_record,
+                {
+                    "health_record": record,
+                    "person": Person(pk=45),
+                    "actor": actor,
+                },
+                PermissionDenied("denied"),
+            ),
+            (
                 "health.use_cases.create_health_record_service",
                 use_cases.create_health_record,
                 {"data": data, "actor": actor},
@@ -241,6 +301,16 @@ class HealthRecordUseCaseApiTests(SimpleTestCase):
                 use_cases.update_health_record,
                 {"health_record": record, "data": data, "actor": actor},
                 HealthRecord.DoesNotExist("unavailable"),
+            ),
+            (
+                "health.use_cases.restore_archived_health_record_service",
+                use_cases.restore_archived_health_record,
+                {
+                    "health_record": record,
+                    "person": Person(pk=45),
+                    "actor": actor,
+                },
+                ValidationError({"health_record": ["invalid"]}),
             ),
             (
                 "health.use_cases.create_health_record_service",

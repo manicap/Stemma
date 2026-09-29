@@ -1,7 +1,7 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.60
+**Verze:** 0.61
 **Stav:** koncept  
 **Datum revize:** 29. 9. 2026
 
@@ -1141,8 +1141,8 @@ create/update use-cases obdobně pouze delegují na autorizované doménové slu
 ACP-010 nad existujícími lifecycle poli definuje tři aplikační stavy
 `HealthRecord`: `ACTIVE` bez archive i delete času, `ARCHIVED` pouze s
 `archived_at` a `SOFT_DELETED` pouze s `deleted_at`. Současný databázový model
-technicky dovoluje vyplnění obou časů; nové lifecycle API takovou kombinaci
-nesmí vytvořit. Schválené jsou pouze přechody `ACTIVE -> ARCHIVED` a
+technicky dovoluje vyplnění obou časů; implementované lifecycle API takovou
+kombinaci nesmí vytvořit. Implementované jsou pouze přechody `ACTIVE -> ARCHIVED` a
 `ARCHIVED -> ACTIVE`. Archivace zapisuje `archived_at`, `archived_by`, volitelný
 oříznutý `archive_reason` a běžné `updated_at`; obnovení nastaví první dvě pole
 na `NULL`, důvod na `""` a rovněž aktualizuje `updated_at`. `created_by`, obsah,
@@ -1153,8 +1153,10 @@ Lifecycle zdravotního záznamu je non-cascade. `HealthRecordAttachment`,
 `HealthRecordSource`, `Attachment`, `Source` ani jejich lifecycle pole se při
 archivaci či obnovení nemění. Jejich běžná viditelnost pouze následuje
 viditelnost rodičovského zdravotního záznamu. Databázový constraint se v tomto
-dokumentačním řezu nepřidává; soft-delete a jeho případná obnova zůstávají
-samostatným budoucím kontraktem.
+backendovém řezu nepřidává; soft-delete a jeho případná obnova zůstávají
+samostatným budoucím kontraktem. Service a use-case vrstva přijímají explicitní
+kontext osoby a actora, fresh locked target a nevytvářejí nový model ani
+prezentační strukturu.
 
 ## 11. Místo
 

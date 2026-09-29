@@ -1,5 +1,20 @@
 # Historie změn dokumentace
 
+## Verze 0.86 – 29. 9. 2026
+
+- implementovány backendové actor-aware operace `archive_health_record()` a
+  `restore_archived_health_record()` přesně podle ACP-010,
+- služby a delegující use-cases používají explicitní kontext osoby, stávající
+  `health.change_healthrecord`, fresh locked stav a centrální Health policy,
+- ne-idempotentní přechody zachovávají stabilní validační kódy a fail-closed
+  `HealthRecord.DoesNotExist` pro skryté, cizí, odstraněné či jinak
+  neautorizovatelné cíle,
+- archive metadata a `updated_at` se mění bez zásahu do `created_by`, business
+  dat, příloh a zdrojů; integrační regrese dokládá non-cascade skrytí a opětovné
+  zpřístupnění aktivních vazeb běžnými selectory,
+- soft-delete, undelete, HTTP, HTMX a UI lifecycle zůstávají neimplementované;
+  nevzniká model, migrace, permission ani nové ACP.
+
 ## Verze 0.85 – 29. 9. 2026
 
 - schváleno ACP-010 s přesným actor-aware kontraktem archivace a obnovení

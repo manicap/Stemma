@@ -1,7 +1,7 @@
 # Architektonická rozhodnutí
 
 **Dokument:** 12  
-**Verze:** 0.7
+**Verze:** 0.8
 **Stav:** platný registr rozhodnutí  
 **Datum vytvoření:** 15. 7. 2026  
 **Datum revize:** 29. 9. 2026
@@ -396,7 +396,7 @@ Nyní jsou schváleny pouze ne-idempotentní přechody `ACTIVE -> ARCHIVED` pře
 `restore_archived_health_record(...)`. Obecné neurčité označení `restore` se
 pro health nepoužije.
 
-Obě budoucí operace musí přijmout explicitní kontext osoby a actora. Vyžadují
+Obě operace musí přijmout explicitní kontext osoby a actora. Vyžadují
 čerstvě načteného uloženého aktivního actora se stávající permission
 `health.change_healthrecord`, platnou aktivní a actorovi dostupnou osobu,
 záznam patřící právě této osobě, obsahový přístup podle centralizované health
@@ -459,8 +459,9 @@ POST endpoint, HTMX odpověď, redirect, tlačítko ani potvrzovací dialog.
 
 ### Dopady
 
-- navazující backendový řez musí vytvořit actor-aware use-cases a bezpečnou
-  interní hranici pro skrytý lifecycle target podle tohoto kontraktu,
+- navazující backendový řez vytvořil actor-aware služby, přesně delegující
+  use-cases a bezpečnou interní hranici pro skrytý lifecycle target podle
+  tohoto kontraktu,
 - běžné create/update Health UI ani read selectory se tímto dokumentačním
   rozhodnutím nemění,
 - historie přechodů bude patřit do budoucí auditní infrastruktury, nikoli do
