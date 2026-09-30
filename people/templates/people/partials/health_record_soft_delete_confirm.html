@@ -1,0 +1,25 @@
+<article class="person-detail person-edit" aria-labelledby="health-soft-delete-confirm-heading">
+  {% include "people/partials/person_header.html" %}
+  {% include "people/partials/person_tabs.html" %}
+  <form class="person-form person-overview" method="post" action="{% url 'people:health-record-soft-delete' selected_person.pk selected_health_record.pk %}" hx-post="{% url 'people:health-record-soft-delete' selected_person.pk selected_health_record.pk %}" hx-target="#person-detail" hx-indicator="#detail-loading" hx-disabled-elt="find button[type='submit']">
+    {% csrf_token %}
+    <p class="eyebrow">Zdraví</p>
+    <h3 id="health-soft-delete-confirm-heading">Přesunout zdravotní záznam do koše</h3>
+    <p>Záznam <strong>{{ selected_health_record.title|default:"Zdravotní záznam" }}</strong> zmizí z běžného zdravotního přehledu, ale nebude fyzicky smazán. Později jej lze z Koše obnovit.</p>
+    {% if health_lifecycle_form.errors %}
+      <div class="form-errors" role="alert" tabindex="-1" data-form-error-summary>
+        <p><strong>Přesunutí do koše se nepodařilo.</strong></p>
+        <ul>{% for error in health_lifecycle_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}{% for error in health_lifecycle_form.deletion_reason.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+      </div>
+    {% endif %}
+    <div class="form-field{% if health_lifecycle_form.deletion_reason.errors %} has-error{% endif %}">
+      <label for="{{ health_lifecycle_form.deletion_reason.id_for_label }}">{{ health_lifecycle_form.deletion_reason.label }}</label>
+      {{ health_lifecycle_form.deletion_reason }}
+      {% if health_lifecycle_form.deletion_reason.errors %}<div id="{{ health_lifecycle_form.deletion_reason.id_for_label }}-errors" class="field-errors">{{ health_lifecycle_form.deletion_reason.errors }}</div>{% endif %}
+    </div>
+    <div class="form-actions">
+      <button class="primary-button" type="submit">Přesunout do koše</button>
+      <a class="secondary-button" href="{% url 'people:health-record-detail' selected_person.pk selected_health_record.pk %}" hx-get="{% url 'people:health-record-detail' selected_person.pk selected_health_record.pk %}" hx-target="#person-detail" hx-push-url="true">Zrušit</a>
+    </div>
+  </form>
+</article>

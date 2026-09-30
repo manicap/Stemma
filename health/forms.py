@@ -21,6 +21,21 @@ class HealthRecordRestoreForm(forms.Form):
     """Prázdný potvrzovací formulář obnovy archivovaného záznamu."""
 
 
+class HealthRecordSoftDeleteForm(forms.Form):
+    """Transportní formulář povinného důvodu odstranění."""
+
+    deletion_reason = forms.CharField(
+        label="Důvod odstranění",
+        required=True,
+        strip=False,
+        widget=forms.Textarea(attrs={"rows": 3}),
+    )
+
+
+class HealthRecordRestoreSoftDeletedForm(forms.Form):
+    """Prázdný potvrzovací formulář obnovy odstraněného záznamu."""
+
+
 class HealthRecordForm(forms.ModelForm):
     """HTTP validation for the user-editable HealthRecord snapshot."""
 

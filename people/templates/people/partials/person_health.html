@@ -14,8 +14,12 @@
       {% endif %}
     </div>
     {% if health_record_archived %}<p class="success-message" role="status">Zdravotní záznam byl archivován.</p>{% endif %}
-    {% if can_manage_health_archive %}
-      <p><a class="secondary-button" href="{% url 'people:health-archive' selected_person.pk %}" hx-get="{% url 'people:health-archive' selected_person.pk %}" hx-target="#person-detail" hx-push-url="true">Archivované záznamy</a></p>
+    {% if health_record_deleted %}<p class="success-message" role="status">Zdravotní záznam byl přesunut do koše.</p>{% endif %}
+    {% if can_manage_health_archive or can_manage_deleted_health_records %}
+      <div class="form-actions">
+        {% if can_manage_health_archive %}<a class="secondary-button" href="{% url 'people:health-archive' selected_person.pk %}" hx-get="{% url 'people:health-archive' selected_person.pk %}" hx-target="#person-detail" hx-push-url="true">Archivované záznamy</a>{% endif %}
+        {% if can_manage_deleted_health_records %}<a class="secondary-button" href="{% url 'people:health-deleted' selected_person.pk %}" hx-get="{% url 'people:health-deleted' selected_person.pk %}" hx-target="#person-detail" hx-push-url="true">Koš</a>{% endif %}
+      </div>
     {% endif %}
     <div class="health-record-list">
       {% for health_record in health_records %}

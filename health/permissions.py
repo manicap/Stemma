@@ -12,6 +12,7 @@ __all__ = (
     "can_view_health_record_access",
     "get_archived_health_record_management_filter",
     "get_health_record_visibility_filter",
+    "get_soft_deleted_health_record_management_filter",
 )
 
 _ALLOWED_HEALTH_ACCESS_LEVELS = (
@@ -87,4 +88,16 @@ def get_archived_health_record_management_filter(
     return _get_health_record_content_filter(actor=actor) & Q(
         archived_at__isnull=False,
         deleted_at__isnull=True,
+    )
+
+
+def get_soft_deleted_health_record_management_filter(
+    *,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> Q:
+    """Sestav access filtr pouze pro odstraněné, nearchivované záznamy."""
+
+    return _get_health_record_content_filter(actor=actor) & Q(
+        archived_at__isnull=True,
+        deleted_at__isnull=False,
     )

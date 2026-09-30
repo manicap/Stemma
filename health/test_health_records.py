@@ -244,6 +244,7 @@ class HealthRecordPermissionApiTests(SimpleTestCase):
                 "can_view_health_record_access",
                 "get_archived_health_record_management_filter",
                 "get_health_record_visibility_filter",
+                "get_soft_deleted_health_record_management_filter",
             ),
         )
         parameters = signature(can_view_health_record_access).parameters
@@ -257,6 +258,7 @@ class HealthRecordPermissionApiTests(SimpleTestCase):
         for filter_function in (
             permissions.get_archived_health_record_management_filter,
             permissions.get_health_record_visibility_filter,
+            permissions.get_soft_deleted_health_record_management_filter,
         ):
             filter_parameters = signature(filter_function).parameters
             self.assertEqual(tuple(filter_parameters), ("actor",))

@@ -15,6 +15,8 @@ from health.forms import (
     HealthRecordArchiveForm,
     HealthRecordForm,
     HealthRecordRestoreForm,
+    HealthRecordRestoreSoftDeletedForm,
+    HealthRecordSoftDeleteForm,
 )
 from health.models import HealthRecord
 from health.permissions import can_view_health_record_access
@@ -23,12 +25,16 @@ from health.use_cases import (
     archive_health_record,
     create_health_record,
     get_archived_health_record_for_management,
+    get_soft_deleted_health_record_for_management,
     get_health_record_detail,
     list_archived_health_records,
     list_health_record_attachments,
     list_health_record_sources,
     list_health_records,
+    list_soft_deleted_health_records,
     restore_archived_health_record,
+    restore_soft_deleted_health_record,
+    soft_delete_health_record,
     update_health_record,
 )
 from places.models import Place
@@ -161,6 +167,7 @@ def _render_health_list(
     presentation: PersonPresentation,
     health_records,
     archived: bool = False,
+    deleted: bool = False,
 ) -> HttpResponse:
     return _render_person_content(
         request,
@@ -178,7 +185,14 @@ def _render_health_list(
                 request,
                 permission="health.change_healthrecord",
             ),
+            "can_manage_deleted_health_records": (
+                _current_actor_can_write_health(
+                    request,
+                    permission="health.delete_healthrecord",
+                )
+            ),
             "health_record_archived": archived,
+            "health_record_deleted": deleted,
         },
     )
 
@@ -206,6 +220,33 @@ def person_health_archive(
         context={
             "active_person_tab": "health",
             "archived_health_records": archived_records,
+        },
+    )
+
+
+@require_GET
+def person_health_deleted(
+    request: HttpRequest,
+    person_id: int,
+) -> HttpResponse:
+    """Zobraz bezpečný management seznam odstraněných health záznamů."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    try:
+        deleted_records = list_soft_deleted_health_records(
+            person=presentation.person,
+            actor=request.user,
+        )
+    except Person.DoesNotExist as exc:
+        raise Http404("Osoba nebyla nalezena.") from exc
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_health_deleted.html",
+        context={
+            "active_person_tab": "health",
+            "deleted_health_records": deleted_records,
         },
     )
 
@@ -279,6 +320,13 @@ def _render_health_record_detail(
                 permission="health.change_healthrecord",
                 access_level=health_record.access_level,
             ),
+            "can_soft_delete_health_record": (
+                _current_actor_can_write_health(
+                    request,
+                    permission="health.delete_healthrecord",
+                    access_level=health_record.access_level,
+                )
+            ),
             "health_record_saved": saved,
         },
     )
@@ -300,25 +348,52 @@ def _archived_health_record_or_404(
         raise Http404("Zdravotní záznam nebyl nalezen.") from exc
 
 
+def _soft_deleted_health_record_or_404(
+    request: HttpRequest,
+    *,
+    person: Person,
+    health_record_id: int,
+) -> HealthRecord:
+    try:
+        return get_soft_deleted_health_record_for_management(
+            health_record_id=health_record_id,
+            person=person,
+            actor=request.user,
+        )
+    except (Person.DoesNotExist, HealthRecord.DoesNotExist) as exc:
+        raise Http404("Zdravotní záznam nebyl nalezen.") from exc
+
+
 def _render_health_lifecycle_confirmation(
     request: HttpRequest,
     *,
     presentations: tuple[PersonPresentation, ...],
     presentation: PersonPresentation,
     health_record: HealthRecord,
-    form: HealthRecordArchiveForm | HealthRecordRestoreForm,
+    form: (
+        HealthRecordArchiveForm
+        | HealthRecordRestoreForm
+        | HealthRecordSoftDeleteForm
+        | HealthRecordRestoreSoftDeletedForm
+    ),
     mode: str,
 ) -> HttpResponse:
     _prepare_accessible_form_errors(form)
+    templates = {
+        "archive": "people/partials/health_record_archive_confirm.html",
+        "restore": "people/partials/health_record_restore_confirm.html",
+        "soft_delete": (
+            "people/partials/health_record_soft_delete_confirm.html"
+        ),
+        "restore_soft_deleted": (
+            "people/partials/health_record_restore_soft_deleted_confirm.html"
+        ),
+    }
     return _render_person_content(
         request,
         presentations=presentations,
         presentation=presentation,
-        template_name=(
-            "people/partials/health_record_archive_confirm.html"
-            if mode == "archive"
-            else "people/partials/health_record_restore_confirm.html"
-        ),
+        template_name=templates[mode],
         context={
             "active_person_tab": "health",
             "selected_health_record": health_record,
@@ -447,6 +522,132 @@ def person_health_record_restore(
         health_record=health_record,
         form=form,
         mode="restore",
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def person_health_record_soft_delete(
+    request: HttpRequest,
+    person_id: int,
+    health_record_id: int,
+) -> HttpResponse:
+    """Potvrď a proveď měkké odstranění aktivního health záznamu."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    health_record = _visible_health_record_or_404(
+        request,
+        person=presentation.person,
+        health_record_id=health_record_id,
+    )
+    if not _current_actor_can_write_health(
+        request,
+        permission="health.delete_healthrecord",
+        access_level=health_record.access_level,
+    ):
+        raise PermissionDenied(
+            "K odstranění zdravotního záznamu nemáte oprávnění."
+        )
+    form = HealthRecordSoftDeleteForm(
+        request.POST if request.method == "POST" else None
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            soft_delete_health_record(
+                health_record=health_record,
+                person=presentation.person,
+                actor=request.user,
+                reason=form.cleaned_data["deletion_reason"],
+            )
+        except (Person.DoesNotExist, HealthRecord.DoesNotExist) as exc:
+            raise Http404("Zdravotní záznam nebyl nalezen.") from exc
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            if request.headers.get("HX-Request") == "true":
+                response = _render_health_list(
+                    request,
+                    presentations=presentations,
+                    presentation=presentation,
+                    health_records=list_health_records(
+                        person=presentation.person,
+                        actor=request.user,
+                    ),
+                    deleted=True,
+                )
+                response["HX-Push-Url"] = reverse(
+                    "people:health",
+                    args=(presentation.person.pk,),
+                )
+                return response
+            messages.success(
+                request,
+                "Zdravotní záznam byl přesunut do koše.",
+            )
+            return redirect("people:health", person_id=presentation.person.pk)
+    return _render_health_lifecycle_confirmation(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        health_record=health_record,
+        form=form,
+        mode="soft_delete",
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def person_health_record_restore_soft_deleted(
+    request: HttpRequest,
+    person_id: int,
+    health_record_id: int,
+) -> HttpResponse:
+    """Potvrď a proveď obnovení odstraněného health záznamu."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    health_record = _soft_deleted_health_record_or_404(
+        request,
+        person=presentation.person,
+        health_record_id=health_record_id,
+    )
+    form = HealthRecordRestoreSoftDeletedForm(
+        request.POST if request.method == "POST" else None
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            restored_record = restore_soft_deleted_health_record(
+                health_record=health_record,
+                person=presentation.person,
+                actor=request.user,
+            )
+        except (Person.DoesNotExist, HealthRecord.DoesNotExist) as exc:
+            raise Http404("Zdravotní záznam nebyl nalezen.") from exc
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            if request.headers.get("HX-Request") == "true":
+                response = _render_health_record_detail(
+                    request,
+                    presentations=presentations,
+                    presentation=presentation,
+                    health_record=restored_record,
+                )
+                response["HX-Push-Url"] = reverse(
+                    "people:health-record-detail",
+                    args=(presentation.person.pk, restored_record.pk),
+                )
+                return response
+            messages.success(request, "Zdravotní záznam byl obnoven.")
+            return redirect(
+                "people:health-record-detail",
+                person_id=presentation.person.pk,
+                health_record_id=restored_record.pk,
+            )
+    return _render_health_lifecycle_confirmation(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        health_record=health_record,
+        form=form,
+        mode="restore_soft_deleted",
     )
 
 

@@ -24,9 +24,11 @@ from people.models import Person
 from .models import HealthRecord
 from .selectors import (
     get_archived_health_record_for_management as get_archived_record,
+    get_soft_deleted_health_record_for_management as get_deleted_record,
     get_visible_health_record,
     get_visible_health_records,
     list_archived_health_records_for_management,
+    list_soft_deleted_health_records_for_management,
 )
 from .services import (
     HealthRecordInput,
@@ -44,11 +46,13 @@ __all__ = (
     "create_health_record_attachment",
     "create_health_record_source",
     "get_archived_health_record_for_management",
+    "get_soft_deleted_health_record_for_management",
     "get_health_record_detail",
     "list_archived_health_records",
     "list_health_record_attachments",
     "list_health_records",
     "list_health_record_sources",
+    "list_soft_deleted_health_records",
     "restore_archived_health_record",
     "restore_soft_deleted_health_record",
     "soft_delete_health_record",
@@ -269,6 +273,34 @@ def get_archived_health_record_for_management(
     """Vrať jeden archivovaný cíl pro potvrzení bezpečné obnovy."""
 
     return get_archived_record(
+        health_record_id=health_record_id,
+        person=person,
+        actor=actor,
+    )
+
+
+def list_soft_deleted_health_records(
+    *,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[HealthRecord]:
+    """Vrať odstraněné záznamy dostupné pro deletion management."""
+
+    return list_soft_deleted_health_records_for_management(
+        person=person,
+        actor=actor,
+    )
+
+
+def get_soft_deleted_health_record_for_management(
+    *,
+    health_record_id: int,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> HealthRecord:
+    """Vrať jeden odstraněný cíl pro potvrzení bezpečné obnovy."""
+
+    return get_deleted_record(
         health_record_id=health_record_id,
         person=person,
         actor=actor,

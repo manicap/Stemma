@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.79
-**Stav:** M2 dokončen; Health soft-delete backend implementován
-**Datum revize:** 29. 9. 2026
+**Verze:** 0.80
+**Stav:** M2 dokončen; Health deletion-management UI implementováno
+**Datum revize:** 30. 9. 2026
 
 ## 1. Účel
 
@@ -2442,8 +2442,17 @@ aktivní vazby a materiály procházející současnými selectory. Běžné a a
 selectory se o odstraněné záznamy nerozšiřují. Produktová vrstva HealthRecord
 fyzicky nemaže a nedostane hard-delete service ani endpoint. Implementované
 služby mají přesně delegující use-cases; model, migrace, DB constraint ani
-permission se nemění a deleted-management read ani transportní vrstva
-nevznikly.
+permission se nemění a v tomto backendovém řezu deleted-management read ani
+transportní vrstva nevznikly.
+
+Navazující transportní řez přidává nad nezměněným schématem samostatné
+actor-aware `list_soft_deleted_health_records(*, person, actor)` a
+`get_soft_deleted_health_record_for_management(*, health_record_id, person,
+actor)`. Vyžadují aktivního actora s `health.delete_healthrecord`, aktivní a
+dostupnou osobu a Health content policy; vydají pouze `SOFT_DELETED` bez archive
+metadata. Koš používá stejný konstantní query shape se `select_related()` a
+nečte Materials. Potvrzovací POST endpointy delegují na existující ACP-011
+use-cases, takže schéma, vazby, přílohy ani zdroje nemění.
 
 Pro vazbu přílohy modul obdobně vystavuje
 `create_health_record_attachment(*, health_record, data, actor)` a

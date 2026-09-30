@@ -27,9 +27,11 @@ class HealthRecordSelectorApiTests(SimpleTestCase):
             selectors.__all__,
             (
                 "get_archived_health_record_for_management",
+                "get_soft_deleted_health_record_for_management",
                 "get_visible_health_record",
                 "get_visible_health_records",
                 "list_archived_health_records_for_management",
+                "list_soft_deleted_health_records_for_management",
             ),
         )
 

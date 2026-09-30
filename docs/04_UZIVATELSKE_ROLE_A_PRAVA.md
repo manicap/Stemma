@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.41
+**Verze:** 0.42
 **Stav:** pracovní návrh  
 **Datum revize:** 30. 9. 2026
 
@@ -185,8 +185,8 @@ každého HealthRecord; skrytý, cizí, soft-deleted nebo lifecycle-neplatný c�
 na přímé URL nerozliší od chybějícího. `is_staff` samo nestačí, neaktivní actor
 nemůže archiv spravovat a aktivní superuser prochází centrální policy. Tlačítka
 jsou pouze presentation pomůcka; autoritu zachovává server a existující
-actor-aware archive/restore use-case. Soft-delete a undelete nejsou součástí
-tohoto UI kontraktu.
+actor-aware archive/restore use-case. Deletion management používá oddělený
+kontrakt níže a archivní cestu nerozšiřuje.
 
 Implementované operace ACP-011 `soft_delete_health_record()` a
 `restore_soft_deleted_health_record()` používají existující
@@ -208,10 +208,13 @@ osoba, neaktivní typ, cizí záznam nebo neautorizovatelný cíl operaci uzavř
 Actor nebo permission chyba je `PermissionDenied`; skrytý či cizí target je
 `HealthRecord.DoesNotExist`. Chybný stav lze rozlišit až po bezpečné autorizaci.
 Odstraněné záznamy zůstávají mimo běžné čtení, archivní management, editaci a
-related-data API. Budoucí deleted-management read hranice musí samostatně
-vyžadovat `health.delete_healthrecord` i content policy. Produktový hard delete
-HealthRecord není povolen. Backendové služby a přesně delegující use-cases jsou
-implementované; deleted-management read ani HTTP/UI tohoto kontraktu nevznikly.
+related-data API. Samostatné actor-aware `list_soft_deleted_health_records()` a
+`get_soft_deleted_health_record_for_management()` vyžadují
+`health.delete_healthrecord`, aktivní dostupnou osobu a content policy každého
+záznamu. Vydávají pouze nearchivovaný `SOFT_DELETED` stav; skrytý, cizí,
+archivovaný, kombinovaný nebo fyzicky chybějící cíl selže jednotně. Koš ani
+potvrzovací akce nenačítají Materials. Produktový hard delete HealthRecord není
+povolen a server deleguje zápisy pouze existujícím ACP-011 use-cases.
 
 Zápis `HealthRecordAttachment` používá existující standardní permissions
 `materials.add_healthrecordattachment` a
@@ -250,10 +253,10 @@ schválené skupině přidělit samostatně.
 Lokální DEBUG-only příkaz `bootstrap_demo_accounts` přiděluje přímo účtu
 `stemma-demo-administrator` existující `health.add_healthrecord` a
 `health.change_healthrecord` a `health.delete_healthrecord`, aby byly Health
-write a budoucí deletion-management UI reprodukovatelně ověřitelné. Jde pouze o
+write a deletion-management UI reprodukovatelně ověřitelné. Jde pouze o
 resetovatelnou lokální testovací identitu; oprávnění se nepřidávají skupině
-Správce ani produkční roli. Demo delete permission zahrnuje soft-delete, budoucí
-čtení Koše i restore soft-deleted podle jednotného kontraktu ACP-011.
+Správce ani produkční roli. Demo delete permission zahrnuje soft-delete, čtení
+Koše i restore soft-deleted podle jednotného kontraktu ACP-011.
 
 Přihlášení ani samotné členství ve skupině nemění význam přístupových
 úrovní. Čtenář a Editor vidí `authenticated`, nikoli automaticky

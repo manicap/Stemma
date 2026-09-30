@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.50
+**Verze:** 0.51
 **Stav:** pracovní návrh  
-**Datum revize:** 29. 9. 2026
+**Datum revize:** 30. 9. 2026
 
 ## 1. Globální aplikační shell a Přehled
 
@@ -674,16 +674,34 @@ metadata. Přechody mezi archivovaným a odstraněným stavem jsou zakázané a
 kombinovaný stav je neplatný. Operace zachovají business data i `created_by`,
 aktualizují `updated_at` a nemění kaskádou přílohy, zdroje ani vazby.
 
-Odstraněný záznam se nevydává běžným listem, detailem, archivním managementem,
-editací ani related-data API. Případná budoucí deleted-management read hranice
-musí být samostatná, actor-aware a omezená stejnou permission a content policy;
-běžné selectory se nerozšíří. Produktová aplikační vrstva HealthRecord fyzicky
-nemaže. HTTP/UI, deleted-management read hranice a auditní historie nejsou
-implementovány.
+Transportní vrstva ACP-011 používá samostatné actor-aware read API
+`list_soft_deleted_health_records(*, person, actor)` a
+`get_soft_deleted_health_record_for_management(*, health_record_id, person,
+actor)`. Vydává pouze čistý `SOFT_DELETED` stav konkrétní aktivní a dostupné
+osoby actorovi s `health.delete_healthrecord` a odpovídajícím content accessem;
+archivovaný, kombinovaný, cizí nebo skrytý záznam se nevydá. Běžné a archivní
+Health selectory zůstávají beze změny.
 
-Konkrétní URL jsou `/osoby/<person_id>/zdravi/archiv/`,
+Aktivní Health detail vede přes potvrzení s povinným důvodem a POST do
+soft-delete. Samostatný Koš osoby zobrazuje pouze bezpečné identifikační údaje
+odstraněných záznamů a vede přes vlastní potvrzení a POST do restore
+soft-deleted. Full-page tok po odstranění vrací běžný Health seznam a po obnově
+běžný detail; HTMX vrací stejné fragmenty a nastavuje jejich kanonické URL. Koš
+nenačítá Materials a lifecycle operace je nemění kaskádou. Archiv a Koš jsou
+oddělené management cesty; produktový hard delete ani editace odstraněného
+záznamu nevznikají.
+
+Odstraněný záznam se nevydává běžným listem, detailem, archivním managementem,
+editací ani related-data API. Běžné selectory se kvůli Koši nerozšiřují a
+produktová aplikační vrstva HealthRecord fyzicky nemaže. Auditní historie
+zatím implementována není.
+
+Archivní URL jsou `/osoby/<person_id>/zdravi/archiv/`,
 `/osoby/<person_id>/zdravi/<health_record_id>/archivovat/` a
-`/osoby/<person_id>/zdravi/<health_record_id>/obnovit/`.
+`/osoby/<person_id>/zdravi/<health_record_id>/obnovit/`. Deletion-management
+URL jsou `/osoby/<person_id>/zdravi/kos/`,
+`/osoby/<person_id>/zdravi/<health_record_id>/odstranit/` a
+`/osoby/<person_id>/zdravi/<health_record_id>/obnovit-odstraneny/`.
 
 ## 13. Hrobová místa
 

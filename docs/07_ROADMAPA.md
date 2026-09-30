@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.53
-**Stav:** M2 a RC 0.1 dokončeny; Health soft-delete backend implementován
-**Datum revize:** 29. 9. 2026
+**Verze:** 0.54
+**Stav:** M2 a RC 0.1 dokončeny; Health deletion-management UI implementováno
+**Datum revize:** 30. 9. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -329,12 +329,22 @@ error kontrakt, business data a striktně non-cascade Materials chování. Běž
 read API odstraněný záznam nevydají. Nevzniká HTTP/UI, deleted-management read,
 hard delete, model, migrace, DB constraint, permission ani nový ACP.
 
+Třicátý pátý řez zpřístupňuje ACP-011 v existujícím person-centric Health UI.
+Samostatné actor-aware read API poskytuje Koš pouze pro nearchivované
+`SOFT_DELETED` záznamy aktivní dostupné osoby a vyžaduje
+`health.delete_healthrecord` i content access. Aktivní detail nabízí potvrzovaný
+soft-delete s povinným důvodem; Koš nabízí potvrzovaný restore soft-deleted.
+Full-page i HTMX tok vrací kanonický běžný seznam nebo detail. Běžné a archivní
+selectory zůstávají active/archive-only, Koš nenačítá Materials a lifecycle je
+nemění kaskádou. Nevzniká hard delete, editace odstraněného záznamu, model,
+migrace, permission, Group ani nový ACP.
+
 #### Následující implementační kroky
 
 1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
 2. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
-   bezpečnými aplikačními kontrakty; soft-delete transport, Materials zápisy a
-   doručení souborů zůstávají mimo dokončené Health UI řezy.
+   bezpečnými aplikačními kontrakty; Materials zápisy a doručení souborů
+   zůstávají mimo dokončené Health UI řezy.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a

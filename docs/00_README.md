@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.54
-**Stav:** RC 0.1 a M2 dokončeny; Health soft-delete backend implementován
-**Datum revize:** 29. 9. 2026
+**Verze dokumentace:** 0.55
+**Stav:** RC 0.1 a M2 dokončeny; Health deletion-management UI implementováno
+**Datum revize:** 30. 9. 2026
 
 ## Účel balíčku
 
@@ -40,6 +40,21 @@ Přehledové výstupy:
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
 
+## Stav verze 0.55
+
+Verze 0.55 zpřístupňuje backend ACP-011 v existujícím Health UI:
+
+- samostatný actor-aware Koš vydává pouze nearchivované `SOFT_DELETED` záznamy
+  aktivní dostupné osoby actorovi s `health.delete_healthrecord` a odpovídajícím
+  content accessem,
+- aktivní detail nabízí oprávněnému actorovi potvrzovaný soft-delete s povinným
+  důvodem a Koš potvrzovanou obnovu odstraněného záznamu,
+- full-page i HTMX tok zachovávají person-centric shell a kanonické URL; běžné
+  a archivní čtení odstraněné záznamy nadále nevydává,
+- Koš nečte Materials a oba lifecycle přechody je nemění kaskádou,
+- nevzniká hard delete, model, migrace, DB constraint, permission, Group ani
+  nový ACP.
+
 ## Stav verze 0.54
 
 Verze 0.54 implementuje backendový kontrakt ACP-011 bez transportního nebo UI
@@ -55,7 +70,7 @@ rozšíření:
   vyčistí, přičemž autorství a business data zůstávají zachované,
 - přílohy, zdroje a vazby se nemění kaskádou a běžná read API odstraněný záznam
   nadále nevydávají,
-- nevzniká HTTP/UI, deleted-management read API, hard delete, model, migrace,
+- v tomto řezu nevzniklo HTTP/UI, deleted-management read API, hard delete, model, migrace,
   DB constraint, permission ani nový ACP.
 
 ## Stav verze 0.53

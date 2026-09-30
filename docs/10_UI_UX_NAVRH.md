@@ -1,9 +1,9 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.8
+**Verze:** 0.9
 **Stav:** schválený pracovní základ  
-**Datum revize:** 29. 9. 2026
+**Datum revize:** 30. 9. 2026
 
 ## 1. Účel dokumentu
 
@@ -568,11 +568,17 @@ Běžný Health seznam nabízí oprávněnému uživateli samostatnou cestu
 údaje archivovaných záznamů a akci **Obnovit**. Obnova má vlastní potvrzení,
 stav mění pouze POST a po úspěchu otevře full-page nebo HTMX běžný aktivní
 detail s kanonickou URL. Empty state jasně říká, že archiv neobsahuje dostupné
-záznamy. Běžný seznam a detail archivované záznamy nezobrazují. ACP-011
-schvaluje backendový kontrakt soft-delete a obnovy odstraněného HealthRecord,
-ale jejich URL, deleted management, potvrzení, HTMX, redirecty a tlačítka zatím
-nejsou navrženy ani implementovány. Celá osoba se nikdy běžně nemaže, ale pouze
-archivuje.
+záznamy. Běžný seznam a detail archivované záznamy nezobrazují.
+
+ACP-011 deletion management je samostatná cesta **Koš**, nikoli varianta
+archivu. Oprávněný uživatel na aktivním detailu volí **Přesunout do koše** a na
+potvrzení povinně uvede důvod. Stav mění pouze POST a úspěšný full-page i HTMX
+tok vrátí běžný Health seznam. Koš zobrazuje jen bezpečné identifikační údaje,
+důvod odstranění a akci **Obnovit**; nenačítá přílohy ani zdroje. Obnova má
+vlastní potvrzení, pouze POST mění stav a po úspěchu otevře běžný detail s
+kanonickou URL. Empty state jasně odlišuje prázdný Koš od archivu. Odstraněný
+záznam nelze editovat ani archivovat a produktový hard delete není dostupný.
+Celá osoba se nikdy běžně nemaže, ale pouze archivuje.
 
 Archivace osoby:
 
@@ -598,7 +604,8 @@ Rozhraní zobrazuje jen akce, které může uživatel skutečně provést.
 
 - Nepřihlášený uživatel a čtenář nevidí editační akce.
 - Editor vidí přidávání a úpravy v rozsahu svých oprávnění.
-- Správce vidí také správní akce, archivaci a obnovu.
+- Správce vidí správní akce podle konkrétně přidělených permissions; Health Koš
+  ani odstranění nezískává systémová skupina Správce automaticky.
 - Akce bez oprávnění se většinou vůbec nezobrazují.
 - Zamčený obsah může zůstat označen jako existující, ale jeho data se nezobrazí.
 

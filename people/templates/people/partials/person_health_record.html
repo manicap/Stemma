@@ -21,6 +21,11 @@
       <div class="form-actions">
         <a class="secondary-button" href="{% url 'people:health-record-edit' selected_person.pk selected_health_record.pk %}" hx-get="{% url 'people:health-record-edit' selected_person.pk selected_health_record.pk %}" hx-target="#person-detail" hx-push-url="true">Upravit</a>
         <a class="secondary-button" href="{% url 'people:health-record-archive' selected_person.pk selected_health_record.pk %}" hx-get="{% url 'people:health-record-archive' selected_person.pk selected_health_record.pk %}" hx-target="#person-detail" hx-push-url="true">Archivovat</a>
+        {% if can_soft_delete_health_record %}<a class="secondary-button" href="{% url 'people:health-record-soft-delete' selected_person.pk selected_health_record.pk %}" hx-get="{% url 'people:health-record-soft-delete' selected_person.pk selected_health_record.pk %}" hx-target="#person-detail" hx-push-url="true">Přesunout do koše</a>{% endif %}
+      </div>
+    {% elif can_soft_delete_health_record %}
+      <div class="form-actions">
+        <a class="secondary-button" href="{% url 'people:health-record-soft-delete' selected_person.pk selected_health_record.pk %}" hx-get="{% url 'people:health-record-soft-delete' selected_person.pk selected_health_record.pk %}" hx-target="#person-detail" hx-push-url="true">Přesunout do koše</a>
       </div>
     {% endif %}
 

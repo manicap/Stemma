@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.63
+**Verze:** 0.64
 **Stav:** koncept  
-**Datum revize:** 29. 9. 2026
+**Datum revize:** 30. 9. 2026
 
 ## 1. Základní pilíře
 
@@ -1166,7 +1166,10 @@ Aktivní vazby se po obnově pouze znovu posoudí svými běžnými selectory.
 Databázový constraint ani model override se nepřidává. Produktová aplikační
 vrstva `HealthRecord` fyzicky nemaže. Kontrakt soft-delete a restore
 soft-deleted má implementované actor-aware služby a přesně delegující use-cases;
-deleted-management read ani transportní vrstva nevznikly.
+navazující samostatná actor-aware deleted-management read hranice vydává pouze
+čistý `SOFT_DELETED` stav a transportní vrstva ji používá pro Health Koš a
+obnovu. Běžné a archivní selectory zůstávají oddělené. Model, databázový
+constraint ani migrace se tím nemění.
 
 ## 11. Místo
 

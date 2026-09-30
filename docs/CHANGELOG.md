@@ -1,5 +1,24 @@
 # Historie změn dokumentace
 
+## Verze 0.91 – 30. 9. 2026
+
+- implementováno samostatné actor-aware read API pro Health Koš, omezené na
+  nearchivovaný `SOFT_DELETED` stav, aktivní dostupnou osobu,
+  `health.delete_healthrecord` a content access,
+- aktivní detail nově vede přes potvrzení s povinným důvodem a POST do
+  existujícího soft-delete use-case; Koš přes oddělené potvrzení a POST do
+  restore-soft-deleted use-case,
+- full-page i HTMX tok zachovávají person-centric shell a kanonické URL; archiv
+  a Koš jsou zřetelně oddělené,
+- Koš má bezpečný empty state, nevydává skryté záznamy, nenačítá Materials a
+  lifecycle operace je nemění kaskádou,
+- role policy rozhodnutí 191 zůstává zachována a implementační kontrakt je
+  zaznamenán běžným rozhodnutím 192,
+- aktuální funkční a datový popis nově rozlišuje běžné, archivní a samostatné
+  deleted-management read hranice i jejich URL bez změny databázového modelu,
+- nevznikl hard delete, editace odstraněného záznamu, model, migrace,
+  DB constraint, permission, Group ani nový ACP.
+
 ## Verze 0.90 – 30. 9. 2026
 
 - potvrzeno, že produkční systémové skupiny Čtenář, Editor ani Správce

@@ -18,6 +18,11 @@ urlpatterns = [
         name="health-archive",
     ),
     path(
+        "<int:person_id>/zdravi/kos/",
+        views.person_health_deleted,
+        name="health-deleted",
+    ),
+    path(
         "<int:person_id>/zdravi/<int:health_record_id>/",
         views.person_health_record_detail,
         name="health-record-detail",
@@ -41,6 +46,16 @@ urlpatterns = [
         "<int:person_id>/zdravi/<int:health_record_id>/obnovit/",
         views.person_health_record_restore,
         name="health-record-restore",
+    ),
+    path(
+        "<int:person_id>/zdravi/<int:health_record_id>/odstranit/",
+        views.person_health_record_soft_delete,
+        name="health-record-soft-delete",
+    ),
+    path(
+        "<int:person_id>/zdravi/<int:health_record_id>/obnovit-odstraneny/",
+        views.person_health_record_restore_soft_deleted,
+        name="health-record-restore-soft-deleted",
     ),
     path(
         "<int:person_id>/upravit/",
