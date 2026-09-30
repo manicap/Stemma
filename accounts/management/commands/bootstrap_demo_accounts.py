@@ -49,14 +49,15 @@ _ELEVATED_PERMISSIONS = (
     ("people", "view_archived_person"),
     ("people", "view_deleted_person"),
 )
-_HEALTH_WRITER_PERMISSIONS = (
+_HEALTH_DEMO_PERMISSIONS = (
     ("health", "add_healthrecord"),
     ("health", "change_healthrecord"),
+    ("health", "delete_healthrecord"),
 )
 _REQUIRED_PERMISSIONS = (
     _PERSON_EDITOR_PERMISSION,
     *_ELEVATED_PERMISSIONS,
-    *_HEALTH_WRITER_PERMISSIONS,
+    *_HEALTH_DEMO_PERMISSIONS,
 )
 
 
@@ -194,7 +195,7 @@ class Command(BaseCommand):
                     user.user_permissions.add(
                         *(
                             permissions[key]
-                            for key in _HEALTH_WRITER_PERMISSIONS
+                            for key in _HEALTH_DEMO_PERMISSIONS
                         )
                     )
                 if created:

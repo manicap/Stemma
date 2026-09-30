@@ -13,6 +13,7 @@ ELEVATED_PERMISSION_KEYS = {
     ("people", "view_deleted_person"),
 }
 PERSON_EDITOR_PERMISSION_KEY = ("people", "change_person")
+HEALTH_DELETE_PERMISSION_KEY = ("health", "delete_healthrecord")
 
 
 class InitialPermissionGroupTests(TestCase):
@@ -98,6 +99,16 @@ class InitialPermissionGroupTests(TestCase):
         self.assertTrue(ELEVATED_PERMISSION_KEYS.issubset(keys))
         self.assertNotIn(("accounts", "add_user"), keys)
         self.assertNotIn(("people", "delete_person"), keys)
+
+    def test_system_groups_do_not_receive_health_deletion_management(
+        self,
+    ) -> None:
+        for group_name in ("Čtenář", "Editor", "Správce"):
+            with self.subTest(group=group_name):
+                keys = self.group_permission_keys(
+                    Group.objects.get(name=group_name)
+                )
+                self.assertNotIn(HEALTH_DELETE_PERMISSION_KEY, keys)
 
     def test_group_membership_does_not_change_user_flags(self) -> None:
         user = get_user_model().objects.create_user(username="administrator")

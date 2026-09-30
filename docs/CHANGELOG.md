@@ -1,5 +1,20 @@
 # Historie změn dokumentace
 
+## Verze 0.90 – 30. 9. 2026
+
+- potvrzeno, že produkční systémové skupiny Čtenář, Editor ani Správce
+  automaticky nezískávají `health.delete_healthrecord`,
+- deletion management zůstává explicitně delegovanou citlivou pravomocí
+  aktivního superusera, individuálně oprávněného uživatele nebo samostatně
+  upravené skupiny,
+- DEBUG-only `stemma-demo-administrator` nově dostává existující
+  `health.delete_healthrecord` přímo vedle Health add/change permissions pro
+  reprodukovatelné browser/UI testování,
+- focused testy potvrzují oddělení přímé demo permission od nezměněné produkční
+  skupiny Správce a přesný idempotentně opravovaný demo whitelist,
+- nevznikla nová role, permission, migrace, ACP, deleted-management read hranice
+  ani HTTP/UI.
+
 ## Verze 0.89 – 29. 9. 2026
 
 - implementovány actor-aware `soft_delete_health_record()` a

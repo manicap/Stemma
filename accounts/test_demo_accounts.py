@@ -38,6 +38,7 @@ class BootstrapDemoAccountsCommandTests(TestCase):
                 "people.change_person",
                 "health.add_healthrecord",
                 "health.change_healthrecord",
+                "health.delete_healthrecord",
                 "accounts.view_restricted_content",
                 "accounts.view_admin_only_content",
                 "people.view_archived_person",
@@ -75,6 +76,7 @@ class BootstrapDemoAccountsCommandTests(TestCase):
                     {
                         "health.add_healthrecord",
                         "health.change_healthrecord",
+                        "health.delete_healthrecord",
                     }
                     if username == "stemma-demo-administrator"
                     else set()
@@ -90,6 +92,12 @@ class BootstrapDemoAccountsCommandTests(TestCase):
                     expected_direct_permissions,
                 )
                 self.assertIn(username, output)
+        self.assertFalse(
+            Group.objects.get(name="Správce").permissions.filter(
+                content_type__app_label="health",
+                codename="delete_healthrecord",
+            ).exists()
+        )
         self.assertNotIn(self.password, output)
 
     def test_repeated_run_is_idempotent_and_repairs_demo_identity(self) -> None:
@@ -105,6 +113,15 @@ class BootstrapDemoAccountsCommandTests(TestCase):
         Group.objects.get(name="Čtenář").permissions.add(editor_permission)
         Group.objects.get(name="Editor").permissions.remove(editor_permission)
         administrator.permissions.remove(editor_permission)
+        demo_administrator = get_user_model().objects.get(
+            username="stemma-demo-administrator"
+        )
+        demo_administrator.user_permissions.add(
+            Permission.objects.get(
+                content_type__app_label="people",
+                codename="add_person",
+            )
+        )
         user.is_staff = True
         user.is_superuser = True
         user.is_active = False
@@ -134,6 +151,28 @@ class BootstrapDemoAccountsCommandTests(TestCase):
         )
         self.assertTrue(
             administrator.permissions.filter(pk=editor_permission.pk).exists()
+        )
+        demo_administrator.refresh_from_db()
+        self.assertEqual(
+            {
+                f"{permission.content_type.app_label}.{permission.codename}"
+                for permission in (
+                    demo_administrator.user_permissions.select_related(
+                        "content_type"
+                    )
+                )
+            },
+            {
+                "health.add_healthrecord",
+                "health.change_healthrecord",
+                "health.delete_healthrecord",
+            },
+        )
+        self.assertFalse(
+            administrator.permissions.filter(
+                content_type__app_label="health",
+                codename="delete_healthrecord",
+            ).exists()
         )
         self.assertIn("nové účty 0, resetované účty 3", output)
 

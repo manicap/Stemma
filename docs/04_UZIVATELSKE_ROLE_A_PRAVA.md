@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.40
+**Verze:** 0.41
 **Stav:** pracovní návrh  
-**Datum revize:** 29. 9. 2026
+**Datum revize:** 30. 9. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -192,12 +192,15 @@ Implementované operace ACP-011 `soft_delete_health_record()` a
 `restore_soft_deleted_health_record()` používají existující
 standardní Django permission `health.delete_healthrecord`; nová custom
 permission nevzniká. Stejná permission
-spravuje oba směry deletion lifecycle, ale ACP-011 ji nově nepřiděluje žádné
-systémové skupině ani demo účtu a sama nikdy nestačí. Actor musí být čerstvě
-ověřený, uložený a aktivní, projít centrální actor policy, mít content access k
-aktivní osobě i HealthRecord a pracovat se záznamem patřícím právě této osobě a
-s aktivním typem. `is_staff` ani autorství přístup nerozšiřují a aktivní
-superuser se řídí centrální policy.
+spravuje oba směry deletion lifecycle a sama nikdy nestačí. V produkčním
+výchozím role bootstrapu ji automaticky nezískává Čtenář, Editor ani Správce.
+Deletion management je citlivá explicitně delegovaná pravomoc dostupná
+aktivnímu superuserovi, individuálně oprávněnému uživateli nebo členovi skupiny,
+které ji administrátor výslovně přidělil mimo systémový bootstrap. Actor musí
+být čerstvě ověřený, uložený a aktivní, projít centrální actor policy, mít
+content access k aktivní osobě i HealthRecord a pracovat se záznamem patřícím
+právě této osobě a s aktivním typem. `is_staff` ani autorství přístup
+nerozšiřují a aktivní superuser se řídí centrální policy.
 
 Soft-delete přijímá pouze `ACTIVE`; restore soft-deleted pouze přesný
 `SOFT_DELETED` bez archive metadata. Archivovaná, odstraněná či neviditelná
@@ -246,9 +249,11 @@ schválené skupině přidělit samostatně.
 
 Lokální DEBUG-only příkaz `bootstrap_demo_accounts` přiděluje přímo účtu
 `stemma-demo-administrator` existující `health.add_healthrecord` a
-`health.change_healthrecord`, aby byl create/update Health UI reprodukovatelně
-ověřitelný. Jde pouze o resetovatelnou lokální testovací identitu; oprávnění se
-nepřidávají skupině Správce ani produkční roli.
+`health.change_healthrecord` a `health.delete_healthrecord`, aby byly Health
+write a budoucí deletion-management UI reprodukovatelně ověřitelné. Jde pouze o
+resetovatelnou lokální testovací identitu; oprávnění se nepřidávají skupině
+Správce ani produkční roli. Demo delete permission zahrnuje soft-delete, budoucí
+čtení Koše i restore soft-deleted podle jednotného kontraktu ACP-011.
 
 Přihlášení ani samotné členství ve skupině nemění význam přístupových
 úrovní. Čtenář a Editor vidí `authenticated`, nikoli automaticky

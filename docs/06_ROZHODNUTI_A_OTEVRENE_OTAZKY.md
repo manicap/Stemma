@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.80
+**Verze:** 0.81
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 29. 9. 2026
+**Datum revize:** 30. 9. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -151,6 +151,8 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 189. ACP-011 schvaluje přesný backendový kontrakt ne-idempotentních operací `soft_delete_health_record()` pro `ACTIVE -> SOFT_DELETED` a `restore_soft_deleted_health_record()` pro `SOFT_DELETED -> ACTIVE`; přechody mezi `ARCHIVED` a `SOFT_DELETED` jsou zakázané a kombinovaný stav je neplatný. Obě operace používají existující `health.delete_healthrecord`, čerstvého aktivního actora, centrální Health content policy, aktivní a dostupnou osobu, aktivní typ a fresh locked stav s opakovanou autorizací po zámcích. Soft-delete vyžaduje povinný oříznutý důvod a nastaví delete metadata; restore je vyčistí. `created_by` a business data zůstávají zachované, `updated_at` se mění a Materials zůstávají striktně non-cascade. Běžné, archivní a related-data selectory odstraněný záznam nevydají; budoucí deleted management musí mít samostatnou actor-aware hranici. Produktový hard delete HealthRecord je zakázán. Stabilní kódy jsou `health_record_not_active`, `health_record_not_soft_deleted`, `health_record_lifecycle_invalid` a `health_record_deletion_reason_required`. V tomto řezu nevzniká executable změna, model, migrace, DB constraint, nová permission ani HTTP/UI.
 
 190. Backendový řez implementuje ACP-011 v `health.services` a přesně delegujících `health.use_cases`. Veřejné keyword-only operace provádějí pouze `ACTIVE -> SOFT_DELETED` s povinným oříznutým důvodem a `SOFT_DELETED -> ACTIVE`; používají existující `health.delete_healthrecord`, čerstvého aktivního actora, úplnou content policy, aktivní osobu a typ a uzamčený čerstvý stav s opakovanou autorizací. Zachovávají fail-closed rozhraní, stabilní lifecycle kódy, autorství a business data a jsou striktně non-cascade vůči Materials. Běžná read API odstraněný záznam nadále nevydají. Nevzniká HTTP/UI, deleted-management read, hard delete, model, migrace, DB constraint, permission ani nový ACP.
+
+191. Produkční systémové skupiny Čtenář, Editor ani Správce automaticky nezískávají `health.delete_healthrecord`. Deletion management zůstává citlivou explicitně delegovanou pravomocí aktivního superusera, individuálně oprávněného uživatele nebo člena administrátorem samostatně upravené skupiny. Lokální DEBUG-only `stemma-demo-administrator` dostává tuto existující permission přímo pouze pro reprodukovatelné browser/UI testování; skupina Správce se tím nemění. Permission podle ACP-011 společně zahrnuje soft-delete, budoucí actor-aware čtení Koše a restore soft-deleted. Nevzniká nová role, permission, produkční skupinová migrace, ACP ani UI a význam backendového kontraktu ACP-011 se nemění.
 
 ## 2. Otevřené otázky
 
