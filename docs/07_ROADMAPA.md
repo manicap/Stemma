@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.54
-**Stav:** M2 a RC 0.1 dokončeny; Health deletion-management UI implementováno
-**Datum revize:** 30. 9. 2026
+**Verze:** 0.55
+**Stav:** M2 a RC 0.1 dokončeny; post-RC rozsah stavově sjednocen
+**Datum revize:** 7. 10. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -569,51 +569,90 @@ reload; zavřené drawery jsou vyřazeny z focus a accessibility toku a Escape
 vrací focus na jejich ovládací prvek.
 
 Oblasti B, C a G jsou tím pro RC 0.1 splněny. Bezpečnostní oblast F je
-doložena cílenými testy a nezávislým security review bez blockeru. Závěrečná
-brána H prošla `manage.py check`, `makemigrations --check --dry-run`, 1020
-automatickými testy, cílenými testy průchodu, nezávislým QA a security review,
-kontrolou dokumentace, diffu, tajemství a lokálních artefaktů.
+doložena cílenými testy a nezávislým security review bez blockeru. Historická
+closure brána H tehdy prošla `manage.py check`,
+`makemigrations --check --dry-run`, 1 020 automatickými testy, cílenými testy
+průchodu, nezávislým QA a security review, kontrolou dokumentace, diffu,
+tajemství a lokálních artefaktů.
 
-Všechna povinná acceptance kritéria A–H jsou splněna. RC 0.1 je připraven
+Po dalších přijatých post-RC řezech je současný ověřený baseline 1 514/1 514
+testů. Tento novější údaj nenahrazuje historickou evidenci původní closure
+brány; popisuje aktuální stav stejné větve po dokončení Health vertikály.
+
+Všechna povinná acceptance kritéria A–H jsou splněna a RC 0.1 nemá otevřený
+acceptance blocker. RC 0.1 je připraven
 na větvi `agent/rc-0.1`; nejde o schválení produkčního nasazení, merge do
-`feature/mvp` nebo `main` ani o dokončení pozdějších fází roadmapy.
+`feature/mvp` nebo `main` ani o dokončení pozdějších fází roadmapy. Další
+funkční rozvoj je post-RC a tato roadmapa mu zatím neurčuje nový milestone.
 
 ACP-009 nemění výše uvedenou finální bránu ani její důkazy. Invalidačně řízená
 gate optimalizuje pouze průběžné řezy: PASS zůstává platný do změny relevantního
 vstupu a kompletní release kontrola se nadále provede vždy, když ji acceptance
 kontrakt vyžaduje.
 
-## Fáze 4 – Interaktivní prototyp
+## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
+
+**Dokončeno:**
 
 - layout nad skutečnými Django views a šablonami,
-- ukázkový seznam osob,
-- přepínání detailu pomocí HTMX,
-- základní záložky,
-- ukázkové formuláře,
-- test použitelnosti.
+- skutečný actor-aware seznam a detail osob,
+- přepínání detailu a kontextových karet pomocí HTMX i full-page režimu,
+- základ person-centric záložek, responzivní shell a světlý i tmavý motiv,
+- formuláře a uživatelské průchody editace osoby a kompletní Health vertikály,
+- testy použitelnosti a browser smoke pro implementované průchody.
 
-## Fáze 5 – MVP
+**Plánováno:**
 
-- přihlášení,
-- osoby,
-- narození a úmrtí,
-- základní vazby,
-- fotografie,
-- vyhledávání,
-- historie změn,
-- základní oprávnění.
+- produktové karty Vztahy, Události, Bydliště a Materiály; jejich záložky jsou
+  zatím poctivě označené jako plánované,
+- další formuláře a uživatelské průchody těchto domén.
 
-## Fáze 6 – První použitelná verze
+Fáze proto není prohlášena za kompletní v celém původně zamýšleném rozsahu,
+přestože její UI základ je skutečně používán.
 
-- všechny běžné události,
-- bydliště,
-- dokumenty a přílohy,
-- zdravotní záznamy,
-- hrobová místa,
-- zdroje,
-- rodokmen,
-- časová osa,
-- záloha a export.
+## Fáze 5 – MVP — částečně dokončeno
+
+**Dokončeno:**
+
+- přihlášení, odhlášení, základní role a centrální access policy,
+- skutečný seznam, detail a omezená editace osoby,
+- bezpečná prezentace narození, úmrtí, věku a životního stavu z událostí,
+- modely, služby a actor-aware čtecí přehled základních vazeb.
+
+**Částečně dokončeno:**
+
+- vazby mají robustní backend a autorizované čtení, ale nemají HTTP/UI,
+- fotografie mají metadata a explicitní přílohovou infrastrukturu, nikoli
+  produktové zobrazení, upload nebo doručení souboru.
+
+**Plánováno:**
+
+- obecné vyhledávání a filtry,
+- produktové UI vazeb,
+- auditní historie změn.
+
+## Fáze 6 – První použitelná verze — backendové části a Health vertikála
+
+**Dokončeno:**
+
+- kompletní Health vertikála: list, detail, create/update, archiv/obnova,
+  soft-delete/Koš/obnova odstraněného a bezpečná metadata příloh a zdrojů.
+
+**Backendově připraveno, UI plánováno:**
+
+- vztahy, bydliště a hrobová místa mají modely, služby a actor-aware čtení,
+- události mají modely a agregátní služby; obecné actor-aware read API a UI
+  zatím chybí,
+- Materials mají metadata, zdroje, explicitní vazby, služby a kontextové
+  selectory; produktové management UI existuje pouze jako bezpečné read-only
+  metadata na Health detailu.
+
+**Plánováno nebo odloženo:**
+
+- fyzický upload, storage a bezpečný download/doručení souborů,
+- obecné UI událostí, bydlišť, hrobových míst, dokumentů a zdrojů,
+- rodokmen, časová osa, záloha a produktový export včetně PDF/A4 osoby,
+- auditní historie a její UI.
 
 ## Fáze 7 – Testování v rodině
 

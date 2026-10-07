@@ -1,5 +1,21 @@
 # Historie změn dokumentace
 
+## Verze 0.92 – 7. 10. 2026
+
+- sjednoceny aktivní stavové části README, roadmapy a funkční specifikace po
+  dokončení Health vertikály,
+- výslovně potvrzeno, že všechna acceptance kritéria RC 0.1 A–H jsou splněna
+  bez otevřeného blockeru a další funkční rozvoj je post-RC,
+- roadmapa nově rozlišuje dokončený UI základ a Health vertikálu, backendově
+  připravené domény bez UI a dosud plánované capability,
+- současný ověřený baseline je uveden jako 1 514/1 514; původní údaj 1 020
+  zůstává zachován jako historická evidence tehdejší closure brány,
+- funkční specifikace označuje obecné vyhledávání, produktové doménové UI,
+  file upload/storage/download, PDF/A4 export osoby a auditní historii jako
+  plánovaný cílový stav, nikoli hotovou funkci,
+- nevznikl nový milestone ani ACP a nebyl změněn executable obsah, architektura
+  nebo aplikační chování.
+
 ## Verze 0.91 – 30. 9. 2026
 
 - implementováno samostatné actor-aware read API pro Health Koš, omezené na

@@ -1,9 +1,35 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.51
-**Stav:** pracovní návrh  
-**Datum revize:** 30. 9. 2026
+**Verze:** 0.52
+**Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
+**Datum revize:** 7. 10. 2026
+
+## 0. Jak číst stav funkcí
+
+Tento dokument popisuje současnou implementaci i dlouhodobý cílový stav.
+Požadavek uvedený ve specifikaci proto sám o sobě neznamená, že je již
+uživatelsky dostupný.
+
+**Implementováno:** globální shell a Přehled, actor-aware seznam a detail osob,
+omezená editace osoby, session autentizace a role, odvozené údaje osoby a
+kompletní Health vertikála včetně archivu a Koše. Tyto průchody podporují
+full-page i HTMX režim podle svého kontraktu.
+
+**Backendově implementováno, produktové UI plánováno:** modely a servisní nebo
+čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Rozsah autorizovaných
+write hranic není u všech těchto domén stejný; existence backendu se proto
+nesmí vykládat jako hotové UI.
+
+**Metadata a vazby implementovány, práce se souborem plánována:** Materials
+obsahují přílohy, zdroje, explicitní vazby, služby a kontextové selectory.
+Health detail bezpečně zobrazuje pouze dostupná metadata. Fyzický upload,
+volba storage, download/doručení a obecné Materials UI neexistují.
+
+**Plánováno / cílový stav:** obecné vyhledávání a filtry, produktové UI vztahů,
+událostí, bydlišť, hrobových míst a Materials, fotografie jako souborový
+průchod, PDF/A4 export osoby a auditní historie. Tyto požadavky zůstávají
+součástí návrhu, ale nejsou podmínkou již uzavřeného RC 0.1.
 
 ## 1. Globální aplikační shell a Přehled
 
@@ -35,6 +61,11 @@ jsou globální navigace i seznam osob samostatné vysouvací vrstvy; detail se
 používá samostatně a seznam se po výběru osoby automaticky zavře.
 
 ## 2. Seznam osob
+
+**Stav:** Implementován je actor-aware seznam skutečných osob, bezpečný empty
+state, základní identifikační údaje a odvozené datum či rok života, kategorie a
+římské pořadí. Následující vyhledávání, filtry, volby řazení, fotografie a
+vytvoření osoby představují plánovaný cílový stav.
 
 Každý záznam osoby obsahuje:
 
@@ -75,6 +106,11 @@ Vyhledávání nerozlišuje velikost písmen a je tolerantní k diakritice.
 Archivované osoby se ve výchozím seznamu nezobrazují. Oprávněný uživatel je může zobrazit zvláštní volbou filtru.
 
 ## 3. Detail osoby
+
+**Stav:** Implementován je skutečný actor-aware detail, základní záhlaví,
+odvozené životní údaje, přehled, omezená editace osoby a kompletní karta
+Zdraví. Hlavní fotografie, lokální historie Zpět/Vpřed, PDF/A4 export a
+produktové karty Vztahy, Události, Bydliště a Materiály jsou plánované.
 
 Záhlaví detailu zůstává viditelné při přepínání karet a obsahuje:
 
@@ -149,6 +185,10 @@ lišit a nesmí mezerou prozradit skrytého jmenovce.
 
 ## 7. Události
 
+**Stav:** Datový model, agregátní zápisové služby a bezpečné odvození narození
+a úmrtí do prezentace osoby jsou implementované. Obecné actor-aware read
+use-cases a produktové list/detail/create/update UI událostí jsou plánované.
+
 Událost může být spojena s jednou nebo více osobami.
 
 Podporované typy zahrnují:
@@ -192,6 +232,10 @@ službami. Událost s detailem nelze převést na jiný typ a detail se nikdy
 automaticky neodstraňuje při změně typu.
 
 ## 8. Vazby mezi osobami
+
+**Stav:** Model, doménové create/update služby, odvození sourozenců a
+actor-aware čtecí přehled jsou implementované a testované. HTTP/UI, formuláře
+a lifecycle management vztahů jsou plánované.
 
 Vazby jsou univerzální a ukládají se pouze jednou.
 
@@ -347,6 +391,10 @@ N+1 a selector nic nezapisuje ani nevytváří migraci.
 
 ## 9. Bydliště
 
+**Stav:** Model, doménové create/update služby a actor-aware čtení bydlišť
+osoby jsou implementované. Produktové HTTP/UI a actor-aware write orchestrace
+pro tento průchod jsou plánované.
+
 Osoba může mít libovolný počet záznamů bydliště.
 
 Typ bydliště je uživatelsky rozšiřitelný číselník `ResidenceType`.
@@ -431,6 +479,11 @@ export.
 
 ## 10. Fotografie
 
+**Stav:** Jde o cílový uživatelský stav. Existující Materials backend poskytuje
+metadata a explicitní vazbu přílohy k osobě, ale neurčuje fotografii pouze
+příznakem primární přílohy a neposkytuje upload, storage, download ani
+fotografické UI.
+
 Každá osoba může mít:
 
 - jednu hlavní fotografii,
@@ -451,6 +504,12 @@ Každá fotografie může obsahovat:
 - přístupovou úroveň.
 
 ## 11. Dokumenty a přílohy
+
+**Stav:** Metadata příloh, stav souboru, zdroje, explicitní vazby, doménové
+služby a kontextové actor-aware read selectory jsou implementované. Health
+detail zobrazuje pouze bezpečná metadata. Fyzický upload, storage, download či
+jiné doručení souboru a obecné management UI jsou plánované a jejich provozní
+kontrakt zůstává otevřený.
 
 Příloha je univerzální objekt pro:
 
@@ -481,6 +540,11 @@ fotografii. Budoucí zobrazení vyžaduje také `available` a autorizaci přílo
 vazby i osoby, jinak používá siluetu.
 
 ## 12. Zdravotní informace
+
+**Stav:** Implementována je kompletní současná Health vertikála: actor-aware
+list/detail/create/update, archivace a obnova, soft-delete, samostatný Koš a
+obnova odstraněného záznamu ve full-page i HTMX režimu. Přílohy a zdroje jsou
+na detailu pouze read-only metadata bez editace nebo doručení souboru.
 
 Zdravotní informace tvoří samostatnou záložku.
 
@@ -704,6 +768,10 @@ URL jsou `/osoby/<person_id>/zdravi/kos/`,
 `/osoby/<person_id>/zdravi/<health_record_id>/obnovit-odstraneny/`.
 
 ## 13. Hrobová místa
+
+**Stav:** Modely hrobových míst a vazeb na osoby, doménové služby a actor-aware
+čtení jsou implementované. Produktové HTTP/UI, formuláře a lifecycle
+management jsou plánované.
 
 Hrobové místo je samostatný objekt, nikoli událost.
 
@@ -969,6 +1037,10 @@ zobrazí potvrzení. Rozpracovaná změna před opuštěním vyžaduje potvrzen�
 
 ## 15. Historie změn
 
+**Stav:** Plánovaný cílový stav. Aplikace `audit` ani auditní operace a změny
+polí zatím neexistují. Současná timestamps, autorství a metadata aktuální
+archivace nebo soft-delete nejsou auditní historií.
+
 U důležitých záznamů se eviduje:
 
 - kdo změnu provedl,
@@ -978,6 +1050,11 @@ U důležitých záznamů se eviduje:
 - případný komentář.
 
 ## 16. Mazání
+
+**Stav:** Společný lifecycle datový základ je implementovaný. Health má
+kompletní archive/restore a soft-delete/Koš/restore-soft-deleted UI. Obecný
+lifecycle management ostatních domén není automaticky odvozen z existence
+modelových metadat a zůstává podle konkrétní domény plánovaný.
 
 Důležité záznamy se fyzicky nemažou okamžitě.
 

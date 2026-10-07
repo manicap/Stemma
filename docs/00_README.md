@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.55
-**Stav:** RC 0.1 a M2 dokončeny; Health deletion-management UI implementováno
-**Datum revize:** 30. 9. 2026
+**Verze dokumentace:** 0.56
+**Stav:** RC 0.1 a M2 dokončeny; post-RC rozsah stavově sjednocen
+**Datum revize:** 7. 10. 2026
 
 ## Účel balíčku
 
@@ -39,6 +39,22 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.56
+
+Verze 0.56 sjednocuje aktivní stavové dokumenty po dokončení Health řezu:
+
+- povinná acceptance kritéria RC 0.1 A–H zůstávají dokončená bez otevřeného
+  blockeru a další funkční rozvoj je výslovně post-RC,
+- roadmapa nově rozlišuje dokončený UI základ a Health vertikálu od
+  backendově připravených, ale uživatelsky dosud nezpřístupněných domén,
+- funkční specifikace viditelně odděluje implementovaný stav od cílových a
+  plánovaných funkcí,
+- současný přijatý testovací baseline je 1 514/1 514; starší počty testů
+  zůstávají zachovány pouze jako historická evidence tehdejších bran,
+- file upload, fyzické storage a download, produktový PDF/A4 export osoby a
+  auditní historie zůstávají neimplementované,
+- nebyl určen nový milestone ani změněna architektura, aplikace nebo chování.
 
 ## Stav verze 0.55
 
@@ -840,8 +856,16 @@ v produkčním prostředí.
   zůstává nedotčeným pre-agentním integračním základem.
 - Autonomní režim na `agent/rc-0.1` vymezuje ACP-006; jeho validační a review
   workflow upřesňuje ACP-009.
-- RC 0.1 je na experimentální větvi připravené podle `07_ROADMAPA.md`; tento
-  stav ani dokončení M2 nepovolují produkční nasazení nebo merge.
+- RC 0.1 je na experimentální větvi dokončené a připravené podle
+  `07_ROADMAPA.md`; tento stav ani dokončení M2 nepovolují produkční nasazení
+  nebo merge.
+- Všechna acceptance kritéria RC 0.1 A–H jsou uzavřená bez otevřeného
+  blockeru. Současný přijatý testovací baseline je 1 514/1 514; další funkční
+  rozvoj je post-RC a žádný nový milestone zatím nebyl určen.
+- Kompletní uživatelský vertikální průchod má vedle základního UI osoby doména
+  Health. Vztahy, události, bydliště a hrobová místa mají různě rozsáhlý
+  backend, ale jejich produktové UI zůstává plánované. Materials poskytují
+  metadata a explicitní vazby, nikoli upload, storage nebo download souborů.
 - `backup/pre-agent-2026-08-17` je návratový bod před zahájením agentního experimentu a neslouží k vývoji.
 - Hlavním technickým dokumentem zůstává `11_DATABAZOVY_NAVRH.md` a exekuční pravidla agentní větve určuje kořenový `AGENTS.md`.
 
