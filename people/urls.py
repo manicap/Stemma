@@ -8,6 +8,11 @@ urlpatterns = [
     path("", views.person_index, name="index"),
     path("<int:person_id>/", views.person_detail, name="detail"),
     path(
+        "<int:person_id>/vztahy/",
+        views.person_relationships,
+        name="relationships",
+    ),
+    path(
         "<int:person_id>/zdravi/",
         views.person_health,
         name="health",

@@ -7,7 +7,14 @@
     hx-push-url="true"
     {% if active_person_tab == 'overview' or not active_person_tab %}aria-current="page"{% endif %}
   >Přehled</a>
-  <span class="person-tab is-disabled" aria-disabled="true">Vztahy <small>Plánováno</small></span>
+  <a
+    class="person-tab{% if active_person_tab == 'relationships' %} is-active{% endif %}"
+    href="{% url 'people:relationships' selected_person.pk %}"
+    hx-get="{% url 'people:relationships' selected_person.pk %}"
+    hx-target="#person-detail"
+    hx-push-url="true"
+    {% if active_person_tab == 'relationships' %}aria-current="page"{% endif %}
+  >Vztahy</a>
   <span class="person-tab is-disabled" aria-disabled="true">Události <small>Plánováno</small></span>
   <span class="person-tab is-disabled" aria-disabled="true">Bydliště <small>Plánováno</small></span>
   <a

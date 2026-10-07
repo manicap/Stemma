@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.82
+**Verze:** 0.83
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 30. 9. 2026
+**Datum revize:** 7. 10. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -155,6 +155,13 @@ Rozhodnutí 1–70 z verze 0.5 zůstávají v platnosti.
 191. Produkční systémové skupiny Čtenář, Editor ani Správce automaticky nezískávají `health.delete_healthrecord`. Deletion management zůstává citlivou explicitně delegovanou pravomocí aktivního superusera, individuálně oprávněného uživatele nebo člena administrátorem samostatně upravené skupiny. Lokální DEBUG-only `stemma-demo-administrator` dostává tuto existující permission přímo pouze pro reprodukovatelné browser/UI testování; skupina Správce se tím nemění. Permission podle ACP-011 společně zahrnuje soft-delete, budoucí actor-aware čtení Koše a restore soft-deleted. Nevzniká nová role, permission, produkční skupinová migrace, ACP ani UI a význam backendového kontraktu ACP-011 se nemění.
 
 192. Health deletion-management HTTP/UI zpřístupňuje ACP-011 v existujícím person-centric shellu. Samostatný actor-aware Koš `/osoby/<person_id>/zdravi/kos/` vydává pouze nearchivované `SOFT_DELETED` záznamy aktivní dostupné osoby actorovi s `health.delete_healthrecord` a odpovídajícím content accessem. Aktivní detail vede přes potvrzení s povinným důvodem a POST endpoint `odstranit/` do existujícího soft-delete use-case; Koš vede přes oddělené potvrzení a `obnovit-odstraneny/` do restore-soft-deleted use-case. Full-page a HTMX odpovědi vracejí kanonický běžný Health seznam nebo detail. Běžné a archivní selectory zůstávají beze změny, Koš nečte Materials a lifecycle je nemění kaskádou. Archivace a Koš zůstávají oddělené; nevzniká hard delete, editace odstraněného záznamu, model, migrace, permission, Group ani nový ACP.
+
+193. RC 0.1 je uzavřeným baseline na `agent/rc-0.1`; aktivní vývoj pokračuje
+jako RC 0.2 na `agent/rc-0.2`. Prvním a zatím jediným schváleným funkčním řezem
+RC 0.2 je read-only person-centric karta Vztahy nad existujícím actor-aware
+selectorem. Relationship create/update, lifecycle, Materials UI a ostatní
+plánované person taby vyžadují samostatné explicitní schválení. Jde o běžné
+milestone rozhodnutí bez změny architektury a bez nového ACP.
 
 ## 2. Otevřené otázky
 

@@ -1,0 +1,43 @@
+<article class="person-detail">
+  {% include "people/partials/person_header.html" %}
+  {% include "people/partials/person_tabs.html" %}
+
+  <section class="person-overview" aria-labelledby="relationships-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Rodinné a další vazby</p>
+        <h3 id="relationships-heading">Vztahy</h3>
+      </div>
+    </div>
+
+    {% if relationship_overview %}
+      <div class="related-list">
+        {% for item in relationship_overview %}
+          {% if item.detail_url %}
+            <a
+              class="related-card"
+              href="{{ item.detail_url }}"
+              hx-get="{{ item.detail_url }}"
+              hx-target="#person-detail"
+              hx-push-url="true"
+              hx-indicator="#detail-loading"
+            >
+          {% else %}
+            <div class="related-card">
+          {% endif %}
+              <strong>{{ item.person.first_name }} {{ item.person.last_name }}</strong>
+              {% for reason in item.reasons %}
+                <small>{{ reason.label }}</small>
+              {% endfor %}
+          {% if item.detail_url %}
+            </a>
+          {% else %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">Pro tuto osobu nejsou dostupné žádné vztahy.</p>
+    {% endif %}
+  </section>
+</article>

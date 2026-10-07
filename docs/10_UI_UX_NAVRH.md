@@ -1,9 +1,9 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.9
+**Verze:** 0.10
 **Stav:** schválený pracovní základ  
-**Datum revize:** 30. 9. 2026
+**Datum revize:** 7. 10. 2026
 
 ## 1. Účel dokumentu
 
@@ -385,9 +385,9 @@ Aktivní záložka bude označena kombinací:
 
 Obsah každé karty bude mít vlastní nadpis a může obsahovat velmi jemný tematický piktogram v pozadí. Piktogram je pouze dekorativní a nesmí rušit text.
 
-První implementovaný tabový řez zpřístupňuje Přehled a read-only Zdraví;
-ostatní karty jsou ve společné navigaci jasně označené jako plánované. Obě
-funkční karty používají stejný person header, full-page fallback a HTMX výměnu
+Implementované taby zpřístupňují Přehled, read-only Vztahy a Zdraví; ostatní
+karty jsou ve společné navigaci jasně označené jako plánované. Všechny funkční
+karty používají stejný person header, full-page fallback a HTMX výměnu
 v `#person-detail`. Karta Zdraví zobrazuje seznam záznamů a jejich detail s
 bezpečnými metadaty příloh a zdrojů. Příloha zde není odkazem ke stažení a UI
 nezobrazuje storage klíč ani stav, který by suploval autorizační rozhodnutí.
@@ -424,21 +424,15 @@ Událost může mít příznak **Zobrazit v přehledu osoby**. Takto označené 
 
 ## 11. Karta Vztahy
 
-Vztahy se zobrazují v jednoduchých skupinách:
+Implementovaný read-only řez zobrazuje jednoduchý seznam bezpečně dostupných
+propojených osob. U každé osoby se zobrazuje pouze jméno, příjmení a jeden nebo
+více směrových popisků, které vydal actor-aware overview. Pokud je protějšek
+dostupný i v běžném person detailu, karta na něj bezpečně odkazuje.
 
-- rodiče,
-- sourozenci,
-- partneři,
-- děti,
-- ostatní vztahy.
-
-U každé propojené osoby se zobrazí pouze:
-
-- jméno a příjmení,
-- případná římská číslice,
-- rok narození a úmrtí v závorce.
-
-Kliknutí otevře detail vybrané osoby.
+Full-page i HTMX režim zachovávají společný person header a navigaci. Skryté
+vztahy ani osoby nezanechávají jméno, odkaz, počet nebo odlišný prázdný stav.
+Seznam používá stávající responzivní karty a světlý i tmavý motiv. Zápis,
+lifecycle a Materials vztahů nejsou součástí tohoto řezu.
 
 Karta nenahrazuje samostatný rodokmen.
 

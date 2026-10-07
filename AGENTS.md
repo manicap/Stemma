@@ -4,7 +4,7 @@
 
 Stemma is a Django-based family information system. Preserve the approved architecture and move the project toward a genuinely usable first production candidate through small, verifiable vertical slices.
 
-This file contains the execution policy for the experimental autonomous-development branch `agent/rc-0.1`. It does not grant permission to change approved architecture, ACP decisions, security policy, or the meaning of documented system values.
+This file contains the execution policy for the active development branch `agent/rc-0.2`. It does not grant permission to change approved architecture, ACP decisions, security policy, or the meaning of documented system values.
 
 ## Source of truth
 
@@ -77,7 +77,7 @@ not exist yet and must not be treated as implemented:
 
 ## Autonomous operating mode
 
-On `agent/rc-0.1`, the default behavior is to continue working rather than stop after every implementation step.
+On `agent/rc-0.2`, the default behavior is to continue working within the explicitly approved slice rather than stop after every implementation step.
 
 For reversible implementation decisions that are consistent with approved documentation and architecture:
 
@@ -241,7 +241,7 @@ require more than these minimums.
 - Confirm that required document metadata and the changelog were completed and
   reviewed at Level 2 and Level 3.
 - Verify the tracked working-tree state, then stage only explicit relevant files.
-- Create one coherent commit and push it to `origin/agent/rc-0.1`.
+- Create one coherent commit and push it to `origin/agent/rc-0.2`.
 - Verify local and remote HEAD equality and a clean tracked working tree.
 
 Do not routinely repeat the full suite, fetch, system check, migration check, or
@@ -313,7 +313,7 @@ Before editing:
 
 - run `git branch --show-current` and `git status --short`,
 - confirm that the repository is Stemma,
-- for autonomous RC work, expect `agent/rc-0.1` unless an isolated task worktree was intentionally created from it,
+- for current RC work, expect `agent/rc-0.2` unless an isolated task worktree was intentionally created from it,
 - stop if there are unrelated uncommitted user changes, merge conflicts, an unfinished rebase, or an unexpected detached `HEAD`,
 - never discard, overwrite, stash, stage, or modify unrelated user changes.
 
@@ -321,22 +321,23 @@ Branch workflow:
 
 - `feature/mvp` is the preserved pre-agent integration baseline and must not be modified by autonomous RC work.
 - `backup/pre-agent-2026-08-17` is a recovery snapshot and must never be moved or used for development.
-- `agent/rc-0.1` is the active autonomous-development branch.
-- The lead agent may create temporary `codex/<milestone>-<short-description>` branches or isolated worktrees from `agent/rc-0.1` when genuinely useful for risky or parallel work, without asking for routine approval.
+- `agent/rc-0.1` is the closed RC 0.1 baseline and must not receive further functional development.
+- `agent/rc-0.2` is the active development branch.
+- The lead agent may create temporary `codex/<milestone>-<short-description>` branches or isolated worktrees from `agent/rc-0.2` when genuinely useful for risky or parallel work, without asking for routine approval.
 - Subagents should be read-only by default; parallel write work must be isolated and non-overlapping.
 
-Commit and remote rules for `agent/rc-0.1`:
+Commit and remote rules for `agent/rc-0.2`:
 
-- The lead agent may stage explicit relevant files, create a coherent commit, and push to `origin/agent/rc-0.1` after the required checks pass.
+- The lead agent may stage explicit relevant files, create a coherent commit, and push to `origin/agent/rc-0.2` after the required checks pass.
 - Commit only one coherent accepted slice at a time.
-- Every completed and verified vertical slice must be committed separately and pushed to `origin/agent/rc-0.1` before work begins on the next slice. After the push, the working tree must be clean except for explicitly ignored local artifacts.
+- Every completed and verified vertical slice must be committed separately and pushed to `origin/agent/rc-0.2` before work begins on the next slice. After the push, the working tree must be clean except for explicitly ignored local artifacts.
 - Local test launcher artifacts `start_stemma_test.ps1`, `start_stemma_test.cmd`, `stemma_local_test_launcher/`, and packaged variants such as `stemma_local_test_launcher.zip` are user-owned local helpers only. Never stage, commit, or push them.
 - Before committing, run the relevant tests and checks, inspect `git diff --check`, `git status --short`, and the final diff.
 - Never use `git add .` or `git add -A` when a narrower explicit file list is available.
 - Do not amend or rewrite already pushed commits.
 - Never force-push.
-- Never merge or rebase `agent/rc-0.1` into `feature/mvp` or `main` without explicit user approval.
-- Never delete `feature/mvp`, `backup/pre-agent-2026-08-17`, `agent/rc-0.1`, or another user's branch without explicit approval.
+- Never merge or rebase `agent/rc-0.1` or `agent/rc-0.2` into `feature/mvp` or `main` without explicit user approval.
+- Never delete `feature/mvp`, `backup/pre-agent-2026-08-17`, `agent/rc-0.1`, `agent/rc-0.2`, or another user's branch without explicit approval.
 - Do not open or merge a pull request into `feature/mvp` or `main` without explicit user approval.
 - Never use destructive commands such as `git reset --hard`, `git clean -fd`, checkout/restore that discards user changes, or history rewriting without explicit approval.
 
@@ -390,15 +391,19 @@ When all RC 0.1 criteria pass, stop autonomous feature expansion and produce a f
 
 ## Current mission
 
-The active autonomous-development branch is `agent/rc-0.1`.
+The active development branch is `agent/rc-0.2`; `agent/rc-0.1` is a closed,
+protected baseline.
 
 Milestones M0, M1, and M2 are complete. All RC 0.1 acceptance areas A-H are
 recorded as complete in `docs/07_ROADMAPA.md`. Autonomous feature expansion
-toward RC 0.1 has therefore stopped.
+toward RC 0.1 has therefore stopped. RC 0.2 starts with the explicitly approved
+read-only person relationship tab.
 
-Continue only with an explicit user-approved goal, maintenance task, or
-documentation/process correction that stays within the approved architecture.
-Use the ACP-006 autonomous boundaries and the ACP-009 invalidation-based gate.
+The current approved goal is only the read-only person relationship UI. It does
+not authorize relationship writes or lifecycle actions, Relationship Materials
+UI, or another planned person tab. Further functional slices require separate
+explicit approval. Use the established architectural boundaries and the
+ACP-009 invalidation-based gate.
 
 Do not declare Stemma production-ready merely because roadmap items or automated
 tests are complete. Production deployment, integration into `feature/mvp` or

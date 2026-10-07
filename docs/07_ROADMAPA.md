@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.55
-**Stav:** M2 a RC 0.1 dokončeny; post-RC rozsah stavově sjednocen
+**Verze:** 0.56
+**Stav:** RC 0.1 uzavřeno; první read-only řez RC 0.2 dokončen
 **Datum revize:** 7. 10. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -575,20 +575,33 @@ closure brána H tehdy prošla `manage.py check`,
 průchodu, nezávislým QA a security review, kontrolou dokumentace, diffu,
 tajemství a lokálních artefaktů.
 
-Po dalších přijatých post-RC řezech je současný ověřený baseline 1 514/1 514
-testů. Tento novější údaj nenahrazuje historickou evidenci původní closure
-brány; popisuje aktuální stav stejné větve po dokončení Health vertikály.
+Před zahájením RC 0.2 byl přijatý post-RC baseline 1 514/1 514 testů. Tento
+údaj nenahrazuje historickou evidenci původní closure brány; popisuje stav
+uzavřeného RC 0.1 po dokončení Health vertikály.
 
 Všechna povinná acceptance kritéria A–H jsou splněna a RC 0.1 nemá otevřený
 acceptance blocker. RC 0.1 je připraven
 na větvi `agent/rc-0.1`; nejde o schválení produkčního nasazení, merge do
 `feature/mvp` nebo `main` ani o dokončení pozdějších fází roadmapy. Další
-funkční rozvoj je post-RC a tato roadmapa mu zatím neurčuje nový milestone.
+funkční rozvoj pokračuje samostatně jako RC 0.2 na nové větvi.
 
 ACP-009 nemění výše uvedenou finální bránu ani její důkazy. Invalidačně řízená
 gate optimalizuje pouze průběžné řezy: PASS zůstává platný do změny relevantního
 vstupu a kompletní release kontrola se nadále provede vždy, když ji acceptance
 kontrakt vyžaduje.
+
+## RC 0.2 – schválený první řez
+
+RC 0.2 probíhá na `agent/rc-0.2`. Jeho prvním a zatím jediným schváleným řezem
+je dokončený read-only přehled Vztahů osoby ve stávajícím person-centric shellu.
+Používá existující actor-aware selector, podporuje full-page i HTMX režim,
+bezpečné odkazy a jednotný empty state bez existence leaku.
+Stabilní diff prošel 1 526/1 526 automatickými testy, systémovou kontrolou,
+query regresí, nezávislými review a skutečným browser smoke.
+
+Tento milestone sám nepovoluje relationship write nebo lifecycle UI, Materials
+UI ani implementaci Událostí, Bydliště, Hrobových míst či dalšího tabu. Každý
+další funkční řez vyžaduje samostatné explicitní schválení.
 
 ## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
 
@@ -599,11 +612,12 @@ kontrakt vyžaduje.
 - přepínání detailu a kontextových karet pomocí HTMX i full-page režimu,
 - základ person-centric záložek, responzivní shell a světlý i tmavý motiv,
 - formuláře a uživatelské průchody editace osoby a kompletní Health vertikály,
+- read-only karta Vztahy ve full-page i HTMX režimu,
 - testy použitelnosti a browser smoke pro implementované průchody.
 
 **Plánováno:**
 
-- produktové karty Vztahy, Události, Bydliště a Materiály; jejich záložky jsou
+- produktové karty Události, Bydliště a Materiály; jejich záložky jsou
   zatím poctivě označené jako plánované,
 - další formuláře a uživatelské průchody těchto domén.
 
@@ -617,30 +631,33 @@ přestože její UI základ je skutečně používán.
 - přihlášení, odhlášení, základní role a centrální access policy,
 - skutečný seznam, detail a omezená editace osoby,
 - bezpečná prezentace narození, úmrtí, věku a životního stavu z událostí,
-- modely, služby a actor-aware čtecí přehled základních vazeb.
+- modely, služby a actor-aware čtecí přehled základních vazeb,
+- read-only HTTP/UI přehled vztahů s bezpečným filtrováním protějšku.
 
 **Částečně dokončeno:**
 
-- vazby mají robustní backend a autorizované čtení, ale nemají HTTP/UI,
+- vazby mají robustní backend a read-only HTTP/UI, ale nemají zápis, lifecycle
+  ani Materials UI,
 - fotografie mají metadata a explicitní přílohovou infrastrukturu, nikoli
   produktové zobrazení, upload nebo doručení souboru.
 
 **Plánováno:**
 
 - obecné vyhledávání a filtry,
-- produktové UI vazeb,
+- write/lifecycle a Materials UI vazeb,
 - auditní historie změn.
 
-## Fáze 6 – První použitelná verze — backendové části a Health vertikála
+## Fáze 6 – První použitelná verze — dílčí doménové vertikály
 
 **Dokončeno:**
 
 - kompletní Health vertikála: list, detail, create/update, archiv/obnova,
-  soft-delete/Koš/obnova odstraněného a bezpečná metadata příloh a zdrojů.
+  soft-delete/Koš/obnova odstraněného a bezpečná metadata příloh a zdrojů,
+- vztahy mají modely, služby, actor-aware čtení a read-only person-centric UI.
 
 **Backendově připraveno, UI plánováno:**
 
-- vztahy, bydliště a hrobová místa mají modely, služby a actor-aware čtení,
+- bydliště a hrobová místa mají modely, služby a actor-aware čtení,
 - události mají modely a agregátní služby; obecné actor-aware read API a UI
   zatím chybí,
 - Materials mají metadata, zdroje, explicitní vazby, služby a kontextové

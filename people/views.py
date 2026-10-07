@@ -45,7 +45,7 @@ from .derived_selectors import (
 )
 from .forms import PersonForm
 from .models import Person
-from .selectors import get_visible_person
+from .selectors import get_visible_person, get_visible_relationship_overview
 from .services import BasicPersonInput, update_person_basic
 
 
@@ -140,6 +140,45 @@ def person_detail(
         presentation=presentation,
         template_name="people/partials/person_detail.html",
         context={"active_person_tab": "overview"},
+    )
+
+
+@require_GET
+def person_relationships(
+    request: HttpRequest,
+    person_id: int,
+) -> HttpResponse:
+    """Zobraz bezpečný read-only přehled vztahů osoby."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    relationship_overview = get_visible_relationship_overview(
+        person=presentation.person,
+        actor=request.user,
+    )
+    detail_person_ids = {
+        item.person.pk for item in presentations
+    }
+    relationship_presentations = tuple(
+        {
+            "person": item.person,
+            "reasons": item.reasons,
+            "detail_url": (
+                reverse("people:detail", args=(item.person.pk,))
+                if item.person.pk in detail_person_ids
+                else None
+            ),
+        }
+        for item in relationship_overview
+    )
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_relationships.html",
+        context={
+            "active_person_tab": "relationships",
+            "relationship_overview": relationship_presentations,
+        },
     )
 
 

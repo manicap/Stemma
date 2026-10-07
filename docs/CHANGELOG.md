@@ -1,5 +1,19 @@
 # Historie změn dokumentace
 
+## Verze 0.93 – 7. 10. 2026
+
+- RC 0.1 zůstává uzavřeným baseline a aktivní vývoj pokračuje jako RC 0.2 na
+  `agent/rc-0.2`,
+- první schválený RC 0.2 řez zpřístupňuje read-only kartu Vztahy osoby ve
+  full-page i HTMX režimu nad existujícím `get_visible_relationship_overview()`,
+- UI vydává pouze bezpečné jméno protějšku, směrové popisky a dostupný person
+  detail odkaz; skrytá data nezanechávají odlišný empty state,
+- HTTP/security a query regrese ověřují actor-aware delegaci, fail-closed person
+  hranici, centrální access policy a konstantní dotazový profil,
+- finální brána prošla 1 526/1 526 testy, systémovou kontrolou a browser smoke,
+- relationship write/lifecycle, Materials UI i další person taby zůstávají mimo
+  schválený rozsah; nevznikl model, migrace, permission ani ACP.
+
 ## Verze 0.92 – 7. 10. 2026
 
 - sjednoceny aktivní stavové části README, roadmapy a funkční specifikace po

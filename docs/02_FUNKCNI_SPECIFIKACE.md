@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.52
+**Verze:** 0.53
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
 **Datum revize:** 7. 10. 2026
 
@@ -12,12 +12,13 @@ Požadavek uvedený ve specifikaci proto sám o sobě neznamená, že je již
 uživatelsky dostupný.
 
 **Implementováno:** globální shell a Přehled, actor-aware seznam a detail osob,
-omezená editace osoby, session autentizace a role, odvozené údaje osoby a
-kompletní Health vertikála včetně archivu a Koše. Tyto průchody podporují
+omezená editace osoby, session autentizace a role, odvozené údaje osoby,
+read-only karta Vztahy a kompletní Health vertikála včetně archivu a Koše. Tyto průchody podporují
 full-page i HTMX režim podle svého kontraktu.
 
-**Backendově implementováno, produktové UI plánováno:** modely a servisní nebo
-čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Rozsah autorizovaných
+**Backendově implementováno, širší produktové UI plánováno:** modely a servisní
+nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy mají
+read-only person-centric přehled; jejich zápis, lifecycle a Materials UI chybí. Rozsah autorizovaných
 write hranic není u všech těchto domén stejný; existence backendu se proto
 nesmí vykládat jako hotové UI.
 
@@ -26,8 +27,8 @@ obsahují přílohy, zdroje, explicitní vazby, služby a kontextové selectory.
 Health detail bezpečně zobrazuje pouze dostupná metadata. Fyzický upload,
 volba storage, download/doručení a obecné Materials UI neexistují.
 
-**Plánováno / cílový stav:** obecné vyhledávání a filtry, produktové UI vztahů,
-událostí, bydlišť, hrobových míst a Materials, fotografie jako souborový
+**Plánováno / cílový stav:** obecné vyhledávání a filtry, write/lifecycle UI
+vztahů, produktové UI událostí, bydlišť, hrobových míst a Materials, fotografie jako souborový
 průchod, PDF/A4 export osoby a auditní historie. Tyto požadavky zůstávají
 součástí návrhu, ale nejsou podmínkou již uzavřeného RC 0.1.
 
@@ -108,9 +109,9 @@ Archivované osoby se ve výchozím seznamu nezobrazují. Oprávněný uživatel
 ## 3. Detail osoby
 
 **Stav:** Implementován je skutečný actor-aware detail, základní záhlaví,
-odvozené životní údaje, přehled, omezená editace osoby a kompletní karta
-Zdraví. Hlavní fotografie, lokální historie Zpět/Vpřed, PDF/A4 export a
-produktové karty Vztahy, Události, Bydliště a Materiály jsou plánované.
+odvozené životní údaje, přehled, omezená editace osoby, read-only karta Vztahy
+a kompletní karta Zdraví. Hlavní fotografie, lokální historie Zpět/Vpřed,
+PDF/A4 export a produktové karty Události, Bydliště a Materiály jsou plánované.
 
 Záhlaví detailu zůstává viditelné při přepínání karet a obsahuje:
 
@@ -233,9 +234,12 @@ automaticky neodstraňuje při změně typu.
 
 ## 8. Vazby mezi osobami
 
-**Stav:** Model, doménové create/update služby, odvození sourozenců a
-actor-aware čtecí přehled jsou implementované a testované. HTTP/UI, formuláře
-a lifecycle management vztahů jsou plánované.
+**Stav:** Model, doménové create/update služby, odvození sourozenců a actor-aware
+čtecí přehled jsou implementované a testované. Endpoint
+`/osoby/<person_id>/vztahy/` jej zobrazuje read-only ve full-page i HTMX režimu.
+UI používá pouze bezpečně vydané jméno protějšku a směrový popisek; skrytý vztah
+nebo osoba nezanechá odkaz, ID, metadata ani odlišný empty state. Formuláře,
+lifecycle a Relationship Materials UI jsou plánované.
 
 Vazby jsou univerzální a ukládají se pouze jednou.
 
