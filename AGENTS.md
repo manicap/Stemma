@@ -397,13 +397,14 @@ protected baseline.
 Milestones M0, M1, and M2 are complete. All RC 0.1 acceptance areas A-H are
 recorded as complete in `docs/07_ROADMAPA.md`. Autonomous feature expansion
 toward RC 0.1 has therefore stopped. RC 0.2 has completed the explicitly
-approved read-only person relationship, residence, grave-site, and event tabs.
+approved read-only person relationship, residence, grave-site and event tabs
+and the actor-aware PDF/A4 person export.
 
-The current approved Event slice is complete. It does not authorize Event or
-participant writes or lifecycle actions, Event detail, Place or Materials UI,
-or another planned person tab. Further functional slices require separate
-explicit approval. Use the established architectural boundaries and the
-ACP-009 invalidation-based gate.
+The approved PDF/A4 slice is complete. It does not authorize broader exports,
+Health or Materials export, attachments, stored attachment or Materials file
+delivery, domain writes or lifecycle actions, or another planned person
+feature. Further functional slices require separate explicit approval. Use the
+established architectural boundaries and the ACP-009 invalidation-based gate.
 
 Do not declare Stemma production-ready merely because roadmap items or automated
 tests are complete. Production deployment, integration into `feature/mvp` or

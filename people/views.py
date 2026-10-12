@@ -8,6 +8,7 @@ from django.core.exceptions import (
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.text import slugify
 from django.views.decorators.http import require_GET, require_http_methods
 
 from common.choices import AccessLevel
@@ -50,6 +51,7 @@ from .derived_selectors import (
 )
 from .forms import PersonForm
 from .models import Person
+from .pdf_exports import build_person_pdf, get_person_pdf_export
 from .selectors import get_visible_person, get_visible_relationship_overview
 from .services import BasicPersonInput, update_person_basic
 
@@ -146,6 +148,33 @@ def person_detail(
         template_name="people/partials/person_detail.html",
         context={"active_person_tab": "overview"},
     )
+
+
+@require_GET
+def person_pdf_export(
+    request: HttpRequest,
+    person_id: int,
+) -> HttpResponse:
+    """Return one actor-aware person profile as a printable A4 PDF."""
+
+    try:
+        export = get_person_pdf_export(
+            person_id=person_id,
+            actor=request.user,
+        )
+    except (Person.DoesNotExist, PermissionDenied):
+        raise Http404("Osoba nebyla nalezena.") from None
+
+    filename_base = slugify(export.display_name) or "osoba"
+    response = HttpResponse(
+        build_person_pdf(export),
+        content_type="application/pdf",
+    )
+    response["Content-Disposition"] = (
+        f'inline; filename="{filename_base}.pdf"'
+    )
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @require_GET

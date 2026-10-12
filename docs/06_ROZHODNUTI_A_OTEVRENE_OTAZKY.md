@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.86
+**Verze:** 0.87
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 12. 10. 2026
 
@@ -194,6 +194,20 @@ se nevydávají. UI přidává pouze person-centric seznam ve full-page a HTMX
 režimu; Event detail/write/lifecycle, participant write, Place UI a Materials
 zůstávají mimo rozsah. Nevzniká model, migrace, permission ani ACP.
 
+197. PDF/A4 export osoby je samostatný actor-aware GET na
+`/osoby/<person_id>/export/pdf/`. Frozen slotted `PersonPdfExport` skládá
+existující bezpečné read kontrakty osoby, odvozených životních údajů, vztahů,
+bydlišť, hrobových míst a událostí do textové prezentace bez interních ID.
+Health, Materials, přílohy, zdroje, storage údaje a alternativní `PersonName`
+bez veřejného actor-aware read API nejsou součástí. HTTP view neprovádí ORM ani
+vlastní autorizaci; neviditelná a chybějící osoba končí stejnou 404. PDF se
+generuje přímo v paměti serveru pomocí ReportLab 4.4.9, přenosného fontu Roboto
+a vícestránkového A4 portrait layoutu. ReportLab, Apache 2.0 `font-roboto`
+0.0.1 a čistě pythonový pypdf 6.10.0 pro regresní čtení struktury a textu jsou
+reprodukovatelně připnuté v `requirements.txt`; nevzniká browserový renderer,
+externě konfigurovaná systémová služba ani nový deploymentový subsystém.
+Nevzniká model, migrace, permission, dočasný veřejný soubor ani ACP.
+
 ## 2. Otevřené otázky
 
 ### Implementace a provoz
@@ -210,7 +224,7 @@ zůstávají mimo rozsah. Nevzniká model, migrace, permission ani ACP.
 
 - Jak přesně se bude zobrazovat rodokmen?
 - Jak bude řešeno slučování duplicit?
-- Jaké exportní formáty budou podporovány?
+- Jaké další exportní formáty kromě PDF/A4 profilu osoby budou podporovány?
 - Bude podporován GEDCOM?
 - Zda bude „Příběh nebo vzpomínka“ samostatná entita, nebo typ dokumentu či poznámky.
 - Zda bude později zaveden univerzální model tvrzení pro zdrojování jednotlivých polí.

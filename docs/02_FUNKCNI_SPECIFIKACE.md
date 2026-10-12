@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.56
+**Verze:** 0.57
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
 **Datum revize:** 12. 10. 2026
 
@@ -13,9 +13,10 @@ uživatelsky dostupný.
 
 **Implementováno:** globální shell a Přehled, actor-aware seznam a detail osob,
 omezená editace osoby, session autentizace a role, odvozené údaje osoby,
-read-only karty Vztahy, Bydliště, Hrobová místa a Události a kompletní Health vertikála
-včetně archivu a Koše. Tyto průchody podporují
-full-page i HTMX režim podle svého kontraktu.
+read-only karty Vztahy, Bydliště, Hrobová místa a Události, actor-aware PDF/A4
+export osoby a kompletní Health vertikála včetně archivu a Koše. Webové
+průchody podporují full-page i HTMX režim podle svého kontraktu; export je
+samostatný běžný GET odkaz na PDF.
 
 **Backendově implementováno, širší produktové UI plánováno:** modely a servisní
 nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy, Bydliště,
@@ -31,7 +32,7 @@ volba storage, download/doručení a obecné Materials UI neexistují.
 
 **Plánováno / cílový stav:** obecné vyhledávání a filtry, write/lifecycle UI
 vztahů, bydlišť, hrobových míst a událostí, obecný Event detail a Materials UI, fotografie jako souborový
-průchod, PDF/A4 export osoby a auditní historie. Tyto požadavky zůstávají
+průchod a auditní historie. Tyto požadavky zůstávají
 součástí návrhu, ale nejsou podmínkou již uzavřeného RC 0.1.
 
 ## 1. Globální aplikační shell a Přehled
@@ -112,9 +113,9 @@ Archivované osoby se ve výchozím seznamu nezobrazují. Oprávněný uživatel
 
 **Stav:** Implementován je skutečný actor-aware detail, základní záhlaví,
 odvozené životní údaje, přehled, omezená editace osoby, read-only karty Vztahy,
-Bydliště, Hrobová místa a Události a kompletní karta Zdraví. Hlavní fotografie,
-lokální historie Zpět/Vpřed, PDF/A4 export, Event detail a karta Materiály jsou
-plánované.
+Bydliště, Hrobová místa a Události, actor-aware PDF/A4 export a kompletní karta
+Zdraví. Hlavní fotografie, lokální historie Zpět/Vpřed, Event detail a karta
+Materiály jsou plánované.
 
 Záhlaví detailu zůstává viditelné při přepínání karet a obsahuje:
 
@@ -143,6 +144,14 @@ Pod záhlavím jsou záložky:
 Výchozí záložkou je Přehled. Aktivní záložka je zřetelně označena textem, pozadím a barevnou spodní linkou.
 
 Podrobný vzhled a chování rozhraní definuje `10_UI_UX_NAVRH.md`.
+
+Souhrnný PDF/A4 export je samostatný tiskový profil, nikoli kopie webového UI.
+Obsahuje základní identifikaci a bezpečně dostupné odvozené životní údaje,
+životopis, poznámky, vztahy, bydliště, hrobová místa a události. Každý export
+vzniká pro aktuálního actora z existujících actor-aware read kontraktů. Health,
+Materials, přílohy, zdroje, storage údaje, interní ID a alternativní jména bez
+veřejného actor-aware selectoru se neexportují. Prázdné person-centric sekce se
+vynechávají.
 
 ## 4. Osoba
 

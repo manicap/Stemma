@@ -11,13 +11,21 @@
       </p>
     {% endif %}
   </div>
-  {% if perms.people.change_person %}
+  <div class="person-header-actions">
     <a
-      class="secondary-button person-edit-action"
-      href="{% url 'people:edit' selected_person.pk %}"
-      hx-get="{% url 'people:edit' selected_person.pk %}"
-      hx-target="#person-detail"
-      hx-push-url="true"
-    >Upravit osobu</a>
-  {% endif %}
+      class="secondary-button"
+      href="{% url 'people:pdf-export' selected_person.pk %}"
+      target="_blank"
+      rel="noopener"
+    >Export PDF</a>
+    {% if perms.people.change_person %}
+      <a
+        class="secondary-button person-edit-action"
+        href="{% url 'people:edit' selected_person.pk %}"
+        hx-get="{% url 'people:edit' selected_person.pk %}"
+        hx-target="#person-detail"
+        hx-push-url="true"
+      >Upravit osobu</a>
+    {% endif %}
+  </div>
 </header>

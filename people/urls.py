@@ -8,6 +8,11 @@ urlpatterns = [
     path("", views.person_index, name="index"),
     path("<int:person_id>/", views.person_detail, name="detail"),
     path(
+        "<int:person_id>/export/pdf/",
+        views.person_pdf_export,
+        name="pdf-export",
+    ),
+    path(
         "<int:person_id>/vztahy/",
         views.person_relationships,
         name="relationships",

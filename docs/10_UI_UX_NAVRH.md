@@ -1,7 +1,7 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.13
+**Verze:** 0.14
 **Stav:** schválený pracovní základ  
 **Datum revize:** 12. 10. 2026
 
@@ -352,6 +352,13 @@ oprávnění lišit.
 
 PDF není snímkem obrazovky. Aplikace vytvoří samostatně formátovaný souhrnný profil osoby optimalizovaný pro A4.
 
+**Stav:** Implementován je actor-aware textový profil na samostatném GET
+endpointu. Akce **Export PDF** je běžný odkaz v záhlaví osoby, nikoli karta ani
+HTMX tok. Výstup používá A4 portrait, tisknutelné okraje, Unicode písmo,
+automatické pokračování na další stránky a kompaktně vynechává prázdné sekce.
+PDF používá přenosné Roboto Regular/Bold z balíčku `font-roboto` s licencí
+Apache 2.0; tato volba neurčuje typografii webového rozhraní.
+
 Může obsahovat:
 
 - základní údaje a hlavní fotografii,
@@ -362,7 +369,10 @@ Může obsahovat:
 - zdroje,
 - datum vytvoření dokumentu.
 
-Rozsah může být podle množství dat vícestránkový.
+První implementace zahrnuje základní údaje, životopis a poznámky, odvozené
+narození/úmrtí a actorovi dostupné Vztahy, Bydliště, Hrobová místa a Události.
+Health, Materials, fotografie, přílohy a zdroje nejsou součástí. Rozsah může
+být podle množství dat vícestránkový.
 
 ## 9. Záložky detailu osoby
 
@@ -702,10 +712,10 @@ Reference určuje vizuální směr, nikoli přesné pixelové rozměry všech pr
 
 ## 26. Otevřené otázky pro další fázi
 
-- Přesná typografická rodina a licenční podmínky fontů.
+- Přesná typografická rodina a licenční podmínky webového rozhraní; pro PDF je
+  použito Roboto s licencí Apache 2.0.
 - Přesné breakpointy pro počítač, tablet a telefon.
 - Detailní podoba mini formulářů.
 - Detailní návrh dialogů a náhledu materiálů.
-- Rozsah první implementace generování PDF A4.
 - Rozsah a technické řešení AI návrhu životopisného textu.
 - Samostatný návrh skutečného rodokmenu a obsahových modulů globálních sekcí.

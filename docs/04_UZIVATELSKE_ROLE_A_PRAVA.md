@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.42
+**Verze:** 0.43
 **Stav:** pracovní návrh  
-**Datum revize:** 30. 9. 2026
+**Datum revize:** 12. 10. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -55,6 +55,13 @@ Může:
 - spravovat číselníky,
 - provádět export a zálohu,
 - spravovat omezený obsah.
+
+Administrátorský bod „export a záloha“ označuje širší správní a hromadné
+exporty. Implementovaný PDF/A4 profil jedné osoby je read-only projekce bez
+samostatné exportní permission: smí jej získat každý actor, který podle
+centrální content a lifecycle policy smí zobrazit danou osobu. Anonymní actor
+proto může exportovat veřejnou osobu, ale žádný export nerozšiřuje viditelnost
+osoby ani souvisejících dat.
 
 Jde o cílové produktové schopnosti, nikoli automatické zpřístupnění každého
 modelu přes výchozí Django admin. V aktuální infrastrukturní etapě admin

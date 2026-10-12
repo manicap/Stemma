@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.60
-**Stav:** RC 0.1 uzavřeno; čtyři read-only person řezy RC 0.2 dokončeny
+**Verze dokumentace:** 0.61
+**Stav:** RC 0.1 uzavřeno; actor-aware PDF/A4 export osoby dokončen v RC 0.2
 **Datum revize:** 12. 10. 2026
 
 ## Účel balíčku
@@ -39,6 +39,23 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.61
+
+Verze 0.61 doplňuje samostatný actor-aware PDF/A4 export osoby v RC 0.2:
+
+- běžná akce v záhlaví osoby vede na GET
+  `/osoby/<person_id>/export/pdf/` a vrací serverem vytvořené PDF A4,
+- tenký `PersonPdfExport` skládá pouze data vydaná existujícími actor-aware
+  prezentacemi vztahů, bydlišť, hrobových míst, událostí a odvozených životních
+  údajů; skrytá data ani interní identifikátory nevydává,
+- export obsahuje základní identifikaci, životopisné údaje a dostupné
+  person-centric sekce; Health, Materials, přílohy, zdroje a alternativní
+  `PersonName` bez veřejného actor-aware read kontraktu jsou vynechány,
+- skutečné PDF vytváří serverový ReportLab 4.4.9 s přenosným Unicode fontem
+  Roboto a vícestránkovým A4 layoutem bez dočasného veřejného souboru; pypdf
+  6.10.0 zajišťuje deterministickou regresní kontrolu struktury a textu PDF,
+- nevznikl model, migrace, permission ani ACP.
 
 ## Stav verze 0.60
 
@@ -111,8 +128,9 @@ Verze 0.56 sjednocuje aktivní stavové dokumenty po dokončení Health řezu:
   plánovaných funkcí,
 - současný přijatý testovací baseline je 1 514/1 514; starší počty testů
   zůstávají zachovány pouze jako historická evidence tehdejších bran,
-- file upload, fyzické storage a download, produktový PDF/A4 export osoby a
-  auditní historie zůstávají neimplementované,
+- file upload, fyzické storage a download a auditní historie zůstávají
+  neimplementované; tehdy neimplementovaný PDF/A4 export osoby doplnila až
+  verze 0.61,
 - nebyl určen nový milestone ani změněna architektura, aplikace nebo chování.
 
 ## Stav verze 0.55

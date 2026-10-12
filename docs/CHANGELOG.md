@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 0.97 – 12. 10. 2026
+
+- samostatný řez RC 0.2 zpřístupňuje actor-aware PDF/A4 export jedné osoby na
+  `/osoby/<person_id>/export/pdf/` a běžnou akci **Export PDF** v záhlaví,
+- frozen `PersonPdfExport` skládá existující bezpečné prezentace základních a
+  odvozených údajů, vztahů, bydlišť, hrobových míst a událostí bez vlastního
+  ORM nebo autorizační policy v HTTP vrstvě,
+- serverový ReportLab 4.4.9 vytváří PDF přímo v paměti, s přenosným Unicode
+  fontem Roboto (Apache 2.0), A4 portrait layoutem, tisknutelnými okraji a
+  automatickým stránkováním; pypdf 6.10.0 ověřuje text a strukturu v regresních
+  testech,
+- Health, Materials, přílohy, zdroje, storage údaje, interní ID a alternativní
+  jména bez actor-aware read API se neexportují,
+- dokument rolí rozlišuje actor-aware PDF profilu jedné viditelné osoby od
+  širších administrátorských exportů a záloh,
+- nevznikl model, migrace, permission ani ACP.
+
 ## Verze 0.96 – 12. 10. 2026
 
 - čtvrtý samostatně schválený řez RC 0.2 zpřístupňuje read-only kartu Události

@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.59
-**Stav:** RC 0.1 uzavřeno; čtyři read-only person řezy RC 0.2 dokončeny
+**Verze:** 0.60
+**Stav:** RC 0.1 uzavřeno; actor-aware PDF/A4 export osoby dokončen v RC 0.2
 **Datum revize:** 12. 10. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -467,7 +467,7 @@ Existující backendové funkce z těchto oblastí se nesmějí odstranit, obej�
 Oblast A má implementovaný reprodukovatelný lokální postup:
 
 - dokumentace vede čistý checkout od Python 3.14 přes izolovaný `venv`,
-  instalaci jediného deklarovaného balíčku, lokální tajný klíč a migrace až
+  instalaci deklarovaných přímých balíčků, lokální tajný klíč a migrace až
   ke spuštění serveru,
 - lokální konfigurace, databáze a launcher artefakty zůstávají mimo Git,
 - lokálně omezený `seed_demo_data` vytvoří syntetické osoby pro tři
@@ -679,6 +679,8 @@ přestože její UI základ je skutečně používán.
   person-centric UI.
 - události mají modely, agregátní služby, actor-aware čtení a read-only
   person-centric UI.
+- osoba má actor-aware serverový PDF/A4 export základních údajů a již
+  implementovaných bezpečných person-centric přehledů.
 
 **Backendově připraveno, UI plánováno:**
 
@@ -690,7 +692,7 @@ přestože její UI základ je skutečně používán.
 
 - fyzický upload, storage a bezpečný download/doručení souborů,
 - obecný detail a write/lifecycle UI událostí, dokumentů a zdrojů,
-- rodokmen, časová osa, záloha a produktový export včetně PDF/A4 osoby,
+- rodokmen, časová osa, záloha a další produktové exportní formáty,
 - auditní historie a její UI.
 
 ## Fáze 7 – Testování v rodině
