@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.58
-**Stav:** RC 0.1 uzavřeno; tři read-only person řezy RC 0.2 dokončeny
+**Verze:** 0.59
+**Stav:** RC 0.1 uzavřeno; čtyři read-only person řezy RC 0.2 dokončeny
 **Datum revize:** 12. 10. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -593,16 +593,19 @@ kontrakt vyžaduje.
 ## RC 0.2 – schválené read-only řezy
 
 RC 0.2 probíhá na `agent/rc-0.2`. Dokončené samostatně schválené řezy jsou
-read-only přehledy Vztahů, Bydliště a Hrobových míst osoby ve stávajícím
-person-centric shellu. Používají existující actor-aware selectory, podporují
-full-page i HTMX režim a jednotný empty state bez existence leaku. Stabilní
-diff prošel 1 553/1 553 automatickými testy, systémovou kontrolou, query
-regresí, nezávislými review a skutečným browser smoke.
+read-only přehledy Vztahů, Bydliště, Hrobových míst a Událostí osoby ve
+stávajícím person-centric shellu. Používají actor-aware selectory, podporují
+full-page i HTMX režim a jednotný empty state bez existence leaku. Události
+doplňují nejmenší veřejný selector `get_visible_person_events()`, který vydává
+jen aktivní viditelné události, nenačítá jiné participanty a bezpečně omezuje
+text Place. Každý dokončený řez prošel příslušnou query regresí, nezávislými
+review a skutečným browser smoke. Aktuální stabilní baseline po Event řezu je
+1 573/1 573 testů.
 
-Tento milestone sám nepovoluje Relationship, Residence, GraveSite ani
-PersonGraveSite write/lifecycle UI, Place nebo Materials UI ani implementaci
-Událostí či dalšího tabu. Každý další funkční řez vyžaduje samostatné explicitní
-schválení.
+Tento milestone sám nepovoluje Relationship, Residence, GraveSite,
+PersonGraveSite, Event ani participant write/lifecycle UI, obecný Event detail,
+Place nebo Materials UI ani implementaci dalšího tabu. Každý další funkční řez
+vyžaduje samostatné explicitní schválení.
 
 ## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
 
@@ -616,13 +619,14 @@ schválení.
 - read-only karta Vztahy ve full-page i HTMX režimu,
 - read-only karta Bydliště ve full-page i HTMX režimu,
 - read-only karta Hrobová místa ve full-page i HTMX režimu,
+- read-only karta Události ve full-page i HTMX režimu,
 - testy použitelnosti a browser smoke pro implementované průchody.
 
 **Plánováno:**
 
-- produktové karty Události a Materiály; jejich záložky jsou
-  zatím poctivě označené jako plánované,
-- další formuláře a uživatelské průchody těchto domén.
+- produktová karta Materiály; její záložka je zatím poctivě označená jako
+  plánovaná,
+- Event detail, formuláře a další uživatelské průchody Events a Materials.
 
 Fáze proto není prohlášena za kompletní v celém původně zamýšleném rozsahu,
 přestože její UI základ je skutečně používán.
@@ -639,6 +643,8 @@ přestože její UI základ je skutečně používán.
 - read-only HTTP/UI přehled bydlišť s actor-aware filtrováním Residence,
 - read-only HTTP/UI přehled hrobových míst s actor-aware filtrováním vazby a
   GraveSite.
+- read-only HTTP/UI přehled událostí s actor-aware filtrováním Event a
+  bezpečným textovým kontextem Place bez participantů.
 
 **Částečně dokončeno:**
 
@@ -648,6 +654,8 @@ přestože její UI základ je skutečně používán.
   lifecycle ani Materials UI,
 - hrobová místa mají robustní backend a read-only HTTP/UI, ale nemají zápis,
   lifecycle ani Materials UI,
+- události mají agregátní backend a read-only person-centric HTTP/UI, ale
+  nemají detail, zápis, lifecycle ani Materials UI,
 - fotografie mají metadata a explicitní přílohovou infrastrukturu, nikoli
   produktové zobrazení, upload nebo doručení souboru.
 
@@ -669,11 +677,11 @@ přestože její UI základ je skutečně používán.
 - bydliště mají modely, služby, actor-aware čtení a read-only person-centric UI,
 - hrobová místa mají modely, služby, actor-aware čtení a read-only
   person-centric UI.
+- události mají modely, agregátní služby, actor-aware čtení a read-only
+  person-centric UI.
 
 **Backendově připraveno, UI plánováno:**
 
-- události mají modely a agregátní služby; obecné actor-aware read API a UI
-  zatím chybí,
 - Materials mají metadata, zdroje, explicitní vazby, služby a kontextové
   selectory; produktové management UI existuje pouze jako bezpečné read-only
   metadata na Health detailu.
@@ -681,7 +689,7 @@ přestože její UI základ je skutečně používán.
 **Plánováno nebo odloženo:**
 
 - fyzický upload, storage a bezpečný download/doručení souborů,
-- obecné UI událostí, dokumentů a zdrojů,
+- obecný detail a write/lifecycle UI událostí, dokumentů a zdrojů,
 - rodokmen, časová osa, záloha a produktový export včetně PDF/A4 osoby,
 - auditní historie a její UI.
 

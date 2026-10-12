@@ -1,0 +1,7 @@
+{% if event.original_date_text %}
+  {{ event.original_date_text }}
+{% elif event.start_year %}
+  {% if event.date_qualifier == "approximate" %}přibližně {% elif event.date_qualifier == "before" %}před {% elif event.date_qualifier == "after" %}po {% endif %}{% if event.start_day %}{{ event.start_day }}. {{ event.start_month }}. {{ event.start_year }}{% elif event.start_month %}{{ event.start_month }}/{{ event.start_year }}{% else %}{{ event.start_year }}{% endif %}{% if event.date_precision == "range" and event.end_year %}–{% if event.end_day %}{{ event.end_day }}. {{ event.end_month }}. {{ event.end_year }}{% elif event.end_month %}{{ event.end_month }}/{{ event.end_year }}{% else %}{{ event.end_year }}{% endif %}{% endif %}
+{% else %}
+  Datum neuvedeno
+{% endif %}

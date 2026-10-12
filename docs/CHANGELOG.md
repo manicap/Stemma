@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 0.96 – 12. 10. 2026
+
+- čtvrtý samostatně schválený řez RC 0.2 zpřístupňuje read-only kartu Události
+  osoby ve full-page i HTMX režimu,
+- nový lazy actor-aware `get_visible_person_events()` používá centrální access
+  policy, běžnou viditelnost rodičovské osoby a aktivní Event lifecycle,
+- UI zobrazuje typ, neúplné datum, název, popis a bezpečný textový kontext Place;
+  jiné participanty, jejich počet ani metadata nevydává,
+- focused a affected regrese potvrzují fail-closed HTTP hranici a konstantní
+  query profil bez N+1,
+- funkční specifikace a UI/UX návrh rozlišují implementovaný read-only seznam
+  od nadále plánovaného Event detailu, zápisu, lifecycle a Materials,
+- finální brána prošla 1 573/1 573 testy, system checkem, query regresí,
+  nezávislými review a skutečným browser smoke,
+- nevznikl model, migrace, permission ani ACP; Event detail/write/lifecycle,
+  participant write, Place a Materials UI zůstávají mimo rozsah.
+
 ## Verze 0.95 – 12. 10. 2026
 
 - třetí samostatně schválený řez RC 0.2 zpřístupňuje read-only kartu Hrobová

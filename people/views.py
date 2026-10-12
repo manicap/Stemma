@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
 from common.choices import AccessLevel
+from events.selectors import get_visible_person_events
 from health.forms import (
     HealthRecordArchiveForm,
     HealthRecordForm,
@@ -182,6 +183,30 @@ def person_relationships(
         context={
             "active_person_tab": "relationships",
             "relationship_overview": relationship_presentations,
+        },
+    )
+
+
+@require_GET
+def person_events(
+    request: HttpRequest,
+    person_id: int,
+) -> HttpResponse:
+    """Zobraz bezpečný read-only přehled událostí osoby."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    events = get_visible_person_events(
+        person=presentation.person,
+        actor=request.user,
+    )
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_events.html",
+        context={
+            "active_person_tab": "events",
+            "events": events,
         },
     )
 

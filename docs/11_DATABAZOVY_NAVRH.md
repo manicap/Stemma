@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.80
-**Stav:** M2 dokončen; Health deletion-management UI implementováno
-**Datum revize:** 30. 9. 2026
+**Verze:** 0.81
+**Stav:** M2 dokončen; read-only person Event UI implementováno
+**Datum revize:** 12. 10. 2026
 
 ## 1. Účel
 
@@ -2642,6 +2642,15 @@ viditelných narozeních nebo úmrtích selector náhodně nevybírá jeden záz
 Římské pořadí používá přesně shodnou uloženou dvojici hlavních jmen, známá
 narození řadí podle technických mezí a PK, neznámá až za nimi a pracuje jen
 s actorovi viditelnou kohortou. Modely ani migrace se tím nemění.
+
+RC 0.2 doplňuje veřejný lazy
+`get_visible_person_events(*, person, actor)`. Vstup musí být běžně viditelná
+aktivní osoba. Výsledný QuerySet obsahuje jen Eventy propojené její účastí,
+které vyhovují centrální access policy a nejsou archivované ani měkce
+odstraněné. Selector zachovává modelové řazení, načítá typ události bez N+1 a
+participanty nepřednačítá ani nevydává. Bezpečný text Place anotuje jen tehdy,
+když je Place samo actorovi viditelné, nearchivované a neodstraněné; Place ID,
+odkaz a další metadata nejsou součástí prezentačního kontraktu.
 
 ## 18. Pořadí migrací
 

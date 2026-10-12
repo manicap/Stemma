@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.59
-**Stav:** RC 0.1 uzavřeno; tři read-only person řezy RC 0.2 dokončeny
+**Verze dokumentace:** 0.60
+**Stav:** RC 0.1 uzavřeno; čtyři read-only person řezy RC 0.2 dokončeny
 **Datum revize:** 12. 10. 2026
 
 ## Účel balíčku
@@ -39,6 +39,21 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.60
+
+Verze 0.60 doplňuje čtvrtý samostatně schválený read-only řez RC 0.2:
+
+- nový lazy actor-aware `get_visible_person_events(*, person, actor)` vydává
+  pouze aktivní události viditelné přes účast běžně viditelné osoby,
+- karta Události osoby funguje ve full-page i HTMX režimu a zobrazuje typ,
+  neúplné datum, název, popis a bezpečný textový kontext místa,
+- jiné participanty selector ani UI nenačítají; skryté participanty, události a
+  místa nezanechávají jméno, ID, odkaz, metadata ani odlišný empty state,
+- Event write/detail/lifecycle, participant write, Place UI a Materials UI
+  zůstávají mimo schválený rozsah,
+- aktuální ověřený baseline po řezu je 1 573/1 573 testů,
+- nevznikl model, migrace, permission ani ACP.
 
 ## Stav verze 0.59
 
@@ -899,18 +914,19 @@ v produkčním prostředí.
 - M0, M1 a M2 jsou na uzavřeném `agent/rc-0.1` skutečně dokončené; `feature/mvp`
   zůstává nedotčeným pre-agentním integračním základem.
 - Aktivní vývoj pokračuje jako RC 0.2 na `agent/rc-0.2`; dokončené jsou
-  samostatně schválené read-only karty Vztahy, Bydliště a Hrobová místa osoby.
+  samostatně schválené read-only karty Vztahy, Bydliště, Hrobová místa a
+  Události osoby.
   Validační a review workflow upřesňuje ACP-009; aktuální baseline je
-  1 553/1 553 testů.
+  1 573/1 573 testů.
 - RC 0.1 je na experimentální větvi dokončené a připravené podle
   `07_ROADMAPA.md`; tento stav ani dokončení M2 nepovolují produkční nasazení
   nebo merge.
 - Všechna acceptance kritéria RC 0.1 A–H jsou uzavřená bez otevřeného
   blockeru. Historický post-RC baseline před zahájením RC 0.2 byl 1 514/1 514.
 - Kompletní uživatelský vertikální průchod má vedle základního UI osoby doména
-  Health. Vztahy, Bydliště a Hrobová místa mají bezpečné read-only
+  Health. Vztahy, Bydliště, Hrobová místa a Události mají bezpečné read-only
   person-centric přehledy; jejich zápis, lifecycle a Materials UI zůstávají
-  plánované. Události mají backend, ale produktové UI nemají. Materials poskytují
+  plánované. Obecný Event detail a write UI nevznikly. Materials poskytují
   metadata a explicitní vazby, nikoli upload, storage nebo download souborů.
 - `backup/pre-agent-2026-08-17` je návratový bod před zahájením agentního experimentu a neslouží k vývoji.
 - Hlavním technickým dokumentem zůstává `11_DATABAZOVY_NAVRH.md` a exekuční pravidla agentní větve určuje kořenový `AGENTS.md`.

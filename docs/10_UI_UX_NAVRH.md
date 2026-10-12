@@ -1,7 +1,7 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.12
+**Verze:** 0.13
 **Stav:** schválený pracovní základ  
 **Datum revize:** 12. 10. 2026
 
@@ -440,17 +440,21 @@ Karta nenahrazuje samostatný rodokmen.
 
 ## 12. Karta Události
 
-Události se zobrazují jako svislá časová osa seřazená od nejstarší po nejnovější.
+Implementovaný první read-only řez zobrazuje bezpečně dostupné události v
+jednoduchých responzivních kartách podle řazení actor-aware selectoru. Každá
+karta může obsahovat typ, datum nebo období bez falešné přesnosti, název,
+stručný popis, lokalizační detail a bezpečný textový název Place bez odkazu.
+Jiní participanti, jejich počet, přílohy a zdroje se nezobrazují.
 
-Každý záznam obsahuje:
+Full-page i HTMX režim zachovávají person header, aktivní tab, URL/history a
+světlý i tmavý motiv. Prázdný stav nerozlišuje chybějící a skryté události.
+Archivované a soft-deleted události ani skryté, archivované či soft-deleted
+Place se v běžném přehledu nevydávají.
 
-- datum nebo období,
-- název události,
-- stručný popis.
-
-Kliknutí otevře podrobnosti události.
-
-Oprávněný uživatel vidí tlačítko **+ Přidat událost**. Po kliknutí se přímo v kartě zobrazí malý formulář. Po uložení se událost automaticky zařadí na správné místo časové osy.
+**Plánovaný cílový stav:** svislá časová osa, klikací Event detail a oprávněním
+řízené tlačítko **+ Přidat událost** s formulářem. Tyto detailové a zápisové
+interakce, lifecycle a Materials nejsou součástí implementovaného read-only
+řezu.
 
 ## 13. Karta Bydliště
 

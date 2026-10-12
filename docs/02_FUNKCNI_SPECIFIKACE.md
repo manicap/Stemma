@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.55
+**Verze:** 0.56
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
 **Datum revize:** 12. 10. 2026
 
@@ -13,14 +13,14 @@ uživatelsky dostupný.
 
 **Implementováno:** globální shell a Přehled, actor-aware seznam a detail osob,
 omezená editace osoby, session autentizace a role, odvozené údaje osoby,
-read-only karty Vztahy, Bydliště a Hrobová místa a kompletní Health vertikála
+read-only karty Vztahy, Bydliště, Hrobová místa a Události a kompletní Health vertikála
 včetně archivu a Koše. Tyto průchody podporují
 full-page i HTMX režim podle svého kontraktu.
 
 **Backendově implementováno, širší produktové UI plánováno:** modely a servisní
-nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy, Bydliště
-a Hrobová místa mají read-only person-centric přehled; jejich zápis, lifecycle
-a Materials UI chybí. Rozsah autorizovaných
+nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy, Bydliště,
+Hrobová místa a Události mají read-only person-centric přehled; jejich zápis,
+lifecycle a Materials UI chybí. Události navíc nemají obecný detail. Rozsah autorizovaných
 write hranic není u všech těchto domén stejný; existence backendu se proto
 nesmí vykládat jako hotové UI.
 
@@ -30,7 +30,7 @@ Health detail bezpečně zobrazuje pouze dostupná metadata. Fyzický upload,
 volba storage, download/doručení a obecné Materials UI neexistují.
 
 **Plánováno / cílový stav:** obecné vyhledávání a filtry, write/lifecycle UI
-vztahů, bydlišť a hrobových míst, produktové UI událostí a Materials, fotografie jako souborový
+vztahů, bydlišť, hrobových míst a událostí, obecný Event detail a Materials UI, fotografie jako souborový
 průchod, PDF/A4 export osoby a auditní historie. Tyto požadavky zůstávají
 součástí návrhu, ale nejsou podmínkou již uzavřeného RC 0.1.
 
@@ -111,9 +111,10 @@ Archivované osoby se ve výchozím seznamu nezobrazují. Oprávněný uživatel
 ## 3. Detail osoby
 
 **Stav:** Implementován je skutečný actor-aware detail, základní záhlaví,
-odvozené životní údaje, přehled, omezená editace osoby, read-only karty Vztahy
-a Bydliště a kompletní karta Zdraví. Hlavní fotografie, lokální historie
-Zpět/Vpřed, PDF/A4 export a produktové karty Události a Materiály jsou plánované.
+odvozené životní údaje, přehled, omezená editace osoby, read-only karty Vztahy,
+Bydliště, Hrobová místa a Události a kompletní karta Zdraví. Hlavní fotografie,
+lokální historie Zpět/Vpřed, PDF/A4 export, Event detail a karta Materiály jsou
+plánované.
 
 Záhlaví detailu zůstává viditelné při přepínání karet a obsahuje:
 
@@ -188,9 +189,16 @@ lišit a nesmí mezerou prozradit skrytého jmenovce.
 
 ## 7. Události
 
-**Stav:** Datový model, agregátní zápisové služby a bezpečné odvození narození
-a úmrtí do prezentace osoby jsou implementované. Obecné actor-aware read
-use-cases a produktové list/detail/create/update UI událostí jsou plánované.
+**Stav:** Datový model, agregátní zápisové služby, bezpečné odvození narození
+a úmrtí i actor-aware person-centric read-only seznam jsou implementované.
+Obecný Event detail a create/update/lifecycle UI zůstávají plánované.
+
+Read-only karta používá `get_visible_person_events(*, person, actor)` a
+zobrazuje jen aktivní viditelné události propojené účastí vybrané osoby. Typ,
+neúplné datum, název, popis, lokalizační detail a bezpečný text Place jsou
+prezentační údaje; jiní participanti, jejich počty, přílohy a zdroje se
+nevydávají. Full-page i HTMX režim sdílejí jednotný empty state bez existence
+leaku.
 
 Událost může být spojena s jednou nebo více osobami.
 

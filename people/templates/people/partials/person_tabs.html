@@ -15,7 +15,14 @@
     hx-push-url="true"
     {% if active_person_tab == 'relationships' %}aria-current="page"{% endif %}
   >Vztahy</a>
-  <span class="person-tab is-disabled" aria-disabled="true">Události <small>Plánováno</small></span>
+  <a
+    class="person-tab{% if active_person_tab == 'events' %} is-active{% endif %}"
+    href="{% url 'people:events' selected_person.pk %}"
+    hx-get="{% url 'people:events' selected_person.pk %}"
+    hx-target="#person-detail"
+    hx-push-url="true"
+    {% if active_person_tab == 'events' %}aria-current="page"{% endif %}
+  >Události</a>
   <a
     class="person-tab{% if active_person_tab == 'residences' %} is-active{% endif %}"
     href="{% url 'people:residences' selected_person.pk %}"

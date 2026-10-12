@@ -13,6 +13,11 @@ urlpatterns = [
         name="relationships",
     ),
     path(
+        "<int:person_id>/udalosti/",
+        views.person_events,
+        name="events",
+    ),
+    path(
         "<int:person_id>/bydliste/",
         views.person_residences,
         name="residences",

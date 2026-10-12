@@ -1,0 +1,32 @@
+<article class="person-detail">
+  {% include "people/partials/person_header.html" %}
+  {% include "people/partials/person_tabs.html" %}
+
+  <section class="person-overview" aria-labelledby="events-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Životní a rodinné dění</p>
+        <h3 id="events-heading">Události</h3>
+      </div>
+    </div>
+
+    {% if events %}
+      <div class="related-list">
+        {% for event in events %}
+          <article class="related-card">
+            <small class="health-record-type">{{ event.event_type.name }}</small>
+            <strong>{% if event.title %}{{ event.title }}{% else %}{{ event.event_type.name }}{% endif %}</strong>
+            <p class="health-record-date">
+              {% include "people/partials/event_date.html" %}
+            </p>
+            {% if event.presentation_place_name %}<p>{{ event.presentation_place_name }}</p>{% endif %}
+            {% if event.location_detail %}<p>{{ event.location_detail }}</p>{% endif %}
+            {% if event.description %}<p>{{ event.description }}</p>{% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">Pro tuto osobu nejsou dostupné žádné události.</p>
+    {% endif %}
+  </section>
+</article>

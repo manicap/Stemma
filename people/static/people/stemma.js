@@ -111,10 +111,11 @@
     });
   };
   document.body.addEventListener("htmx:afterSwap", (event) => {
-    if (event.detail.target.id !== "person-detail") return;
+    const target = event.detail?.target;
+    if (!(target instanceof Element) || target.id !== "person-detail") return;
     selectCurrentPerson();
     setListOpen(false);
-    event.detail.target.querySelector("[data-form-error-summary]")?.focus();
+    target.querySelector("[data-form-error-summary]")?.focus();
   });
   const resetSubmitButton = (form) => {
     const button = form?.querySelector("[data-person-submit]");

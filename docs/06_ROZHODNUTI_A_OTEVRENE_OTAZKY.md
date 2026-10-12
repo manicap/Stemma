@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.85
+**Verze:** 0.86
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 12. 10. 2026
 
@@ -181,6 +181,18 @@ vydávají, soft-deleted vazby a místa nikoli. Place zůstává pouze textovým
 kontextem bez samostatné autorizace či detailu. GraveSite a PersonGraveSite
 write/lifecycle, Materials a další taby zůstávají mimo rozsah. Nevzniká nový
 model, migrace, permission ani ACP.
+
+196. Čtvrtý samostatně schválený RC 0.2 řez zavádí
+`get_visible_person_events(*, person, actor)` jako lazy actor-aware přehled
+událostí běžně viditelné aktivní osoby a zpřístupňuje jej na
+`/osoby/<person_id>/udalosti/`. Selector používá centrální access policy,
+vydává pouze nearchivované a měkce neodstraněné Eventy propojené účastí vstupní
+osoby a zachovává modelové řazení bez N+1. Jiné participanty nenačítá ani
+nevydává. Place poskytuje pouze anotovaný text názvu, a to jen při vlastní
+viditelné access úrovni a aktivním lifecycle; jeho ID, odkaz ani další metadata
+se nevydávají. UI přidává pouze person-centric seznam ve full-page a HTMX
+režimu; Event detail/write/lifecycle, participant write, Place UI a Materials
+zůstávají mimo rozsah. Nevzniká model, migrace, permission ani ACP.
 
 ## 2. Otevřené otázky
 
