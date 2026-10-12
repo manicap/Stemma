@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.84
+**Verze:** 0.85
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 12. 10. 2026
 
@@ -171,6 +171,16 @@ není samostatnou autorizační vrstvou. UI z Place vydává pouze kontextový n
 a nevytváří Place detail; Residence write/lifecycle, Place management,
 Materials a další taby zůstávají mimo rozsah. Nevzniká nový model, migrace,
 permission ani ACP.
+
+195. Třetí samostatně schválený RC 0.2 řez zpřístupňuje read-only Hrobová
+místa osoby na `/osoby/<person_id>/hrobova-mista/`. HTTP vrstva používá
+existující `get_visible_person_grave_site_links(*, person, actor)` a zachovává
+jeho lazy ordering, actor-aware ochranu osoby, vazby i GraveSite a historický
+lifecycle kontrakt. Archivované vazby a archivovaná nebo zaniklá místa se
+vydávají, soft-deleted vazby a místa nikoli. Place zůstává pouze textovým
+kontextem bez samostatné autorizace či detailu. GraveSite a PersonGraveSite
+write/lifecycle, Materials a další taby zůstávají mimo rozsah. Nevzniká nový
+model, migrace, permission ani ACP.
 
 ## 2. Otevřené otázky
 

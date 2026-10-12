@@ -217,7 +217,7 @@ h1, h2, h3, .brand, .app-sidebar-title {
 .life-dates { display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin: .4rem 0 0; color: var(--muted); }
 .portrait { width: 5.5rem; height: 5.5rem; flex: 0 0 auto; font-size: 1.4rem; }
 .person-overview { margin-top: 1rem; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; }
-.person-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .25rem; margin-top: 1rem; border-bottom: 1px solid var(--border); }
+.person-tabs { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .25rem; margin-top: 1rem; border-bottom: 1px solid var(--border); }
 .person-tab { min-width: 0; padding: .7rem .45rem; color: var(--muted); border-bottom: .2rem solid transparent; text-align: center; text-decoration: none; }
 .person-tab:hover, .person-tab:focus-visible { color: var(--text); outline: none; }
 .person-tab.is-active { color: var(--text); background: var(--surface); border-bottom-color: var(--primary); font-weight: 700; }

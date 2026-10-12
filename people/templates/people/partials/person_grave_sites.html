@@ -1,0 +1,54 @@
+<article class="person-detail">
+  {% include "people/partials/person_header.html" %}
+  {% include "people/partials/person_tabs.html" %}
+
+  <section class="person-overview" aria-labelledby="grave-sites-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Místa pohřbení a připomínky</p>
+        <h3 id="grave-sites-heading">Hrobová místa</h3>
+      </div>
+    </div>
+
+    {% if grave_site_links %}
+      <div class="related-list">
+        {% for link in grave_site_links %}
+          {% with grave_site=link.grave_site %}
+            <article class="related-card">
+              <small class="health-record-type">{{ grave_site.grave_site_type.name }}</small>
+              {% if grave_site.cemetery_name %}
+                <strong>{{ grave_site.cemetery_name }}</strong>
+              {% elif grave_site.location_text %}
+                <strong>{{ grave_site.location_text }}</strong>
+              {% elif grave_site.place %}
+                <strong>{{ grave_site.place.name }}</strong>
+              {% else %}
+                <strong>Hrobové nebo pamětní místo</strong>
+              {% endif %}
+              <p><strong>Role:</strong> {{ link.role.name }}</p>
+              {% if grave_site.cemetery_name and grave_site.location_text %}
+                <p>{{ grave_site.location_text }}</p>
+              {% endif %}
+              {% if grave_site.place %}
+                {% if grave_site.cemetery_name and grave_site.place.name != grave_site.cemetery_name %}
+                  <p>{{ grave_site.place.name }}</p>
+                {% elif grave_site.location_text and grave_site.place.name != grave_site.location_text %}
+                  <p>{{ grave_site.place.name }}</p>
+                {% endif %}
+              {% endif %}
+              {% if grave_site.section or grave_site.row or grave_site.grave_number %}
+                <p>
+                  {% if grave_site.section %}Oddíl {{ grave_site.section }}{% endif %}{% if grave_site.section and grave_site.row %} · {% endif %}{% if grave_site.row %}Řada {{ grave_site.row }}{% endif %}{% if grave_site.grave_number and grave_site.section or grave_site.grave_number and grave_site.row %} · {% endif %}{% if grave_site.grave_number %}Hrob {{ grave_site.grave_number }}{% endif %}
+                </p>
+              {% endif %}
+              <p>Stav: {{ grave_site.get_status_display }}</p>
+              {% if link.note %}<p>{{ link.note }}</p>{% endif %}
+            </article>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">Pro tuto osobu nejsou dostupná žádná hrobová místa.</p>
+    {% endif %}
+  </section>
+</article>

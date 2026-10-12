@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.54
+**Verze:** 0.55
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
 **Datum revize:** 12. 10. 2026
 
@@ -13,13 +13,14 @@ uživatelsky dostupný.
 
 **Implementováno:** globální shell a Přehled, actor-aware seznam a detail osob,
 omezená editace osoby, session autentizace a role, odvozené údaje osoby,
-read-only karty Vztahy a Bydliště a kompletní Health vertikála včetně archivu
-a Koše. Tyto průchody podporují
+read-only karty Vztahy, Bydliště a Hrobová místa a kompletní Health vertikála
+včetně archivu a Koše. Tyto průchody podporují
 full-page i HTMX režim podle svého kontraktu.
 
 **Backendově implementováno, širší produktové UI plánováno:** modely a servisní
-nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy a Bydliště
-mají read-only person-centric přehled; jejich zápis, lifecycle a Materials UI chybí. Rozsah autorizovaných
+nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy, Bydliště
+a Hrobová místa mají read-only person-centric přehled; jejich zápis, lifecycle
+a Materials UI chybí. Rozsah autorizovaných
 write hranic není u všech těchto domén stejný; existence backendu se proto
 nesmí vykládat jako hotové UI.
 
@@ -29,7 +30,7 @@ Health detail bezpečně zobrazuje pouze dostupná metadata. Fyzický upload,
 volba storage, download/doručení a obecné Materials UI neexistují.
 
 **Plánováno / cílový stav:** obecné vyhledávání a filtry, write/lifecycle UI
-vztahů a bydlišť, produktové UI událostí, hrobových míst a Materials, fotografie jako souborový
+vztahů, bydlišť a hrobových míst, produktové UI událostí a Materials, fotografie jako souborový
 průchod, PDF/A4 export osoby a auditní historie. Tyto požadavky zůstávají
 součástí návrhu, ale nejsou podmínkou již uzavřeného RC 0.1.
 
@@ -779,8 +780,13 @@ URL jsou `/osoby/<person_id>/zdravi/kos/`,
 ## 13. Hrobová místa
 
 **Stav:** Modely hrobových míst a vazeb na osoby, doménové služby a actor-aware
-čtení jsou implementované. Produktové HTTP/UI, formuláře a lifecycle
-management jsou plánované.
+čtení jsou implementované. Endpoint `/osoby/<person_id>/hrobova-mista/`
+poskytuje read-only full-page i HTMX přehled vazeb. Zobrazuje typ a fyzický
+stav místa, roli osoby, bezpečný textový kontext hřbitova, lokality a Place,
+oddíl, řadu, číslo hrobu a poznámku vazby bez Place nebo GraveSite detailu.
+Archivované vazby a archivovaná či zaniklá místa zůstávají historicky
+viditelná; soft-deleted vazby a místa se nevydávají. Formuláře, write/lifecycle
+management a Materials UI jsou plánované.
 
 Hrobové místo je samostatný objekt, nikoli událost.
 

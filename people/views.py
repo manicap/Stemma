@@ -38,7 +38,10 @@ from health.use_cases import (
     update_health_record,
 )
 from places.models import Place
-from places.selectors import get_visible_person_residences
+from places.selectors import (
+    get_visible_person_grave_site_links,
+    get_visible_person_residences,
+)
 
 from .derived_selectors import (
     PersonPresentation,
@@ -203,6 +206,30 @@ def person_residences(
         context={
             "active_person_tab": "residences",
             "residences": residences,
+        },
+    )
+
+
+@require_GET
+def person_grave_sites(
+    request: HttpRequest,
+    person_id: int,
+) -> HttpResponse:
+    """Zobraz bezpečný read-only přehled hrobových míst osoby."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    grave_site_links = get_visible_person_grave_site_links(
+        person=presentation.person,
+        actor=request.user,
+    )
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_grave_sites.html",
+        context={
+            "active_person_tab": "grave_sites",
+            "grave_site_links": grave_site_links,
         },
     )
 

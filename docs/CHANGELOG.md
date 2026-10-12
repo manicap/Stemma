@@ -1,5 +1,20 @@
 # Historie změn dokumentace
 
+## Verze 0.95 – 12. 10. 2026
+
+- třetí samostatně schválený řez RC 0.2 zpřístupňuje read-only kartu Hrobová
+  místa osoby ve full-page i HTMX režimu,
+- HTTP vrstva používá existující lazy actor-aware
+  `get_visible_person_grave_site_links()` bez vlastních ORM dotazů nebo policy,
+- UI zobrazuje bezpečný textový kontext místa, typ, fyzický stav, roli osoby,
+  identifikaci hrobu a poznámku vazby bez Place či GraveSite detailu,
+- archivované vazby a archivovaná či zaniklá místa zůstávají v historii;
+  soft-deleted a obsahově skryté záznamy se nevydávají,
+- finální brána prošla 1 553/1 553 testy, systémovou kontrolou, query regresí
+  a skutečným browser smoke,
+- nevznikl model, migrace, permission ani ACP; write/lifecycle, Place a
+  Materials UI zůstávají mimo rozsah.
+
 ## Verze 0.94 – 12. 10. 2026
 
 - druhý samostatně schválený řez RC 0.2 zpřístupňuje read-only kartu Bydliště

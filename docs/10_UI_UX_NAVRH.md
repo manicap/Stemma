@@ -1,7 +1,7 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.11
+**Verze:** 0.12
 **Stav:** schválený pracovní základ  
 **Datum revize:** 12. 10. 2026
 
@@ -372,8 +372,9 @@ Pod záhlavím jsou hlavní záložky:
 2. Vztahy
 3. Události
 4. Bydliště
-5. Zdraví
-6. Materiály
+5. Hrobová místa
+6. Zdraví
+7. Materiály
 
 Výchozí záložkou je **Přehled**.
 
@@ -385,8 +386,8 @@ Aktivní záložka bude označena kombinací:
 
 Obsah každé karty bude mít vlastní nadpis a může obsahovat velmi jemný tematický piktogram v pozadí. Piktogram je pouze dekorativní a nesmí rušit text.
 
-Implementované taby zpřístupňují Přehled, read-only Vztahy, read-only Bydliště
-a Zdraví; ostatní
+Implementované taby zpřístupňují Přehled, read-only Vztahy, read-only Bydliště,
+read-only Hrobová místa a Zdraví; ostatní
 karty jsou ve společné navigaci jasně označené jako plánované. Všechny funkční
 karty používají stejný person header, full-page fallback a HTMX výměnu
 v `#person-detail`. Karta Zdraví zobrazuje seznam záznamů a jejich detail s
@@ -468,7 +469,21 @@ záznamy se nezobrazují a empty state jejich existenci nerozlišuje. Karta
 podporuje full-page i HTMX režim ve společném responzivním shellu. Create,
 update, lifecycle, Place management a Materials UI nejsou implementované.
 
-## 14. Karta Zdraví
+## 14. Karta Hrobová místa
+
+Implementovaný read-only přehled zobrazuje bezpečně dostupné vazby osoby k
+hrobovým a pamětním místům v pořadí actor-aware selectoru. Karta uvádí typ a
+stav místa, roli osoby, textový kontext hřbitova, lokality a Place, oddíl, řadu,
+číslo hrobu a případnou poznámku vazby. Place je pouze text bez odkazu a
+souřadnice, nápis ani další metadata se v tomto řezu nezobrazují.
+
+Archivované vazby a archivovaná či zaniklá místa zůstávají historicky
+viditelná. Soft-deleted nebo obsahově skryté vazby a místa se nezobrazují a
+empty state jejich existenci nerozlišuje. Karta podporuje full-page i HTMX
+režim ve společném responzivním shellu. Write/lifecycle, Place management,
+Materials a samostatný GraveSite detail nejsou implementované.
+
+## 15. Karta Zdraví
 
 Karta Zdraví je dostupná u každé osoby, kterou actor smí vidět. Její obsah vždy
 pochází z actor-aware health hranice; bez oprávnění k jednotlivým záznamům karta
@@ -494,7 +509,7 @@ Příklad historického záznamu:
 
 U dlouhodobého stavu lze uvést období nebo počáteční datum.
 
-## 15. Karta Materiály
+## 16. Karta Materiály
 
 Karta Materiály představuje souhrnný pohled na všechny přílohy propojené s osobou.
 
@@ -523,7 +538,7 @@ Po kliknutí se zobrazí:
 
 Jedna příloha se neukládá duplicitně. V Materiálech se pouze zobrazí ve všech odpovídajících souvislostech.
 
-## 16. Přidání a editace osoby
+## 17. Přidání a editace osoby
 
 Oprávněný uživatel vidí nad seznamem tlačítko **+ Přidat osobu**.
 
@@ -546,7 +561,7 @@ Po uložení se nová osoba:
 
 Tlačítko **Upravit osobu** v záhlaví upravuje základní údaje osoby a záhlaví.
 
-## 17. Editace jednotlivých záznamů
+## 18. Editace jednotlivých záznamů
 
 U jednotlivých položek v kartách mohou být podle schváleného doménového
 kontraktu pro oprávněného uživatele dostupné malé akce, například:
@@ -586,7 +601,7 @@ Archivace osoby:
 - vyžaduje potvrzení,
 - umožňuje pozdější obnovení.
 
-## 18. Okamžitá aktualizace rozhraní
+## 19. Okamžitá aktualizace rozhraní
 
 Po uložení změny se upravené údaje bez ručního obnovení stránky ihned promítnou všude, kde jsou v aktuálním rozhraní zobrazeny.
 
@@ -598,7 +613,7 @@ Příklady:
 
 Pro dílčí aktualizace se použije HTMX.
 
-## 19. Oprávnění v UI
+## 20. Oprávnění v UI
 
 Rozhraní zobrazuje jen akce, které může uživatel skutečně provést.
 
@@ -609,7 +624,7 @@ Rozhraní zobrazuje jen akce, které může uživatel skutečně provést.
 - Akce bez oprávnění se většinou vůbec nezobrazují.
 - Zamčený obsah může zůstat označen jako existující, ale jeho data se nezobrazí.
 
-## 20. Prázdné stavy
+## 21. Prázdné stavy
 
 Pokud není vybrána osoba:
 
@@ -621,7 +636,7 @@ Pokud karta neobsahuje data:
 
 Editor může v prázdném stavu vidět odpovídající tlačítko pro přidání prvního záznamu.
 
-## 21. Načítání a ukládání
+## 22. Načítání a ukládání
 
 ### Načítání
 
@@ -635,7 +650,7 @@ Indikátor se zobrazuje přímo v oblasti, která se načítá.
 - Zobrazí text **Ukládám…**.
 - Po úspěchu se data ihned aktualizují.
 
-## 22. Upozornění a chyby
+## 23. Upozornění a chyby
 
 Důležitá upozornění se nezobrazují pouze jako malá zpráva v rohu. Vždy se zobrazí přímo v místě, kde uživatel pracuje.
 
@@ -658,7 +673,7 @@ Při chybě ukládání zůstane formulář vyplněný. Chyba může nastat nap�
 - konfliktu dat,
 - technickému problému nebo výpadku spojení.
 
-## 23. Ochrana neuložených změn
+## 24. Ochrana neuložených změn
 
 Pokud uživatel opouští rozpracovanou editaci, aplikace zobrazí upozornění:
 
@@ -669,7 +684,7 @@ Akce:
 - **Pokračovat v úpravě**
 - **Zahodit změny**
 
-## 24. Vizuální reference
+## 25. Vizuální reference
 
 Schváleným výchozím směrem je klidný modrošedý shell ve světlém a tmavém
 režimu včetně Přehledu, globální navigace, sekce Osoby, seznamu, detailu a
@@ -681,7 +696,7 @@ Doporučený soubor reference v projektu:
 
 Reference určuje vizuální směr, nikoli přesné pixelové rozměry všech prvků.
 
-## 25. Otevřené otázky pro další fázi
+## 26. Otevřené otázky pro další fázi
 
 - Přesná typografická rodina a licenční podmínky fontů.
 - Přesné breakpointy pro počítač, tablet a telefon.

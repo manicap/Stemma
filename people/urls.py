@@ -18,6 +18,11 @@ urlpatterns = [
         name="residences",
     ),
     path(
+        "<int:person_id>/hrobova-mista/",
+        views.person_grave_sites,
+        name="grave-sites",
+    ),
+    path(
         "<int:person_id>/zdravi/",
         views.person_health,
         name="health",
