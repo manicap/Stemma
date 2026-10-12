@@ -38,6 +38,7 @@ from health.use_cases import (
     update_health_record,
 )
 from places.models import Place
+from places.selectors import get_visible_person_residences
 
 from .derived_selectors import (
     PersonPresentation,
@@ -178,6 +179,30 @@ def person_relationships(
         context={
             "active_person_tab": "relationships",
             "relationship_overview": relationship_presentations,
+        },
+    )
+
+
+@require_GET
+def person_residences(
+    request: HttpRequest,
+    person_id: int,
+) -> HttpResponse:
+    """Zobraz bezpečný read-only přehled bydlišť osoby."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    residences = get_visible_person_residences(
+        person=presentation.person,
+        actor=request.user,
+    )
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_residences.html",
+        context={
+            "active_person_tab": "residences",
+            "residences": residences,
         },
     )
 

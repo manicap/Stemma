@@ -396,14 +396,15 @@ protected baseline.
 
 Milestones M0, M1, and M2 are complete. All RC 0.1 acceptance areas A-H are
 recorded as complete in `docs/07_ROADMAPA.md`. Autonomous feature expansion
-toward RC 0.1 has therefore stopped. RC 0.2 starts with the explicitly approved
-read-only person relationship tab.
+toward RC 0.1 has therefore stopped. RC 0.2 has completed the explicitly
+approved read-only person relationship tab and continues with the separately
+approved read-only person residence tab.
 
-The current approved goal is only the read-only person relationship UI. It does
-not authorize relationship writes or lifecycle actions, Relationship Materials
-UI, or another planned person tab. Further functional slices require separate
-explicit approval. Use the established architectural boundaries and the
-ACP-009 invalidation-based gate.
+The current approved goal is only the read-only person residence UI. It does
+not authorize Residence writes or lifecycle actions, Place or Residence
+Materials UI, grave sites, events, or another planned person tab. Further
+functional slices require separate explicit approval. Use the established
+architectural boundaries and the ACP-009 invalidation-based gate.
 
 Do not declare Stemma production-ready merely because roadmap items or automated
 tests are complete. Production deployment, integration into `feature/mvp` or

@@ -1,0 +1,7 @@
+{% if residence.original_date_text %}
+  {{ residence.original_date_text }}
+{% elif residence.start_year %}
+  {% if residence.date_qualifier == "approximate" %}přibližně {% elif residence.date_qualifier == "before" %}před {% elif residence.date_qualifier == "after" %}po {% endif %}{% if residence.start_day %}{{ residence.start_day }}. {{ residence.start_month }}. {{ residence.start_year }}{% elif residence.start_month %}{{ residence.start_month }}/{{ residence.start_year }}{% else %}{{ residence.start_year }}{% endif %}{% if residence.date_precision == "range" and residence.end_year %}–{% if residence.end_day %}{{ residence.end_day }}. {{ residence.end_month }}. {{ residence.end_year }}{% elif residence.end_month %}{{ residence.end_month }}/{{ residence.end_year }}{% else %}{{ residence.end_year }}{% endif %}{% endif %}
+{% else %}
+  Období neuvedeno
+{% endif %}

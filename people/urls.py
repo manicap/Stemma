@@ -13,6 +13,11 @@ urlpatterns = [
         name="relationships",
     ),
     path(
+        "<int:person_id>/bydliste/",
+        views.person_residences,
+        name="residences",
+    ),
+    path(
         "<int:person_id>/zdravi/",
         views.person_health,
         name="health",

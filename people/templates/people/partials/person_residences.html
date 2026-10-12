@@ -1,0 +1,37 @@
+<article class="person-detail">
+  {% include "people/partials/person_header.html" %}
+  {% include "people/partials/person_tabs.html" %}
+
+  <section class="person-overview" aria-labelledby="residences-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Místa a období pobytu</p>
+        <h3 id="residences-heading">Bydliště</h3>
+      </div>
+    </div>
+
+    {% if residences %}
+      <div class="related-list">
+        {% for residence in residences %}
+          <article class="related-card">
+            <small class="health-record-type">{{ residence.residence_type.name }}</small>
+            {% if residence.place %}
+              <strong>{{ residence.place.name }}</strong>
+            {% elif residence.address_text %}
+              <strong>{{ residence.address_text }}</strong>
+            {% endif %}
+            {% if residence.place and residence.address_text %}
+              <p>{{ residence.address_text }}</p>
+            {% endif %}
+            <p class="health-record-date">
+              {% include "people/partials/residence_date.html" %}
+            </p>
+            {% if residence.note %}<p>{{ residence.note }}</p>{% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">Pro tuto osobu nejsou dostupná žádná bydliště.</p>
+    {% endif %}
+  </section>
+</article>

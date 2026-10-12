@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.83
+**Verze:** 0.84
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 7. 10. 2026
+**Datum revize:** 12. 10. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -162,6 +162,15 @@ RC 0.2 je read-only person-centric karta Vztahy nad existujícím actor-aware
 selectorem. Relationship create/update, lifecycle, Materials UI a ostatní
 plánované person taby vyžadují samostatné explicitní schválení. Jde o běžné
 milestone rozhodnutí bez změny architektury a bez nového ACP.
+
+194. Druhý samostatně schválený RC 0.2 řez zpřístupňuje read-only Bydliště
+osoby na `/osoby/<person_id>/bydliste/`. HTTP vrstva používá existující
+`get_visible_person_residences(*, person, actor)`, zachovává jeho lazy řazení,
+archivovanou historii, vyloučení soft-deleted záznamů a policy, ve které Place
+není samostatnou autorizační vrstvou. UI z Place vydává pouze kontextový název
+a nevytváří Place detail; Residence write/lifecycle, Place management,
+Materials a další taby zůstávají mimo rozsah. Nevzniká nový model, migrace,
+permission ani ACP.
 
 ## 2. Otevřené otázky
 

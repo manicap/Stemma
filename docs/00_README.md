@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.57
-**Stav:** RC 0.1 uzavřeno; první read-only řez RC 0.2 dokončen
-**Datum revize:** 7. 10. 2026
+**Verze dokumentace:** 0.58
+**Stav:** RC 0.1 uzavřeno; read-only Vztahy a Bydliště v RC 0.2 dokončeny
+**Datum revize:** 12. 10. 2026
 
 ## Účel balíčku
 
@@ -39,6 +39,20 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.58
+
+Verze 0.58 doplňuje druhý samostatně schválený read-only řez RC 0.2:
+
+- karta Bydliště osoby používá existující actor-aware Residence selector ve
+  full-page i HTMX režimu,
+- zobrazuje typ, bezpečný kontextový název Place, adresní text, období a
+  poznámku bez Place odkazu nebo dalších Place metadat,
+- archivovaná bydliště zůstávají historicky viditelná, soft-deleted bydliště
+  selector nevydává a jednotný empty state neprozrazuje skryté záznamy,
+- Residence write/lifecycle, Place UI, Materials UI a další person taby
+  zůstávají mimo schválený rozsah,
+- nevznikl model, migrace, permission ani ACP.
 
 ## Stav verze 0.57
 
@@ -869,17 +883,17 @@ v produkčním prostředí.
 - Databázový a technický návrh je dokončen jako schválený pracovní základ.
 - M0, M1 a M2 jsou na uzavřeném `agent/rc-0.1` skutečně dokončené; `feature/mvp`
   zůstává nedotčeným pre-agentním integračním základem.
-- Aktivní vývoj pokračuje jako RC 0.2 na `agent/rc-0.2`; prvním a zatím jediným
-  schváleným funkčním řezem je read-only karta Vztahy osoby. Validační a review
-  workflow upřesňuje ACP-009; aktuální baseline je 1 526/1 526 testů.
+- Aktivní vývoj pokračuje jako RC 0.2 na `agent/rc-0.2`; dokončené jsou
+  samostatně schválené read-only karty Vztahy a Bydliště osoby. Validační a
+  review workflow upřesňuje ACP-009; aktuální baseline je 1 539/1 539 testů.
 - RC 0.1 je na experimentální větvi dokončené a připravené podle
   `07_ROADMAPA.md`; tento stav ani dokončení M2 nepovolují produkční nasazení
   nebo merge.
 - Všechna acceptance kritéria RC 0.1 A–H jsou uzavřená bez otevřeného
   blockeru. Historický post-RC baseline před zahájením RC 0.2 byl 1 514/1 514.
 - Kompletní uživatelský vertikální průchod má vedle základního UI osoby doména
-  Health. Vztahy mají také bezpečný read-only person-centric přehled; jejich
-  zápis, lifecycle a Materials UI zůstávají plánované. Události, bydliště a
+  Health. Vztahy a Bydliště mají bezpečné read-only person-centric přehledy;
+  jejich zápis, lifecycle a Materials UI zůstávají plánované. Události a
   hrobová místa mají různě rozsáhlý backend, ale produktové UI nemají. Materials poskytují
   metadata a explicitní vazby, nikoli upload, storage nebo download souborů.
 - `backup/pre-agent-2026-08-17` je návratový bod před zahájením agentního experimentu a neslouží k vývoji.

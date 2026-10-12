@@ -1,9 +1,9 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.10
+**Verze:** 0.11
 **Stav:** schválený pracovní základ  
-**Datum revize:** 7. 10. 2026
+**Datum revize:** 12. 10. 2026
 
 ## 1. Účel dokumentu
 
@@ -385,7 +385,8 @@ Aktivní záložka bude označena kombinací:
 
 Obsah každé karty bude mít vlastní nadpis a může obsahovat velmi jemný tematický piktogram v pozadí. Piktogram je pouze dekorativní a nesmí rušit text.
 
-Implementované taby zpřístupňují Přehled, read-only Vztahy a Zdraví; ostatní
+Implementované taby zpřístupňují Přehled, read-only Vztahy, read-only Bydliště
+a Zdraví; ostatní
 karty jsou ve společné navigaci jasně označené jako plánované. Všechny funkční
 karty používají stejný person header, full-page fallback a HTMX výměnu
 v `#person-detail`. Karta Zdraví zobrazuje seznam záznamů a jejich detail s
@@ -452,7 +453,8 @@ Oprávněný uživatel vidí tlačítko **+ Přidat událost**. Po kliknutí se 
 
 ## 13. Karta Bydliště
 
-Bydliště se zobrazuje jako svislá chronologická časová osa od nejstaršího po nejnovější.
+Implementovaný read-only přehled zobrazuje bydliště v pořadí actor-aware
+selectoru od neznámých po chronologicky řazené historické záznamy.
 
 Každý záznam obsahuje:
 
@@ -460,7 +462,11 @@ Každý záznam obsahuje:
 - místo nebo adresu,
 - krátkou poznámku, pokud existuje.
 
-Oprávněný uživatel může přímo v kartě otevřít mini formulář pomocí tlačítka **+ Přidat bydliště**.
+Název Place je pouze textový kontext bez odkazu na neexistující Place detail.
+Archivovaná bydliště zůstávají součástí historie, soft-deleted ani skryté
+záznamy se nezobrazují a empty state jejich existenci nerozlišuje. Karta
+podporuje full-page i HTMX režim ve společném responzivním shellu. Create,
+update, lifecycle, Place management a Materials UI nejsou implementované.
 
 ## 14. Karta Zdraví
 

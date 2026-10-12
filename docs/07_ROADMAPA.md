@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.56
-**Stav:** RC 0.1 uzavřeno; první read-only řez RC 0.2 dokončen
-**Datum revize:** 7. 10. 2026
+**Verze:** 0.57
+**Stav:** RC 0.1 uzavřeno; read-only Vztahy a Bydliště v RC 0.2 dokončeny
+**Datum revize:** 12. 10. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -590,18 +590,18 @@ gate optimalizuje pouze průběžné řezy: PASS zůstává platný do změny re
 vstupu a kompletní release kontrola se nadále provede vždy, když ji acceptance
 kontrakt vyžaduje.
 
-## RC 0.2 – schválený první řez
+## RC 0.2 – schválené read-only řezy
 
-RC 0.2 probíhá na `agent/rc-0.2`. Jeho prvním a zatím jediným schváleným řezem
-je dokončený read-only přehled Vztahů osoby ve stávajícím person-centric shellu.
-Používá existující actor-aware selector, podporuje full-page i HTMX režim,
-bezpečné odkazy a jednotný empty state bez existence leaku.
-Stabilní diff prošel 1 526/1 526 automatickými testy, systémovou kontrolou,
+RC 0.2 probíhá na `agent/rc-0.2`. Dokončené samostatně schválené řezy jsou
+read-only přehled Vztahů a read-only přehled Bydliště osoby ve stávajícím
+person-centric shellu. Oba používají existující actor-aware selectory,
+podporují full-page i HTMX režim a jednotný empty state bez existence leaku.
+Stabilní diff prošel 1 539/1 539 automatickými testy, systémovou kontrolou,
 query regresí, nezávislými review a skutečným browser smoke.
 
-Tento milestone sám nepovoluje relationship write nebo lifecycle UI, Materials
-UI ani implementaci Událostí, Bydliště, Hrobových míst či dalšího tabu. Každý
-další funkční řez vyžaduje samostatné explicitní schválení.
+Tento milestone sám nepovoluje Relationship ani Residence write/lifecycle UI,
+Place nebo Materials UI ani implementaci Událostí, Hrobových míst či dalšího
+tabu. Každý další funkční řez vyžaduje samostatné explicitní schválení.
 
 ## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
 
@@ -613,11 +613,12 @@ další funkční řez vyžaduje samostatné explicitní schválení.
 - základ person-centric záložek, responzivní shell a světlý i tmavý motiv,
 - formuláře a uživatelské průchody editace osoby a kompletní Health vertikály,
 - read-only karta Vztahy ve full-page i HTMX režimu,
+- read-only karta Bydliště ve full-page i HTMX režimu,
 - testy použitelnosti a browser smoke pro implementované průchody.
 
 **Plánováno:**
 
-- produktové karty Události, Bydliště a Materiály; jejich záložky jsou
+- produktové karty Události a Materiály; jejich záložky jsou
   zatím poctivě označené jako plánované,
 - další formuláře a uživatelské průchody těchto domén.
 
@@ -632,12 +633,15 @@ přestože její UI základ je skutečně používán.
 - skutečný seznam, detail a omezená editace osoby,
 - bezpečná prezentace narození, úmrtí, věku a životního stavu z událostí,
 - modely, služby a actor-aware čtecí přehled základních vazeb,
-- read-only HTTP/UI přehled vztahů s bezpečným filtrováním protějšku.
+- read-only HTTP/UI přehled vztahů s bezpečným filtrováním protějšku,
+- read-only HTTP/UI přehled bydlišť s actor-aware filtrováním Residence.
 
 **Částečně dokončeno:**
 
 - vazby mají robustní backend a read-only HTTP/UI, ale nemají zápis, lifecycle
   ani Materials UI,
+- bydliště mají robustní backend a read-only HTTP/UI, ale nemají zápis,
+  lifecycle ani Materials UI,
 - fotografie mají metadata a explicitní přílohovou infrastrukturu, nikoli
   produktové zobrazení, upload nebo doručení souboru.
 
@@ -645,6 +649,7 @@ přestože její UI základ je skutečně používán.
 
 - obecné vyhledávání a filtry,
 - write/lifecycle a Materials UI vazeb,
+- write/lifecycle a Materials UI bydlišť a Place management,
 - auditní historie změn.
 
 ## Fáze 6 – První použitelná verze — dílčí doménové vertikály
@@ -653,11 +658,12 @@ přestože její UI základ je skutečně používán.
 
 - kompletní Health vertikála: list, detail, create/update, archiv/obnova,
   soft-delete/Koš/obnova odstraněného a bezpečná metadata příloh a zdrojů,
-- vztahy mají modely, služby, actor-aware čtení a read-only person-centric UI.
+- vztahy mají modely, služby, actor-aware čtení a read-only person-centric UI,
+- bydliště mají modely, služby, actor-aware čtení a read-only person-centric UI.
 
 **Backendově připraveno, UI plánováno:**
 
-- bydliště a hrobová místa mají modely, služby a actor-aware čtení,
+- hrobová místa mají modely, služby a actor-aware čtení,
 - události mají modely a agregátní služby; obecné actor-aware read API a UI
   zatím chybí,
 - Materials mají metadata, zdroje, explicitní vazby, služby a kontextové
@@ -667,7 +673,7 @@ přestože její UI základ je skutečně používán.
 **Plánováno nebo odloženo:**
 
 - fyzický upload, storage a bezpečný download/doručení souborů,
-- obecné UI událostí, bydlišť, hrobových míst, dokumentů a zdrojů,
+- obecné UI událostí, hrobových míst, dokumentů a zdrojů,
 - rodokmen, časová osa, záloha a produktový export včetně PDF/A4 osoby,
 - auditní historie a její UI.
 

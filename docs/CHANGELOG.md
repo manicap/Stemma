@@ -1,5 +1,20 @@
 # Historie změn dokumentace
 
+## Verze 0.94 – 12. 10. 2026
+
+- druhý samostatně schválený řez RC 0.2 zpřístupňuje read-only kartu Bydliště
+  osoby ve full-page i HTMX režimu,
+- HTTP vrstva používá existující lazy actor-aware
+  `get_visible_person_residences()` bez vlastních ORM dotazů nebo policy,
+- UI zobrazuje typ, kontextový název Place, adresní text, období a poznámku;
+  nevytváří Place detail, Materials UI ani storage cestu,
+- archivovaná bydliště zůstávají v historii, soft-deleted a obsahově skryté
+  záznamy se nevydávají a empty state neprozrazuje jejich existenci,
+- finální brána prošla 1 539/1 539 testy, systémovou kontrolou, query regresí
+  a skutečným browser smoke,
+- nevznikl model, migrace, permission ani ACP; Residence write/lifecycle,
+  Place management a další person taby zůstávají mimo rozsah.
+
 ## Verze 0.93 – 7. 10. 2026
 
 - RC 0.1 zůstává uzavřeným baseline a aktivní vývoj pokračuje jako RC 0.2 na
