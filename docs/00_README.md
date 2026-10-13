@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.61
-**Stav:** RC 0.1 uzavřeno; actor-aware PDF/A4 export osoby dokončen v RC 0.2
-**Datum revize:** 12. 10. 2026
+**Verze dokumentace:** 0.62
+**Stav:** RC 0.2; další etapa M3 – Materials a bezpečné soubory
+**Datum revize:** 13. 10. 2026
 
 ## Účel balíčku
 
@@ -11,6 +11,9 @@ Tento balíček je aktuálním zdrojem pravdy pro projekt **Rodinná databáze �
 Projekt není zamýšlen pouze jako rodokmen, ale jako dlouhodobě rozšiřitelný rodinný informační systém pro evidenci osob, událostí, vazeb, míst, zdrojů, dokumentů, fotografií a citlivých rodinných informací.
 
 ## Obsah
+
+Kořenový [`README.md`](../README.md) slouží pouze jako stručný vstupní bod pro
+GitHub; tento dokument zůstává detailním indexem a zdrojem projektového stavu.
 
 1. `01_VIZE_A_ROZSAH.md`
 2. `02_FUNKCNI_SPECIFIKACE.md`
@@ -39,6 +42,17 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.62
+
+Verze 0.62 doplňuje dokumentační řez **M2.9 – Kořenový README pro GitHub**:
+
+- kořenový `README.md` stručně uvádí milestone RC 0.2, dokončené person-centric
+  funkce a technologický základ a odkazuje sem na detailní dokumentaci,
+- další etapou je **M3 – Materials a bezpečné soubory** a posledním dokončeným
+  návrhovým řezem je **M3.0 – Návrh Materials/File Storage architektury**,
+- aktivní vývojové větve používají jediný standardní kořenový README bez
+  branch-specific variant a bez duplikace podrobné dokumentace.
 
 ## Stav verze 0.61
 
@@ -933,9 +947,8 @@ v produkčním prostředí.
   zůstává nedotčeným pre-agentním integračním základem.
 - Aktivní vývoj pokračuje jako RC 0.2 na `agent/rc-0.2`; dokončené jsou
   samostatně schválené read-only karty Vztahy, Bydliště, Hrobová místa a
-  Události osoby.
-  Validační a review workflow upřesňuje ACP-009; aktuální baseline je
-  1 573/1 573 testů.
+  Události osoby a actor-aware PDF/A4 export osoby. Validační a review workflow
+  upřesňuje ACP-009; aktuální baseline je 1 587/1 587 testů.
 - RC 0.1 je na experimentální větvi dokončené a připravené podle
   `07_ROADMAPA.md`; tento stav ani dokončení M2 nepovolují produkční nasazení
   nebo merge.

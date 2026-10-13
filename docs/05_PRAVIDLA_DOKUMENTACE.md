@@ -1,9 +1,9 @@
 # Pravidla dokumentace projektu
 
 **Dokument:** 05  
-**Verze:** 0.4
+**Verze:** 0.5
 **Stav:** platné pracovní pravidlo  
-**Datum revize:** 29. 9. 2026
+**Datum revize:** 13. 10. 2026
 
 ## 1. Základní pravidlo
 
@@ -39,6 +39,15 @@ Názvy zdrojových souborů neobsahují číslo verze:
 `NN_NAZEV_DOKUMENTU.md`
 
 Číslo verze je uvedeno uvnitř dokumentu. Historii starších verzí uchovává Git a GitHub.
+
+Aktivní vývojová větev vždy obsahuje jeden standardní kořenový `README.md`
+jako krátký vstupní bod pro GitHub. Odkazuje na detailní dokumentační index
+`docs/00_README.md` a nenahrazuje ani neduplikuje projektovou dokumentaci.
+Nevytvářejí se branch-specific varianty README; při změně milestone nebo
+aktuálního řezu se upraví pouze krátká stavová sekce téhož souboru. Kořenový
+README není součástí číslovaného dokumentačního balíčku, proto nemá samostatnou
+interní verzi ani datum revize; jeho aktuálnost vyjadřují milestone a řez a
+historii uchovává Git.
 
 ## 5. Kdy dokumentaci aktualizovat
 

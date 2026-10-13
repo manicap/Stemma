@@ -1,5 +1,18 @@
 # Historie změn dokumentace
 
+## Verze 0.98 – 13. 10. 2026
+
+- dokumentační řez **M2.9 – Kořenový README pro GitHub** přidává krátký
+  kořenový vstupní bod s milestone RC 0.2, dokončenými person-centric funkcemi,
+  technologickým základem a odkazy na detailní dokumentaci,
+- stavová sekce uvádí další etapu **M3 – Materials a bezpečné soubory** a
+  poslední dokončený návrhový řez **M3.0 – Návrh Materials/File Storage
+  architektury**,
+- pravidla dokumentace stanovují jeden standardní kořenový `README.md` na každé
+  aktivní vývojové větvi, bez branch-specific variant a bez duplikace detailní
+  dokumentace,
+- nevznikla změna aplikace, modelu, migrace, permission ani ACP.
+
 ## Verze 0.97 – 12. 10. 2026
 
 - samostatný řez RC 0.2 zpřístupňuje actor-aware PDF/A4 export jedné osoby na

@@ -400,6 +400,13 @@ toward RC 0.1 has therefore stopped. RC 0.2 has completed the explicitly
 approved read-only person relationship, residence, grave-site and event tabs
 and the actor-aware PDF/A4 person export.
 
+The current documentation-only slice is **M2.9 – Kořenový README pro GitHub**.
+It adds the single concise root GitHub entry point required on every active
+development branch and keeps detailed project documentation in
+`docs/00_README.md`. The next stage remains **M3 – Materials a bezpečné
+soubory**; the latest completed design slice is **M3.0 – Návrh Materials/File
+Storage architektury**.
+
 The approved PDF/A4 slice is complete. It does not authorize broader exports,
 Health or Materials export, attachments, stored attachment or Materials file
 delivery, domain writes or lifecycle actions, or another planned person
