@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.58
+**Verze:** 0.59
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
-**Datum revize:** 13. 10. 2026
+**Datum revize:** 14. 10. 2026
 
 ## 0. Jak číst stav funkcí
 
@@ -25,10 +25,11 @@ lifecycle a Materials UI chybí. Události navíc nemají obecný detail. Rozsah
 write hranic není u všech těchto domén stejný; existence backendu se proto
 nesmí vykládat jako hotové UI.
 
-**Metadata a vazby implementovány, práce se souborem plánována:** Materials
-obsahují přílohy, zdroje, explicitní vazby, služby a kontextové selectory.
-Health detail bezpečně zobrazuje pouze dostupná metadata. Fyzický upload,
-volba storage, download/doručení a obecné Materials UI neexistují.
+**Backend Materials implementován, produktové UI plánováno:** Materials
+obsahují přílohy, zdroje, explicitní vazby, služby, kontextové selectory,
+privátní Vault-aware filesystem a actor-aware server-side upload PDF/JPEG/PNG.
+Health detail bezpečně zobrazuje pouze dostupná metadata. Download/doručení,
+browser upload a obecné Materials UI neexistují.
 
 **Plánováno / cílový stav:** obecné vyhledávání a filtry, write/lifecycle UI
 vztahů, bydlišť, hrobových míst a událostí, obecný Event detail a Materials UI, fotografie jako souborový
@@ -532,11 +533,10 @@ Každá fotografie může obsahovat:
 
 ## 11. Dokumenty a přílohy
 
-**Stav:** Metadata příloh, Vault ownership, oddělené soukromí, stav souboru,
-zdroje, explicitní vazby, doménové služby a kontextové actor-aware read
-selectory jsou implementované. Health detail zobrazuje pouze bezpečná metadata.
-Fyzický upload, storage, download či jiné doručení souboru, request/grant a
-obecné management UI jsou plánované.
+**Stav:** Vedle metadat, Vault ownership, explicitních vazeb a actor-aware read
+selectorů je implementován privátní filesystem a server-side upload use-case.
+Health detail zobrazuje pouze bezpečná metadata. Download či jiné doručení,
+request/grant, browser upload a obecné management UI jsou plánované.
 
 Příloha je univerzální objekt pro:
 
@@ -563,6 +563,21 @@ jediným vlastníkem přílohy; `created_by` vlastnictví neurčuje. Pevný
 actor-aware selectory vydají private přílohu pouze aktivnímu vlastníkovi;
 samotné staff nebo superuser postavení cizí private obsah neotevře. Budoucí
 explicitní grant může tuto hranici rozšířit, ale v M3.1 ještě neexistuje.
+
+M3.2 přijímá pouze PDF (`.pdf`, `application/pdf`), JPEG (`.jpg`/`.jpeg`,
+`image/jpeg`) a PNG (`.png`, `image/png`) do 25 MiB. Aktivní přihlášený actor
+nemůže zvolit cizí Vault. Původní filename je po Unicode normalizaci a odstranění
+cesty pouze metadata; fyzický objekt používá nový opaque klíč. Server kombinuje
+příponu, deklarovaný MIME, signaturu a hlubší Pillow/pypdf kontrolu. Odmítá
+poškozené obrázky, decompression bomb rozměry, šifrované PDF, vložené soubory,
+formuláře, JavaScript a actions.
+
+SHA-256 se počítá ze stejného validovaného obsahu, který se ukládá. Zůstává
+neunikátní: stejný soubor vytvoří nový Attachment i blob bez deduplikace.
+Metadata vzniknou jako `pending`, blob se zapíše za Vault-aware storage boundary
+a teprve potom se stav změní na `available`. Známé selhání rollbackne DB a
+pokusí se odstranit blob; neočekávaný crash může zanechat orphan blob nebo stale
+`pending`, jejichž reconciliation není součástí řezu.
 
 Současná infrastruktura používá samostatné explicitní vazby přílohy k osobě,
 události, vazbě osob, bydlišti, hrobovému místu, místu a zdravotnímu záznamu.

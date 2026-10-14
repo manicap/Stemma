@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.82
-**Stav:** M3.1 – Vault a vlastnictví příloh implementováno
-**Datum revize:** 13. 10. 2026
+**Verze:** 0.83
+**Stav:** M3.2 – Chráněné storage a bezpečný upload implementováno
+**Datum revize:** 14. 10. 2026
 
 ## 1. Účel
 
@@ -1933,6 +1933,32 @@ seed používají stejný explicitní provisioning use-case.
 
 M3.1 neimplementuje fyzické úložiště, upload, download, request/grant workflow,
 Materials UI, společný Koš ani šifrování.
+
+Řez **M3.2 – Chráněné storage a bezpečný upload** přidává kompoziční
+`ProtectedAttachmentStorage` nad Django `FileSystemStorage`. Root určuje
+`PROTECTED_ATTACHMENTS_ROOT` s lokálním deployment override; backend používá
+restriktivní file/directory modes a Vault namespace. Veřejné rozhraní nabízí
+jen `write(vault, key, stream)`, interní `open`, `delete` a integrity `exists`;
+nemá `url()` ani `path()` a neleží za `MEDIA_URL`.
+
+`upload_attachment()` přijímá čerstvého aktivního actora, kategorii, filename,
+deklarovaný MIME, `standard`/`private` a stream, nikoli volitelný Vault. Obsah
+streamuje přes dočasný spool s limitem 25 MiB. Allowlist PDF/JPEG/PNG ověřuje
+příponu, MIME, magic bytes a následně úplné dekódování obrázku přes připnuté
+Pillow 12.3.0 nebo fail-closed strukturu PDF přes stávající pypdf 6.10.0.
+Odmítá decompression bomb rozměry, šifrované PDF, vložené soubory, formuláře,
+JavaScript a actions.
+
+Normalizovaný původní filename zůstává pouze metadatem. Fyzický objekt používá
+náhodný 64znakový lowercase hex key; SHA-256 vzniká z validovaného obsahu a
+není unikátní. Každý upload proto vytváří nový Attachment i blob bez
+deduplikace a bez automatického doménového linku. V jedné DB transakci nejprve
+vzniknou metadata `pending`, následuje blob write a až potom `available`.
+Filesystem není součástí DB transakce: známé selhání rollbackne metadata a
+pokusí se blob odstranit, cleanup chyba nepřekryje původní chybu. Process crash
+může zanechat orphan blob nebo stale `pending`; reconciliation, download,
+granty, UI, cloud backend a šifrování zůstávají mimo M3.2. Existující
+actor-aware link selectory nadále vydávají jen `available`.
 
 První implementační řez zavádí dva prázdné katalogy:
 

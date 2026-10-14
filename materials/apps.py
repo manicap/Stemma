@@ -7,3 +7,8 @@ class MaterialsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "materials"
     verbose_name = "Materiály a zdroje"
+
+    def ready(self) -> None:
+        """Register Materials system checks."""
+
+        from . import checks  # noqa: F401

@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.63
-**Stav:** M3.1 – Vault a vlastnictví příloh implementováno
-**Datum revize:** 13. 10. 2026
+**Verze dokumentace:** 0.64
+**Stav:** M3.2 – Chráněné storage a bezpečný upload implementováno
+**Datum revize:** 14. 10. 2026
 
 ## Účel balíčku
 
@@ -42,6 +42,22 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.64
+
+Verze 0.64 dokončuje řez **M3.2 – Chráněné storage a bezpečný upload**:
+
+- `ProtectedAttachmentStorage` ukládá blob v privátním Vault namespace bez
+  veřejného URL nebo path API; root je konfigurovatelný v settings,
+- actor-aware upload zapisuje pouze do vlastního Vaultu, normalizuje filename,
+  přijímá PDF/JPEG/PNG do 25 MiB a kombinuje MIME, signaturu a hlubší kontrolu
+  pomocí připnutých Pillow 12.3.0 a pypdf 6.10.0,
+- každý upload dostane nový opaque key a neunikátní SHA-256 bez deduplikace;
+  metadata přejdou z `pending` na `available` až po zápisu blobu,
+- známé chyby používají rollback a kompenzační cleanup; crash může zanechat
+  orphan blob nebo stale `pending` pro budoucí samostatnou reconciliation,
+- download, granty, Materials UI a šifrování nevznikají a další M3.x řez není
+  tímto řezem určen ani schválen.
 
 ## Stav verze 0.63
 

@@ -124,6 +124,19 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Private attachment blobs are never exposed through MEDIA_URL or static files.
+PROTECTED_ATTACHMENTS_ROOT = BASE_DIR / "private_data" / "attachments"
+PROTECTED_ATTACHMENTS_FILE_PERMISSIONS = 0o600
+PROTECTED_ATTACHMENTS_DIRECTORY_PERMISSIONS = 0o700
+try:
+    from .settings_local import (
+        PROTECTED_ATTACHMENTS_ROOT as LOCAL_PROTECTED_ATTACHMENTS_ROOT,
+    )
+except ImportError:
+    pass
+else:
+    PROTECTED_ATTACHMENTS_ROOT = LOCAL_PROTECTED_ATTACHMENTS_ROOT
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

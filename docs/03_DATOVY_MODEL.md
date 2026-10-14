@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.65
+**Verze:** 0.66
 **Stav:** koncept  
-**Datum revize:** 13. 10. 2026
+**Datum revize:** 14. 10. 2026
 
 ## 1. Základní pilíře
 
@@ -933,7 +933,16 @@ současně vyplněné `archived_at` a `deleted_at`. `storage_key` zůstává int
 Pevný `FileStatus` má hodnoty `pending`, `available`, `missing` a
 `quarantined` s výchozím `pending`. Stav je nezávislý na access a lifecycle;
 pouze `available` smí budoucí doručovací vrstva zpřístupnit. Model zatím
-nevolí storage backend, nezapisuje fyzický soubor a nemá admin ani UI.
+nevolí storage backend ani sám nezapisuje fyzický soubor a nemá admin ani UI.
+
+M3.2 přidává mimo model samostatný `ProtectedAttachmentStorage` a actor-aware
+`upload_attachment()`. Storage mapuje serverem generovaný 64znakový opaque klíč
+do privátního Vault namespace; původní filename cestu neurčuje. Upload po
+streamované validaci PDF/JPEG/PNG do 25 MiB vypočte SHA-256, vytvoří metadata
+`pending`, zapíše blob a teprve poté potvrdí `available`. SHA zůstává neunikátní
+a stejný obsah se nededuplikuje. DB a filesystem netvoří jednu transakci;
+známé chyby používají rollback a kompenzační odstranění, zatímco crash může
+zanechat orphan blob nebo stale `pending` pro budoucí reconciliation.
 
 Explicitní `PersonAttachment`, `EventAttachment`, `RelationshipAttachment`,
 `ResidenceAttachment`, `GraveSiteAttachment`, `PlaceAttachment` a

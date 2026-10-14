@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.61
-**Stav:** M3.1 – Vault a vlastnictví příloh implementováno
-**Datum revize:** 13. 10. 2026
+**Verze:** 0.62
+**Stav:** M3.2 – Chráněné storage a bezpečný upload implementováno
+**Datum revize:** 14. 10. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -615,11 +615,16 @@ zavádí Vault, povinné vlastnictví každého Attachmentu, privacy stav odděl
 `access_level`, bezpečný textový fallback a databázový lifecycle invariant.
 Autoritativní dlouhodobý kontrakt je ACP-012.
 
-Původně uvažovaný M3.2 mezikrok pro legacy ownership se ruší: vývojová databáze
-neobsahuje hodnotná data a po změně schématu se bezpečně znovu vytvoří ze seedu.
-M3.1 neimplementuje fyzické storage, upload, download, request/grant workflow,
-Materials UI, společný Koš ani šifrování. Tyto capability vyžadují samostatné
-navazující řezy.
+Původně uvažovaný pracovní M3.2 mezikrok pro legacy ownership byl zrušen:
+vývojová databáze se bezpečně znovu vytvořila ze seedu. Označení M3.2 je nyní
+výslovně přiděleno schválenému řezu **M3.2 – Chráněné storage a bezpečný
+upload**. Ten implementuje privátní Vault-aware filesystem a server-side upload
+PDF/JPEG/PNG do 25 MiB s opaque klíčem, SHA-256, přechodem
+`pending -> available` a kompenzačním cleanupem.
+
+Download/doručení, request/grant workflow, Materials UI, společný Koš,
+reconciliation a šifrování zůstávají budoucími samostatnými capability. Další
+M3.x řez není tímto řezem určen ani schválen.
 
 ## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
 

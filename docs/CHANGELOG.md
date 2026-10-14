@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 1.00 – 14. 10. 2026
+
+- řez **M3.2 – Chráněné storage a bezpečný upload** zavádí privátní
+  Vault-aware filesystem bez veřejného URL/path API a s rootem
+  konfigurovatelným přes settings,
+- actor-aware `upload_attachment()` zapisuje pouze do vlastního Vaultu,
+  přijímá PDF/JPEG/PNG do 25 MiB a bezpečně normalizuje filename metadata,
+- MIME, magic bytes a hlubší kontrolu zajišťuje explicitní allowlist, nově
+  připnuté Pillow 12.3.0 a stávající pypdf 6.10.0; aktivní, vložený, šifrovaný
+  nebo poškozený obsah se odmítá fail-closed,
+- SHA-256 zůstává neunikátní, každý upload má nový opaque klíč a blob bez
+  deduplikace; metadata přecházejí `pending -> available` až po blob write,
+- DB rollback a kompenzační cleanup řeší známé chyby, aniž by cleanup překryl
+  původní selhání; crash reconciliation zůstává mimo řez,
+- nevznikl download, grant workflow, Materials UI, permission, model, migrace,
+  šifrování ani nový ACP; browser/UI gate se nepoužívá.
+
 ## Verze 0.99 – 13. 10. 2026
 
 - řez **M3.1 – Vault a vlastnictví příloh** zavádí `Vault` s jediným ownerem,

@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.44
+**Verze:** 0.45
 **Stav:** pracovní návrh  
-**Datum revize:** 13. 10. 2026
+**Datum revize:** 14. 10. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -133,6 +133,13 @@ patří do samostatného řezu. Stejnou podmínku vlastníka vynucuje i zápis H
 vazby k private příloze.
 Znalost ID přílohy či vazby health policy neobchází. Nevzniká nové zdravotní
 oprávnění ani obecná cesta vydání souboru.
+
+Server-side upload M3.2 vyžaduje čerstvého aktivního přihlášeného actora a
+nepřijímá Vault jako volitelný vstup: vždy použije pouze actorův vlastní Vault.
+`is_staff`, superuser ani modelová permission proto neumožní zapisovat do
+cizího Vaultu. Upload validuje pouze `standard` nebo `private`, nevytváří
+doménovou vazbu a nezavádí žádné právo soubor stáhnout. Veřejné URL, fyzická
+cesta ani opaque `storage_key` se v běžném chybovém rozhraní nevydávají.
 
 Actor-aware zdroje zdravotního záznamu používají tentýž centrální health
 řetězec. Výsledek navíc vyžaduje viditelnou, nearchivovanou a neodstraněnou

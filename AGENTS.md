@@ -400,13 +400,14 @@ toward RC 0.1 has therefore stopped. RC 0.2 has completed the explicitly
 approved read-only person relationship, residence, grave-site and event tabs
 and the actor-aware PDF/A4 person export.
 
-The current slice is **M3.1 – Vault a vlastnictví příloh**. It implements the
-first Materials security foundation approved by **M3.0 – Návrh Materials/File
-Storage architektury**: one Vault per provisioned user, mandatory Attachment
-ownership through that Vault, and privacy independent of `access_level`.
-ACP-012 is the authoritative long-term storage and access contract. Physical
-storage, upload, download, access requests or grants, Materials UI, encryption,
-and a shared Materials recycle bin remain outside this slice.
+The current slice is **M3.2 – Chráněné storage a bezpečný upload**. It adds a
+private Vault-aware filesystem boundary and an actor-aware server-side upload
+for validated PDF, JPEG and PNG files. Uploads are limited to 25 MiB, use an
+opaque key and non-unique SHA-256, and transition from `pending` to `available`
+only after the blob write succeeds. ACP-012 remains the authoritative storage
+and access contract. Download, access requests or grants, Materials UI,
+encryption, reconciliation and a shared Materials recycle bin remain outside
+this slice. No later M3.x slice is authorized by this mission.
 
 The approved PDF/A4 slice is complete. It does not authorize broader exports,
 Health or Materials export, attachments, stored attachment or Materials file

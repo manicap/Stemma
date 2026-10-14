@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.88
+**Verze:** 0.89
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 13. 10. 2026
+**Datum revize:** 14. 10. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -211,9 +211,18 @@ Nevzniká model, migrace, permission, dočasný veřejný soubor ani ACP.
 uživatele a odděluje soukromí přílohy od její obecné access úrovně. Private
 přílohu smí číst a použít v Health vazbě pouze její aktivní vlastník; `is_staff`,
 superuser ani modelová permission tuto hranici neobcházejí a budoucí explicitní
-grant patří do samostatného řezu. Vývojová větev používá schválený reset bez převodu
-legacy příloh, takže původně plánovaný mezikrok M3.2 odpadá. M3.1 neimplementuje
+grant patří do samostatného řezu. Vývojová větev používá schválený reset bez
+převodu legacy příloh, takže původně plánovaný mezikrok M3.2 odpadá. M3.1 neimplementuje
 fyzické úložiště, upload, download, granty, Materials UI ani šifrování.
+199. Schválené označení M3.2 je nově přiděleno řezu **Chráněné storage a
+bezpečný upload**; dříve zrušený pracovní legacy mezikrok se neimplementuje.
+Privátní Vault-aware filesystem nemá veřejné URL ani path API. Actor-aware
+upload používá výhradně vlastní Vault, přijímá PDF/JPEG/PNG do 25 MiB a
+ověřuje filename metadata, příponu, MIME, signaturu a hlubší Pillow/pypdf
+strukturu. Vytváří nový opaque klíč a neunikátní SHA-256 bez deduplikace a stav
+mění z `pending` na `available` až po zápisu blobu. Známé selhání používá DB
+rollback a kompenzační cleanup; reconciliation po crashi zůstává budoucím
+řezem. Nevzniká download, UI, grant, šifrování, permission, model ani ACP.
 
 ## 2. Otevřené otázky
 
