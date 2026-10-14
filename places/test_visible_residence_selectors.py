@@ -143,6 +143,7 @@ class VisibleResidenceSelectorTests(TestCase):
 
         unsaved = get_user_model()(username="unsaved")
         missing = self.create_user("missing")
+        missing.vault.delete()
         get_user_model().objects.filter(pk=missing.pk).delete()
         for actor in (unsaved, missing):
             with self.subTest(actor=actor.username):

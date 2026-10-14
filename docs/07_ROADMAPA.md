@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.60
-**Stav:** RC 0.1 uzavřeno; actor-aware PDF/A4 export osoby dokončen v RC 0.2
-**Datum revize:** 12. 10. 2026
+**Verze:** 0.61
+**Stav:** M3.1 – Vault a vlastnictví příloh implementováno
+**Datum revize:** 13. 10. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -606,6 +606,20 @@ Tento milestone sám nepovoluje Relationship, Residence, GraveSite,
 PersonGraveSite, Event ani participant write/lifecycle UI, obecný Event detail,
 Place nebo Materials UI ani implementaci dalšího tabu. Každý další funkční řez
 vyžaduje samostatné explicitní schválení.
+
+## M3 – Materials a bezpečné soubory
+
+Návrhový řez **M3.0 – Návrh Materials/File Storage architektury** určil
+bezpečnostní směr. Implementační řez **M3.1 – Vault a vlastnictví příloh** nyní
+zavádí Vault, povinné vlastnictví každého Attachmentu, privacy stav oddělený od
+`access_level`, bezpečný textový fallback a databázový lifecycle invariant.
+Autoritativní dlouhodobý kontrakt je ACP-012.
+
+Původně uvažovaný M3.2 mezikrok pro legacy ownership se ruší: vývojová databáze
+neobsahuje hodnotná data a po změně schématu se bezpečně znovu vytvoří ze seedu.
+M3.1 neimplementuje fyzické storage, upload, download, request/grant workflow,
+Materials UI, společný Koš ani šifrování. Tyto capability vyžadují samostatné
+navazující řezy.
 
 ## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
 

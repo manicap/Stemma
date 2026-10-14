@@ -16,7 +16,11 @@ from health.use_cases import (
     list_health_record_sources,
     list_health_records,
 )
-from materials.choices import FileStatus, SourceSupport
+from materials.choices import (
+    AttachmentPrivacyStatus,
+    FileStatus,
+    SourceSupport,
+)
 from materials.models import (
     Attachment,
     AttachmentCategory,
@@ -27,6 +31,7 @@ from materials.models import (
     SourceRole,
     SourceType,
 )
+from materials.services import get_or_create_owned_vault
 
 from .models import Person
 from .views import person_health, person_health_record_detail
@@ -71,6 +76,7 @@ class PersonHealthWebTests(TestCase):
             access_level=AccessLevel.RESTRICTED,
         )
         self.actor = self.user("reader", "view_restricted_content")
+        self.vault = get_or_create_owned_vault(owner=self.actor)
 
         category = AttachmentCategory.objects.create(
             code="medical-document",
@@ -81,6 +87,7 @@ class PersonHealthWebTests(TestCase):
             name="Lékařská zpráva",
         )
         self.attachment = Attachment.objects.create(
+            vault=self.vault,
             category=category,
             display_name="Zpráva z prohlídky",
             original_filename="prohlidka.pdf",
@@ -99,6 +106,7 @@ class PersonHealthWebTests(TestCase):
             access_level=AccessLevel.RESTRICTED,
         )
         pending_attachment = Attachment.objects.create(
+            vault=self.vault,
             category=category,
             display_name="Nevydatelná příloha",
             original_filename="pending.pdf",
@@ -267,6 +275,7 @@ class PersonHealthWebTests(TestCase):
     def test_detail_never_uses_storage_key_as_attachment_label(self) -> None:
         storage_key = "private/never-expose/unnamed-health-file.bin"
         unnamed_attachment = Attachment.objects.create(
+            vault=self.vault,
             category=self.attachment.category,
             display_name="",
             original_filename="",
@@ -294,6 +303,40 @@ class PersonHealthWebTests(TestCase):
 
         self.assertContains(response, "<strong>Příloha</strong>", html=True)
         self.assertNotContains(response, storage_key)
+
+    def test_detail_does_not_expose_foreign_private_attachment(self) -> None:
+        foreign_owner = self.user("foreign-private-owner")
+        private_attachment = Attachment.objects.create(
+            vault=get_or_create_owned_vault(owner=foreign_owner),
+            category=self.attachment.category,
+            display_name="Cizí soukromá zpráva",
+            original_filename="foreign-private.pdf",
+            storage_key="private/foreign-private.pdf",
+            mime_type="application/pdf",
+            size_bytes=2048,
+            sha256="e" * 64,
+            file_status=FileStatus.AVAILABLE,
+            privacy_status=AttachmentPrivacyStatus.PRIVATE,
+            access_level=AccessLevel.RESTRICTED,
+        )
+        HealthRecordAttachment.objects.create(
+            health_record=self.visible_record,
+            attachment=private_attachment,
+            role=self.attachment_link.role,
+            access_level=AccessLevel.RESTRICTED,
+        )
+
+        self.client.force_login(self.actor)
+        response = self.client.get(
+            reverse(
+                "people:health-record-detail",
+                args=(self.person.pk, self.visible_record.pk),
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Cizí soukromá zpráva")
+        self.assertNotContains(response, "private/foreign-private.pdf")
         self.assertNotContains(response, "private/")
 
     @override_settings(DEBUG=False)

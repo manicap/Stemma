@@ -9,6 +9,8 @@ from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from materials.services import get_or_create_owned_vault
+
 
 @dataclass(frozen=True, slots=True)
 class _DemoAccount:
@@ -189,6 +191,7 @@ class Command(BaseCommand):
                 user.is_superuser = False
                 user.set_password(password)
                 user.save()
+                get_or_create_owned_vault(owner=user)
                 user.groups.set((groups[account.group_name],))
                 user.user_permissions.clear()
                 if account.username == "stemma-demo-administrator":

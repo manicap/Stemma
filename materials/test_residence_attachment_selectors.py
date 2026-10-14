@@ -24,6 +24,7 @@ from .selectors import (
     get_residence_attachment_links,
     get_visible_residence_attachment_links,
 )
+from .services import get_or_create_owned_vault
 
 
 class ResidenceAttachmentSelectorApiTests(SimpleTestCase):
@@ -50,6 +51,7 @@ class ResidenceAttachmentSelectorTests(TestCase):
 
     def setUp(self) -> None:
         self.author = get_user_model().objects.create_user(username="author")
+        self.vault = get_or_create_owned_vault(owner=self.author)
         self.person = Person.objects.create(first_name="Anna")
         self.residence_type = ResidenceType.objects.create(
             code="test_attachment_residence",
@@ -84,6 +86,7 @@ class ResidenceAttachmentSelectorTests(TestCase):
 
     def attachment(self, key: str, **overrides) -> Attachment:
         values = {
+            "vault": self.vault,
             "category": self.category,
             "original_filename": f"{key}.pdf",
             "storage_key": f"attachments/{key}.pdf",

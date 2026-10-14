@@ -10,6 +10,13 @@ class FileStatus(models.TextChoices):
     QUARANTINED = "quarantined", "V karanténě"
 
 
+class AttachmentPrivacyStatus(models.TextChoices):
+    """Soukromí přílohy nezávislé na obsahové přístupové úrovni."""
+
+    STANDARD = "standard", "Standardní"
+    PRIVATE = "private", "Soukromá"
+
+
 class SourceSupport(models.TextChoices):
     """Síla podpory konkrétního tvrzení zdrojovou vazbou."""
 

@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.87
+**Verze:** 0.88
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 12. 10. 2026
+**Datum revize:** 13. 10. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -207,6 +207,13 @@ a vícestránkového A4 portrait layoutu. ReportLab, Apache 2.0 `font-roboto`
 reprodukovatelně připnuté v `requirements.txt`; nevzniká browserový renderer,
 externě konfigurovaná systémová služba ani nový deploymentový subsystém.
 Nevzniká model, migrace, permission, dočasný veřejný soubor ani ACP.
+198. ACP-012 schvaluje vlastnictví příloh přes právě jeden Vault každého
+uživatele a odděluje soukromí přílohy od její obecné access úrovně. Private
+přílohu smí číst a použít v Health vazbě pouze její aktivní vlastník; `is_staff`,
+superuser ani modelová permission tuto hranici neobcházejí a budoucí explicitní
+grant patří do samostatného řezu. Vývojová větev používá schválený reset bez převodu
+legacy příloh, takže původně plánovaný mezikrok M3.2 odpadá. M3.1 neimplementuje
+fyzické úložiště, upload, download, granty, Materials UI ani šifrování.
 
 ## 2. Otevřené otázky
 

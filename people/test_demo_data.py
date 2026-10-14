@@ -18,7 +18,9 @@ from materials.models import (
     HealthRecordAttachment,
     HealthRecordSource,
     Source,
+    Vault,
 )
+from materials.services import get_or_create_owned_vault
 
 from . import services
 from .models import Person, PersonCategory
@@ -141,6 +143,7 @@ class SeedDemoDataCommandTests(TestCase):
         self.assertEqual(Source.objects.count(), 1)
         self.assertEqual(HealthRecordAttachment.objects.count(), 1)
         self.assertEqual(HealthRecordSource.objects.count(), 1)
+        self.assertEqual(Vault.objects.count(), 1)
         seed_actor = get_user_model().objects.get(
             username="stemma-demo-health-writer"
         )
@@ -148,6 +151,8 @@ class SeedDemoDataCommandTests(TestCase):
         self.assertTrue(seed_actor.is_active)
         self.assertFalse(seed_actor.is_staff)
         self.assertFalse(seed_actor.is_superuser)
+        self.assertEqual(Attachment.objects.get().owner, seed_actor)
+        self.assertEqual(Attachment.objects.get().vault, seed_actor.vault)
         self.assertEqual(
             HealthRecord.objects.get().created_by_id,
             seed_actor.pk,
@@ -195,6 +200,11 @@ class SeedDemoDataCommandTests(TestCase):
         self.assertEqual(HealthRecord.objects.count(), 1)
         self.assertEqual(HealthRecordAttachment.objects.count(), 1)
         self.assertEqual(HealthRecordSource.objects.count(), 1)
+        self.assertEqual(Vault.objects.count(), 1)
+        self.assertEqual(
+            Attachment.objects.get().owner.username,
+            "stemma-demo-health-writer",
+        )
         self.assertEqual(
             get_user_model().objects.filter(
                 username="stemma-demo-health-writer"
@@ -204,6 +214,18 @@ class SeedDemoDataCommandTests(TestCase):
         person.refresh_from_db()
         self.assertEqual(person.first_name, "Uživatelská změna")
         self.assertTrue(person.notes.endswith("Uživatelský dodatek."))
+
+    def test_command_rejects_demo_attachment_with_changed_owner(self) -> None:
+        self.run_command()
+        foreign_owner = get_user_model().objects.create_user(
+            username="foreign-attachment-owner"
+        )
+        Attachment.objects.update(
+            vault=get_or_create_owned_vault(owner=foreign_owner)
+        )
+
+        with self.assertRaisesMessage(CommandError, "neočekávaného vlastníka"):
+            self.run_command()
 
     def test_command_completes_partially_seeded_data(self) -> None:
         create_person(

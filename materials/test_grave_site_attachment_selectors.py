@@ -23,6 +23,7 @@ from .selectors import (
     get_grave_site_attachment_links,
     get_visible_grave_site_attachment_links,
 )
+from .services import get_or_create_owned_vault
 
 
 class GraveSiteAttachmentSelectorApiTests(SimpleTestCase):
@@ -49,6 +50,7 @@ class GraveSiteAttachmentSelectorTests(TestCase):
 
     def setUp(self) -> None:
         self.author = get_user_model().objects.create_user(username="author")
+        self.vault = get_or_create_owned_vault(owner=self.author)
         self.grave_site_type = GraveSiteType.objects.get(code="grave")
         self.place = Place.objects.create(
             name="Praha",
@@ -75,6 +77,7 @@ class GraveSiteAttachmentSelectorTests(TestCase):
 
     def attachment(self, key: str, **overrides) -> Attachment:
         values = {
+            "vault": self.vault,
             "category": self.category,
             "original_filename": f"{key}.pdf",
             "storage_key": f"attachments/{key}.pdf",

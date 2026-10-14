@@ -298,6 +298,7 @@ class VisiblePersonGraveSiteSelectorTests(TestCase):
     ) -> None:
         unsaved = get_user_model()(username="unsaved-link-actor")
         missing = self.create_user("missing-link-actor")
+        missing.vault.delete()
         get_user_model().objects.filter(pk=missing.pk).delete()
         callbacks = (
             lambda actor: self.visible_for_person(actor),

@@ -429,6 +429,7 @@ class PersonGraveSiteServiceTests(TestCase):
             username="missing-link-author"
         )
         missing_pk = missing.pk
+        missing.vault.delete()
         missing.delete()
         missing.pk = missing_pk
 

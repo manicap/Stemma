@@ -1,5 +1,27 @@
 # Historie změn dokumentace
 
+## Verze 0.99 – 13. 10. 2026
+
+- řez **M3.1 – Vault a vlastnictví příloh** zavádí `Vault` s jediným ownerem,
+  povinný `Attachment.vault` a ownera odvozeného pouze z Vaultu,
+- nový pevný `privacy_status` (`standard`, `private`) je ortogonální k
+  `access_level`; actor-aware attachment selectory a Health link write hranice
+  vydají private přílohu pouze aktivnímu vlastníkovi a cizí staff ani superuser
+  nemají bypass,
+- `Attachment` zakazuje současně vyplněné archive/delete timestampy, indexuje
+  `(vault, deleted_at)` a bezpečný `__str__` už nikdy nepoužije `storage_key`,
+- migrace `materials.0009_vault_attachment_ownership` vytvoří Vaulty existujícím
+  uživatelům a zavede povinné vlastnictví bez nullable mezikroku; legacy demo
+  přílohy vyžadují schválený reset vývojové DB,
+- demo účty i technický health seed actor získávají Vault idempotentním
+  use-casem; demo zdravotní příloha patří tomuto technickému actorovi,
+- nový **ACP-012 – Vault, chráněné úložiště a přístup k přílohám** je
+  autoritativním dlouhodobým kontraktem; storage, upload, download,
+  request/grant, Materials UI, společný Koš a šifrování zůstávají mimo řez,
+- původně navrhovaný M3.2 legacy ownership mezikrok byl zrušen, protože
+  vývojová databáze neobsahuje hodnotná data a lze ji bezpečně obnovit ze seedu;
+  nevznikla nová permission.
+
 ## Verze 0.98 – 13. 10. 2026
 
 - dokumentační řez **M2.9 – Kořenový README pro GitHub** přidává krátký

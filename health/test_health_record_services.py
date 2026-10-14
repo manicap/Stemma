@@ -362,6 +362,7 @@ class HealthRecordServiceTests(TestCase):
         inactive = self.writer("inactive", is_active=False)
         missing = self.writer("missing")
         missing_pk = missing.pk
+        missing.vault.delete()
         missing.delete()
         missing.pk = missing_pk
 

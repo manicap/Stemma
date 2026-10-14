@@ -7,6 +7,8 @@ from django.contrib.auth.models import Group, Permission
 from django.core.management import CommandError, call_command
 from django.test import TestCase, override_settings
 
+from materials.models import Vault
+
 
 @override_settings(DEBUG=True)
 class BootstrapDemoAccountsCommandTests(TestCase):
@@ -51,6 +53,7 @@ class BootstrapDemoAccountsCommandTests(TestCase):
             for permission in permissions
         }
         self.assertEqual(get_user_model().objects.count(), 3)
+        self.assertEqual(Vault.objects.count(), 3)
         for username, group_name in expected.items():
             with self.subTest(username=username):
                 user = get_user_model().objects.get(username=username)
@@ -61,6 +64,7 @@ class BootstrapDemoAccountsCommandTests(TestCase):
                 self.assertFalse(user.is_staff)
                 self.assertFalse(user.is_superuser)
                 self.assertTrue(user.is_active)
+                self.assertEqual(user.vault.owner_id, user.pk)
                 self.assertIsNotNone(
                     authenticate(username=username, password=self.password)
                 )
@@ -130,6 +134,7 @@ class BootstrapDemoAccountsCommandTests(TestCase):
         output = self.run_command()
 
         self.assertEqual(get_user_model().objects.count(), 3)
+        self.assertEqual(Vault.objects.count(), 3)
         user.refresh_from_db()
         self.assertEqual(
             list(user.groups.values_list("name", flat=True)),

@@ -1,6 +1,7 @@
 from importlib import import_module
 
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import connection, migrations, models
@@ -32,6 +33,7 @@ from .models import (
     SourceRole,
     SourceType,
 )
+from .services import get_or_create_owned_vault
 
 
 LINK_MODELS = (
@@ -165,6 +167,10 @@ class SourceLinkStructureTests(TestCase):
 
 class SourceLinkDatabaseTests(TestCase):
     def setUp(self) -> None:
+        owner = get_user_model().objects.create_user(
+            username="source-link-owner"
+        )
+        self.vault = get_or_create_owned_vault(owner=owner)
         self.source_type = SourceType.objects.create(
             code="archive",
             name="Archivní pramen",
@@ -182,6 +188,7 @@ class SourceLinkDatabaseTests(TestCase):
             name="Sken",
         )
         self.attachment = Attachment.objects.create(
+            vault=self.vault,
             category=category,
             original_filename="scan.pdf",
             storage_key="attachments/source-link.pdf",

@@ -25,6 +25,7 @@ from .selectors import (
     get_person_attachment_links,
     get_visible_person_attachment_links,
 )
+from .services import get_or_create_owned_vault
 
 
 class PersonAttachmentSelectorApiTests(SimpleTestCase):
@@ -76,6 +77,8 @@ class PersonAttachmentSelectorTests(TestCase):
     sha256 = "a" * 64
 
     def setUp(self) -> None:
+        self.owner = self.create_user("attachment-owner")
+        self.vault = get_or_create_owned_vault(owner=self.owner)
         self.person = Person.objects.create(
             first_name="Anna",
             last_name="Testovací",
@@ -107,6 +110,7 @@ class PersonAttachmentSelectorTests(TestCase):
 
     def create_attachment(self, key: str, **overrides: object) -> Attachment:
         values = {
+            "vault": self.vault,
             "category": self.category,
             "original_filename": f"{key}.pdf",
             "storage_key": f"attachments/{key}.pdf",

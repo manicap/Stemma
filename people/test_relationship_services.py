@@ -657,6 +657,7 @@ class RelationshipServiceTests(TestCase):
     def test_rejects_deleted_created_by(self) -> None:
         user = get_user_model().objects.create_user(username="deleted-author")
         user_pk = user.pk
+        user.vault.delete()
         user.delete()
         user.pk = user_pk
 

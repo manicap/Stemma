@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.62
-**Stav:** RC 0.2; další etapa M3 – Materials a bezpečné soubory
+**Verze dokumentace:** 0.63
+**Stav:** M3.1 – Vault a vlastnictví příloh implementováno
 **Datum revize:** 13. 10. 2026
 
 ## Účel balíčku
@@ -42,6 +42,23 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.63
+
+Verze 0.63 dokončuje řez **M3.1 – Vault a vlastnictví příloh** nad schváleným
+návrhem M3.0:
+
+- `Vault` poskytuje jednoznačný vlastnický kontext uživatele a každý nový
+  `Attachment` na něj povinně odkazuje,
+- owner přílohy je výhradně `attachment.vault.owner`; `created_by` zůstává
+  autorstvím záznamu,
+- `privacy_status` rozlišuje `standard` a `private` nezávisle na
+  `access_level`; private metadata vydá současná actor-aware hranice pouze
+  aktivnímu vlastníkovi, nikoli cizímu staffovi nebo superuserovi,
+- ACP-012 určuje dlouhodobý storage/access kontrakt; storage, upload, download,
+  request/grant, Materials UI, společný Koš a šifrování nejsou implementované,
+- původně uvažovaný M3.2 legacy ownership mezikrok nevzniká, protože vývojová
+  databáze může být bezpečně vytvořena znovu ze seedu.
 
 ## Stav verze 0.62
 

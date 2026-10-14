@@ -6,12 +6,15 @@ vztahů, událostí, míst, zdravotních údajů a souvisejících materiálů.
 ## Stav projektu
 
 - **Milestone:** RC 0.2
-- **Řez:** M2.9 – Kořenový README pro GitHub
+- **Řez:** M3.1 – Vault a vlastnictví příloh
 - **Dostupné person-centric funkce:** read-only Vztahy, Bydliště, Hrobová místa
   a Události; A4/PDF export osoby
 - **Další etapa:** M3 – Materials a bezpečné soubory
 - **Poslední dokončený návrhový řez:** M3.0 – Návrh Materials/File Storage
   architektury
+- **Materials security základ:** Vault, povinné vlastnictví a oddělené
+  `standard`/`private` soukromí příloh; storage a přenos souborů zatím nejsou
+  implementované
 
 ## Technologický základ
 

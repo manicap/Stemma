@@ -20,7 +20,7 @@ from health.permissions import get_health_record_visibility_filter
 from people.models import Person, Relationship
 from places.models import GraveSite, Place, Residence
 
-from .choices import FileStatus
+from .choices import AttachmentPrivacyStatus, FileStatus
 from .models import (
     Attachment,
     AttachmentLinkModel,
@@ -32,6 +32,7 @@ from .models import (
     PlaceAttachment,
     RelationshipAttachment,
     ResidenceAttachment,
+    Vault,
 )
 from .selectors import _visible_health_record_attachment_links
 
@@ -44,6 +45,7 @@ __all__ = (
     "create_place_attachment",
     "create_relationship_attachment",
     "create_residence_attachment",
+    "get_or_create_owned_vault",
     "update_event_attachment",
     "update_grave_site_attachment",
     "update_health_record_attachment",
@@ -52,6 +54,31 @@ __all__ = (
     "update_relationship_attachment",
     "update_residence_attachment",
 )
+
+
+def get_or_create_owned_vault(*, owner: AbstractBaseUser) -> Vault:
+    """Idempotentně vydá jediný Vault uloženého uživatele."""
+
+    user_model = get_user_model()
+    if not isinstance(owner, user_model) or owner.pk is None:
+        _raise_service_error(
+            "owner",
+            "Vlastník trezoru musí být uložený v databázi.",
+            "vault_owner_unsaved",
+        )
+    with transaction.atomic():
+        try:
+            current_owner = user_model._default_manager.select_for_update().get(
+                pk=owner.pk
+            )
+        except user_model.DoesNotExist:
+            _raise_service_error(
+                "owner",
+                "Vlastník trezoru musí být uložený v databázi.",
+                "vault_owner_unsaved",
+            )
+        vault, _ = Vault.objects.get_or_create(owner=current_owner)
+        return vault
 
 
 @dataclass(frozen=True, slots=True)
@@ -288,6 +315,11 @@ def _load_visible_attachment_for_write(
     if not can_view_access_level(
         actor=actor,
         access_level=current.access_level,
+    ):
+        raise Attachment.DoesNotExist
+    if (
+        current.privacy_status == AttachmentPrivacyStatus.PRIVATE
+        and current.vault.owner_id != actor.pk
     ):
         raise Attachment.DoesNotExist
     return current

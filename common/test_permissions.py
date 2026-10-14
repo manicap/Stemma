@@ -67,6 +67,7 @@ class ActiveActorPermissionTests(TestCase):
         )
         missing = get_user_model().objects.create_user(username="missing-writer")
         missing_pk = missing.pk
+        missing.vault.delete()
         missing.delete()
         missing.pk = missing_pk
         ordinary = get_user_model().objects.create_user(username="ordinary")
@@ -160,6 +161,7 @@ class AccessLevelPermissionTests(TestCase):
     def test_unsaved_and_physically_missing_authenticated_actor(self) -> None:
         unsaved = get_user_model()(username="unsaved")
         missing = self.create_user("missing")
+        missing.vault.delete()
         get_user_model().objects.filter(pk=missing.pk).delete()
 
         for actor in (unsaved, missing):

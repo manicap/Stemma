@@ -24,6 +24,7 @@ from materials.selectors import (
     get_visible_health_record_attachment_links,
     get_visible_health_record_source_links,
 )
+from materials.services import get_or_create_owned_vault
 from people.models import Person
 
 from .models import HealthRecord, HealthRecordType
@@ -590,6 +591,7 @@ class HealthRecordSoftDeleteServiceTests(TestCase):
             name="Doklad",
         )
         attachment = Attachment.objects.create(
+            vault=get_or_create_owned_vault(owner=self.creator),
             category=category,
             original_filename="report.pdf",
             storage_key="health/report.pdf",

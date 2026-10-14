@@ -229,6 +229,7 @@ class VisibleRelationshipOverviewSelectorTests(TestCase):
 
         unsaved_actor = get_user_model()(username="unsaved")
         missing_actor = self.create_user("missing")
+        missing_actor.vault.delete()
         get_user_model().objects.filter(pk=missing_actor.pk).delete()
         for actor in (unsaved_actor, missing_actor):
             with self.subTest(actor=actor.username):

@@ -1,10 +1,10 @@
 # Architektonická rozhodnutí
 
 **Dokument:** 12  
-**Verze:** 0.9
+**Verze:** 0.10
 **Stav:** platný registr rozhodnutí  
 **Datum vytvoření:** 15. 7. 2026  
-**Datum revize:** 29. 9. 2026
+**Datum revize:** 13. 10. 2026
 
 ## Účel
 
@@ -590,3 +590,81 @@ součástí tohoto řezu.
   zůstávají samostatným pozdějším transportním/UI rozhodnutím,
 - ACP-010 zůstává autoritou pro archive/restore archived; ACP-011 nahrazuje jen
   jeho odklad soft-delete a případné obnovy.
+
+---
+
+## ACP-012 — Vault, chráněné úložiště a přístup k přílohám
+
+**Stav:** Schváleno
+
+### Kontext
+
+Materials už evidují metadata jednoho souboru v `Attachment`, jeho fyzický stav
+a explicitní kontextové vazby. Dosavadní model však nerozlišoval autora
+databázového záznamu od vlastníka souboru, neměl samostatný privacy stav a
+neurčoval stabilní hranici mezi doménou, fyzickým úložištěm a případným
+budoucím šifrováním. `access_level` sám nevyjadřuje osobní vlastnictví ani
+výslovné sdílení soukromého souboru.
+
+### Rozhodnutí
+
+Každý uživatel má právě jeden `Vault`. Každý `Attachment` patří právě jednomu
+Vaultu a jeho owner je vždy a pouze `attachment.vault.owner`. Pole `created_by`
+nadále označuje autora databázového záznamu a vlastnictví nezakládá ani
+nepřenáší. Vlastnické vazby používají `PROTECT`; deaktivace uživatele Vault ani
+přílohy nemaže a vlastnictví nemění. Provisioning je explicitní, idempotentní a
+transakčně bezpečný use-case, nikoli skrytý business signal.
+
+Strukturovaná metadata přílohy zůstávají v databázi. Fyzický blob leží mimo
+databázi za oddělenou storage boundary. `storage_key` je neprůhledná interní
+hodnota; není uživatelským názvem, adresou ke zveřejnění ani autorizačním
+tokenem a nesmí se objevit v běžné prezentaci nebo chybovém rozhraní.
+
+`Attachment` má pevný privacy stav `standard` nebo `private`, který je
+ortogonální k existujícímu `access_level`. Běžná autorizace vždy kombinuje
+policy cílového objektu, explicitní vazby a Attachmentu. Private Attachment
+navíc smí číst jeho aktivní owner nebo actor s budoucím platným explicitním
+grantem. Samotné `is_staff`, superuser status, obecná obsahová permission ani
+znalost identifikátoru nepřidávají právo číst cizí private blob. Dokud grant
+model neexistuje, je private přístup fail-closed pouze na aktivního ownera.
+
+Lifecycle explicitní vazby a lifecycle Attachmentu jsou samostatné. Změna,
+archivace nebo odstranění vazby automaticky nemění Attachment a změna
+Attachmentu automaticky nepřepisuje vazby. Společný Materials Koš bude
+actor-aware prezentační agregace výsledků jednotlivých doménových providerů,
+nikoli polymorfní databázový model nebo generická business vazba.
+
+Veřejné Attachment a link API zůstává nezávislé na konkrétním fyzickém
+backendu. Storage boundary musí být Vault-aware, aby na ni bylo možné později
+vložit šifrování bez změny veřejných Attachment a link kontraktů. Toto
+rozhodnutí neschvaluje implementaci storage, uploadu, doručení, grant workflow,
+Materials UI ani kryptografie.
+
+### Důvod
+
+- jednoznačně oddělit vlastnictví souboru od autorství metadat,
+- zabránit tomu, aby obecná role nebo superuser automaticky prolomily osobní
+  privacy hranici,
+- zachovat současnou vícevrstvou autorizaci explicitních doménových vazeb,
+- udržet metadata a fyzický blob v oddělených odpovědnostech,
+- připravit stabilní seam pro budoucí Vault-aware storage a šifrování,
+- zachovat link lifecycle bez skrytých kaskád do sdílené přílohy.
+
+### Nevýhody
+
+- každý Attachment vyžaduje explicitní vlastnický kontext i v technických a
+  demo scénářích,
+- private sdílení nelze zpřístupnit dříve, než vznikne samostatný bezpečný grant
+  kontrakt,
+- autorizace budoucího doručení musí kombinovat více nezávislých vrstev a
+  nemůže se opřít pouze o obecnou Django roli.
+
+### Dopady
+
+- M3.1 zavádí `Vault`, povinné `Attachment.vault`, oddělený privacy stav a
+  fail-closed owner hranici,
+- současné standardní Attachment selectory zachovávají dosavadní access a
+  lifecycle chování; private výsledky jsou navíc omezené ownership pravidlem,
+- storage a přenos souboru, request/grant workflow, společný Materials Koš a
+  šifrovací vrstva zůstávají samostatnými navazujícími řezy,
+- nevzniká nová role ani permission a explicitní link modely se nemění.

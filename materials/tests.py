@@ -30,6 +30,7 @@ from .models import (
     Source,
     SourceRole,
     SourceType,
+    Vault,
 )
 
 
@@ -58,6 +59,7 @@ class MaterialsApplicationTests(SimpleTestCase):
                 ResidenceSource,
                 GraveSiteSource,
                 AttachmentSource,
+                Vault,
                 Attachment,
                 PersonAttachment,
                 EventAttachment,

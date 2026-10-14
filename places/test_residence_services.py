@@ -511,6 +511,7 @@ class ResidenceServiceTests(TestCase):
             username="missing-residence-author"
         )
         creator_pk = creator.pk
+        creator.vault.delete()
         creator.delete()
         creator.pk = creator_pk
 

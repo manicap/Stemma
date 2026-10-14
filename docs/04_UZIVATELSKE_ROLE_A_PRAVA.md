@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.43
+**Verze:** 0.44
 **Stav:** pracovní návrh  
-**Datum revize:** 12. 10. 2026
+**Datum revize:** 13. 10. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -89,6 +89,8 @@ spravovatelným systémovým nastavením; uživatelské řádky jsou plně sprav
 Neaktivní uživatel, včetně neaktivního superusera, se posuzuje jako
 anonymní. `is_staff` pouze řídí přístup do Django Adminu a sám obsahová
 oprávnění neposkytuje. Aktivní superuser má úplný obsahový přístup.
+Toto obecné pravidlo samo nepřekonává vlastnickou hranici soukromé přílohy
+podle ACP-012.
 
 Přístupová úroveň může být nastavena pro:
 
@@ -124,6 +126,11 @@ health oprávnění ani paralelní permission mechanismus.
 Actor-aware čtení zdravotních příloh nejprve vyžaduje celý centrální health
 řetězec osoby, záznamu a aktivního typu. Výsledné SQL dále vyžaduje viditelnou,
 nearchivovanou a neodstraněnou vazbu i přílohu a stav souboru `available`.
+Příloha se stavem soukromí `private` je navíc viditelná pouze svému aktivnímu
+vlastníkovi Vaultu; cizí `is_staff`, superuser ani modelová permission tuto
+vlastnickou hranici neobcházejí. Budoucí explicitní grant zatím neexistuje a
+patří do samostatného řezu. Stejnou podmínku vlastníka vynucuje i zápis Health
+vazby k private příloze.
 Znalost ID přílohy či vazby health policy neobchází. Nevzniká nové zdravotní
 oprávnění ani obecná cesta vydání souboru.
 

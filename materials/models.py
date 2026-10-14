@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
@@ -15,7 +16,7 @@ from health.models import HealthRecord
 from people.models import Person, PersonName, Relationship
 from places.models import GraveSite, Place, Residence
 
-from .choices import FileStatus, SourceSupport
+from .choices import AttachmentPrivacyStatus, FileStatus, SourceSupport
 
 
 class AttachmentCategory(LookupModel):
@@ -272,6 +273,23 @@ class AttachmentSource(SourceLinkModel):
         return self._link_text(self.attachment)
 
 
+class Vault(TimestampedModel, models.Model):
+    """Jednoznačný vlastnický kontext příloh jednoho uživatele."""
+
+    owner = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="vault",
+    )
+
+    class Meta:
+        verbose_name = "Trezor"
+        verbose_name_plural = "Trezory"
+
+    def __str__(self) -> str:
+        return "Trezor příloh"
+
+
 class Attachment(
     TimestampedModel,
     PartialDateModel,
@@ -282,6 +300,11 @@ class Attachment(
 ):
     """Metadata jednoho fyzického digitálního souboru."""
 
+    vault = models.ForeignKey(
+        Vault,
+        on_delete=models.PROTECT,
+        related_name="attachments",
+    )
     category = models.ForeignKey(
         AttachmentCategory,
         on_delete=models.PROTECT,
@@ -313,6 +336,11 @@ class Attachment(
         default=FileStatus.PENDING,
         db_index=True,
     )
+    privacy_status = models.CharField(
+        max_length=20,
+        choices=AttachmentPrivacyStatus.choices,
+        default=AttachmentPrivacyStatus.STANDARD,
+    )
     creator_name = models.CharField(max_length=255, blank=True)
     provenance = models.TextField(blank=True)
     original_owner = models.CharField(max_length=255, blank=True)
@@ -322,6 +350,28 @@ class Attachment(
     class Meta:
         verbose_name = "Příloha"
         verbose_name_plural = "Přílohy"
+        indexes = (
+            models.Index(
+                fields=("vault", "deleted_at"),
+                name="materials_att_vault_del_idx",
+            ),
+        )
+        constraints = (
+            models.CheckConstraint(
+                condition=(
+                    models.Q(archived_at__isnull=True)
+                    | models.Q(deleted_at__isnull=True)
+                ),
+                name="materials_attachment_lifecycle_exclusive",
+                violation_error_code="attachment_lifecycle_conflict",
+            ),
+        )
+
+    @property
+    def owner(self):
+        """Vlastník přílohy odvozený výhradně z jejího Vaultu."""
+
+        return self.vault.owner
 
     def clean(self) -> None:
         super().clean()
@@ -339,7 +389,7 @@ class Attachment(
         return (
             self.display_name.strip()
             or self.original_filename.strip()
-            or self.storage_key
+            or "Příloha bez názvu"
         )
 
 

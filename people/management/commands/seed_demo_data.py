@@ -32,7 +32,7 @@ from materials.models import (
     SourceRole,
     SourceType,
 )
-from materials.services import AttachmentLinkInput
+from materials.services import AttachmentLinkInput, get_or_create_owned_vault
 from materials.source_services import SourceLinkInput
 from people.models import Person
 from people.services import PersonInput, create_person
@@ -178,6 +178,7 @@ def _seed_demo_health_data(*, person: Person) -> None:
             "Technický actor health ukázky má neočekávaná oprávnění."
         )
     seed_actor.user_permissions.add(*required_permissions)
+    seed_actor_vault = get_or_create_owned_vault(owner=seed_actor)
 
     if health_record is None:
         health_record = create_health_record(
@@ -209,6 +210,7 @@ def _seed_demo_health_data(*, person: Person) -> None:
     attachment, _ = Attachment.objects.get_or_create(
         storage_key="stemma-demo/health/preventive-checkup.pdf",
         defaults={
+            "vault": seed_actor_vault,
             "category": category,
             "display_name": "Ukázková zpráva z prohlídky",
             "original_filename": "preventivni-prohlidka.pdf",
@@ -219,6 +221,10 @@ def _seed_demo_health_data(*, person: Person) -> None:
             "access_level": AccessLevel.RESTRICTED,
         },
     )
+    if attachment.vault_id != seed_actor_vault.pk:
+        raise CommandError(
+            "Ukázková zdravotní příloha má neočekávaného vlastníka."
+        )
     if not HealthRecordAttachment.objects.filter(
         health_record=health_record,
         attachment=attachment,

@@ -238,6 +238,7 @@ class HealthRecordSourceServiceTests(TestCase):
             "materials.change_healthrecordsource",
         )
         missing_pk = missing.pk
+        missing.vault.delete()
         missing.delete()
         missing.pk = missing_pk
         forged = SimpleNamespace(is_authenticated=True, pk=self.actor.pk)

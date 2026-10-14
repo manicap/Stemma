@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.64
+**Verze:** 0.65
 **Stav:** koncept  
-**Datum revize:** 30. 9. 2026
+**Datum revize:** 13. 10. 2026
 
 ## 1. Základní pilíře
 
@@ -917,6 +917,18 @@ Implementovaný `Attachment` dědí `TimestampedModel`, `PartialDateModel`,
 Neprůhledný `storage_key` je unikátní identita uloženého objektu; SHA-256 je
 64znakový lowercase hexadecimální údaj s indexem, ale záměrně není unikátní a
 není identitou záznamu. Technická metadata jsou JSON objekt.
+
+M3.1 doplňuje `Vault` jako timestampovaný first-class Materials model s
+povinným `owner = OneToOneField(settings.AUTH_USER_MODEL, PROTECT)`. Vault nemá
+archive ani soft-delete lifecycle. Každý `Attachment` má povinný chráněný FK
+`vault`; vlastník přílohy je vždy `attachment.vault.owner`, nikoli
+`created_by`. Index `(vault, deleted_at)` podporuje vlastnické lifecycle dotazy.
+
+Pevný `AttachmentPrivacyStatus` má hodnoty `standard` a `private` s výchozím
+`standard` a je ortogonální k `access_level`. Databázový constraint zakazuje
+současně vyplněné `archived_at` a `deleted_at`. `storage_key` zůstává interní a
+`Attachment.__str__()` při chybějícím názvu používá neutrální text, nikoli klíč
+úložiště.
 
 Pevný `FileStatus` má hodnoty `pending`, `available`, `missing` a
 `quarantined` s výchozím `pending`. Stav je nezávislý na access a lifecycle;

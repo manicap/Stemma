@@ -2,6 +2,7 @@ from importlib import import_module
 from unittest.mock import patch
 
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import (
@@ -57,6 +58,7 @@ from .services import (
     update_place_attachment,
     update_relationship_attachment,
     update_residence_attachment,
+    get_or_create_owned_vault,
 )
 
 
@@ -176,6 +178,10 @@ class AttachmentLinkStructureTests(SimpleTestCase):
 
 class AttachmentLinkServiceTests(TestCase):
     def setUp(self) -> None:
+        self.owner = get_user_model().objects.create_user(
+            username="attachment-owner"
+        )
+        self.vault = get_or_create_owned_vault(owner=self.owner)
         self.category = AttachmentCategory.objects.create(
             code="document",
             name="Dokument",
@@ -236,6 +242,7 @@ class AttachmentLinkServiceTests(TestCase):
 
     def make_attachment(self, suffix: str) -> Attachment:
         return Attachment.objects.create(
+            vault=self.vault,
             category=self.category,
             original_filename=f"{suffix}.pdf",
             storage_key=f"attachments/{suffix}",

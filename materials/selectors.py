@@ -14,7 +14,7 @@ from health.permissions import get_health_record_visibility_filter
 from people.models import Person, PersonName, Relationship
 from places.models import GraveSite, Residence
 
-from .choices import FileStatus
+from .choices import AttachmentPrivacyStatus, FileStatus
 from .models import (
     EventAttachment,
     EventSource,
@@ -63,6 +63,21 @@ _ACCESS_LEVELS = (
 )
 _VIEW_ARCHIVED_PERSON_PERMISSION = "people.view_archived_person"
 _VIEW_DELETED_PERSON_PERMISSION = "people.view_deleted_person"
+
+
+def _attachment_privacy_filter(
+    actor: AbstractBaseUser | AnonymousUser,
+) -> Q:
+    condition = Q(
+        attachment__privacy_status=AttachmentPrivacyStatus.STANDARD
+    )
+    if getattr(actor, "is_authenticated", False) and actor.pk is not None:
+        condition |= Q(
+            attachment__privacy_status=AttachmentPrivacyStatus.PRIVATE,
+            attachment__vault__owner_id=actor.pk,
+            attachment__vault__owner__is_active=True,
+        )
+    return condition
 
 
 def _person_unsaved_error() -> ValidationError:
@@ -539,6 +554,7 @@ def get_visible_person_attachment_links(
         if is_visible
     )
     return get_person_attachment_links(person=current_person).filter(
+        _attachment_privacy_filter(actor),
         _person_lifecycle_filter(
             can_view_archived=can_view_archived,
             can_view_deleted=can_view_deleted,
@@ -581,6 +597,7 @@ def get_visible_event_attachment_links(
         if is_visible
     )
     return get_event_attachment_links(event=current_event).filter(
+        _attachment_privacy_filter(actor),
         access_level__in=visible_access_levels,
         archived_at__isnull=True,
         event__access_level__in=visible_access_levels,
@@ -611,6 +628,7 @@ def _visible_health_record_attachment_links(
     )
     return (
         HealthRecordAttachment.objects.filter(
+            _attachment_privacy_filter(actor),
             health_record_id__in=visible_health_records.values("pk"),
             access_level__in=visible_levels,
             archived_at__isnull=True,
@@ -886,6 +904,7 @@ def get_visible_relationship_attachment_links(
         level for level, is_visible in visibility.items() if is_visible
     )
     return get_relationship_attachment_links(relationship=current).filter(
+        _attachment_privacy_filter(actor),
         _relationship_people_lifecycle_filter(
             can_view_archived=can_view_archived,
         ),
@@ -929,6 +948,7 @@ def get_visible_residence_attachment_links(
         level for level, is_visible in visibility.items() if is_visible
     )
     return get_residence_attachment_links(residence=current).filter(
+        _attachment_privacy_filter(actor),
         _residence_person_lifecycle_filter(
             can_view_archived=can_view_archived,
             can_view_deleted=can_view_deleted,
@@ -1009,6 +1029,7 @@ def get_visible_grave_site_attachment_links(
         level for level, is_visible in visibility.items() if is_visible
     )
     return get_grave_site_attachment_links(grave_site=current).filter(
+        _attachment_privacy_filter(actor),
         access_level__in=visible_levels,
         archived_at__isnull=True,
         grave_site__access_level__in=visible_levels,

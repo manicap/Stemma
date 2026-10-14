@@ -22,7 +22,7 @@ from people.models import Person
 from places.models import Place
 
 from . import selectors, services
-from .choices import FileStatus
+from .choices import AttachmentPrivacyStatus, FileStatus
 from .models import (
     Attachment,
     AttachmentCategory,
@@ -34,6 +34,7 @@ from .selectors import get_visible_health_record_attachment_links
 from .services import (
     AttachmentLinkInput,
     create_health_record_attachment,
+    get_or_create_owned_vault,
     update_health_record_attachment,
 )
 
@@ -115,7 +116,10 @@ class HealthRecordAttachmentServiceTests(TestCase):
             code="evidence",
             name="Doklad",
         )
+        self.actor = get_user_model().objects.create_user(username="writer")
+        self.vault = get_or_create_owned_vault(owner=self.actor)
         self.attachment = Attachment.objects.create(
+            vault=self.vault,
             category=self.category,
             original_filename="record.pdf",
             storage_key="health/record.pdf",
@@ -124,7 +128,6 @@ class HealthRecordAttachmentServiceTests(TestCase):
             sha256=self.sha256,
             file_status=FileStatus.AVAILABLE,
         )
-        self.actor = get_user_model().objects.create_user(username="writer")
         for codename in (
             "add_healthrecordattachment",
             "change_healthrecordattachment",
@@ -256,6 +259,7 @@ class HealthRecordAttachmentServiceTests(TestCase):
             "materials.change_healthrecordattachment",
         )
         missing_pk = missing.pk
+        missing.vault.delete()
         missing.delete()
         missing.pk = missing_pk
         forged = SimpleNamespace(
@@ -358,6 +362,7 @@ class HealthRecordAttachmentServiceTests(TestCase):
         )
 
         stale = Attachment.objects.create(
+            vault=self.vault,
             category=self.category,
             original_filename="stale.pdf",
             storage_key="health/stale.pdf",
@@ -402,6 +407,29 @@ class HealthRecordAttachmentServiceTests(TestCase):
                         data=self.data(),
                         actor=self.actor,
                     )
+
+    def test_create_rejects_private_attachment_of_another_owner(self) -> None:
+        foreign_owner = get_user_model().objects.create_user(
+            username="foreign-owner"
+        )
+        private_attachment = Attachment.objects.create(
+            vault=get_or_create_owned_vault(owner=foreign_owner),
+            category=self.category,
+            original_filename="private.pdf",
+            storage_key="health/private.pdf",
+            mime_type="application/pdf",
+            size_bytes=1,
+            sha256="9" * 64,
+            file_status=FileStatus.AVAILABLE,
+            privacy_status=AttachmentPrivacyStatus.PRIVATE,
+        )
+
+        with self.assertRaises(Attachment.DoesNotExist):
+            create_health_record_attachment(
+                health_record=self.health_record,
+                data=self.data(attachment=private_attachment),
+                actor=self.actor,
+            )
 
     def test_update_requires_current_visible_link_and_endpoints(self) -> None:
         link = create_health_record_attachment(
@@ -488,6 +516,7 @@ class HealthRecordAttachmentServiceTests(TestCase):
             )
 
         hidden_attachment = Attachment.objects.create(
+            vault=self.vault,
             category=self.category,
             original_filename="hidden.pdf",
             storage_key="health/hidden.pdf",
@@ -609,6 +638,7 @@ class HealthRecordAttachmentSelectorTests(TestCase):
             name="Doklad",
         )
         self.actor = self.create_user("reader", "view_restricted_content")
+        self.vault = get_or_create_owned_vault(owner=self.actor)
 
     def create_user(self, username: str, *codenames: str, **values: object):
         actor = get_user_model().objects.create_user(username=username, **values)
@@ -624,6 +654,7 @@ class HealthRecordAttachmentSelectorTests(TestCase):
 
     def attachment(self, key: str, **changes: object) -> Attachment:
         values = {
+            "vault": self.vault,
             "category": self.category,
             "original_filename": f"{key}.pdf",
             "storage_key": f"health/{key}.pdf",
@@ -669,6 +700,41 @@ class HealthRecordAttachmentSelectorTests(TestCase):
 
         self.assertIsInstance(result, QuerySet)
         self.assertEqual(list(result), [available])
+
+    def test_private_attachment_is_visible_only_to_active_owner(self) -> None:
+        owned = self.link(
+            "owned-private",
+            attachment=self.attachment(
+                "owned-private",
+                privacy_status=AttachmentPrivacyStatus.PRIVATE,
+            ),
+        )
+        foreign_owner = self.create_user("foreign-owner")
+        foreign = self.link(
+            "foreign-private",
+            attachment=self.attachment(
+                "foreign-private",
+                vault=get_or_create_owned_vault(owner=foreign_owner),
+                privacy_status=AttachmentPrivacyStatus.PRIVATE,
+            ),
+        )
+        superuser = self.create_user("privacy-superuser", is_superuser=True)
+        staff = self.create_user(
+            "privacy-staff",
+            "view_restricted_content",
+            is_staff=True,
+        )
+        stale_owner_queryset = self.visible()
+
+        self.assertIn(owned, self.visible())
+        self.assertNotIn(foreign, self.visible())
+        self.assertNotIn(owned, self.visible(actor=superuser))
+        self.assertNotIn(owned, self.visible(actor=staff))
+
+        get_user_model().objects.filter(pk=self.actor.pk).update(is_active=False)
+        self.assertNotIn(owned, stale_owner_queryset)
+        with self.assertRaises(HealthRecord.DoesNotExist):
+            self.visible()
 
     def test_person_and_health_record_access_use_health_policy(self) -> None:
         visible = self.link("visible")

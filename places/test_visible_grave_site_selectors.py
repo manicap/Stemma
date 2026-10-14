@@ -162,6 +162,7 @@ class VisibleGraveSiteSelectorTests(TestCase):
     ) -> None:
         unsaved = get_user_model()(username="unsaved-grave-selector")
         missing = self.create_user("missing-grave-selector")
+        missing.vault.delete()
         get_user_model().objects.filter(pk=missing.pk).delete()
 
         for actor in (unsaved, missing):

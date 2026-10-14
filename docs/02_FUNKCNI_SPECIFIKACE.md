@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.57
+**Verze:** 0.58
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
-**Datum revize:** 12. 10. 2026
+**Datum revize:** 13. 10. 2026
 
 ## 0. Jak číst stav funkcí
 
@@ -532,11 +532,11 @@ Každá fotografie může obsahovat:
 
 ## 11. Dokumenty a přílohy
 
-**Stav:** Metadata příloh, stav souboru, zdroje, explicitní vazby, doménové
-služby a kontextové actor-aware read selectory jsou implementované. Health
-detail zobrazuje pouze bezpečná metadata. Fyzický upload, storage, download či
-jiné doručení souboru a obecné management UI jsou plánované a jejich provozní
-kontrakt zůstává otevřený.
+**Stav:** Metadata příloh, Vault ownership, oddělené soukromí, stav souboru,
+zdroje, explicitní vazby, doménové služby a kontextové actor-aware read
+selectory jsou implementované. Health detail zobrazuje pouze bezpečná metadata.
+Fyzický upload, storage, download či jiné doručení souboru, request/grant a
+obecné management UI jsou plánované.
 
 Příloha je univerzální objekt pro:
 
@@ -556,6 +556,13 @@ očekávaný soubor a `quarantined` záměrné vyřazení kvůli bezpečnostní 
 integritní kontrole. Pouze `available` může být později přímo doručován.
 Ostatní stavy doručení zakazují bez ohledu na oprávnění uživatele. Nejde o
 přístupovou úroveň a stav souboru je nezávislý na archivaci a soft-delete.
+
+Každý `Attachment` povinně patří právě jednomu `Vault`, jehož chráněný owner je
+jediným vlastníkem přílohy; `created_by` vlastnictví neurčuje. Pevný
+`privacy_status` má nezávislé hodnoty `standard` a `private`. Současné
+actor-aware selectory vydají private přílohu pouze aktivnímu vlastníkovi;
+samotné staff nebo superuser postavení cizí private obsah neotevře. Budoucí
+explicitní grant může tuto hranici rozšířit, ale v M3.1 ještě neexistuje.
 
 Současná infrastruktura používá samostatné explicitní vazby přílohy k osobě,
 události, vazbě osob, bydlišti, hrobovému místu, místu a zdravotnímu záznamu.

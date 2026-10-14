@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.81
-**Stav:** M2 dokončen; read-only person Event UI implementováno
-**Datum revize:** 12. 10. 2026
+**Verze:** 0.82
+**Stav:** M3.1 – Vault a vlastnictví příloh implementováno
+**Datum revize:** 13. 10. 2026
 
 ## 1. Účel
 
@@ -1902,6 +1902,37 @@ ohledu na množství výsledků. Krok nic nezapisuje a nevytváří modelovou
 změnu, migraci, nový permission codename ani ACP.
 
 ## 11. Přílohy
+
+Řez **M3.1 – Vault a vlastnictví příloh** doplňuje bezpečnostní základ podle
+ACP-012. `Vault` dědí pouze `TimestampedModel`, má jediný povinný
+`OneToOneField` `owner` na `settings.AUTH_USER_MODEL` s `PROTECT` a nemá vlastní
+lifecycle ani storage metadata. Idempotentní transakční
+`get_or_create_owned_vault(*, owner)` znovu načte uloženého ownera a vydá jeho
+jediný Vault; deaktivace uživatele vlastnictví nemění.
+
+`Attachment.vault` je povinný chráněný FK s reverse názvem `attachments`.
+Owner se odvozuje pouze jako `attachment.vault.owner`; `created_by` zůstává
+nezávislou informací o autorovi databázového záznamu. Index
+`(vault, deleted_at)` podporuje budoucí vlastnické lifecycle dotazy a constraint
+`materials_attachment_lifecycle_exclusive` zakazuje současně vyplněné
+`archived_at` a `deleted_at`.
+
+Pevný `AttachmentPrivacyStatus` odděluje `standard` a `private` od existujícího
+`access_level`. Actor-aware attachment selectory zachovávají dosavadní policy
+pro standardní přílohy; private řádek vydají pouze aktivnímu ownerovi Vaultu.
+Cizí staff ani superuser nemají privacy bypass. Stejné pravidlo chrání
+actor-aware Health attachment link write. Budoucí explicitní grant může
+private hranici rozšířit, ale grant model v M3.1 nevzniká.
+
+`storage_key` zůstává neprůhlednou interní hodnotou a bezpečný `__str__` jej
+nikdy nepoužije. Migrace `materials.0009_vault_attachment_ownership` vytvoří
+Vault pro existující uživatele a zavede přímo povinný FK bez nullable mezifáze.
+Pokud najde legacy Attachment, ukončí se s požadavkem na schválený reset
+vývojové DB. Demo příloha patří technickému health seed actorovi; demo účty a
+seed používají stejný explicitní provisioning use-case.
+
+M3.1 neimplementuje fyzické úložiště, upload, download, request/grant workflow,
+Materials UI, společný Koš ani šifrování.
 
 První implementační řez zavádí dva prázdné katalogy:
 

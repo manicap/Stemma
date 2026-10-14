@@ -24,6 +24,7 @@ from .selectors import (
     get_event_attachment_links,
     get_visible_event_attachment_links,
 )
+from .services import get_or_create_owned_vault
 
 
 class EventAttachmentSelectorApiTests(SimpleTestCase):
@@ -51,6 +52,7 @@ class EventAttachmentSelectorTests(TestCase):
         self.uploader = get_user_model().objects.create_user(
             username="event-uploader",
         )
+        self.vault = get_or_create_owned_vault(owner=self.uploader)
         self.place = Place.objects.create(
             name="Praha",
             normalized_name="praha",
@@ -86,6 +88,7 @@ class EventAttachmentSelectorTests(TestCase):
 
     def create_attachment(self, key: str, **overrides: object) -> Attachment:
         values = {
+            "vault": self.vault,
             "category": self.category,
             "original_filename": f"{key}.pdf",
             "storage_key": f"attachments/events/{key}.pdf",

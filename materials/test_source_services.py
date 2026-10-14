@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
@@ -16,6 +17,7 @@ from .source_services import (
     create_attachment_source,
     update_attachment_source,
 )
+from .services import get_or_create_owned_vault
 from . import source_services
 
 
@@ -45,6 +47,8 @@ class SourceLinkServiceApiTests(SimpleTestCase):
 
 class SourceLinkServiceTests(TestCase):
     def setUp(self) -> None:
+        owner = get_user_model().objects.create_user(username="source-owner")
+        self.vault = get_or_create_owned_vault(owner=owner)
         source_type = SourceType.objects.create(code="archive", name="Archiv")
         self.role = SourceRole.objects.create(code="evidence", name="Doklad")
         self.source = Source.objects.create(
@@ -53,6 +57,7 @@ class SourceLinkServiceTests(TestCase):
         )
         category = AttachmentCategory.objects.create(code="scan", name="Sken")
         self.attachment = Attachment.objects.create(
+            vault=self.vault,
             category=category,
             original_filename="scan.pdf",
             storage_key="attachments/service-source.pdf",
