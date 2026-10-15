@@ -16,7 +16,12 @@ from health.models import HealthRecord
 from people.models import Person, PersonName, Relationship
 from places.models import GraveSite, Place, Residence
 
-from .choices import AttachmentPrivacyStatus, FileStatus, SourceSupport
+from .choices import (
+    AttachmentAccessRequestStatus,
+    AttachmentPrivacyStatus,
+    FileStatus,
+    SourceSupport,
+)
 
 
 class AttachmentCategory(LookupModel):
@@ -391,6 +396,165 @@ class Attachment(
             or self.original_filename.strip()
             or "Příloha bez názvu"
         )
+
+
+class AttachmentAccessRequest(TimestampedModel, models.Model):
+    """Historická žádost uživatele o přístup k soukromé příloze."""
+
+    attachment = models.ForeignKey(
+        Attachment,
+        on_delete=models.PROTECT,
+        related_name="access_requests",
+    )
+    requester = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="attachment_access_requests",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=AttachmentAccessRequestStatus.choices,
+        default=AttachmentAccessRequestStatus.PENDING,
+        db_index=True,
+    )
+    message = models.TextField(blank=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="resolved_attachment_access_requests",
+    )
+    decision_note = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Žádost o přístup k příloze"
+        verbose_name_plural = "Žádosti o přístup k přílohám"
+        ordering = ("-created_at", "-pk")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("attachment", "requester"),
+                condition=models.Q(
+                    status=AttachmentAccessRequestStatus.PENDING,
+                ),
+                name="materials_unique_pending_access_request",
+                violation_error_code="attachment_request_pending",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(
+                        status=AttachmentAccessRequestStatus.PENDING,
+                        resolved_at__isnull=True,
+                        resolved_by__isnull=True,
+                        decision_note="",
+                    )
+                    | models.Q(
+                        status__in=(
+                            AttachmentAccessRequestStatus.APPROVED,
+                            AttachmentAccessRequestStatus.DENIED,
+                            AttachmentAccessRequestStatus.CANCELLED,
+                        ),
+                        resolved_at__isnull=False,
+                        resolved_by__isnull=False,
+                    )
+                ),
+                name="materials_access_request_resolution",
+                violation_error_code="attachment_request_resolution_invalid",
+            ),
+        )
+
+    def __str__(self) -> str:
+        return "Žádost o přístup k soukromé příloze"
+
+
+class AttachmentAccessGrant(TimestampedModel, models.Model):
+    """Historický explicitní grant přístupu k soukromé příloze."""
+
+    attachment = models.ForeignKey(
+        Attachment,
+        on_delete=models.PROTECT,
+        related_name="access_grants",
+    )
+    grantee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="attachment_access_grants",
+    )
+    request = models.OneToOneField(
+        AttachmentAccessRequest,
+        on_delete=models.PROTECT,
+        related_name="grant",
+    )
+    granted_at = models.DateTimeField()
+    granted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="granted_attachment_access_grants",
+    )
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revoked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="revoked_attachment_access_grants",
+    )
+    revoke_reason = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Grant přístupu k příloze"
+        verbose_name_plural = "Granty přístupu k přílohám"
+        ordering = ("-granted_at", "-pk")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("attachment", "grantee"),
+                condition=models.Q(revoked_at__isnull=True),
+                name="materials_unique_active_access_grant",
+                violation_error_code="attachment_grant_active",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(
+                        revoked_at__isnull=True,
+                        revoked_by__isnull=True,
+                        revoke_reason="",
+                    )
+                    | models.Q(
+                        revoked_at__isnull=False,
+                        revoked_by__isnull=False,
+                    )
+                ),
+                name="materials_access_grant_revocation",
+                violation_error_code="attachment_grant_revocation_invalid",
+            ),
+        )
+
+    def clean(self) -> None:
+        super().clean()
+        if not self.request_id or not self.attachment_id or not self.grantee_id:
+            return
+        request = AttachmentAccessRequest.objects.filter(
+            pk=self.request_id,
+        ).first()
+        if request is None:
+            return
+        if (
+            request.status != AttachmentAccessRequestStatus.APPROVED
+            or request.attachment_id != self.attachment_id
+            or request.requester_id != self.grantee_id
+        ):
+            raise ValidationError(
+                {
+                    "request": ValidationError(
+                        "Grant musí odpovídat schválené žádosti.",
+                        code="attachment_grant_request_mismatch",
+                    )
+                }
+            )
+
+    def __str__(self) -> str:
+        return "Grant přístupu k soukromé příloze"
 
 
 class AttachmentLinkModel(

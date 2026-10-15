@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.83
-**Stav:** M3.2 – Chráněné storage a bezpečný upload implementováno
-**Datum revize:** 14. 10. 2026
+**Verze:** 0.84
+**Stav:** M3.3 – Soukromé přílohy: žádosti a granty přístupu implementováno
+**Datum revize:** 15. 10. 2026
 
 ## 1. Účel
 
@@ -1959,6 +1959,45 @@ pokusí se blob odstranit, cleanup chyba nepřekryje původní chybu. Process cr
 může zanechat orphan blob nebo stale `pending`; reconciliation, download,
 granty, UI, cloud backend a šifrování zůstávají mimo M3.2. Existující
 actor-aware link selectory nadále vydávají jen `available`.
+
+Řez **M3.3 – Soukromé přílohy: žádosti a granty přístupu** přidává čistě
+historické timestampované modely bez archive/soft-delete lifecycle.
+`AttachmentAccessRequest` chráněnými FK odkazuje na Attachment, requestera a
+volitelného resolvera, ukládá zprávu, stav `pending|approved|denied|cancelled`,
+`resolved_at` a `decision_note`. Podmíněný unique constraint dovoluje jediný
+pending request na Attachment × requester; check constraint vyžaduje u pending
+prázdná resolution metadata a u terminálního stavu vyplněný čas i resolvera.
+
+`AttachmentAccessGrant` chráněnými FK odkazuje na Attachment, grantee, grantora
+a volitelného revokera; OneToOne/PROTECT jej váže na schválený request. Ukládá
+`granted_at`, `revoked_at` a `revoke_reason`. Podmíněný unique constraint
+dovoluje jediný nerevokovaný grant na Attachment × grantee a check constraint
+váže revokační čas na revokera. Transakční approve služba znovu ověřuje shodu
+request Attachment/requester s grant Attachment/grantee, protože tento cross-row
+invariant nelze přenositelně vyjádřit databázovým check constraintem. Strukturální
+migrace je `materials.0010_attachment_access_requests_and_grants`.
+
+`request_attachment_access()` nepřijímá Attachment ID jako autorizační důkaz:
+Attachment odvodí z čerstvě vydatelného konkrétního Person/Event/HealthRecord/
+Relationship/Residence/GraveSite linku. `PlaceAttachment` zůstává bez actor-aware
+target policy nepodporovaný. Request, approve a revoke používají transakce a
+potřebné row locks; podmíněné unique constrainty jsou autoritativní ochranou
+závodu i na SQLite. Approve mění pending request a vytváří grant atomicky, deny
+grant nevytváří a revoke pouze doplní historická metadata.
+
+Centrální private policy vydá plná bezpečná metadata pouze čerstvému aktivnímu
+ownerovi nebo aktivnímu grantee s nerevokovaným grantem, jehož request je stále
+approved a odpovídá Attachmentu i uživateli. Tato podmínka se přidává k target,
+link a Attachment access/lifecycle filtrům a `FileStatus.AVAILABLE`; staff,
+superuser ani model permission nejsou bypass. Samostatná immutable presentation
+vrací neautorizovanému actorovi v jinak viditelném kontextu pouze
+`Soukromý dokument`. Neobsahuje ORM link/Attachment, `storage_key`, filename,
+MIME, velikost, SHA-256, autora, Vault ani workflow metadata. Ani autorizovaná
+běžná metadata presentation nevydává interní `storage_key`.
+
+M3.3 nevytváří download/delivery, HTTP endpoint, UI, notifikace ani automatickou
+delete/cancel/revoke lifecycle orchestraci. Další plánovaný řez je
+**M3.4 – Kontextové doručení příloh**.
 
 První implementační řez zavádí dva prázdné katalogy:
 

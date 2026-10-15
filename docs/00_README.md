@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.64
-**Stav:** M3.2 – Chráněné storage a bezpečný upload implementováno
-**Datum revize:** 14. 10. 2026
+**Verze dokumentace:** 0.65
+**Stav:** M3.3 – Soukromé přílohy: žádosti a granty přístupu implementováno
+**Datum revize:** 15. 10. 2026
 
 ## Účel balíčku
 
@@ -42,6 +42,22 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.65
+
+Verze 0.65 dokončuje řez **M3.3 – Soukromé přílohy: žádosti a granty
+přístupu**:
+
+- historické `AttachmentAccessRequest` a `AttachmentAccessGrant` chrání
+  pending/active jedinečnost a konzistenci rozhodovacích a revokačních metadat,
+- actor-aware request odvozuje Attachment z viditelného aktivního kontextového
+  linku; approve/deny/revoke používají čerstvý request či grant a owner-only
+  rozhodování bez staff nebo superuser bypassu,
+- plná bezpečná metadata private přílohy získá pouze aktivní owner nebo aktivní
+  grantee; ostatní v jinak viditelném kontextu dostanou jen `Soukromý dokument`,
+- download, doručení, HTTP/UI a lifecycle orchestrace zůstávají mimo M3.3;
+  dalším plánovaným, nikoli autorizovaným řezem je **M3.4 – Kontextové doručení
+  příloh**.
 
 ## Stav verze 0.64
 

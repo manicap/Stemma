@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.59
+**Verze:** 0.60
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
-**Datum revize:** 14. 10. 2026
+**Datum revize:** 15. 10. 2026
 
 ## 0. Jak číst stav funkcí
 
@@ -27,7 +27,9 @@ nesmí vykládat jako hotové UI.
 
 **Backend Materials implementován, produktové UI plánováno:** Materials
 obsahují přílohy, zdroje, explicitní vazby, služby, kontextové selectory,
-privátní Vault-aware filesystem a actor-aware server-side upload PDF/JPEG/PNG.
+privátní Vault-aware filesystem, actor-aware server-side upload PDF/JPEG/PNG a
+backendový request/grant workflow soukromých příloh včetně bezpečné redigované
+presentation.
 Health detail bezpečně zobrazuje pouze dostupná metadata. Download/doručení,
 browser upload a obecné Materials UI neexistují.
 
@@ -533,10 +535,11 @@ Každá fotografie může obsahovat:
 
 ## 11. Dokumenty a přílohy
 
-**Stav:** Vedle metadat, Vault ownership, explicitních vazeb a actor-aware read
-selectorů je implementován privátní filesystem a server-side upload use-case.
-Health detail zobrazuje pouze bezpečná metadata. Download či jiné doručení,
-request/grant, browser upload a obecné management UI jsou plánované.
+**Stav:** Vedle metadat, Vault ownership, explicitních vazeb, actor-aware read
+selectorů, privátního filesystemu a server-side uploadu je implementován
+backendový request/grant workflow pro soukromé přílohy. Health detail zobrazuje
+pouze bezpečná metadata. Download či jiné doručení, request/grant UI, browser
+upload a obecné management UI jsou plánované.
 
 Příloha je univerzální objekt pro:
 
@@ -560,9 +563,25 @@ přístupovou úroveň a stav souboru je nezávislý na archivaci a soft-delete.
 Každý `Attachment` povinně patří právě jednomu `Vault`, jehož chráněný owner je
 jediným vlastníkem přílohy; `created_by` vlastnictví neurčuje. Pevný
 `privacy_status` má nezávislé hodnoty `standard` a `private`. Současné
-actor-aware selectory vydají private přílohu pouze aktivnímu vlastníkovi;
-samotné staff nebo superuser postavení cizí private obsah neotevře. Budoucí
-explicitní grant může tuto hranici rozšířit, ale v M3.1 ještě neexistuje.
+actor-aware selectory vydají private přílohu pouze aktivnímu vlastníkovi nebo
+aktivnímu uživateli s platným grantem; samotné staff nebo superuser postavení
+cizí private obsah neotevře.
+
+Řez **M3.3 – Soukromé přílohy: žádosti a granty přístupu** přidává historické
+žádosti se stavy `pending`, `approved`, `denied`, `cancelled` a nerevokované či
+revokované granty. Aktivní přihlášený ne-owner může požádat pouze přes jeden ze
+šesti již schválených actor-aware kontextových linků; znalost Attachment ID,
+skrytý link nebo skrytý target nestačí. Aktuální aktivní owner Vaultu smí žádost
+schválit či zamítnout a grant odvolat. Schválení vytvoří grant atomicky,
+zamítnutí grant nevytvoří a revokace nemaže historii. Grant nenahrazuje target,
+link ani Attachment access/lifecycle policy a neobchází `FileStatus.AVAILABLE`.
+
+Actor bez owner/grant práva dostane v jinak viditelném kontextu pouze immutable
+placeholder `Soukromý dokument`; nevydává filename, MIME, velikost, SHA-256,
+`storage_key`, autora, vlastníka, technická metadata ani workflow informace.
+`storage_key` se nevydává ani v běžné plné presentation. M3.3 nevytváří download,
+doručení, HTTP endpoint, UI, notifikace ani lifecycle delete/cancel/revoke
+orchestrace. Další plánovaný řez je **M3.4 – Kontextové doručení příloh**.
 
 M3.2 přijímá pouze PDF (`.pdf`, `application/pdf`), JPEG (`.jpg`/`.jpeg`,
 `image/jpeg`) a PNG (`.png`, `image/png`) do 25 MiB. Aktivní přihlášený actor

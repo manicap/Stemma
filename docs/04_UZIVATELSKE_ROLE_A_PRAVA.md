@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.45
+**Verze:** 0.46
 **Stav:** pracovní návrh  
-**Datum revize:** 14. 10. 2026
+**Datum revize:** 15. 10. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -126,11 +126,22 @@ health oprávnění ani paralelní permission mechanismus.
 Actor-aware čtení zdravotních příloh nejprve vyžaduje celý centrální health
 řetězec osoby, záznamu a aktivního typu. Výsledné SQL dále vyžaduje viditelnou,
 nearchivovanou a neodstraněnou vazbu i přílohu a stav souboru `available`.
-Příloha se stavem soukromí `private` je navíc viditelná pouze svému aktivnímu
-vlastníkovi Vaultu; cizí `is_staff`, superuser ani modelová permission tuto
-vlastnickou hranici neobcházejí. Budoucí explicitní grant zatím neexistuje a
-patří do samostatného řezu. Stejnou podmínku vlastníka vynucuje i zápis Health
-vazby k private příloze.
+Příloha se stavem soukromí `private` je navíc plně viditelná pouze svému
+aktivnímu vlastníkovi Vaultu nebo aktivnímu uživateli s platným nerevokovaným
+grantem navázaným na odpovídající schválený request. Cizí `is_staff`, superuser
+ani modelová permission tuto hranici neobcházejí. Grant rozšiřuje pouze private
+read policy; nenahrazuje viditelnost targetu, explicitní vazby, Attachmentu,
+jejich lifecycle ani `FileStatus.AVAILABLE`. Zápis Health vazby k cizí private
+příloze zůstává owner-only a grant jej nerozšiřuje.
+
+Request může vytvořit jen čerstvý aktivní autentizovaný ne-owner přes viditelný
+aktivní kontextový link. Owner sám sobě request nevytváří, uživatel s aktivním
+grantem ani s existujícím pending requestem nový request nezaloží. Approve, deny
+a revoke smí provést pouze aktuální aktivní owner Vaultu; staff, superuser ani
+obecná permission nemají bypass. Rozhodnutí i revokace zachovávají historii.
+Pokud actor target a link vidí, ale private grant nemá, presentation vrátí pouze
+text `Soukromý dokument`; žádná metadata přílohy, vlastníka ani workflow
+nevydává. Skrytý target nebo link nevrátí ani placeholder.
 Znalost ID přílohy či vazby health policy neobchází. Nevzniká nové zdravotní
 oprávnění ani obecná cesta vydání souboru.
 

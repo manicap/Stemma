@@ -55,6 +55,9 @@ class PersonAttachmentSelectorApiTests(SimpleTestCase):
                 "get_visible_residence_source_links",
                 "get_visible_relationship_attachment_links",
                 "get_visible_relationship_source_links",
+                "get_attachment_link_presentation",
+                "AttachmentMetadataPresentation",
+                "PrivateAttachmentPlaceholder",
             ),
         )
         expectations = (

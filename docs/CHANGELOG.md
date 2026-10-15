@@ -1,5 +1,26 @@
 # Historie změn dokumentace
 
+## Verze 1.01 – 15. 10. 2026
+
+- řez **M3.3 – Soukromé přílohy: žádosti a granty přístupu** přidává historické
+  `AttachmentAccessRequest` a `AttachmentAccessGrant` s `PROTECT`, stavovými
+  check constrainty a podmíněnou jedinečností pending requestu a aktivního
+  grantu,
+- actor-aware request odvozuje Attachment pouze z existujícího viditelného
+  kontextového linku; approve/deny/revoke používají čerstvý request či grant a
+  owner-only rozhodování nemá staff, superuser ani permission bypass,
+- centrální private policy uznává aktivního ownera nebo aktivní validní grant,
+  ale nikdy nenahrazuje target/link/Attachment access, lifecycle ani
+  `FileStatus.AVAILABLE`,
+- nová immutable presentation vrací bez owner/grant práva pouze
+  `Soukromý dokument`; nevydává raw ORM objekt, citlivá metadata ani interní
+  `storage_key`,
+- migrace `materials.0010_attachment_access_requests_and_grants` je čistě
+  strukturální; download, delivery, HTTP/UI, Materials Koš a lifecycle
+  orchestrace zůstávají mimo M3.3,
+- další plánovaný, tímto řezem neautorizovaný krok je
+  **M3.4 – Kontextové doručení příloh**; ACP-012 zůstává beze změny.
+
 ## Verze 1.00 – 14. 10. 2026
 
 - řez **M3.2 – Chráněné storage a bezpečný upload** zavádí privátní

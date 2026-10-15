@@ -11,6 +11,8 @@ from common.models import LookupModel
 
 from .models import (
     Attachment,
+    AttachmentAccessGrant,
+    AttachmentAccessRequest,
     AttachmentCategory,
     AttachmentRole,
     AttachmentSource,
@@ -61,6 +63,8 @@ class MaterialsApplicationTests(SimpleTestCase):
                 AttachmentSource,
                 Vault,
                 Attachment,
+                AttachmentAccessRequest,
+                AttachmentAccessGrant,
                 PersonAttachment,
                 EventAttachment,
                 HealthRecordAttachment,

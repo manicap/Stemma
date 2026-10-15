@@ -400,14 +400,15 @@ toward RC 0.1 has therefore stopped. RC 0.2 has completed the explicitly
 approved read-only person relationship, residence, grave-site and event tabs
 and the actor-aware PDF/A4 person export.
 
-The current slice is **M3.2 – Chráněné storage a bezpečný upload**. It adds a
-private Vault-aware filesystem boundary and an actor-aware server-side upload
-for validated PDF, JPEG and PNG files. Uploads are limited to 25 MiB, use an
-opaque key and non-unique SHA-256, and transition from `pending` to `available`
-only after the blob write succeeds. ACP-012 remains the authoritative storage
-and access contract. Download, access requests or grants, Materials UI,
+The completed current slice is **M3.3 – Soukromé přílohy: žádosti a granty
+přístupu**. It adds historical access-request and access-grant models,
+actor-aware request/approve/deny/revoke services, an owner-or-active-grant
+private read policy and a metadata-safe redacted placeholder. ACP-012 remains
+the authoritative storage and access contract. Download or delivery, HTTP or
+request/grant UI, Materials UI, lifecycle delete/cancel/revoke orchestration,
 encryption, reconciliation and a shared Materials recycle bin remain outside
-this slice. No later M3.x slice is authorized by this mission.
+this slice. The next planned slice is **M3.4 – Kontextové doručení příloh**, but
+it is not authorized by this mission.
 
 The approved PDF/A4 slice is complete. It does not authorize broader exports,
 Health or Materials export, attachments, stored attachment or Materials file

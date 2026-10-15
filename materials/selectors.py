@@ -1,5 +1,10 @@
 """Čtecí doménové dotazy aplikace materials."""
 
+from copy import deepcopy
+from dataclasses import dataclass
+from types import MappingProxyType
+from typing import Mapping
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import AnonymousUser
@@ -14,8 +19,14 @@ from health.permissions import get_health_record_visibility_filter
 from people.models import Person, PersonName, Relationship
 from places.models import GraveSite, Residence
 
+from .access_policy import (
+    can_access_private_attachment,
+    get_attachment_privacy_filter,
+)
 from .choices import AttachmentPrivacyStatus, FileStatus
 from .models import (
+    Attachment,
+    AttachmentLinkModel,
     EventAttachment,
     EventSource,
     GraveSiteAttachment,
@@ -53,6 +64,9 @@ __all__ = (
     "get_visible_residence_source_links",
     "get_visible_relationship_attachment_links",
     "get_visible_relationship_source_links",
+    "get_attachment_link_presentation",
+    "AttachmentMetadataPresentation",
+    "PrivateAttachmentPlaceholder",
 )
 
 _ACCESS_LEVELS = (
@@ -68,16 +82,45 @@ _VIEW_DELETED_PERSON_PERMISSION = "people.view_deleted_person"
 def _attachment_privacy_filter(
     actor: AbstractBaseUser | AnonymousUser,
 ) -> Q:
-    condition = Q(
-        attachment__privacy_status=AttachmentPrivacyStatus.STANDARD
-    )
-    if getattr(actor, "is_authenticated", False) and actor.pk is not None:
-        condition |= Q(
-            attachment__privacy_status=AttachmentPrivacyStatus.PRIVATE,
-            attachment__vault__owner_id=actor.pk,
-            attachment__vault__owner__is_active=True,
-        )
-    return condition
+    return get_attachment_privacy_filter(actor=actor)
+
+
+@dataclass(frozen=True, slots=True)
+class AttachmentMetadataPresentation:
+    """Bezpečná běžná prezentace metadat bez interního storage klíče."""
+
+    attachment_id: int
+    label: str
+    display_name: str
+    description: str
+    original_filename: str
+    mime_type: str
+    size_bytes: int
+    sha256: str
+    file_status: str
+    privacy_status: str
+    access_level: str
+    creator_name: str
+    provenance: str
+    original_owner: str
+    language: str
+    technical_metadata: Mapping[str, object]
+    created_by_id: int | None
+
+    @property
+    def is_redacted(self) -> bool:
+        return False
+
+
+@dataclass(frozen=True, slots=True)
+class PrivateAttachmentPlaceholder:
+    """Minimální redigovaná prezentace bez reference na ORM objekt."""
+
+    label: str = "Soukromý dokument"
+
+    @property
+    def is_redacted(self) -> bool:
+        return True
 
 
 def _person_unsaved_error() -> ValidationError:
@@ -525,10 +568,11 @@ def get_grave_site_source_links(
     )
 
 
-def get_visible_person_attachment_links(
+def _get_visible_person_attachment_links(
     *,
     person: Person,
     actor: AbstractBaseUser | AnonymousUser,
+    enforce_private_access: bool,
 ) -> QuerySet[PersonAttachment]:
     """Vrať dostupné přílohy osoby viditelné pro aktuálního actora."""
 
@@ -553,8 +597,7 @@ def get_visible_person_attachment_links(
         for access_level, is_visible in access_visibility.items()
         if is_visible
     )
-    return get_person_attachment_links(person=current_person).filter(
-        _attachment_privacy_filter(actor),
+    queryset = get_person_attachment_links(person=current_person).filter(
         _person_lifecycle_filter(
             can_view_archived=can_view_archived,
             can_view_deleted=can_view_deleted,
@@ -567,12 +610,30 @@ def get_visible_person_attachment_links(
         attachment__deleted_at__isnull=True,
         attachment__file_status=FileStatus.AVAILABLE,
     )
+    if enforce_private_access:
+        queryset = queryset.filter(_attachment_privacy_filter(actor))
+    return queryset
 
 
-def get_visible_event_attachment_links(
+def get_visible_person_attachment_links(
+    *,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[PersonAttachment]:
+    """Vrať plná metadata příloh osoby dostupná aktuálnímu actorovi."""
+
+    return _get_visible_person_attachment_links(
+        person=person,
+        actor=actor,
+        enforce_private_access=True,
+    )
+
+
+def _get_visible_event_attachment_links(
     *,
     event: Event,
     actor: AbstractBaseUser | AnonymousUser,
+    enforce_private_access: bool,
 ) -> QuerySet[EventAttachment]:
     """Vrať dostupné přílohy události viditelné pro aktuálního actora."""
 
@@ -596,8 +657,7 @@ def get_visible_event_attachment_links(
         for access_level, is_visible in access_visibility.items()
         if is_visible
     )
-    return get_event_attachment_links(event=current_event).filter(
-        _attachment_privacy_filter(actor),
+    queryset = get_event_attachment_links(event=current_event).filter(
         access_level__in=visible_access_levels,
         archived_at__isnull=True,
         event__access_level__in=visible_access_levels,
@@ -608,12 +668,30 @@ def get_visible_event_attachment_links(
         attachment__deleted_at__isnull=True,
         attachment__file_status=FileStatus.AVAILABLE,
     )
+    if enforce_private_access:
+        queryset = queryset.filter(_attachment_privacy_filter(actor))
+    return queryset
+
+
+def get_visible_event_attachment_links(
+    *,
+    event: Event,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[EventAttachment]:
+    """Vrať plná metadata příloh události dostupná aktuálnímu actorovi."""
+
+    return _get_visible_event_attachment_links(
+        event=event,
+        actor=actor,
+        enforce_private_access=True,
+    )
 
 
 def _visible_health_record_attachment_links(
     *,
     actor: AbstractBaseUser | AnonymousUser,
     visible_health_records: QuerySet[HealthRecord] | None = None,
+    enforce_private_access: bool = True,
 ) -> QuerySet[HealthRecordAttachment]:
     """Sestav jediný actor-aware queryset vydatelných health vazeb."""
 
@@ -626,9 +704,8 @@ def _visible_health_record_attachment_links(
         for level in _ACCESS_LEVELS
         if can_view_access_level(actor=actor, access_level=level)
     )
-    return (
+    queryset = (
         HealthRecordAttachment.objects.filter(
-            _attachment_privacy_filter(actor),
             health_record_id__in=visible_health_records.values("pk"),
             access_level__in=visible_levels,
             archived_at__isnull=True,
@@ -651,6 +728,9 @@ def _visible_health_record_attachment_links(
             "created_by",
         )
     )
+    if enforce_private_access:
+        queryset = queryset.filter(_attachment_privacy_filter(actor))
+    return queryset
 
 
 def get_visible_health_record_attachment_links(
@@ -874,10 +954,11 @@ def get_visible_relationship_source_links(
     )
 
 
-def get_visible_relationship_attachment_links(
+def _get_visible_relationship_attachment_links(
     *,
     relationship: Relationship,
     actor: AbstractBaseUser | AnonymousUser,
+    enforce_private_access: bool,
 ) -> QuerySet[RelationshipAttachment]:
     """Vrať dostupné přílohy viditelné přes vazbu i obě osoby."""
 
@@ -903,8 +984,7 @@ def get_visible_relationship_attachment_links(
     visible_levels = tuple(
         level for level, is_visible in visibility.items() if is_visible
     )
-    return get_relationship_attachment_links(relationship=current).filter(
-        _attachment_privacy_filter(actor),
+    queryset = get_relationship_attachment_links(relationship=current).filter(
         _relationship_people_lifecycle_filter(
             can_view_archived=can_view_archived,
         ),
@@ -919,12 +999,30 @@ def get_visible_relationship_attachment_links(
         attachment__deleted_at__isnull=True,
         attachment__file_status=FileStatus.AVAILABLE,
     )
+    if enforce_private_access:
+        queryset = queryset.filter(_attachment_privacy_filter(actor))
+    return queryset
 
 
-def get_visible_residence_attachment_links(
+def get_visible_relationship_attachment_links(
+    *,
+    relationship: Relationship,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[RelationshipAttachment]:
+    """Vrať plná metadata příloh vztahu dostupná aktuálnímu actorovi."""
+
+    return _get_visible_relationship_attachment_links(
+        relationship=relationship,
+        actor=actor,
+        enforce_private_access=True,
+    )
+
+
+def _get_visible_residence_attachment_links(
     *,
     residence: Residence,
     actor: AbstractBaseUser | AnonymousUser,
+    enforce_private_access: bool,
 ) -> QuerySet[ResidenceAttachment]:
     """Vrať dostupné přílohy viditelné v kontextu bydliště a osoby."""
 
@@ -947,8 +1045,7 @@ def get_visible_residence_attachment_links(
     visible_levels = tuple(
         level for level, is_visible in visibility.items() if is_visible
     )
-    return get_residence_attachment_links(residence=current).filter(
-        _attachment_privacy_filter(actor),
+    queryset = get_residence_attachment_links(residence=current).filter(
         _residence_person_lifecycle_filter(
             can_view_archived=can_view_archived,
             can_view_deleted=can_view_deleted,
@@ -962,6 +1059,23 @@ def get_visible_residence_attachment_links(
         attachment__archived_at__isnull=True,
         attachment__deleted_at__isnull=True,
         attachment__file_status=FileStatus.AVAILABLE,
+    )
+    if enforce_private_access:
+        queryset = queryset.filter(_attachment_privacy_filter(actor))
+    return queryset
+
+
+def get_visible_residence_attachment_links(
+    *,
+    residence: Residence,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[ResidenceAttachment]:
+    """Vrať plná metadata příloh bydliště dostupná aktuálnímu actorovi."""
+
+    return _get_visible_residence_attachment_links(
+        residence=residence,
+        actor=actor,
+        enforce_private_access=True,
     )
 
 
@@ -1007,10 +1121,11 @@ def get_visible_residence_source_links(
     )
 
 
-def get_visible_grave_site_attachment_links(
+def _get_visible_grave_site_attachment_links(
     *,
     grave_site: GraveSite,
     actor: AbstractBaseUser | AnonymousUser,
+    enforce_private_access: bool,
 ) -> QuerySet[GraveSiteAttachment]:
     """Vrať dostupné přílohy viditelné v kontextu hrobového místa."""
 
@@ -1028,8 +1143,7 @@ def get_visible_grave_site_attachment_links(
     visible_levels = tuple(
         level for level, is_visible in visibility.items() if is_visible
     )
-    return get_grave_site_attachment_links(grave_site=current).filter(
-        _attachment_privacy_filter(actor),
+    queryset = get_grave_site_attachment_links(grave_site=current).filter(
         access_level__in=visible_levels,
         archived_at__isnull=True,
         grave_site__access_level__in=visible_levels,
@@ -1039,6 +1153,133 @@ def get_visible_grave_site_attachment_links(
         attachment__deleted_at__isnull=True,
         attachment__file_status=FileStatus.AVAILABLE,
     )
+    if enforce_private_access:
+        queryset = queryset.filter(_attachment_privacy_filter(actor))
+    return queryset
+
+
+def get_visible_grave_site_attachment_links(
+    *,
+    grave_site: GraveSite,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> QuerySet[GraveSiteAttachment]:
+    """Vrať plná metadata příloh hrobového místa dostupná actorovi."""
+
+    return _get_visible_grave_site_attachment_links(
+        grave_site=grave_site,
+        actor=actor,
+        enforce_private_access=True,
+    )
+
+
+def _get_context_visible_attachment_link(
+    *,
+    link: AttachmentLinkModel,
+    actor: AbstractBaseUser | AnonymousUser,
+    for_update: bool = False,
+) -> AttachmentLinkModel:
+    """Načti link přes jeho schválený kontext bez private owner/grant filtru."""
+
+    if not isinstance(link, AttachmentLinkModel) or link.pk is None:
+        raise ValidationError(
+            {
+                "link": ValidationError(
+                    "Vazba přílohy musí být uložená v databázi.",
+                    code="attachment_link_unsaved",
+                )
+            }
+        )
+    if type(link) is PersonAttachment:
+        queryset = _get_visible_person_attachment_links(
+            person=Person(pk=link.person_id),
+            actor=actor,
+            enforce_private_access=False,
+        )
+    elif type(link) is EventAttachment:
+        queryset = _get_visible_event_attachment_links(
+            event=Event(pk=link.event_id),
+            actor=actor,
+            enforce_private_access=False,
+        )
+    elif type(link) is HealthRecordAttachment:
+        queryset = _visible_health_record_attachment_links(
+            actor=actor,
+            enforce_private_access=False,
+        )
+    elif type(link) is RelationshipAttachment:
+        queryset = _get_visible_relationship_attachment_links(
+            relationship=Relationship(pk=link.relationship_id),
+            actor=actor,
+            enforce_private_access=False,
+        )
+    elif type(link) is ResidenceAttachment:
+        queryset = _get_visible_residence_attachment_links(
+            residence=Residence(pk=link.residence_id),
+            actor=actor,
+            enforce_private_access=False,
+        )
+    elif type(link) is GraveSiteAttachment:
+        queryset = _get_visible_grave_site_attachment_links(
+            grave_site=GraveSite(pk=link.grave_site_id),
+            actor=actor,
+            enforce_private_access=False,
+        )
+    else:
+        raise PermissionDenied("K této vazbě přílohy nemáte oprávnění.")
+    if for_update:
+        queryset = queryset.select_for_update(of=("self",))
+    try:
+        return queryset.get(pk=link.pk)
+    except type(link).DoesNotExist as error:
+        raise PermissionDenied(
+            "K této vazbě přílohy nemáte oprávnění."
+        ) from error
+
+
+def _metadata_presentation(
+    attachment: Attachment,
+) -> AttachmentMetadataPresentation:
+    return AttachmentMetadataPresentation(
+        attachment_id=attachment.pk,
+        label=str(attachment),
+        display_name=attachment.display_name,
+        description=attachment.description,
+        original_filename=attachment.original_filename,
+        mime_type=attachment.mime_type,
+        size_bytes=attachment.size_bytes,
+        sha256=attachment.sha256,
+        file_status=attachment.file_status,
+        privacy_status=attachment.privacy_status,
+        access_level=attachment.access_level,
+        creator_name=attachment.creator_name,
+        provenance=attachment.provenance,
+        original_owner=attachment.original_owner,
+        language=attachment.language,
+        technical_metadata=MappingProxyType(
+            deepcopy(attachment.technical_metadata)
+        ),
+        created_by_id=attachment.created_by_id,
+    )
+
+
+def get_attachment_link_presentation(
+    *,
+    link: AttachmentLinkModel,
+    actor: AbstractBaseUser | AnonymousUser,
+) -> AttachmentMetadataPresentation | PrivateAttachmentPlaceholder:
+    """Vrať plná bezpečná metadata, nebo jediný redigovaný placeholder."""
+
+    current = _get_context_visible_attachment_link(link=link, actor=actor)
+    attachment = current.attachment
+    if (
+        attachment.privacy_status == AttachmentPrivacyStatus.PRIVATE
+        and not can_access_private_attachment(
+            attachment=attachment,
+            actor=actor,
+        )
+    ):
+        return PrivateAttachmentPlaceholder()
+    return _metadata_presentation(attachment)
 
 
 def get_visible_grave_site_source_links(

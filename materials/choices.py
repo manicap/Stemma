@@ -17,6 +17,15 @@ class AttachmentPrivacyStatus(models.TextChoices):
     PRIVATE = "private", "Soukromá"
 
 
+class AttachmentAccessRequestStatus(models.TextChoices):
+    """Stav historické žádosti o přístup k soukromé příloze."""
+
+    PENDING = "pending", "Čeká na rozhodnutí"
+    APPROVED = "approved", "Schválená"
+    DENIED = "denied", "Zamítnutá"
+    CANCELLED = "cancelled", "Zrušená"
+
+
 class SourceSupport(models.TextChoices):
     """Síla podpory konkrétního tvrzení zdrojovou vazbou."""
 

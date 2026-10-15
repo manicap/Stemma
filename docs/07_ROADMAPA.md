@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.62
-**Stav:** M3.2 – Chráněné storage a bezpečný upload implementováno
-**Datum revize:** 14. 10. 2026
+**Verze:** 0.63
+**Stav:** M3.3 – Soukromé přílohy: žádosti a granty přístupu implementováno
+**Datum revize:** 15. 10. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -622,9 +622,16 @@ upload**. Ten implementuje privátní Vault-aware filesystem a server-side uploa
 PDF/JPEG/PNG do 25 MiB s opaque klíčem, SHA-256, přechodem
 `pending -> available` a kompenzačním cleanupem.
 
-Download/doručení, request/grant workflow, Materials UI, společný Koš,
-reconciliation a šifrování zůstávají budoucími samostatnými capability. Další
-M3.x řez není tímto řezem určen ani schválen.
+Řez **M3.3 – Soukromé přílohy: žádosti a granty přístupu** implementuje
+historické request/grant modely, request/approve/deny/revoke use-cases,
+owner-or-active-grant private policy a bezpečný redigovaný placeholder. Staff,
+superuser ani obecná permission nejsou private bypass a grant nenahrazuje
+target/link/access/lifecycle/FileStatus policy. Download/doručení, HTTP/UI,
+Materials Koš, lifecycle delete/cancel/revoke orchestrace, reconciliation a
+šifrování zůstávají samostatnými budoucími capability.
+
+Další plánovaný řez je **M3.4 – Kontextové doručení příloh**. M3.3 jej
+neimplementuje ani neautorizuje.
 
 ## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
 

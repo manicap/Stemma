@@ -6,16 +6,16 @@ vztahů, událostí, míst, zdravotních údajů a souvisejících materiálů.
 ## Stav projektu
 
 - **Milestone:** RC 0.2
-- **Řez:** M3.2 – Chráněné storage a bezpečný upload
+- **Řez:** M3.3 – Soukromé přílohy: žádosti a granty přístupu
 - **Dostupné person-centric funkce:** read-only Vztahy, Bydliště, Hrobová místa
   a Události; A4/PDF export osoby
 - **Další etapa:** M3 – Materials a bezpečné soubory
 - **Poslední dokončený návrhový řez:** M3.0 – Návrh Materials/File Storage
   architektury
-- **Materials security základ:** Vault-aware privátní filesystem a bezpečný
-  server-side upload PDF/JPEG/PNG; download, granty, šifrování a Materials UI
-  zatím nejsou implementované
-- **Další řez:** v tomto řezu není určen ani schválen
+- **Materials security základ:** Vault-aware privátní filesystem, bezpečný
+  server-side upload a owner/grant privacy policy pro soukromé přílohy
+- **Další plánovaný řez:** M3.4 – Kontextové doručení příloh; dosud není
+  implementován ani tímto stavem autorizován
 
 ## Technologický základ
 

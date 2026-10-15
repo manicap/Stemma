@@ -1,9 +1,9 @@
 # Návrh datového modelu
 
 **Dokument:** 03  
-**Verze:** 0.66
+**Verze:** 0.67
 **Stav:** koncept  
-**Datum revize:** 14. 10. 2026
+**Datum revize:** 15. 10. 2026
 
 ## 1. Základní pilíře
 
@@ -943,6 +943,23 @@ streamované validaci PDF/JPEG/PNG do 25 MiB vypočte SHA-256, vytvoří metadat
 a stejný obsah se nededuplikuje. DB a filesystem netvoří jednu transakci;
 známé chyby používají rollback a kompenzační odstranění, zatímco crash může
 zanechat orphan blob nebo stale `pending` pro budoucí reconciliation.
+
+M3.3 přidává historický `AttachmentAccessRequest`, který dědí pouze timestampy
+a chráněnými FK odkazuje na Attachment, requestera a volitelného resolvera.
+Ukládá stav `pending`, `approved`, `denied` nebo `cancelled`, volitelnou zprávu,
+`resolved_at` a `decision_note`. Podmíněná unikátnost dovoluje nejvýše jeden
+`pending` request na dvojici Attachment × requester a check constraint váže
+pending stav na prázdná resolution metadata, terminální stav na vyplněný čas i
+resolvera. Request nedědí archive ani soft-delete lifecycle.
+
+Historický `AttachmentAccessGrant` rovněž dědí pouze timestampy. Chráněnými FK
+odkazuje na Attachment, grantee a grantora; OneToOne/PROTECT jej váže na jediný
+schválený request. Ukládá `granted_at` a volitelnou revokační trojici
+`revoked_at`, `revoked_by`, `revoke_reason`. Podmíněná unikátnost dovoluje
+nejvýše jeden nerevokovaný grant na Attachment × grantee a check constraint
+udržuje konzistentní revokační metadata. Shodu Attachmentu a requester/grantee
+se schváleným requestem zajišťuje transakční služba, protože jde o cross-row
+pravidlo. Migrace je `materials.0010_attachment_access_requests_and_grants`.
 
 Explicitní `PersonAttachment`, `EventAttachment`, `RelationshipAttachment`,
 `ResidenceAttachment`, `GraveSiteAttachment`, `PlaceAttachment` a

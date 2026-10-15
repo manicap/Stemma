@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.89
+**Verze:** 0.90
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 14. 10. 2026
+**Datum revize:** 15. 10. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -223,6 +223,20 @@ strukturu. Vytváří nový opaque klíč a neunikátní SHA-256 bez deduplikace
 mění z `pending` na `available` až po zápisu blobu. Známé selhání používá DB
 rollback a kompenzační cleanup; reconciliation po crashi zůstává budoucím
 řezem. Nevzniká download, UI, grant, šifrování, permission, model ani ACP.
+200. Řez **M3.3 – Soukromé přílohy: žádosti a granty přístupu** realizuje
+předvídaný grant kontrakt ACP-012 bez nového ACP. Historické
+`AttachmentAccessRequest` a `AttachmentAccessGrant` používají `PROTECT`,
+podmíněnou jedinečnost pending requestu a aktivního grantu a konzistentní
+resolution/revocation metadata. Request vzniká jen přes jeden z existujících
+šesti actor-aware kontextových linků; `PlaceAttachment` zůstává bez schválené
+read policy fail-closed. Aktuální aktivní owner Vaultu výhradně schvaluje,
+zamítá a revokuje bez staff/superuser bypassu. Plný private read vyžaduje ownera
+nebo aktivní validní grant navíc ke všem target/link/Attachment access,
+lifecycle a file-status podmínkám. Neautorizovaná presentation v jinak
+viditelném kontextu obsahuje pouze `Soukromý dokument` a nevydává ORM objekt ani
+citlivá metadata. Download, delivery, HTTP/UI, notifikace a lifecycle
+orchestrace nevznikají; další plánovaný řez je **M3.4 – Kontextové doručení
+příloh**.
 
 ## 2. Otevřené otázky
 
