@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.66
-**Stav:** M3.5b – Nahrávání a připojování příloh k osobě implementováno
+**Verze:** 0.67
+**Stav:** UI vytváření osob a oprávnění skupiny Editor implementováno
 **Datum revize:** 5. 11. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -675,6 +675,23 @@ nativního file chooseru, takže fyzický multipart POST z browseru zůstává
 nahrazen cíleným HTTP/HTMX integračním testem; nejde o produktové omezení
 formuláře, ale o známé omezení této validační relace.
 
+Navazující řez **UI vytváření osoby** zpřístupňuje v person-centric shellu akci
+**+ Přidat osobu** uživateli s `people.add_person`. Nová datová migrace přiděluje
+toto standardní Django oprávnění skupině Editor; Čtenář ani Správce je tímto
+řezem automaticky nezískávají a zvýšené obsahové permission se nemění. Formulář
+zapisuje přes existující `create_person()`, vyžaduje alespoň jméno nebo příjmení
+a omezuje access na centrální policy aktuálního aktivního actora. HTMX úspěch
+vybere nový detail a obnoví celý seznam bez reloadu. Narození, úmrtí, vztahy,
+přílohy, životopis, ověření a lifecycle zůstávají mimo formulář; nevzniká nový
+model, obecný permission framework ani ACP.
+
+Cílené permission/create testy prošly 29/29 a přímo dotčená regrese person
+shellu, editace, odvozených údajů a autentizačního zobrazení 101/101. Django
+system check i kontrola migračního driftu jsou čisté. Izolovaný reálný browser
+smoke ověřil běžného člena skupiny Editor bez individuální permission v toku
+seznam → formulář → HTMX uložení → vybraný detail a aktualizovaný seznam;
+přímý browser POST Čtenáře skončil 403.
+
 ## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
 
 **Dokončeno:**
@@ -683,7 +700,8 @@ formuláře, ale o známé omezení této validační relace.
 - skutečný actor-aware seznam a detail osob,
 - přepínání detailu a kontextových karet pomocí HTMX i full-page režimu,
 - základ person-centric záložek, responzivní shell a světlý i tmavý motiv,
-- formuláře a uživatelské průchody editace osoby a kompletní Health vertikály,
+- formuláře a uživatelské průchody vytvoření a editace osoby a kompletní Health
+  vertikály,
 - read-only karta Vztahy ve full-page i HTMX režimu,
 - read-only karta Bydliště ve full-page i HTMX režimu,
 - read-only karta Hrobová místa ve full-page i HTMX režimu,

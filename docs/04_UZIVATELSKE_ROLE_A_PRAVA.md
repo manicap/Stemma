@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.47
+**Verze:** 0.48
 **Stav:** pracovní návrh  
 **Datum revize:** 5. 11. 2026
 
@@ -44,6 +44,13 @@ připojení ke konkrétní běžně viditelné aktivní osobě. Toto oprávněn�
 nepovoluje obecnou správu Materials, cizích Vaultů, grantů, lifecycle příloh ani
 vazeb v jiných kontextech. Zvolenou access úroveň musí actor smět podle obecné
 obsahové policy zobrazit.
+
+Implementované vytvoření osoby používá oddělené standardní oprávnění
+`people.add_person`. View při každém GET i POST načte aktuální účet, vyžaduje
+aktivního uživatele a formulář nabízí pouze access úrovně dostupné podle
+centrální policy. Systémová skupina Editor toto oprávnění získává automaticky;
+nejde o právo k `restricted` nebo `admin_only` obsahu a nepřidává jiné add,
+change ani lifecycle pravomoci.
 
 Nemůže:
 
@@ -278,7 +285,7 @@ Databázové skupiny jsou `Čtenář`, `Editor` a `Správce`.
 
 - Čtenář automaticky nezískává zvýšená obsahová, lifecycle ani editační
   oprávnění.
-- Editor získává pro RC průchod konkrétní `people.change_person`, ale
+- Editor získává konkrétní `people.change_person` a `people.add_person`, ale
   automaticky nezískává přístup k omezenému nebo administrátorskému obsahu.
 - Správce získává `accounts.view_restricted_content`,
   `accounts.view_admin_only_content`, `people.view_archived_person` a

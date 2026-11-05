@@ -45,6 +45,7 @@ _DEMO_ACCOUNTS = (
     ),
 )
 _PERSON_EDITOR_PERMISSION = ("people", "change_person")
+_PERSON_CREATOR_PERMISSION = ("people", "add_person")
 _ELEVATED_PERMISSIONS = (
     ("accounts", "view_restricted_content"),
     ("accounts", "view_admin_only_content"),
@@ -58,6 +59,7 @@ _HEALTH_DEMO_PERMISSIONS = (
 )
 _REQUIRED_PERMISSIONS = (
     _PERSON_EDITOR_PERMISSION,
+    _PERSON_CREATOR_PERMISSION,
     *_ELEVATED_PERMISSIONS,
     *_HEALTH_DEMO_PERMISSIONS,
 )
@@ -158,21 +160,37 @@ class Command(BaseCommand):
         created_count = 0
         reset_count = 0
         with transaction.atomic():
-            all_role_permissions = tuple(
+            reader_excluded_permissions = tuple(
                 permissions[key]
                 for key in (
                     _PERSON_EDITOR_PERMISSION,
+                    _PERSON_CREATOR_PERMISSION,
                     *_ELEVATED_PERMISSIONS,
                 )
             )
             elevated_permissions = tuple(
                 permissions[key] for key in _ELEVATED_PERMISSIONS
             )
-            editor_permission = permissions[_PERSON_EDITOR_PERMISSION]
-            groups["Čtenář"].permissions.remove(*all_role_permissions)
+            editor_permissions = tuple(
+                permissions[key]
+                for key in (
+                    _PERSON_EDITOR_PERMISSION,
+                    _PERSON_CREATOR_PERMISSION,
+                )
+            )
+            administrator_permissions = tuple(
+                permissions[key]
+                for key in (
+                    _PERSON_EDITOR_PERMISSION,
+                    *_ELEVATED_PERMISSIONS,
+                )
+            )
+            groups["Čtenář"].permissions.remove(
+                *reader_excluded_permissions
+            )
             groups["Editor"].permissions.remove(*elevated_permissions)
-            groups["Editor"].permissions.add(editor_permission)
-            groups["Správce"].permissions.add(*all_role_permissions)
+            groups["Editor"].permissions.add(*editor_permissions)
+            groups["Správce"].permissions.add(*administrator_permissions)
 
             for account in _DEMO_ACCOUNTS:
                 user, created = user_model._default_manager.get_or_create(

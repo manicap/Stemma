@@ -6,6 +6,7 @@ app_name = "people"
 
 urlpatterns = [
     path("", views.person_index, name="index"),
+    path("nova/", views.person_create, name="create"),
     path("<int:person_id>/", views.person_detail, name="detail"),
     path(
         "<int:person_id>/export/pdf/",

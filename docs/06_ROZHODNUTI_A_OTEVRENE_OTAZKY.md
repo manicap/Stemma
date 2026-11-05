@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.92
+**Verze:** 0.93
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 5. 11. 2026
 
@@ -268,6 +268,16 @@ best-effort odstraní výhradně nově vytvořený blob. Selhání kompenzace ne
 původní chybu. Procesní pád může nadále zanechat orphan blob nebo stale
 `pending`; obecná reconciliace zůstává mimo M3.5b. Nevzniká obecný permission
 framework, nový model, migrace, oprávnění ani ACP.
+203. Základní UI vytvoření osoby používá existující atomickou službu
+`create_person()` a standardní Django permission `people.add_person`, kterou
+datová migrace automaticky přiděluje pouze systémové skupině Editor. Čtenář ani
+Správce ji tímto rozhodnutím automaticky nezískávají a význam access úrovní se
+nemění. Server načítá aktuálního aktivního actora při každém požadavku a
+formulář připustí jen access úroveň, kterou actor podle centrální policy smí
+vidět. Full-page a HTMX tok zpřístupňují pouze tituly, jméno, příjmení, pohlaví,
+aktivní kategorii, poznámku a access; alespoň jedna část jména je povinná.
+Narození, úmrtí, vztahy, přílohy, životopis, ověření a lifecycle jsou mimo řez.
+Nevzniká vlastní permission, obecný permission framework ani nový ACP.
 
 ## 2. Otevřené otázky
 

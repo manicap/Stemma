@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.67
-**Stav:** M3.5b – Nahrávání a připojování příloh k osobě implementováno
+**Verze dokumentace:** 0.68
+**Stav:** UI vytváření osob a oprávnění skupiny Editor implementováno
 **Datum revize:** 5. 11. 2026
 
 ## Účel balíčku
@@ -42,6 +42,27 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.68
+
+Verze 0.68 dokončuje základní UI vytvoření osoby:
+
+- aktivní člen systémové skupiny Editor získává standardní Django oprávnění
+  `people.add_person` přes datovou migraci; Čtenář ani Správce je tímto
+  rozhodnutím automaticky nezískávají,
+- oprávněný uživatel otevře z person-centric seznamu formulář v pravém panelu
+  a vytvoří osobu přes existující atomickou službu `create_person()`,
+- formulář přijímá titul před a za jménem, jméno, příjmení, pohlaví, aktivní
+  kategorii, poznámku a actorovi dostupnou access úroveň; alespoň jedna část
+  jména je povinná,
+- HTMX po úspěchu bez obnovení stránky vybere nový detail a nahradí celý seznam,
+  aby zůstalo správné řazení i odvozené římské pořadí,
+- narození, úmrtí, vztahy, přílohy, ověření, životopis a lifecycle nejsou
+  součástí tohoto formuláře; nevzniká nový model, obecný permission framework
+  ani ACP.
+- cílené permission/create testy prošly 29/29, přímo dotčená regrese 101/101,
+  Django system check i kontrola migračního driftu jsou čisté a izolovaný
+  browser smoke ověřil úplný Editor HTMX průchod i přímý POST Čtenáře s 403.
 
 ## Stav verze 0.67
 

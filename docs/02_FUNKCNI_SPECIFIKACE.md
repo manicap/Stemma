@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.61
+**Verze:** 0.62
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
 **Datum revize:** 5. 11. 2026
 
@@ -73,9 +73,9 @@ používá samostatně a seznam se po výběru osoby automaticky zavře.
 ## 2. Seznam osob
 
 **Stav:** Implementován je actor-aware seznam skutečných osob, bezpečný empty
-state, základní identifikační údaje a odvozené datum či rok života, kategorie a
-římské pořadí. Následující vyhledávání, filtry, volby řazení, fotografie a
-vytvoření osoby představují plánovaný cílový stav.
+state, základní identifikační údaje a odvozené datum či rok života, kategorie,
+římské pořadí a oprávněné vytvoření osoby. Následující vyhledávání, filtry,
+volby řazení a fotografie představují plánovaný cílový stav.
 
 Každý záznam osoby obsahuje:
 
@@ -1106,6 +1106,19 @@ osoby s viditelným `access_level`. Neexistující a neviditelný přímý cíl
 vracejí v HTTP vrstvě stejný stav 404 a stejné uživatelské sdělení, aby
 nebylo možné z odpovědi odvodit existenci chráněné osoby. Explicitní režim
 pro oprávněné zobrazení archivovaných osob zůstává navazujícím krokem.
+
+Vytvoření osoby používá `/osoby/nova/` ve full-page i HTMX režimu. Server z
+aktuálního databázového stavu vyžaduje aktivního uživatele s
+`people.add_person`; systémová skupina Editor toto oprávnění získává datovou
+migrací, zatímco Čtenář ani Správce je automaticky nezískávají. Formulář
+zpřístupňuje titul před a za jménem, jméno, příjmení, pohlaví, aktivní
+kategorii, poznámku a pouze takový `access_level`, který actor smí podle
+stávající obsahové policy zobrazit. Alespoň jméno nebo příjmení je povinné.
+View deleguje zápis na existující atomickou službu `create_person()` a nastaví
+čerstvého actora jako autora. Narození, úmrtí, vztahy, přílohy, životopis,
+ověření a lifecycle nejsou součástí formuláře. HTMX úspěch vrátí vybraný detail
+a celý aktuální seznam jako OOB fragment, aby se bez reloadu zachovalo řazení a
+odvozené římské pořadí.
 
 RC autentizační průchod používá standardní Django session autentizaci.
 Anonymní horní lišta odkazuje na přihlášení s lokálním návratovým cílem;

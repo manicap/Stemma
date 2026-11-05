@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
@@ -55,11 +56,35 @@ from .derived_selectors import (
     PersonPresentation,
     get_visible_person_presentations,
 )
-from .forms import PersonForm
+from .forms import PersonCreateForm, PersonForm
 from .models import Person
 from .pdf_exports import build_person_pdf, get_person_pdf_export
 from .selectors import get_visible_person, get_visible_relationship_overview
-from .services import BasicPersonInput, update_person_basic
+from .services import (
+    BasicPersonInput,
+    PersonInput,
+    create_person,
+    update_person_basic,
+)
+
+
+def _current_actor_with_permission(
+    request: HttpRequest,
+    permission: str,
+) -> AbstractBaseUser | None:
+    """Return a fresh active actor only while the permission still exists."""
+
+    actor = request.user
+    if not actor.is_authenticated or actor.pk is None:
+        return None
+    user_model = get_user_model()
+    try:
+        current_actor = user_model._default_manager.get(pk=actor.pk)
+    except user_model.DoesNotExist:
+        return None
+    if not current_actor.is_active or not current_actor.has_perm(permission):
+        return None
+    return current_actor
 
 
 def _shell_context(
@@ -77,6 +102,10 @@ def _shell_context(
     return {
         "person_presentations": presentations,
         "selected_person": selected_person,
+        "can_add_person": (
+            _current_actor_with_permission(request, "people.add_person")
+            is not None
+        ),
         "selected_facts": (
             facts_by_person_id.get(selected_person.pk)
             if selected_person is not None
@@ -132,6 +161,8 @@ def _render_person_content(
 def person_index(request: HttpRequest) -> HttpResponse:
     """Zobraz hlavní obrazovku se seznamem skutečných osob."""
 
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "people/partials/person_empty.html")
     return render(
         request,
         "people/person_shell.html",
@@ -1151,16 +1182,9 @@ def person_health_record_edit(
 
 
 def _current_actor_can_change_person(request: HttpRequest) -> bool:
-    actor = request.user
-    if not actor.is_authenticated or actor.pk is None:
-        return False
-    user_model = get_user_model()
-    try:
-        current_actor = user_model._default_manager.get(pk=actor.pk)
-    except user_model.DoesNotExist:
-        return False
-    return current_actor.is_active and current_actor.has_perm(
-        "people.change_person"
+    return (
+        _current_actor_with_permission(request, "people.change_person")
+        is not None
     )
 
 
@@ -1184,7 +1208,23 @@ def _person_input_from_form(
     )
 
 
-def _add_service_errors(form: PersonForm, error: ValidationError) -> None:
+def _person_create_input_from_form(*, form: PersonCreateForm) -> PersonInput:
+    return PersonInput(
+        category=form.cleaned_data["category"],
+        gender=form.cleaned_data["gender"],
+        first_name=form.cleaned_data["first_name"],
+        last_name=form.cleaned_data["last_name"],
+        title_before_name=form.cleaned_data["title_before_name"],
+        title_after_name=form.cleaned_data["title_after_name"],
+        notes=form.cleaned_data["notes"],
+        access_level=form.cleaned_data["access_level"],
+    )
+
+
+def _add_service_errors(
+    form: PersonForm | PersonCreateForm,
+    error: ValidationError,
+) -> None:
     if hasattr(error, "error_dict"):
         for field_name, field_errors in error.error_dict.items():
             target = field_name if field_name in form.fields else None
@@ -1194,13 +1234,75 @@ def _add_service_errors(form: PersonForm, error: ValidationError) -> None:
     form.add_error(None, error)
 
 
-def _prepare_accessible_form_errors(form: PersonForm) -> None:
+def _prepare_accessible_form_errors(
+    form: PersonForm | PersonCreateForm,
+) -> None:
     for field_name in form.errors:
         if field_name not in form.fields:
             continue
         field = form.fields[field_name]
         field.widget.attrs["aria-invalid"] = "true"
         field.widget.attrs["aria-describedby"] = f"id_{field_name}-errors"
+
+
+@require_http_methods(["GET", "POST"])
+def person_create(request: HttpRequest) -> HttpResponse:
+    """Create one person through the existing domain service."""
+
+    actor = _current_actor_with_permission(request, "people.add_person")
+    if actor is None:
+        raise PermissionDenied("K vytvoření osoby nemáte oprávnění.")
+
+    form = PersonCreateForm(request.POST or None, actor=actor)
+    if request.method == "POST" and form.is_valid():
+        try:
+            created_person = create_person(
+                data=_person_create_input_from_form(form=form),
+                created_by=actor,
+            )
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            if request.headers.get("HX-Request") == "true":
+                presentations = get_visible_person_presentations(actor=actor)
+                presentation = next(
+                    item
+                    for item in presentations
+                    if item.person.pk == created_person.pk
+                )
+                context = _shell_context(
+                    request,
+                    selected_person=created_person,
+                    presentations=presentations,
+                ) | {
+                    "selected_person": presentation.person,
+                    "selected_facts": presentation.facts,
+                }
+                response = render(
+                    request,
+                    "people/partials/person_create_success.html",
+                    context,
+                )
+                response["HX-Push-Url"] = reverse(
+                    "people:detail",
+                    args=(created_person.pk,),
+                )
+                return response
+            messages.success(request, "Osoba byla vytvořena.")
+            return redirect("people:detail", person_id=created_person.pk)
+
+    _prepare_accessible_form_errors(form)
+    context = {
+        "person_create_form": form,
+        "form_submitted": request.method == "POST",
+    }
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "people/partials/person_create_form.html", context)
+    return render(
+        request,
+        "people/person_shell.html",
+        _shell_context(request) | context,
+    )
 
 
 @require_http_methods(["GET", "POST"])

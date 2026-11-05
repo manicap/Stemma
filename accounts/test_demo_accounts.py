@@ -35,7 +35,10 @@ class BootstrapDemoAccountsCommandTests(TestCase):
         }
         expected_permissions = {
             "stemma-demo-reader": set(),
-            "stemma-demo-editor": {"people.change_person"},
+            "stemma-demo-editor": {
+                "people.add_person",
+                "people.change_person",
+            },
             "stemma-demo-administrator": {
                 "people.change_person",
                 "health.add_healthrecord",
@@ -112,10 +115,20 @@ class BootstrapDemoAccountsCommandTests(TestCase):
             content_type__app_label="people",
             codename="change_person",
         )
+        creator_permission = Permission.objects.get(
+            content_type__app_label="people",
+            codename="add_person",
+        )
         user.groups.set((administrator,))
         user.user_permissions.add(editor_permission)
-        Group.objects.get(name="Čtenář").permissions.add(editor_permission)
-        Group.objects.get(name="Editor").permissions.remove(editor_permission)
+        Group.objects.get(name="Čtenář").permissions.add(
+            editor_permission,
+            creator_permission,
+        )
+        Group.objects.get(name="Editor").permissions.remove(
+            editor_permission,
+            creator_permission,
+        )
         administrator.permissions.remove(editor_permission)
         demo_administrator = get_user_model().objects.get(
             username="stemma-demo-administrator"
@@ -146,16 +159,20 @@ class BootstrapDemoAccountsCommandTests(TestCase):
         self.assertTrue(user.is_active)
         self.assertFalse(
             Group.objects.get(name="Čtenář").permissions.filter(
-                pk=editor_permission.pk
+                pk__in=(editor_permission.pk, creator_permission.pk)
             ).exists()
         )
-        self.assertTrue(
+        self.assertEqual(
             Group.objects.get(name="Editor").permissions.filter(
-                pk=editor_permission.pk
-            ).exists()
+                pk__in=(editor_permission.pk, creator_permission.pk)
+            ).count(),
+            2,
         )
         self.assertTrue(
             administrator.permissions.filter(pk=editor_permission.pk).exists()
+        )
+        self.assertFalse(
+            administrator.permissions.filter(pk=creator_permission.pk).exists()
         )
         demo_administrator.refresh_from_db()
         self.assertEqual(

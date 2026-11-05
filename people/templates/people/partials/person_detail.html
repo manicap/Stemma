@@ -1,7 +1,9 @@
 <article class="person-detail">
   {% include "people/partials/person_header.html" %}
   {% include "people/partials/person_tabs.html" %}
-  {% if person_saved %}
+  {% if person_created %}
+    <p class="success-message" role="status">Osoba byla vytvořena.</p>
+  {% elif person_saved %}
     <p class="success-message" role="status">Změny byly uloženy.</p>
   {% endif %}
   <section class="person-overview" aria-labelledby="overview-heading">

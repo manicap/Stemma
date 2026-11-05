@@ -1,5 +1,25 @@
 # Historie změn dokumentace
 
+## Verze 1.05 – 5. 11. 2026
+
+- schválené přiřazení standardního `people.add_person` systémové skupině Editor
+  je implementováno úzkou datovou migrací a sladěno s opakovatelným lokálním
+  bootstrapem; Čtenář ani Správce nezískávají nové automatické oprávnění,
+- person-centric shell zpřístupňuje oprávněnému aktivnímu actorovi full-page a
+  HTMX formulář vytvoření osoby v pravém panelu,
+- zápis deleguje na existující atomickou službu `create_person()`, nastavuje
+  aktuálního actora jako autora a připouští pouze access úroveň dostupnou podle
+  centrální policy,
+- formulář vyžaduje alespoň jméno nebo příjmení a omezuje rozsah na tituly,
+  jméno, příjmení, pohlaví, aktivní kategorii, poznámku a access; narození,
+  úmrtí, vztahy, přílohy, životopis, ověření a lifecycle zůstávají mimo řez,
+- po úspěchu HTMX současně zobrazí nový detail a nahradí celý seznam, takže se
+  bez ručního reloadu zachová výběr, řazení a odvozené římské pořadí,
+- nevznikl nový model, obecný permission framework ani ACP.
+- cílené permission/create testy prošly 29/29 a přímo dotčená regrese 101/101;
+  Django system check a kontrola migrací jsou čisté a izolovaný browser smoke
+  prošel pro Editorův úplný HTMX tok i přímý POST Čtenáře odmítnutý 403.
+
 ## Verze 1.04 – 5. 11. 2026
 
 - schválený řez **M3.5b – Nahrávání a připojování příloh k osobě** používá jediný

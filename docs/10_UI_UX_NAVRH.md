@@ -1,7 +1,7 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.15
+**Verze:** 0.16
 **Stav:** schválený pracovní základ  
 **Datum revize:** 5. 11. 2026
 
@@ -570,11 +570,13 @@ vysvětlí, že je nejprve nutné doplnit katalogy ve správě systému.
 
 ## 17. Přidání a editace osoby
 
-Oprávněný uživatel vidí nad seznamem tlačítko **+ Přidat osobu**.
+Implementovaný řez zobrazuje nad seznamem tlačítko **+ Přidat osobu** pouze
+aktuálnímu aktivnímu uživateli s `people.add_person`. Skupina Editor toto
+oprávnění získává automaticky; Čtenář je nemá.
 
 Po kliknutí se formulář zobrazí v pravém panelu místo detailu osoby.
 
-Formulář bude vizuálně vycházet ze stejného rozložení jako detail osoby:
+Formulář vizuálně vychází ze stejného rozložení jako detail osoby:
 
 - stejné místo pro fotografii nebo bustu,
 - pole jména v místě běžného záhlaví,
@@ -588,6 +590,13 @@ Po uložení se nová osoba:
 - automaticky vybere,
 - otevře v detailu,
 - získá případnou automaticky dopočítanou římskou číslici.
+
+Implementovaný formulář obsahuje titul před a za jménem, jméno, příjmení,
+pohlaví, aktivní kategorii, poznámku a dostupnou přístupovou úroveň. Vyžaduje
+alespoň jméno nebo příjmení a chyby zobrazuje u polí. Narození, úmrtí, vztahy,
+přílohy, životopis, ověření a lifecycle do něj nepatří. Úspěšný HTMX tok bez
+reloadu nahradí detail i celý seznam; Zrušit vrátí pravý panel do prázdného
+stavu a seznam zachová.
 
 Tlačítko **Upravit osobu** v záhlaví upravuje základní údaje osoby a záhlaví.
 

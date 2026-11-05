@@ -13,6 +13,7 @@ ELEVATED_PERMISSION_KEYS = {
     ("people", "view_deleted_person"),
 }
 PERSON_EDITOR_PERMISSION_KEY = ("people", "change_person")
+PERSON_CREATOR_PERMISSION_KEY = ("people", "add_person")
 HEALTH_DELETE_PERMISSION_KEY = ("health", "delete_healthrecord")
 
 
@@ -252,3 +253,43 @@ class PersonEditorPermissionMigrationTests(TestCase):
                 permissions=permission,
             ).exists()
         )
+
+
+class PersonCreatorPermissionMigrationTests(TestCase):
+    migration = import_module(
+        "accounts.migrations.0006_editor_add_person_permission"
+    )
+
+    def permission(self) -> Permission:
+        return Permission.objects.get(
+            content_type__app_label="people",
+            codename="add_person",
+        )
+
+    def test_forward_grants_only_editor_and_is_idempotent(self) -> None:
+        permission = self.permission()
+        reader = Group.objects.get(name="Čtenář")
+        editor = Group.objects.get(name="Editor")
+        administrator = Group.objects.get(name="Správce")
+        editor.permissions.remove(permission)
+
+        self.migration.grant_editor_add_person_permission(apps, None)
+        self.migration.grant_editor_add_person_permission(apps, None)
+
+        self.assertFalse(reader.permissions.filter(pk=permission.pk).exists())
+        self.assertTrue(editor.permissions.filter(pk=permission.pk).exists())
+        self.assertFalse(
+            administrator.permissions.filter(pk=permission.pk).exists()
+        )
+
+    def test_reverse_removes_only_editor_binding(self) -> None:
+        permission = self.permission()
+        editor = Group.objects.get(name="Editor")
+        reader = Group.objects.get(name="Čtenář")
+        reader.permissions.add(permission)
+
+        self.migration.revoke_editor_add_person_permission(apps, None)
+
+        self.assertFalse(editor.permissions.filter(pk=permission.pk).exists())
+        self.assertTrue(reader.permissions.filter(pk=permission.pk).exists())
+        self.assertTrue(Permission.objects.filter(pk=permission.pk).exists())
