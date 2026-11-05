@@ -1,5 +1,29 @@
 # Historie změn dokumentace
 
+## Verze 1.02 – 5. 11. 2026
+
+- řez **M3.4 – Kontextové doručení příloh** přidává serverově autorizované GET
+  otevření a stažení přes typ a ID konkrétního kontextu a ID explicitní vazby,
+- delivery znovu vyhodnocuje target/link/Attachment access a lifecycle,
+  `FileStatus.AVAILABLE` a u private přílohy aktivního ownera nebo validní grant;
+  staff, superuser, obecná permission ani znalost URL nejsou bypass,
+- podporované jsou kontexty osoby, události, zdravotního záznamu, vztahu,
+  bydliště a hrobového místa; `PlaceAttachment` zůstává fail-closed a Health
+  hranice výslovně váže vazbu na požadovaný `health_record_id`,
+- blob se otevírá pouze přes `ProtectedAttachmentStorage`; obecná URL podle
+  Attachment ID, storage key, filename nebo fyzické cesty nevzniká,
+- inline/download `FileResponse` používá PDF/JPEG/PNG allowlist, bezpečný
+  `Content-Disposition`, `nosniff`, `private, no-store` a `no-referrer`,
+- neautorizovaný, neplatný, lifecycle-nepřípustný nebo fyzicky nedostupný cíl
+  končí jednotnou 404 bez úniku citlivých metadat,
+- DEBUG-only `bootstrap_attachment_delivery` vytvoří přes existující upload a
+  person-link služby skutečný lokální blob a vypíše kontextové open/download
+  URL pro ruční ověření bez hesla, storage key nebo fyzické cesty,
+- stabilní diff prošel plnou sadou 1 681/1 681 testů, Django system checkem a
+  nezávislým QA, security a dokumentačním/HTTP review,
+- nevzniká model, migrace, permission, Materials UI, lifecycle orchestrace,
+  audit downloadu, reconciliation, šifrování ani nový ACP.
+
 ## Verze 1.01 – 15. 10. 2026
 
 - řez **M3.3 – Soukromé přílohy: žádosti a granty přístupu** přidává historické

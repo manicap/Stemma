@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.84
-**Stav:** M3.3 – Soukromé přílohy: žádosti a granty přístupu implementováno
-**Datum revize:** 15. 10. 2026
+**Verze:** 0.85
+**Stav:** M3.4 – Kontextové doručení příloh implementováno
+**Datum revize:** 5. 11. 2026
 
 ## 1. Účel
 
@@ -1998,6 +1998,51 @@ běžná metadata presentation nevydává interní `storage_key`.
 M3.3 nevytváří download/delivery, HTTP endpoint, UI, notifikace ani automatickou
 delete/cancel/revoke lifecycle orchestraci. Další plánovaný řez je
 **M3.4 – Kontextové doručení příloh**.
+
+Řez **M3.4 – Kontextové doručení příloh** zavádí transportně neutrálnou službu
+`get_attachment_delivery(*, context_type, context_id, link_id, actor)` a dvě
+GET cesty:
+
+- `/materialy/<context_type>/<context_id>/vazby/<link_id>/otevrit/`,
+- `/materialy/<context_type>/<context_id>/vazby/<link_id>/stahnout/`.
+
+`context_type` podporuje pouze `person`, `event`, `health-record`,
+`relationship`, `residence` a `grave-site`, protože jen tyto přílohové vazby
+mají současnou actor-aware target policy. `PlaceAttachment` se nevydává.
+Obecná URL podle `Attachment.id`, storage key nebo filename nevzniká. Služba z
+URL vytvoří pouze typovaný kandidát explicitní vazby a autoritativní řádek
+získá přes existující kontextovou Materials hranici. Tím současně ověří shodu
+požadovaného kontextu a vazby, target/link/Attachment access a lifecycle a
+`FileStatus.AVAILABLE`. Health větev výslovně filtruje také požadované
+`health_record_id`; změna kontextové části URL se proto nesmí ignorovat.
+
+Private Attachment navíc vyžaduje aktuálního aktivního ownera Vaultu nebo
+platný aktivní grant z M3.3; staff, superuser ani obecná permission nejsou
+bypass. Standardní příloha zachovává existující access policy včetně public
+přístupu anonymního návštěvníka. Neaktivní účet nezískává authenticated,
+restricted ani private práva. Teprve po úplné autorizaci služba normalizuje
+bezpečný basename a přes `ProtectedAttachmentStorage.open(vault, storage_key)`
+otevře blob. Delivery allowlist zůstává shodný s uploadem: PDF, JPEG a PNG.
+
+HTTP vrstva vrací `FileResponse` s `inline` pro otevření nebo `attachment` pro
+stažení, bezpečným původním filename, uloženým MIME a hlavičkami
+`X-Content-Type-Options: nosniff`, `Cache-Control: private, no-store`,
+`Pragma: no-cache`, `Referrer-Policy: no-referrer` a `Vary: Cookie`. Neznámý
+kontext, chybějící nebo cizí vazba, nesoulad kontextu, neplatný lifecycle,
+nedostatečný access, chybějící private právo, nepodporované MIME i fyzicky
+nedostupný blob se navenek sjednotí na 404 bez storage key, filename, fyzické
+cesty nebo rozlišení existence. Storage zůstává mimo public media/static root
+a nemá URL API.
+
+M3.4 nemění modely ani migrace a nepřidává permission. Nevytváří Materials
+management UI, odkazy v existujících šablonách, lifecycle orchestrace,
+reconciliation, audit downloadu, cloud backend ani šifrování.
+Ruční testovatelnost zajišťuje pouze lokální DEBUG-only příkaz
+`bootstrap_attachment_delivery <file_path> --owner <username> --person-id <id>`.
+Zadaný PDF/JPEG/PNG předá existujícímu upload use-casu, vytvoří person link přes
+stávající link service a vypíše jen open/download URL. Heslo, storage key ani
+fyzickou cestu nepřijímá jako veřejný identifikátor a nic nemaže; každé spuštění
+vytvoří nový lokální Attachment.
 
 První implementační řez zavádí dva prázdné katalogy:
 

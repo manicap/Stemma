@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.63
-**Stav:** M3.3 – Soukromé přílohy: žádosti a granty přístupu implementováno
-**Datum revize:** 15. 10. 2026
+**Verze:** 0.64
+**Stav:** M3.4 – Kontextové doručení příloh implementováno
+**Datum revize:** 5. 11. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -343,8 +343,8 @@ migrace, permission, Group ani nový ACP.
 
 1. průběžně rozšiřovat testy databázové integrity a bezpečnostních hranic,
 2. další health UI rozšiřovat pouze samostatnými řezy nad existujícími
-   bezpečnými aplikačními kontrakty; Materials zápisy a doručení souborů
-   zůstávají mimo dokončené Health UI řezy.
+   bezpečnými aplikačními kontrakty; Materials zápisy a odkazy na backendové
+   doručení zůstávají mimo dokončené Health UI řezy.
 
 `PlaceAttachment` a `AttachmentSource` zůstávají fail-closed bez obecného
 veřejného selectoru. První z nich čeká na schválený produktový read use-case a
@@ -630,8 +630,22 @@ target/link/access/lifecycle/FileStatus policy. Download/doručení, HTTP/UI,
 Materials Koš, lifecycle delete/cancel/revoke orchestrace, reconciliation a
 šifrování zůstávají samostatnými budoucími capability.
 
-Další plánovaný řez je **M3.4 – Kontextové doručení příloh**. M3.3 jej
-neimplementuje ani neautorizuje.
+Řez **M3.4 – Kontextové doručení příloh** přidává dvě serverově autorizované
+GET cesty pro otevření a stažení. URL vždy nese podporovaný typ a ID kontextu a
+ID explicitní vazby; neexistuje obecné doručení podle Attachment ID, filename
+nebo storage key. Doručení znovu vynutí target/link/Attachment access a
+lifecycle, `FileStatus.AVAILABLE` a private owner/grant policy, poté otevře blob
+výhradně přes chráněnou Vault-aware storage. Neplatná či změněná URL,
+neautorizovaný actor a fyzicky nedostupný blob končí stejnou 404 bez úniku
+metadat. Podporované jsou kontexty osoby, události, zdravotního záznamu,
+vztahu, bydliště a hrobového místa; obecný `PlaceAttachment` zůstává
+fail-closed. Produktové Materials UI, lifecycle orchestrace, audit downloadu,
+reconciliation a šifrování nejsou součástí řezu.
+DEBUG-only `bootstrap_attachment_delivery` používá existující upload a person
+link služby k vytvoření jednoho skutečného lokálního blobu a vypíše bezpečné
+kontextové URL pro ruční ověření bez storage key nebo hesla. Nejde o Materials
+UI ani produkční seed. Stabilní diff prošel 1 681/1 681 testů, Django system
+checkem a nezávislým QA, security a dokumentačním/HTTP review.
 
 ## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
 
@@ -682,8 +696,8 @@ přestože její UI základ je skutečně používán.
   lifecycle ani Materials UI,
 - události mají agregátní backend a read-only person-centric HTTP/UI, ale
   nemají detail, zápis, lifecycle ani Materials UI,
-- fotografie mají metadata a explicitní přílohovou infrastrukturu, nikoli
-  produktové zobrazení, upload nebo doručení souboru.
+- fotografie mají metadata, explicitní přílohovou infrastrukturu a backendové
+  doručení, nikoli produktové zobrazení nebo Materials UI.
 
 **Plánováno:**
 
@@ -711,12 +725,12 @@ přestože její UI základ je skutečně používán.
 **Backendově připraveno, UI plánováno:**
 
 - Materials mají metadata, zdroje, explicitní vazby, služby a kontextové
-  selectory; produktové management UI existuje pouze jako bezpečné read-only
-  metadata na Health detailu.
+  selectory; produktové management UI neexistuje a Health detail zobrazuje
+  pouze bezpečná read-only metadata.
 
 **Plánováno nebo odloženo:**
 
-- fyzický upload, storage a bezpečný download/doručení souborů,
+- produktové Materials UI a lifecycle orchestrace příloh,
 - obecný detail a write/lifecycle UI událostí, dokumentů a zdrojů,
 - rodokmen, časová osa, záloha a další produktové exportní formáty,
 - auditní historie a její UI.

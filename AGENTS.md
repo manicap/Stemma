@@ -400,21 +400,22 @@ toward RC 0.1 has therefore stopped. RC 0.2 has completed the explicitly
 approved read-only person relationship, residence, grave-site and event tabs
 and the actor-aware PDF/A4 person export.
 
-The completed current slice is **M3.3 – Soukromé přílohy: žádosti a granty
-přístupu**. It adds historical access-request and access-grant models,
-actor-aware request/approve/deny/revoke services, an owner-or-active-grant
-private read policy and a metadata-safe redacted placeholder. ACP-012 remains
-the authoritative storage and access contract. Download or delivery, HTTP or
-request/grant UI, Materials UI, lifecycle delete/cancel/revoke orchestration,
-encryption, reconciliation and a shared Materials recycle bin remain outside
-this slice. The next planned slice is **M3.4 – Kontextové doručení příloh**, but
-it is not authorized by this mission.
+The completed current slice is **M3.4 – Kontextové doručení příloh**. It adds
+server-authorized inline and download delivery through a concrete supported
+context and explicit attachment link, reuses the existing target/link/
+Attachment access and lifecycle policies, enforces the private owner-or-active-
+grant rule, and opens blobs only through the protected Vault-aware storage
+boundary. ACP-012 remains the authoritative storage and access contract.
+`PlaceAttachment`, request/grant UI, Materials management UI, lifecycle
+delete/cancel/revoke orchestration, audit logging of downloads, encryption,
+reconciliation and a shared Materials recycle bin remain outside this slice.
+No later functional slice is authorized by this mission.
 
 The approved PDF/A4 slice is complete. It does not authorize broader exports,
-Health or Materials export, attachments, stored attachment or Materials file
-delivery, domain writes or lifecycle actions, or another planned person
-feature. Further functional slices require separate explicit approval. Use the
-established architectural boundaries and the ACP-009 invalidation-based gate.
+Health or Materials export, attachment export, Materials management UI, domain
+writes or lifecycle actions, or another planned person feature. Further
+functional slices require separate explicit approval. Use the established
+architectural boundaries and the ACP-009 invalidation-based gate.
 
 Do not declare Stemma production-ready merely because roadmap items or automated
 tests are complete. Production deployment, integration into `feature/mvp` or

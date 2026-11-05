@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.65
-**Stav:** M3.3 – Soukromé přílohy: žádosti a granty přístupu implementováno
-**Datum revize:** 15. 10. 2026
+**Verze dokumentace:** 0.66
+**Stav:** M3.4 – Kontextové doručení příloh implementováno
+**Datum revize:** 5. 11. 2026
 
 ## Účel balíčku
 
@@ -42,6 +42,26 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.66
+
+Verze 0.66 dokončuje backendový řez **M3.4 – Kontextové doručení příloh**:
+
+- dvě GET cesty dovolují autorizované otevření inline nebo stažení přes
+  konkrétní typ kontextu, jeho ID a ID explicitní přílohové vazby,
+- doručení znovu vyhodnotí target, link a Attachment access/lifecycle,
+  `FileStatus.AVAILABLE` a u private přílohy aktivního ownera nebo grant,
+- blob se otevírá výhradně přes `ProtectedAttachmentStorage`; storage key,
+  fyzická cesta ani veřejná storage URL se do HTTP kontraktu nedostávají,
+- neplatný kontext, změněná URL, nedostupný blob i chybějící private právo
+  končí jednotnou 404 a podporované MIME zůstávají PDF/JPEG/PNG,
+- lokální DEBUG-only `bootstrap_attachment_delivery` vytvoří ze zadaného
+  bezpečného souboru skutečný person-context průchod a vypíše pouze kontextové
+  open/download cesty pro ruční ověření,
+- stabilní M3.4 diff prošel plnou sadou 1 681/1 681 testů a Django system
+  checkem,
+- nevzniká Materials management UI, lifecycle orchestrace, audit downloadu,
+  reconciliation, šifrování, model, migrace ani nové oprávnění.
 
 ## Stav verze 0.65
 
@@ -964,9 +984,8 @@ veřejnou, přihlášenou a omezenou úroveň. Dvě veřejné osoby jménem Jose
 Dvořák mají tři označené životní události, takže v seznamu a detailu lze
 ověřit římské pořadí, narození, úmrtí, stav i spolehlivě odvozený věk.
 Omezený profil Kláry obsahuje také jeden syntetický zdravotní záznam s
-bezpečnými metadaty přílohy a zdroje. Po přihlášení lokálního Správce lze ověřit
-kartu Zdraví, detail záznamu i absenci downloadu; žádný fyzický soubor se
-nevytváří.
+bezpečnými metadaty přílohy a zdroje. Základní seed záměrně nevytváří fyzický
+soubor; samostatný lokální delivery bootstrap je popsán níže.
 Příkaz funguje pouze s lokálním
 `DEBUG=True`; mimo tento režim selže bez zápisu. Opakované spuštění při
 zachování vložených markerů nevytváří duplicity, existující ukázkové záznamy
@@ -988,6 +1007,30 @@ Příkaz funguje pouze s lokálním
 `DEBUG=True`; vyhrazená uživatelská jména ani zadané heslo se nesmějí používat
 v produkčním prostředí.
 
+### Ruční ověření M3.4 delivery
+
+Po seedu a vytvoření demo účtů vyberte v lokálním UI aktivní osobu a její ID z
+URL. Připravte vlastní bezpečný PDF, JPEG nebo PNG soubor a spusťte lokální
+bootstrap s cestou k souboru, uživatelským jménem vlastníka a ID osoby:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py bootstrap_attachment_delivery `
+  C:\temp\doklad.pdf --owner stemma-demo-administrator --person-id 1
+```
+
+```bash
+python manage.py bootstrap_attachment_delivery /tmp/doklad.pdf \
+  --owner stemma-demo-administrator --person-id 1
+```
+
+Příkaz funguje pouze při `DEBUG=True`, soubor zvaliduje stejným upload
+allowlistem jako M3.2, vytvoří private Attachment ve Vaultu zvoleného aktivního
+účtu a aktivní vazbu osoby přes stávající služby. Nevypisuje storage key ani
+fyzickou cestu; vrátí pouze kontextové cesty pro otevření a stažení. Po
+přihlášení stejného vlastníka lze obě cesty vložit do browseru. Každé spuštění
+vytvoří nový lokální Attachment a nic nemaže; nejde o produkční seed ani
+Materials UI.
+
 ## Aktuální fáze projektu
 
 - Návrh UI/UX je uzavřen jako schválený pracovní základ.
@@ -997,7 +1040,8 @@ v produkčním prostředí.
 - Aktivní vývoj pokračuje jako RC 0.2 na `agent/rc-0.2`; dokončené jsou
   samostatně schválené read-only karty Vztahy, Bydliště, Hrobová místa a
   Události osoby a actor-aware PDF/A4 export osoby. Validační a review workflow
-  upřesňuje ACP-009; aktuální baseline je 1 587/1 587 testů.
+  upřesňuje ACP-009; baseline 1 587/1 587 patřil stavu RC 0.2 před následnými
+  M3 změnami a aktuální M3.4 baseline je 1 681/1 681.
 - RC 0.1 je na experimentální větvi dokončené a připravené podle
   `07_ROADMAPA.md`; tento stav ani dokončení M2 nepovolují produkční nasazení
   nebo merge.
@@ -1007,7 +1051,8 @@ v produkčním prostředí.
   Health. Vztahy, Bydliště, Hrobová místa a Události mají bezpečné read-only
   person-centric přehledy; jejich zápis, lifecycle a Materials UI zůstávají
   plánované. Obecný Event detail a write UI nevznikly. Materials poskytují
-  metadata a explicitní vazby, nikoli upload, storage nebo download souborů.
+  metadata, explicitní vazby, chráněný upload/storage, granty a backendové
+  kontextově autorizované doručení; produktové Materials UI zatím nevzniklo.
 - `backup/pre-agent-2026-08-17` je návratový bod před zahájením agentního experimentu a neslouží k vývoji.
 - Hlavním technickým dokumentem zůstává `11_DATABAZOVY_NAVRH.md` a exekuční pravidla agentní větve určuje kořenový `AGENTS.md`.
 

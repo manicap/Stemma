@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.90
+**Verze:** 0.91
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 15. 10. 2026
+**Datum revize:** 5. 11. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -237,6 +237,23 @@ viditelném kontextu obsahuje pouze `Soukromý dokument` a nevydává ORM objekt
 citlivá metadata. Download, delivery, HTTP/UI, notifikace a lifecycle
 orchestrace nevznikají; další plánovaný řez je **M3.4 – Kontextové doručení
 příloh**.
+201. Řez **M3.4 – Kontextové doručení příloh** realizuje předvídanou delivery
+hranici ACP-012 bez nového architektonického rozhodnutí. Veřejné HTTP API tvoří
+GET otevření a stažení pod `/materialy/<context_type>/<context_id>/vazby/
+<link_id>/...`; obecná cesta podle Attachment ID, storage key, filename nebo
+fyzické cesty neexistuje. Podporované kontexty jsou `person`, `event`,
+`health-record`, `relationship`, `residence` a `grave-site`; `PlaceAttachment`
+zůstává bez actor-aware target policy fail-closed. Služba znovu ověří shodu
+kontextu a vazby, veškerou stávající target/link/Attachment access a lifecycle
+policy, `FileStatus.AVAILABLE` a u private přílohy aktivního ownera nebo platný
+aktivní grant. Standardní public příloha zachovává existující anonymní public
+policy; neaktivní účet nezískává authenticated práva. Jen po autorizaci se blob
+otevře přes `ProtectedAttachmentStorage`. Povolené delivery MIME jsou stejné
+PDF/JPEG/PNG jako u uploadu. Jakákoli neautorizovatelnost nebo storage chyba se
+na HTTP hranici normalizuje na 404 bez storage klíče, filename nebo rozlišení
+existence. Odpověď používá inline nebo attachment `Content-Disposition`,
+`nosniff`, `private, no-store` a `no-referrer`. Nevzniká UI, model, migrace,
+permission, audit, lifecycle orchestrace, reconciliation, šifrování ani ACP.
 
 ## 2. Otevřené otázky
 

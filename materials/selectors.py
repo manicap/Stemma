@@ -1205,7 +1205,7 @@ def _get_context_visible_attachment_link(
         queryset = _visible_health_record_attachment_links(
             actor=actor,
             enforce_private_access=False,
-        )
+        ).filter(health_record_id=link.health_record_id)
     elif type(link) is RelationshipAttachment:
         queryset = _get_visible_relationship_attachment_links(
             relationship=Relationship(pk=link.relationship_id),
