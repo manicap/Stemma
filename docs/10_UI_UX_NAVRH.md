@@ -1,7 +1,7 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.16
+**Verze:** 0.17
 **Stav:** schválený pracovní základ  
 **Datum revize:** 5. 11. 2026
 
@@ -264,6 +264,12 @@ viditelné kohortě a může se podle oprávnění lišit.
 
 Nad seznamem bude vyhledávací pole s našeptávačem.
 
+**Implementovaný stav:** pole po krátké prodlevě aktualizuje přes HTMX návrhy i
+seznam bez obnovení shellu. Návrhy jsou omezené na osm položek, ukazují jméno,
+viditelný údaj narození a kategorii a lze je procházet Tab nebo šipkami a
+potvrdit Enterem. Escape zavře návrhy a vrátí fokus do pole. Prázdný vstup
+návrhy nezobrazuje a ponechá seznam řízený kategorií a řazením.
+
 Vyhledávání pracuje minimálně s:
 
 - jménem,
@@ -292,6 +298,10 @@ Pod vyhledáváním bude rozbalovací filtr:
 
 Aktivní filtr musí být stále zřetelně viditelný.
 
+Implementované menu používá existující aktivní kategorie; již přiřazená
+neaktivní kategorie zůstává dostupná pouze tehdy, pokud ji má některá viditelná
+osoba. Výchozí volba je **Všechny osoby**.
+
 ### 7.4 Řazení
 
 Rozbalovací nabídka řazení obsahuje:
@@ -306,6 +316,12 @@ Rozbalovací nabídka řazení obsahuje:
 Osoby bez známého data narození se při řazení podle věku zobrazí až za osobami se známým datem.
 
 Vyhledávání, filtr a řazení fungují současně.
+
+Ovládací prvky tvoří jediný kombinovaný stav `q`, `category` a `sort`. HTMX mění
+jen návrhy a levý seznam; otevřený pravý detail se nezahazuje. Pokud přestane
+odpovídat filtru, zůstane srozumitelně otevřený bez aktivního zvýraznění v
+seznamu. Odkazy detailu, karet, vytvoření a editace nesou aktuální stav dál.
+Bez JavaScriptu lze stejný formulář odeslat běžným GET požadavkem.
 
 ### 7.5 Archivované osoby
 

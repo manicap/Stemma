@@ -3,8 +3,8 @@
   class="person-list-item{% if selected or selected_person.pk == person.pk %} is-selected{% endif %}"
   {% if selected or selected_person.pk == person.pk %}aria-current="page"{% endif %}
   {% if oob %}hx-swap-oob="outerHTML"{% endif %}
-  href="{% url 'people:detail' person.pk %}"
-  hx-get="{% url 'people:detail' person.pk %}"
+  href="{% url 'people:detail' person.pk %}{{ person_browser_query_suffix }}"
+  hx-get="{% url 'people:detail' person.pk %}{{ person_browser_query_suffix }}"
   hx-target="#person-detail"
   hx-indicator="#detail-loading"
   hx-push-url="true"

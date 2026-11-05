@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.67
-**Stav:** UI vytváření osob a oprávnění skupiny Editor implementováno
+**Verze:** 0.68
+**Stav:** vyhledávání, našeptávač, filtrování a řazení osob implementováno
 **Datum revize:** 5. 11. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -724,6 +724,9 @@ přestože její UI základ je skutečně používán.
 
 - přihlášení, odhlášení, základní role a centrální access policy,
 - skutečný seznam, detail a omezená editace osoby,
+- actor-aware vyhledávání osob a alternativních jmen s HTMX našeptávačem,
+  filtrem existující kategorie a šesti stabilními volbami řazení včetně
+  viditelného odvozeného narození,
 - bezpečná prezentace narození, úmrtí, věku a životního stavu z událostí,
 - modely, služby a actor-aware čtecí přehled základních vazeb,
 - read-only HTTP/UI přehled vztahů s bezpečným filtrováním protějšku,
@@ -748,7 +751,8 @@ přestože její UI základ je skutečně používán.
 
 **Plánováno:**
 
-- obecné vyhledávání a filtry,
+- širší globální vyhledávání mimo person-centric seznam a lifecycle filtr
+  archivovaných osob,
 - write/lifecycle a Materials UI vazeb,
 - write/lifecycle a Materials UI bydlišť a Place management,
 - write/lifecycle a Materials UI hrobových míst a jejich vazeb,

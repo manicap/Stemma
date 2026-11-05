@@ -1,0 +1,46 @@
+<div
+  id="person-browser-results"
+  {% if oob %}hx-swap-oob="outerHTML"{% endif %}
+  data-has-suggestions="{% if person_search_query %}true{% else %}false{% endif %}"
+>
+  {% if person_search_query %}
+    {% if person_suggestions %}
+      <div id="person-suggestions" class="person-suggestions" role="listbox" aria-label="Návrhy osob">
+      {% for presentation in person_suggestions %}
+        <a
+          class="person-suggestion"
+          role="option"
+          href="{% url 'people:detail' presentation.person.pk %}{{ person_browser_query_suffix }}"
+          hx-get="{% url 'people:detail' presentation.person.pk %}{{ person_browser_query_suffix }}"
+          hx-target="#person-detail"
+          hx-indicator="#detail-loading"
+          hx-push-url="true"
+        >
+          <strong>{{ presentation.person.first_name }} {{ presentation.person.last_name }}{% if presentation.facts.roman_suffix %} {{ presentation.facts.roman_suffix }}{% endif %}</strong>
+          <small>{% if presentation.facts.birth_text %}{{ presentation.facts.birth_text }} · {% endif %}{{ presentation.person.category.name|default:"Bez kategorie" }}</small>
+        </a>
+      {% endfor %}
+      </div>
+    {% else %}
+      <div id="person-suggestions" class="person-suggestions person-suggestions-empty">
+        <p class="person-search-empty" role="status">Nebyla nalezena žádná odpovídající osoba.</p>
+        {% if can_add_person %}
+          <a
+            class="person-search-create"
+            href="{% url 'people:create' %}{{ person_browser_query_suffix }}"
+            hx-get="{% url 'people:create' %}{{ person_browser_query_suffix }}"
+            hx-target="#person-detail"
+            hx-push-url="true"
+          >+ Přidat novou osobu</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div id="person-suggestions" hidden></div>
+  {% endif %}
+  {% if person_search_query and not person_presentations %}
+    <nav id="person-list" class="people-list" aria-label="Seznam osob"></nav>
+  {% else %}
+    {% include "people/partials/person_list.html" %}
+  {% endif %}
+</div>

@@ -1,56 +1,56 @@
-<nav class="person-tabs" aria-label="Sekce detailu osoby">
+<nav class="person-tabs" aria-label="Sekce detailu osoby" data-person-browser-links>
   <a
     class="person-tab{% if active_person_tab == 'overview' or not active_person_tab %} is-active{% endif %}"
-    href="{% url 'people:detail' selected_person.pk %}"
-    hx-get="{% url 'people:detail' selected_person.pk %}"
+    href="{% url 'people:detail' selected_person.pk %}{{ person_browser_query_suffix }}"
+    hx-get="{% url 'people:detail' selected_person.pk %}{{ person_browser_query_suffix }}"
     hx-target="#person-detail"
     hx-push-url="true"
     {% if active_person_tab == 'overview' or not active_person_tab %}aria-current="page"{% endif %}
   >Přehled</a>
   <a
     class="person-tab{% if active_person_tab == 'relationships' %} is-active{% endif %}"
-    href="{% url 'people:relationships' selected_person.pk %}"
-    hx-get="{% url 'people:relationships' selected_person.pk %}"
+    href="{% url 'people:relationships' selected_person.pk %}{{ person_browser_query_suffix }}"
+    hx-get="{% url 'people:relationships' selected_person.pk %}{{ person_browser_query_suffix }}"
     hx-target="#person-detail"
     hx-push-url="true"
     {% if active_person_tab == 'relationships' %}aria-current="page"{% endif %}
   >Vztahy</a>
   <a
     class="person-tab{% if active_person_tab == 'events' %} is-active{% endif %}"
-    href="{% url 'people:events' selected_person.pk %}"
-    hx-get="{% url 'people:events' selected_person.pk %}"
+    href="{% url 'people:events' selected_person.pk %}{{ person_browser_query_suffix }}"
+    hx-get="{% url 'people:events' selected_person.pk %}{{ person_browser_query_suffix }}"
     hx-target="#person-detail"
     hx-push-url="true"
     {% if active_person_tab == 'events' %}aria-current="page"{% endif %}
   >Události</a>
   <a
     class="person-tab{% if active_person_tab == 'residences' %} is-active{% endif %}"
-    href="{% url 'people:residences' selected_person.pk %}"
-    hx-get="{% url 'people:residences' selected_person.pk %}"
+    href="{% url 'people:residences' selected_person.pk %}{{ person_browser_query_suffix }}"
+    hx-get="{% url 'people:residences' selected_person.pk %}{{ person_browser_query_suffix }}"
     hx-target="#person-detail"
     hx-push-url="true"
     {% if active_person_tab == 'residences' %}aria-current="page"{% endif %}
   >Bydliště</a>
   <a
     class="person-tab{% if active_person_tab == 'grave_sites' %} is-active{% endif %}"
-    href="{% url 'people:grave-sites' selected_person.pk %}"
-    hx-get="{% url 'people:grave-sites' selected_person.pk %}"
+    href="{% url 'people:grave-sites' selected_person.pk %}{{ person_browser_query_suffix }}"
+    hx-get="{% url 'people:grave-sites' selected_person.pk %}{{ person_browser_query_suffix }}"
     hx-target="#person-detail"
     hx-push-url="true"
     {% if active_person_tab == 'grave_sites' %}aria-current="page"{% endif %}
   >Hrobová místa</a>
   <a
     class="person-tab{% if active_person_tab == 'health' %} is-active{% endif %}"
-    href="{% url 'people:health' selected_person.pk %}"
-    hx-get="{% url 'people:health' selected_person.pk %}"
+    href="{% url 'people:health' selected_person.pk %}{{ person_browser_query_suffix }}"
+    hx-get="{% url 'people:health' selected_person.pk %}{{ person_browser_query_suffix }}"
     hx-target="#person-detail"
     hx-push-url="true"
     {% if active_person_tab == 'health' %}aria-current="page"{% endif %}
   >Zdraví</a>
   <a
     class="person-tab{% if active_person_tab == 'materials' %} is-active{% endif %}"
-    href="{% url 'people:materials' selected_person.pk %}"
-    hx-get="{% url 'people:materials' selected_person.pk %}"
+    href="{% url 'people:materials' selected_person.pk %}{{ person_browser_query_suffix }}"
+    hx-get="{% url 'people:materials' selected_person.pk %}{{ person_browser_query_suffix }}"
     hx-target="#person-detail"
     hx-push-url="true"
     {% if active_person_tab == 'materials' %}aria-current="page"{% endif %}

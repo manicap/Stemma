@@ -8,11 +8,12 @@
   </header>
   <form
     class="person-form person-overview"
+    data-person-browser-form
     data-person-form
     data-dirty="{% if form_submitted %}true{% else %}false{% endif %}"
     method="post"
-    action="{% url 'people:create' %}"
-    hx-post="{% url 'people:create' %}"
+    action="{% url 'people:create' %}{{ person_browser_query_suffix }}"
+    hx-post="{% url 'people:create' %}{{ person_browser_query_suffix }}"
     hx-target="#person-detail"
     hx-indicator="#detail-loading"
     hx-disabled-elt="find [data-person-submit]"
@@ -41,9 +42,10 @@
       <button class="primary-button" type="submit" data-person-submit data-idle-label="Uložit osobu" data-loading-label="Ukládám…">Uložit osobu</button>
       <a
         class="secondary-button"
+        data-person-browser-link
         data-cancel-edit
-        href="{% url 'people:index' %}"
-        hx-get="{% url 'people:index' %}"
+        href="{% url 'people:index' %}{{ person_browser_query_suffix }}"
+        hx-get="{% url 'people:index' %}{{ person_browser_query_suffix }}"
         hx-target="#person-detail"
         hx-push-url="true"
       >Zrušit</a>

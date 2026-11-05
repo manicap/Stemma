@@ -36,6 +36,8 @@ class PersonDerivedFacts:
     age: int | None
     age_text: str | None
     roman_suffix: str | None
+    birth_sort_date: date | None
+    birth_sort_date_end: date | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -290,6 +292,10 @@ def get_visible_person_presentations(
                     age=age,
                     age_text=_format_age(age),
                     roman_suffix=suffixes[person.pk],
+                    birth_sort_date=(birth.sort_date if birth else None),
+                    birth_sort_date_end=(
+                        birth.sort_date_end if birth else None
+                    ),
                 ),
             )
         )

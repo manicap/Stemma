@@ -181,6 +181,22 @@ h1, h2, h3, .brand, .app-sidebar-title {
 .panel-heading { padding: 0 .5rem 1rem; }
 .panel-heading h1, .person-header h2 { margin: .15rem 0; }
 .eyebrow { margin: 0; color: var(--primary); font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.person-browser-controls { display: grid; gap: .7rem; margin: 0 .5rem 1rem; }
+.person-search-field { position: relative; display: grid; gap: .35rem; }
+.person-search-field label, .person-browser-selects span { color: var(--muted); font-size: .78rem; font-weight: 700; }
+.person-search-field input, .person-browser-selects select { width: 100%; min-height: 2.65rem; padding: .55rem .65rem; color: var(--text); background: var(--surface-muted); border: 1px solid var(--border); border-radius: .4rem; }
+.person-search-field input:focus-visible, .person-browser-selects select:focus-visible { border-color: var(--primary); outline: .15rem solid var(--primary-soft); }
+.person-browser-loading { position: absolute; right: .65rem; bottom: .72rem; color: var(--muted); font-size: .75rem; opacity: 0; }
+.person-browser-loading.htmx-request { opacity: 1; }
+.person-browser-selects { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.person-browser-selects label { display: grid; gap: .3rem; min-width: 0; }
+.person-suggestions { display: grid; gap: .2rem; margin: 0 .5rem .75rem; padding: .35rem; background: var(--surface-raised); border: 1px solid var(--border); border-radius: .5rem; box-shadow: 0 .45rem 1rem var(--shadow); }
+.person-suggestion { display: grid; gap: .15rem; padding: .6rem; color: var(--text); border-radius: .35rem; text-decoration: none; }
+.person-suggestion:hover, .person-suggestion:focus-visible { background: var(--primary-soft); outline: none; }
+.person-suggestion small { color: var(--muted); }
+.person-search-empty, .person-list-empty { padding: .65rem; }
+.person-search-empty { margin: 0; color: var(--muted); }
+.person-search-create { display: inline-flex; margin: .15rem .65rem .65rem; color: var(--primary); font-weight: 700; }
 .people-list { display: grid; gap: .35rem; }
 
 .person-list-item {

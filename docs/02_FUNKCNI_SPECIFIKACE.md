@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.62
+**Verze:** 0.63
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
 **Datum revize:** 5. 11. 2026
 
@@ -11,7 +11,8 @@ Tento dokument popisuje současnou implementaci i dlouhodobý cílový stav.
 Požadavek uvedený ve specifikaci proto sám o sobě neznamená, že je již
 uživatelsky dostupný.
 
-**Implementováno:** globální shell a Přehled, actor-aware seznam a detail osob,
+**Implementováno:** globální shell a Přehled, actor-aware seznam, vyhledávání,
+filtrování, řazení a detail osob,
 omezená editace osoby, session autentizace a role, odvozené údaje osoby,
 read-only karty Vztahy, Bydliště, Hrobová místa a Události, actor-aware PDF/A4
 export osoby, read-only karta Materiály osoby a kompletní Health vertikála
@@ -74,8 +75,9 @@ používá samostatně a seznam se po výběru osoby automaticky zavře.
 
 **Stav:** Implementován je actor-aware seznam skutečných osob, bezpečný empty
 state, základní identifikační údaje a odvozené datum či rok života, kategorie,
-římské pořadí a oprávněné vytvoření osoby. Následující vyhledávání, filtry,
-volby řazení a fotografie představují plánovaný cílový stav.
+římské pořadí, oprávněné vytvoření osoby, vyhledávání s našeptávačem, filtr
+kategorie a volby řazení. Fotografie a zvláštní lifecycle filtr archivovaných
+osob představují plánovaný cílový stav.
 
 Každý záznam osoby obsahuje:
 
@@ -112,6 +114,30 @@ Vyhledávání pracuje minimálně s:
 - rokem narození.
 
 Vyhledávání nerozlišuje velikost písmen a je tolerantní k diakritice.
+
+Implementované hledání používá úzký actor-aware person browser nad
+`get_visible_people(*, actor)` a odvozenými prezentacemi. Porovnává částečné
+tokeny v základním jménu a příjmení, ve všech actorovi viditelných aktivních
+`PersonName` záznamech bez ohledu na jejich typ a ve zobrazeném roce či textu
+jednoznačné viditelné události narození. Alternativní jméno s neviditelným
+`access_level`, archivované nebo měkce odstraněné jméno se do hledání
+nezapočítá. Veřejný dotaz je omezen na 200 znaků. Našeptávač vrací nejvýše osm výsledků a přes samostatný GET HTMX
+fragment `/osoby/vysledky/` nikdy neobchází serverovou autorizaci detailu.
+
+Filtr nabízí všechny aktivní kategorie a navíc neaktivní kategorii, pokud je
+přiřazena alespoň jedné právě viditelné osobě. Neznámý nebo neplatný parametr
+kategorie se bezpečně normalizuje na výchozí volbu Všechny osoby; nevytváří se
+paralelní číselník ani nový permission kontrakt.
+
+Řazení podle věku používá pouze technické meze `sort_date` a `sort_date_end`
+jediné actorovi viditelné události narození ve správné roli. Rok, měsíc a
+rozmezí proto zachovávají svoji neúplnost a nevytvářejí falešné přesné datum.
+Chybějící, skryté nebo nejednoznačné narození se považuje pro řazení za
+neznámé a je vždy až za známými hodnotami. Shody jsou deterministicky dořazeny
+normalizovaným jménem a PK. Parametry `q`, `category` a `sort` lze kombinovat;
+HTMX výměna levého výsledkového fragmentu zachová pravý detail. Pokud vybraná
+osoba z výsledků vypadne, detail zůstane otevřený, ale žádná položka seznamu se
+neoznačuje jako aktuální.
 
 Archivované osoby se ve výchozím seznamu nezobrazují. Oprávněný uživatel je může zobrazit zvláštní volbou filtru.
 

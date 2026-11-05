@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -54,12 +56,17 @@ from places.selectors import (
 
 from .derived_selectors import (
     PersonPresentation,
-    get_visible_person_presentations,
 )
 from .forms import PersonCreateForm, PersonForm
 from .models import Person
 from .pdf_exports import build_person_pdf, get_person_pdf_export
 from .selectors import get_visible_person, get_visible_relationship_overview
+from .search_selectors import (
+    DEFAULT_PERSON_SORT,
+    PERSON_SORT_CHOICES,
+    PersonBrowserResult,
+    get_visible_person_browser,
+)
 from .services import (
     BasicPersonInput,
     PersonInput,
@@ -93,14 +100,23 @@ def _shell_context(
     selected_person: Person | None = None,
     presentations: tuple[PersonPresentation, ...] | None = None,
 ) -> dict[str, object]:
+    browser = _person_browser(request)
     if presentations is None:
-        presentations = get_visible_person_presentations(actor=request.user)
+        presentations = browser.presentations
     facts_by_person_id = {
         presentation.person.pk: presentation.facts
-        for presentation in presentations
+        for presentation in browser.visible_presentations
     }
     return {
         "person_presentations": presentations,
+        "person_suggestions": browser.suggestions,
+        "person_categories": browser.categories,
+        "person_search_query": browser.query,
+        "person_category_id": browser.category_id,
+        "person_sort": browser.sort,
+        "person_sort_choices": PERSON_SORT_CHOICES,
+        "person_browser_query": _person_browser_query(browser),
+        "person_browser_query_suffix": _person_browser_query_suffix(browser),
         "selected_person": selected_person,
         "can_add_person": (
             _current_actor_with_permission(request, "people.add_person")
@@ -114,18 +130,51 @@ def _shell_context(
     }
 
 
+def _person_browser(request: HttpRequest) -> PersonBrowserResult:
+    cached = getattr(request, "_stemma_person_browser", None)
+    if cached is None:
+        cached = get_visible_person_browser(
+            actor=request.user,
+            query=request.GET.get("q", ""),
+            category=request.GET.get("category", ""),
+            sort=request.GET.get("sort", DEFAULT_PERSON_SORT),
+        )
+        request._stemma_person_browser = cached
+    return cached
+
+
+def _person_browser_query(browser: PersonBrowserResult) -> str:
+    values = {}
+    if browser.query:
+        values["q"] = browser.query
+    if browser.category_id is not None:
+        values["category"] = str(browser.category_id)
+    if browser.sort != DEFAULT_PERSON_SORT:
+        values["sort"] = browser.sort
+    return urlencode(values)
+
+
+def _person_browser_query_suffix(browser: PersonBrowserResult) -> str:
+    query = _person_browser_query(browser)
+    return f"?{query}" if query else ""
+
+
 def _visible_person_page(
     request: HttpRequest,
     person_id: int,
 ) -> tuple[tuple[PersonPresentation, ...], PersonPresentation]:
-    presentations = get_visible_person_presentations(actor=request.user)
+    browser = _person_browser(request)
     presentation = next(
-        (item for item in presentations if item.person.pk == person_id),
+        (
+            item
+            for item in browser.visible_presentations
+            if item.person.pk == person_id
+        ),
         None,
     )
     if presentation is None:
         raise Http404("Osoba nebyla nalezena.")
-    return presentations, presentation
+    return browser.presentations, presentation
 
 
 def _render_person_content(
@@ -136,7 +185,11 @@ def _render_person_content(
     template_name: str,
     context: dict[str, object] | None = None,
 ) -> HttpResponse:
-    content_context = {
+    content_context = _shell_context(
+        request,
+        selected_person=presentation.person,
+        presentations=presentations,
+    ) | {
         "selected_person": presentation.person,
         "selected_facts": presentation.facts,
     }
@@ -147,12 +200,7 @@ def _render_person_content(
     return render(
         request,
         "people/person_shell.html",
-        _shell_context(
-            request,
-            selected_person=presentation.person,
-            presentations=presentations,
-        )
-        | content_context
+        content_context
         | {"person_content_template": template_name},
     )
 
@@ -166,6 +214,17 @@ def person_index(request: HttpRequest) -> HttpResponse:
     return render(
         request,
         "people/person_shell.html",
+        _shell_context(request),
+    )
+
+
+@require_GET
+def person_search_results(request: HttpRequest) -> HttpResponse:
+    """Return the authorized HTMX list and autocomplete suggestions."""
+
+    return render(
+        request,
+        "people/partials/person_browser_results.html",
         _shell_context(request),
     )
 
@@ -227,7 +286,8 @@ def person_relationships(
         actor=request.user,
     )
     detail_person_ids = {
-        item.person.pk for item in presentations
+        item.person.pk
+        for item in _person_browser(request).visible_presentations
     }
     relationship_presentations = tuple(
         {
@@ -235,6 +295,7 @@ def person_relationships(
             "reasons": item.reasons,
             "detail_url": (
                 reverse("people:detail", args=(item.person.pk,))
+                + _person_browser_query_suffix(_person_browser(request))
                 if item.person.pk in detail_person_ids
                 else None
             ),
@@ -1264,16 +1325,16 @@ def person_create(request: HttpRequest) -> HttpResponse:
             _add_service_errors(form, error)
         else:
             if request.headers.get("HX-Request") == "true":
-                presentations = get_visible_person_presentations(actor=actor)
+                browser = _person_browser(request)
                 presentation = next(
                     item
-                    for item in presentations
+                    for item in browser.visible_presentations
                     if item.person.pk == created_person.pk
                 )
                 context = _shell_context(
                     request,
                     selected_person=created_person,
-                    presentations=presentations,
+                    presentations=browser.presentations,
                 ) | {
                     "selected_person": presentation.person,
                     "selected_facts": presentation.facts,
@@ -1286,13 +1347,16 @@ def person_create(request: HttpRequest) -> HttpResponse:
                 response["HX-Push-Url"] = reverse(
                     "people:detail",
                     args=(created_person.pk,),
-                )
+                ) + _person_browser_query_suffix(browser)
                 return response
             messages.success(request, "Osoba byla vytvořena.")
-            return redirect("people:detail", person_id=created_person.pk)
+            return redirect(
+                reverse("people:detail", args=(created_person.pk,))
+                + _person_browser_query_suffix(_person_browser(request))
+            )
 
     _prepare_accessible_form_errors(form)
-    context = {
+    context = _shell_context(request) | {
         "person_create_form": form,
         "form_submitted": request.method == "POST",
     }
@@ -1301,7 +1365,7 @@ def person_create(request: HttpRequest) -> HttpResponse:
     return render(
         request,
         "people/person_shell.html",
-        _shell_context(request) | context,
+        context,
     )
 
 
@@ -1339,13 +1403,16 @@ def person_edit(request: HttpRequest, person_id: int) -> HttpResponse:
                 response["HX-Push-Url"] = reverse(
                     "people:detail",
                     args=(updated_person.pk,),
-                )
+                ) + _person_browser_query_suffix(_person_browser(request))
                 return response
             messages.success(request, "Změny byly uloženy.")
-            return redirect("people:detail", person_id=updated_person.pk)
+            return redirect(
+                reverse("people:detail", args=(updated_person.pk,))
+                + _person_browser_query_suffix(_person_browser(request))
+            )
 
     _prepare_accessible_form_errors(form)
-    context = {
+    context = _shell_context(request, selected_person=person) | {
         "selected_person": person,
         "person_form": form,
         "form_submitted": request.method == "POST",
@@ -1355,7 +1422,7 @@ def person_edit(request: HttpRequest, person_id: int) -> HttpResponse:
     return render(
         request,
         "people/person_shell.html",
-        _shell_context(request, selected_person=person) | context,
+        context,
     )
 
 

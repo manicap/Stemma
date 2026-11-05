@@ -17,14 +17,65 @@
       {% if can_add_person %}
         <a
           class="primary-button"
-          href="{% url 'people:create' %}"
-          hx-get="{% url 'people:create' %}"
+          data-person-browser-link
+          href="{% url 'people:create' %}{{ person_browser_query_suffix }}"
+          hx-get="{% url 'people:create' %}{{ person_browser_query_suffix }}"
           hx-target="#person-detail"
           hx-push-url="true"
         >+ Přidat osobu</a>
       {% endif %}
     </div>
-    {% include "people/partials/person_list.html" %}
+    <form
+      class="person-browser-controls"
+      action="{% url 'people:index' %}"
+      method="get"
+      hx-get="{% url 'people:search-results' %}"
+      hx-target="#person-browser-results"
+      hx-swap="outerHTML"
+      hx-trigger="input changed delay:250ms from:input[type='search'], change from:select"
+      hx-indicator="#person-browser-loading"
+      data-person-search-form
+    >
+      <div class="person-search-field">
+        <label for="person-search">Vyhledat osobu</label>
+        <input
+          id="person-search"
+          name="q"
+          type="search"
+          maxlength="200"
+          value="{{ person_search_query }}"
+          placeholder="Jméno, jiné jméno nebo rok narození"
+          autocomplete="off"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls="person-suggestions"
+          aria-expanded="{% if person_search_query %}true{% else %}false{% endif %}"
+          data-person-search-input
+        >
+        <span id="person-browser-loading" class="person-browser-loading htmx-indicator" role="status">Hledám…</span>
+      </div>
+      <div class="person-browser-selects">
+        <label>
+          <span>Kategorie</span>
+          <select name="category">
+            <option value="">Všechny osoby</option>
+            {% for category in person_categories %}
+              <option value="{{ category.pk }}"{% if person_category_id == category.pk %} selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <span>Řazení</span>
+          <select name="sort">
+            {% for value, label in person_sort_choices %}
+              <option value="{{ value }}"{% if person_sort == value %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+      <noscript><button class="secondary-button" type="submit">Použít</button></noscript>
+    </form>
+    {% include "people/partials/person_browser_results.html" %}
   </aside>
   <button class="drawer-scrim" type="button" data-person-list-close aria-label="Zavřít seznam osob"></button>
   <div class="detail-region">

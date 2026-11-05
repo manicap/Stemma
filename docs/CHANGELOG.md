@@ -1,5 +1,23 @@
 # Historie změn dokumentace
 
+## Verze 1.06 – 5. 11. 2026
+
+- person-centric seznam používá nový úzký actor-aware browser pro společné
+  částečné hledání v základních a viditelných alternativních jménech i ve
+  viditelném roce narození; porovnání nerozlišuje velikost ani diakritiku a
+  veřejný dotaz je serverově omezen na 200 znaků,
+- HTMX endpoint `/osoby/vysledky/` vrací nejvýše osm přístupných návrhů a
+  filtrovaný seznam, zachovává otevřený detail, podporuje klávesnici a bezpečný
+  empty state s oprávněnou akcí vytvoření osoby,
+- filtr používá stávající kategorie a zachovává přiřazené neaktivní hodnoty;
+  šest voleb řazení lze kombinovat s filtrem i hledáním,
+- řazení podle narození vychází výhradně z jediné actorovi viditelné události a
+  jejích technických mezí neúplného data; skryté, chybějící a nejednoznačné
+  narození pořadí neprozrazuje a zůstává za známými hodnotami,
+- nevznikl nový model, migrace, permission framework, vyhledávací engine ani ACP;
+  zvláštní lifecycle filtr archivovaných osob a globální hledání mimo sekci
+  Osoby zůstávají plánované.
+
 ## Verze 1.05 – 5. 11. 2026
 
 - schválené přiřazení standardního `people.add_person` systémové skupině Editor

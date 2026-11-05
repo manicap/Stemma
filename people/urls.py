@@ -6,6 +6,7 @@ app_name = "people"
 
 urlpatterns = [
     path("", views.person_index, name="index"),
+    path("vysledky/", views.person_search_results, name="search-results"),
     path("nova/", views.person_create, name="create"),
     path("<int:person_id>/", views.person_detail, name="detail"),
     path(

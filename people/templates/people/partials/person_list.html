@@ -7,6 +7,17 @@
   {% for presentation in person_presentations %}
     {% include "people/partials/person_list_item.html" with person=presentation.person person_facts=presentation.facts %}
   {% empty %}
-    <p class="empty-state">Zatím zde nejsou žádné osoby, které můžete zobrazit.</p>
+    <div class="person-list-empty">
+      <p class="empty-state">{% if person_search_query or person_category_id %}Nebyla nalezena žádná odpovídající osoba.{% else %}Zatím zde nejsou žádné osoby, které můžete zobrazit.{% endif %}</p>
+      {% if can_add_person %}
+        <a
+          class="person-search-create"
+          href="{% url 'people:create' %}{{ person_browser_query_suffix }}"
+          hx-get="{% url 'people:create' %}{{ person_browser_query_suffix }}"
+          hx-target="#person-detail"
+          hx-push-url="true"
+        >+ Přidat novou osobu</a>
+      {% endif %}
+    </div>
   {% endfor %}
 </nav>
