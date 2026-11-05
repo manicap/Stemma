@@ -1,8 +1,8 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.85
-**Stav:** M3.4 – Kontextové doručení příloh implementováno
+**Verze:** 0.86
+**Stav:** M3.5b – Nahrávání a připojování příloh k osobě implementováno
 **Datum revize:** 5. 11. 2026
 
 ## 1. Účel
@@ -2043,6 +2043,35 @@ Zadaný PDF/JPEG/PNG předá existujícímu upload use-casu, vytvoří person li
 stávající link service a vypíše jen open/download URL. Heslo, storage key ani
 fyzickou cestu nepřijímá jako veřejný identifikátor a nic nemaže; každé spuštění
 vytvoří nový lokální Attachment.
+
+Řez **M3.5b – Nahrávání a připojování příloh k osobě** přidává veřejný
+person-specific use-case
+`upload_person_attachment(*, actor, person, data, role, stream, storage=None)`.
+Existující `AttachmentUploadInput` zůstává zpětně kompatibilní a nově přijímá
+volitelný `display_name`, `description` a `access_level` s dosavadními bezpečnými
+defaulty. Use-case před čtením streamu a znovu v transakci načte aktuálního
+aktivního actora s `people.change_person`, běžně viditelnou nearchivovanou a
+neodstraněnou osobu a ověří požadovanou access úroveň existující policy. Nový
+Attachment vzniká pouze ve vlastním Vaultu actora; jeho access a access nové
+`PersonAttachment` jsou vždy shodné.
+
+Privátní uploadové jádro ponechává vytvoření vazby uvnitř stejného
+`transaction.atomic()` a stejného exception/cleanup scope jako přechod
+`pending -> available`. Selhání vazby proto vrátí oba databázové zápisy a přes
+`ProtectedAttachmentStorage.delete()` se best-effort pokusí odstranit právě
+vytvořený náhodný blob. Cleanup nikdy nepřekryje původní chybu. Procesní pád či
+selhání cleanupu může nadále zanechat orphan blob; obecná reconciliace není
+součástí řezu.
+
+HTTP/UI tvoří existující GET `/osoby/<person_id>/materialy/` a nový GET/POST
+`/osoby/<person_id>/materialy/pridat/`. Formulář podporuje full-page i HTMX
+multipart tok a po úspěchu vrací aktualizovaný actor-aware seznam s M3.4 open a
+download akcemi. Nabídka uploadu navíc vyžaduje alespoň jednu aktivní
+`AttachmentCategory` a jednu aktivní `AttachmentRole`; bez nich se nevydá
+nepoužitelný submit a UI bezpečně vysvětlí nutnou konfiguraci. Privacy zůstává
+v tomto formuláři `standard`; grant management,
+výběr existující přílohy, editace a lifecycle akce nevznikají. M3.5b nemění
+modely ani migrace a nezavádí nové oprávnění nebo obecný permission framework.
 
 První implementační řez zavádí dva prázdné katalogy:
 

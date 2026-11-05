@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.60
+**Verze:** 0.61
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
-**Datum revize:** 15. 10. 2026
+**Datum revize:** 5. 11. 2026
 
 ## 0. Jak číst stav funkcí
 
@@ -14,14 +14,15 @@ uživatelsky dostupný.
 **Implementováno:** globální shell a Přehled, actor-aware seznam a detail osob,
 omezená editace osoby, session autentizace a role, odvozené údaje osoby,
 read-only karty Vztahy, Bydliště, Hrobová místa a Události, actor-aware PDF/A4
-export osoby a kompletní Health vertikála včetně archivu a Koše. Webové
+export osoby, read-only karta Materiály osoby a kompletní Health vertikála
+včetně archivu a Koše. Webové
 průchody podporují full-page i HTMX režim podle svého kontraktu; export je
 samostatný běžný GET odkaz na PDF.
 
 **Backendově implementováno, širší produktové UI plánováno:** modely a servisní
 nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy, Bydliště,
 Hrobová místa a Události mají read-only person-centric přehled; jejich zápis,
-lifecycle a Materials UI chybí. Události navíc nemají obecný detail. Rozsah autorizovaných
+lifecycle a vlastní kontextové Materials UI chybí. Události navíc nemají obecný detail. Rozsah autorizovaných
 write hranic není u všech těchto domén stejný; existence backendu se proto
 nesmí vykládat jako hotové UI.
 
@@ -29,9 +30,11 @@ nesmí vykládat jako hotové UI.
 obsahují přílohy, zdroje, explicitní vazby, služby, kontextové selectory,
 privátní Vault-aware filesystem, actor-aware server-side upload PDF/JPEG/PNG a
 backendový request/grant workflow soukromých příloh včetně bezpečné redigované
-presentation.
-Health detail bezpečně zobrazuje pouze dostupná metadata. Download/doručení,
-browser upload a obecné Materials UI neexistují.
+presentation. Kontextové endpointy bezpečně otevírají nebo stahují podporované
+soubory a read-only karta Materiály osoby zobrazuje pouze actor-aware dostupné
+vazby, základní metadata a odkazy na tyto endpointy. Health detail bezpečně
+zobrazuje pouze dostupná metadata. Browser upload, request/grant UI a obecné
+management UI Materials neexistují.
 
 **Plánováno / cílový stav:** obecné vyhledávání a filtry, write/lifecycle UI
 vztahů, bydlišť, hrobových míst a událostí, obecný Event detail a Materials UI, fotografie jako souborový
@@ -116,9 +119,9 @@ Archivované osoby se ve výchozím seznamu nezobrazují. Oprávněný uživatel
 
 **Stav:** Implementován je skutečný actor-aware detail, základní záhlaví,
 odvozené životní údaje, přehled, omezená editace osoby, read-only karty Vztahy,
-Bydliště, Hrobová místa a Události, actor-aware PDF/A4 export a kompletní karta
-Zdraví. Hlavní fotografie, lokální historie Zpět/Vpřed, Event detail a karta
-Materiály jsou plánované.
+Bydliště, Hrobová místa, Události a Materiály, actor-aware PDF/A4 export a
+kompletní karta Zdraví. Hlavní fotografie, lokální historie Zpět/Vpřed, Event
+detail a širší Materials management UI jsou plánované.
 
 Záhlaví detailu zůstává viditelné při přepínání karet a obsahuje:
 
@@ -536,10 +539,12 @@ Každá fotografie může obsahovat:
 ## 11. Dokumenty a přílohy
 
 **Stav:** Vedle metadat, Vault ownership, explicitních vazeb, actor-aware read
-selectorů, privátního filesystemu a server-side uploadu je implementován
-backendový request/grant workflow pro soukromé přílohy. Health detail zobrazuje
-pouze bezpečná metadata. Download či jiné doručení, request/grant UI, browser
-upload a obecné management UI jsou plánované.
+selectorů, privátního filesystemu, server-side uploadu a backendového
+request/grant workflow jsou implementovány kontextové endpointy pro otevření a
+stažení. Karta Materiály v detailu osoby poskytuje read-only seznam dostupných
+příloh ve full-page i HTMX režimu. Health detail zobrazuje pouze bezpečná
+metadata. Request/grant UI, browser upload a obecné management UI jsou
+plánované.
 
 Příloha je univerzální objekt pro:
 
@@ -579,9 +584,26 @@ link ani Attachment access/lifecycle policy a neobchází `FileStatus.AVAILABLE`
 Actor bez owner/grant práva dostane v jinak viditelném kontextu pouze immutable
 placeholder `Soukromý dokument`; nevydává filename, MIME, velikost, SHA-256,
 `storage_key`, autora, vlastníka, technická metadata ani workflow informace.
-`storage_key` se nevydává ani v běžné plné presentation. M3.3 nevytváří download,
-doručení, HTTP endpoint, UI, notifikace ani lifecycle delete/cancel/revoke
-orchestrace. Další plánovaný řez je **M3.4 – Kontextové doručení příloh**.
+`storage_key` se nevydává ani v běžné plné presentation. M3.3 nevytvořil
+download, doručení, HTTP endpoint, UI, notifikace ani lifecycle
+delete/cancel/revoke orchestrace; doručení doplnil až následující řez M3.4.
+
+Řez **M3.4 – Kontextové doručení příloh** poskytuje serverově autorizované GET
+otevření a stažení pouze přes podporovaný typ kontextu, jeho ID a ID explicitní
+vazby. Při každém požadavku znovu uplatní target/link/Attachment access,
+lifecycle, `FileStatus.AVAILABLE` a private owner/grant policy a blob otevírá
+výhradně přes chráněné storage. Neautorizovaný, změněný nebo fyzicky nedostupný
+cíl končí jednotnou 404 bez úniku metadat.
+
+Řez **M3.5a – Uživatelské rozhraní pro prohlížení příloh** aktivuje kartu
+Materiály v detailu osoby. Endpoint `/osoby/<person_id>/materialy/` autorizuje
+osobu přes stávající person policy a seznam získává výhradně z
+`get_visible_person_attachment_links()`. U dostupné vazby zobrazuje název,
+kategorii, MIME typ, velikost, popis a roli; akce Otevřít a Stáhnout vedou na
+kontextové endpointy M3.4 s typem `person`, ID osoby a ID vazby. Neviditelná
+příloha nevydá do HTML žádná metadata a prázdný nebo pouze skrytý výsledek má
+stejný bezpečný stav. Karta nevytváří upload, propojování, editaci, mazání,
+grant management, náhledy ani obecné Materials UI.
 
 M3.2 přijímá pouze PDF (`.pdf`, `application/pdf`), JPEG (`.jpg`/`.jpeg`,
 `image/jpeg`) a PNG (`.png`, `image/png`) do 25 MiB. Aktivní přihlášený actor

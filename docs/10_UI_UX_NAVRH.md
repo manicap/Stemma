@@ -1,9 +1,9 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.14
+**Verze:** 0.15
 **Stav:** schválený pracovní základ  
-**Datum revize:** 12. 10. 2026
+**Datum revize:** 5. 11. 2026
 
 ## 1. Účel dokumentu
 
@@ -397,8 +397,8 @@ Aktivní záložka bude označena kombinací:
 Obsah každé karty bude mít vlastní nadpis a může obsahovat velmi jemný tematický piktogram v pozadí. Piktogram je pouze dekorativní a nesmí rušit text.
 
 Implementované taby zpřístupňují Přehled, read-only Vztahy, read-only Bydliště,
-read-only Hrobová místa a Zdraví; ostatní
-karty jsou ve společné navigaci jasně označené jako plánované. Všechny funkční
+read-only Hrobová místa, Zdraví a Materiály osoby; ostatní karty jsou ve
+společné navigaci jasně označené jako plánované. Všechny funkční
 karty používají stejný person header, full-page fallback a HTMX výměnu
 v `#person-detail`. Karta Zdraví zobrazuje seznam záznamů a jejich detail s
 bezpečnými metadaty příloh a zdrojů. Příloha zde není odkazem ke stažení a UI
@@ -551,6 +551,22 @@ Po kliknutí se zobrazí:
 - zdroj a další metadata, pokud existují.
 
 Jedna příloha se neukládá duplicitně. V Materiálech se pouze zobrazí ve všech odpovídajících souvislostech.
+
+Implementovaný person-centric řez zobrazuje actorovi dostupné přílohy v
+jednoduchých kartách se základními metadaty a akcemi **Otevřít** a **Stáhnout**,
+které vedou výhradně na kontextové M3.4 URL. Oprávněný aktivní uživatel s
+`people.change_person` u běžně viditelné aktivní osoby navíc vidí akci
+**Přidat přílohu**. Samostatný full-page/HTMX formulář přijímá soubor, volitelný
+název a popis, povinnou kategorii a roli vazby a jednu dostupnou access úroveň.
+Po úspěchu se vrátí aktualizovaný seznam s novou položkou. Neoprávněnému
+uživateli se akce nezobrazuje a přímý požadavek odmítá server. M3.5b nepřidává
+výběr cizího Vaultu, privacy/grant management, připojení již existující přílohy,
+editaci, lifecycle akce, náhledy ani galerii.
+
+Formulář je použitelný pouze tehdy, když existuje alespoň jedna aktivní
+kategorie přílohy a jedna aktivní role vazby. Pokud některý z těchto katalogů
+nemá aktivní hodnotu, karta akci nezobrazí a místo nefunkčního formuláře
+vysvětlí, že je nejprve nutné doplnit katalogy ve správě systému.
 
 ## 17. Přidání a editace osoby
 

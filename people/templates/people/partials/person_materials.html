@@ -1,0 +1,63 @@
+<article class="person-detail">
+  {% include "people/partials/person_header.html" %}
+  {% include "people/partials/person_tabs.html" %}
+
+  <section class="person-overview" aria-labelledby="person-materials-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Přílohy osoby</p>
+        <h3 id="person-materials-heading">Materiály</h3>
+      </div>
+      {% if can_add_person_attachment %}
+        <a
+          class="primary-button"
+          href="{% url 'people:material-attachment-create' selected_person.pk %}"
+          hx-get="{% url 'people:material-attachment-create' selected_person.pk %}"
+          hx-target="#person-detail"
+          hx-push-url="true"
+        >Přidat přílohu</a>
+      {% endif %}
+    </div>
+
+    {% if attachment_upload_unavailable %}
+      <p class="empty-state">Nahrávání příloh bude dostupné po nastavení aktivní kategorie a role přílohy.</p>
+    {% endif %}
+
+    {% if attachment_saved %}
+      <p class="success-message" role="status">Příloha byla nahrána a připojena.</p>
+    {% endif %}
+
+    {% if attachment_links %}
+      <div class="related-list">
+        {% for link in attachment_links %}
+          <article class="related-card">
+            <span class="health-record-type">{{ link.attachment.category.name }}</span>
+            <strong>{{ link.attachment.display_name|default:link.attachment.original_filename }}</strong>
+            <span class="muted-copy">{{ link.attachment.mime_type }} · {{ link.attachment.size_bytes|filesizeformat }}</span>
+            {% if link.attachment.description %}
+              <p>{{ link.attachment.description }}</p>
+            {% endif %}
+            {% if link.context_description %}
+              <p class="muted-copy">{{ link.context_description }}</p>
+            {% endif %}
+            <span class="muted-copy">Role: {{ link.role.name }}</span>
+            <div class="form-actions">
+              <a
+                class="secondary-button"
+                href="{% url 'materials:open-attachment' 'person' selected_person.pk link.pk %}"
+                target="_blank"
+                rel="noopener"
+              >Otevřít</a>
+              <a
+                class="secondary-button"
+                href="{% url 'materials:download-attachment' 'person' selected_person.pk link.pk %}"
+              >Stáhnout</a>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">K této osobě zatím nejsou dostupné žádné materiály.</p>
+    {% endif %}
+  </section>
+</article>

@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.64
-**Stav:** M3.4 – Kontextové doručení příloh implementováno
+**Verze:** 0.66
+**Stav:** M3.5b – Nahrávání a připojování příloh k osobě implementováno
 **Datum revize:** 5. 11. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -647,6 +647,34 @@ kontextové URL pro ruční ověření bez storage key nebo hesla. Nejde o Mater
 UI ani produkční seed. Stabilní diff prošel 1 681/1 681 testů, Django system
 checkem a nezávislým QA, security a dokumentačním/HTTP review.
 
+Řez **M3.5a – Uživatelské rozhraní pro prohlížení příloh** aktivuje read-only
+kartu Materiály v detailu osoby ve full-page i HTMX režimu. Seznam používá
+stávající actor-aware person attachment selector, takže do HTML vydá pouze
+dostupné vazby a jejich oprávněná metadata. Otevření a stažení vede výhradně na
+kontextové M3.4 URL s typem `person`, ID osoby a ID vazby; fyzický blob ani
+storage cesta se z UI nezpřístupňují. Prázdný a pouze skrytý seznam používají
+stejný bezpečný stav. Upload, propojování, editace, mazání, grant management,
+náhledy, galerie a obecné Materials management UI zůstávají plánované.
+
+Řez **M3.5b – Nahrávání a připojování příloh k osobě** přidává oprávněnému
+actorovi formulář přímo z karty Materiály. Server z čerstvého stavu vyžaduje
+aktivního uživatele s `people.change_person`, běžně viditelnou aktivní osobu,
+vlastní Vault a požadovanou access úroveň v rozsahu existující policy. Úzký
+`upload_person_attachment()` ukládá název, popis a shodný access přílohy i vazby;
+upload a person link uzavírá v jedné DB transakci a při pozdějším selhání
+best-effort odstraní pouze nový blob přes chráněné Storage API. Full-page i HTMX
+tok po úspěchu zobrazí novou položku s M3.4 open/download akcemi. Privacy/grant
+management, připojení existující přílohy, editace, lifecycle, obecná reconciliace
+a obecné Materials management UI zůstávají mimo řez.
+
+Cílená závěrečná regrese M3.5b prošla 68/68 testy a Django system checkem.
+Reálný browser smoke ověřil skrytou akci a 403 pro anonymního uživatele,
+oprávněný formulář a jeho chybu bez souboru, následné zobrazení položky a M3.4
+open/download odpovědi 200. Dostupný in-app browser nepodporuje automatizaci
+nativního file chooseru, takže fyzický multipart POST z browseru zůstává
+nahrazen cíleným HTTP/HTMX integračním testem; nejde o produktové omezení
+formuláře, ale o známé omezení této validační relace.
+
 ## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
 
 **Dokončeno:**
@@ -660,12 +688,13 @@ checkem a nezávislým QA, security a dokumentačním/HTTP review.
 - read-only karta Bydliště ve full-page i HTMX režimu,
 - read-only karta Hrobová místa ve full-page i HTMX režimu,
 - read-only karta Události ve full-page i HTMX režimu,
+- karta Materiály osoby s prohlížením, otevřením, stažením a oprávněným uploadem
+  nové přílohy přímo k osobě,
 - testy použitelnosti a browser smoke pro implementované průchody.
 
 **Plánováno:**
 
-- produktová karta Materiály; její záložka je zatím poctivě označená jako
-  plánovaná,
+- připojování již existujících příloh, editace, lifecycle a management grantů,
 - Event detail, formuláře a další uživatelské průchody Events a Materials.
 
 Fáze proto není prohlášena za kompletní v celém původně zamýšleném rozsahu,

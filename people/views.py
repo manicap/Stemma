@@ -39,6 +39,12 @@ from health.use_cases import (
     soft_delete_health_record,
     update_health_record,
 )
+from materials.forms import PersonAttachmentUploadForm
+from materials.selectors import get_visible_person_attachment_links
+from materials.upload_services import (
+    AttachmentUploadInput,
+    upload_person_attachment,
+)
 from places.models import Place
 from places.selectors import (
     get_visible_person_grave_site_links,
@@ -284,6 +290,141 @@ def person_grave_sites(
         context={
             "active_person_tab": "grave_sites",
             "grave_site_links": grave_site_links,
+        },
+    )
+
+
+@require_GET
+def person_materials(
+    request: HttpRequest,
+    person_id: int,
+) -> HttpResponse:
+    """Zobraz actor-aware přehled příloh osoby."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    return _render_person_materials(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+    )
+
+
+def _render_person_materials(
+    request: HttpRequest,
+    *,
+    presentations: tuple[PersonPresentation, ...],
+    presentation: PersonPresentation,
+    saved: bool = False,
+) -> HttpResponse:
+    can_change_person = (
+        presentation.person.archived_at is None
+        and presentation.person.deleted_at is None
+        and _current_actor_can_change_person(request)
+    )
+    upload_form = (
+        PersonAttachmentUploadForm(actor=request.user)
+        if can_change_person
+        else None
+    )
+    attachment_links = get_visible_person_attachment_links(
+        person=presentation.person,
+        actor=request.user,
+    )
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_materials.html",
+        context={
+            "active_person_tab": "materials",
+            "attachment_links": attachment_links,
+            "can_add_person_attachment": (
+                can_change_person
+                and upload_form is not None
+                and upload_form.is_configured
+            ),
+            "attachment_upload_unavailable": (
+                can_change_person
+                and upload_form is not None
+                and not upload_form.is_configured
+            ),
+            "attachment_saved": saved,
+        },
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def person_material_attachment_create(
+    request: HttpRequest,
+    person_id: int,
+) -> HttpResponse:
+    """Nahraj a atomicky připoj jednu přílohu k osobě."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    if (
+        presentation.person.archived_at is not None
+        or presentation.person.deleted_at is not None
+    ):
+        raise Http404("Osoba nebyla nalezena.")
+    if not _current_actor_can_change_person(request):
+        raise PermissionDenied(
+            "K nahrání přílohy k osobě nemáte oprávnění."
+        )
+    form = PersonAttachmentUploadForm(
+        request.POST or None,
+        request.FILES or None,
+        actor=request.user,
+    )
+    if request.method == "POST" and form.is_valid():
+        uploaded_file = form.cleaned_data["file"]
+        try:
+            upload_person_attachment(
+                actor=request.user,
+                person=presentation.person,
+                data=AttachmentUploadInput(
+                    category=form.cleaned_data["category"],
+                    original_filename=uploaded_file.name,
+                    declared_mime_type=(uploaded_file.content_type or ""),
+                    display_name=form.cleaned_data["display_name"],
+                    description=form.cleaned_data["description"],
+                    access_level=form.cleaned_data["access_level"],
+                ),
+                role=form.cleaned_data["role"],
+                stream=uploaded_file,
+            )
+        except Person.DoesNotExist as exc:
+            raise Http404("Osoba nebyla nalezena.") from exc
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            if request.headers.get("HX-Request") == "true":
+                response = _render_person_materials(
+                    request,
+                    presentations=presentations,
+                    presentation=presentation,
+                    saved=True,
+                )
+                response["HX-Push-Url"] = reverse(
+                    "people:materials",
+                    args=(presentation.person.pk,),
+                )
+                return response
+            messages.success(request, "Příloha byla nahrána a připojena.")
+            return redirect(
+                "people:materials",
+                person_id=presentation.person.pk,
+            )
+    _prepare_accessible_form_errors(form)
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_material_form.html",
+        context={
+            "active_person_tab": "materials",
+            "attachment_form": form,
+            "attachment_upload_configured": form.is_configured,
+            "form_submitted": request.method == "POST",
         },
     )
 

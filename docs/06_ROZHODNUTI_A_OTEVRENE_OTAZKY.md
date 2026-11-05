@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.91
+**Verze:** 0.92
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 5. 11. 2026
 
@@ -254,6 +254,20 @@ na HTTP hranici normalizuje na 404 bez storage klíče, filename nebo rozlišen�
 existence. Odpověď používá inline nebo attachment `Content-Disposition`,
 `nosniff`, `private, no-store` a `no-referrer`. Nevzniká UI, model, migrace,
 permission, audit, lifecycle orchestrace, reconciliation, šifrování ani ACP.
+202. Řez **M3.5b – Nahrávání a připojování příloh k osobě** používá jediný
+actor-aware use-case `upload_person_attachment()`. Server v něm z čerstvého
+databázového stavu vyžaduje aktivního actora s existujícím oprávněním
+`people.change_person` a běžně viditelnou aktivní, nearchivovanou a měkce
+neodstraněnou cílovou osobu. Nový `Attachment` vždy vzniká ve vlastním Vaultu
+actora a jedna požadovaná access úroveň, kterou actor podle stávající policy smí
+vidět, se ukládá shodně na přílohu i `PersonAttachment`. Zobrazovaný název a
+popis jsou kompatibilním rozšířením existujícího upload vstupu. Upload, přechod
+souboru do `available` a vytvoření vazby probíhají v jedné databázové transakci;
+selhání po vytvoření blobu transakci vrátí zpět a přes Django Storage API se
+best-effort odstraní výhradně nově vytvořený blob. Selhání kompenzace nepřekryje
+původní chybu. Procesní pád může nadále zanechat orphan blob nebo stale
+`pending`; obecná reconciliace zůstává mimo M3.5b. Nevzniká obecný permission
+framework, nový model, migrace, oprávnění ani ACP.
 
 ## 2. Otevřené otázky
 

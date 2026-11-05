@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.46
+**Verze:** 0.47
 **Stav:** pracovní návrh  
-**Datum revize:** 15. 10. 2026
+**Datum revize:** 5. 11. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -37,6 +37,13 @@ Může:
 - doplňovat zdroje,
 - upravovat zdravotní záznamy, pokud má oprávnění,
 - opravovat chyby.
+
+Implementovaný řez M3.5b používá existující `people.change_person` také pro
+úzkou akci nahrání nové přílohy do vlastního Vaultu a jejího atomického
+připojení ke konkrétní běžně viditelné aktivní osobě. Toto oprávnění samo
+nepovoluje obecnou správu Materials, cizích Vaultů, grantů, lifecycle příloh ani
+vazeb v jiných kontextech. Zvolenou access úroveň musí actor smět podle obecné
+obsahové policy zobrazit.
 
 Nemůže:
 

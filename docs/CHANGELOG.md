@@ -1,5 +1,42 @@
 # Historie změn dokumentace
 
+## Verze 1.04 – 5. 11. 2026
+
+- schválený řez **M3.5b – Nahrávání a připojování příloh k osobě** používá jediný
+  actor-aware `upload_person_attachment()` s čerstvým `people.change_person`,
+  aktivní viditelnou osobou, vlastním Vaultem a shodným povoleným access levelem
+  přílohy i vazby,
+- `AttachmentUploadInput` zpětně kompatibilně doplňuje zobrazovaný název, popis a
+  access level; formulář navíc vybírá povinnou aktivní kategorii a roli vazby,
+- upload a person link probíhají v jedné DB transakční a kompenzační hranici;
+  selhání po blob write rollbackne metadata i vazbu a best-effort odstraní pouze
+  nový blob přes chráněné Django Storage API bez překrytí původní chyby,
+- karta Materiály nabízí oprávněnému uživateli full-page/HTMX akci Přidat
+  přílohu, po úspěchu vrací aktualizovaný seznam a zachovává kontextové M3.4
+  otevření a stažení,
+- pokud chybí aktivní kategorie nebo role přílohy, UI nevydá nefunkční submit a
+  zobrazí bezpečnou informaci o nutné konfiguraci katalogů,
+- privacy/grant management, výběr již existující přílohy, editace, lifecycle,
+  obecná reconciliace, nový model, migrace, permission framework ani ACP
+  nevznikly.
+- cílená regrese prošla 68/68 testy a Django system checkem; reálný browser
+  ověřil anonymní odmítnutí, oprávněný formulář, výsledný seznam a M3.4
+  otevření/stažení s HTTP 200. Automatizovaný browser multipart POST nebylo
+  možné dokončit, protože dostupný in-app browser nepodporuje nativní file
+  chooser; úplný upload a HTMX obnovu seznamu ověřuje cílený integrační test.
+
+## Verze 1.03 – 5. 11. 2026
+
+- řez **M3.5a – Uživatelské rozhraní pro prohlížení příloh** aktivuje kartu
+  Materiály v detailu osoby ve full-page i HTMX režimu,
+- karta načítá vazby přes existující actor-aware selector, zobrazuje základní
+  metadata a pro Otevřít/Stáhnout používá výhradně kontextové M3.4 URL osoby a
+  konkrétní vazby,
+- neveřejné přílohy ani jejich metadata se neoprávněnému actorovi nevydají do
+  HTML; prázdný a pouze skrytý seznam mají shodný bezpečný stav,
+- nevznikl model, migrace, permission framework, upload, propojování, editace,
+  mazání, grant management, náhled ani obecné Materials management UI.
+
 ## Verze 1.02 – 5. 11. 2026
 
 - řez **M3.4 – Kontextové doručení příloh** přidává serverově autorizované GET

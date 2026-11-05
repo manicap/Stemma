@@ -33,6 +33,16 @@ urlpatterns = [
         name="grave-sites",
     ),
     path(
+        "<int:person_id>/materialy/",
+        views.person_materials,
+        name="materials",
+    ),
+    path(
+        "<int:person_id>/materialy/pridat/",
+        views.person_material_attachment_create,
+        name="material-attachment-create",
+    ),
+    path(
         "<int:person_id>/zdravi/",
         views.person_health,
         name="health",

@@ -47,5 +47,12 @@
     hx-push-url="true"
     {% if active_person_tab == 'health' %}aria-current="page"{% endif %}
   >Zdraví</a>
-  <span class="person-tab is-disabled" aria-disabled="true">Materiály <small>Plánováno</small></span>
+  <a
+    class="person-tab{% if active_person_tab == 'materials' %} is-active{% endif %}"
+    href="{% url 'people:materials' selected_person.pk %}"
+    hx-get="{% url 'people:materials' selected_person.pk %}"
+    hx-target="#person-detail"
+    hx-push-url="true"
+    {% if active_person_tab == 'materials' %}aria-current="page"{% endif %}
+  >Materiály</a>
 </nav>

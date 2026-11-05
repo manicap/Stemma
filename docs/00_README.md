@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.66
-**Stav:** M3.4 – Kontextové doručení příloh implementováno
+**Verze dokumentace:** 0.67
+**Stav:** M3.5b – Nahrávání a připojování příloh k osobě implementováno
 **Datum revize:** 5. 11. 2026
 
 ## Účel balíčku
@@ -42,6 +42,29 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.67
+
+Verze 0.67 dokončuje person-centric Materials UI řezy M3.5a a M3.5b:
+
+- karta Materiály zobrazuje pouze actor-aware dostupné vazby a bezpečná metadata
+  a otevírá či stahuje soubor výhradně přes kontextové M3.4 URL,
+- aktivní uživatel s aktuálním `people.change_person` může u běžně viditelné
+  aktivní osoby otevřít full-page/HTMX formulář a nahrát novou přílohu pouze do
+  vlastního Vaultu,
+- `upload_person_attachment()` nastaví stejný povolený access na Attachment i
+  PersonAttachment a drží upload i vazbu v jedné DB transakční a kompenzační
+  hranici,
+- selhání po vytvoření blobu rollbackne databázi a best-effort odstraní pouze
+  nový blob; cleanup nepřekryje původní chybu a crash reconciliation zůstává
+  známým budoucím provozním krokem,
+- nevznikl model, migrace, nové oprávnění, obecný permission framework,
+  privacy/grant management, editace ani lifecycle UI příloh.
+- cílená regrese M3.5b prošla 68/68 testy a Django system checkem; reálný
+  browser ověřil anonymní odmítnutí, oprávněný formulář, výsledný seznam a M3.4
+  otevření i stažení. Dostupný in-app browser neumí automatizovat nativní výběr
+  souboru, proto je samotný multipart upload v browseru doložen integračním
+  HTTP/HTMX testem, nikoli úplným automatizovaným browser POST průchodem.
 
 ## Stav verze 0.66
 
@@ -1041,7 +1064,8 @@ Materials UI.
   samostatně schválené read-only karty Vztahy, Bydliště, Hrobová místa a
   Události osoby a actor-aware PDF/A4 export osoby. Validační a review workflow
   upřesňuje ACP-009; baseline 1 587/1 587 patřil stavu RC 0.2 před následnými
-  M3 změnami a aktuální M3.4 baseline je 1 681/1 681.
+  M3 změnami; M3.4 baseline byl 1 681/1 681 a navazující M3.5a/M3.5b jsou
+  cíleně ověřované samostatnými HTTP, upload a bezpečnostními testy.
 - RC 0.1 je na experimentální větvi dokončené a připravené podle
   `07_ROADMAPA.md`; tento stav ani dokončení M2 nepovolují produkční nasazení
   nebo merge.
@@ -1049,10 +1073,11 @@ Materials UI.
   blockeru. Historický post-RC baseline před zahájením RC 0.2 byl 1 514/1 514.
 - Kompletní uživatelský vertikální průchod má vedle základního UI osoby doména
   Health. Vztahy, Bydliště, Hrobová místa a Události mají bezpečné read-only
-  person-centric přehledy; jejich zápis, lifecycle a Materials UI zůstávají
-  plánované. Obecný Event detail a write UI nevznikly. Materials poskytují
+  person-centric přehledy; jejich zápis a lifecycle zůstávají plánované. Obecný
+  Event detail a write UI nevznikly. Materials poskytují
   metadata, explicitní vazby, chráněný upload/storage, granty a backendové
-  kontextově autorizované doručení; produktové Materials UI zatím nevzniklo.
+  kontextově autorizované doručení; karta osoby navíc umí bezpečný seznam a
+  oprávněný upload nové přílohy přímo k osobě, nikoli obecnou správu Materials.
 - `backup/pre-agent-2026-08-17` je návratový bod před zahájením agentního experimentu a neslouží k vývoji.
 - Hlavním technickým dokumentem zůstává `11_DATABAZOVY_NAVRH.md` a exekuční pravidla agentní větve určuje kořenový `AGENTS.md`.
 
