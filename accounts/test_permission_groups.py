@@ -15,6 +15,10 @@ ELEVATED_PERMISSION_KEYS = {
 PERSON_EDITOR_PERMISSION_KEY = ("people", "change_person")
 PERSON_CREATOR_PERMISSION_KEY = ("people", "add_person")
 HEALTH_DELETE_PERMISSION_KEY = ("health", "delete_healthrecord")
+EVENT_EDITOR_PERMISSION_KEYS = {
+    ("events", "add_event"),
+    ("events", "change_event"),
+}
 
 
 class InitialPermissionGroupTests(TestCase):
@@ -293,3 +297,54 @@ class PersonCreatorPermissionMigrationTests(TestCase):
         self.assertFalse(editor.permissions.filter(pk=permission.pk).exists())
         self.assertTrue(reader.permissions.filter(pk=permission.pk).exists())
         self.assertTrue(Permission.objects.filter(pk=permission.pk).exists())
+
+
+class EventEditorPermissionMigrationTests(TestCase):
+    migration = import_module(
+        "accounts.migrations.0007_editor_event_permissions"
+    )
+
+    def permissions(self):
+        return Permission.objects.filter(
+            content_type__app_label="events",
+            codename__in={"add_event", "change_event"},
+        )
+
+    def test_forward_and_reverse_touch_only_editor_bindings(self) -> None:
+        permissions = tuple(self.permissions())
+        permission_ids = tuple(item.pk for item in permissions)
+        reader = Group.objects.get(name="Čtenář")
+        editor = Group.objects.get(name="Editor")
+        administrator = Group.objects.get(name="Správce")
+        reader.permissions.add(*permissions)
+        editor.permissions.remove(*permissions)
+
+        self.migration.grant_editor_event_permissions(apps, None)
+        self.migration.grant_editor_event_permissions(apps, None)
+
+        self.assertEqual(
+            set(
+                editor.permissions.filter(pk__in=permission_ids).values_list(
+                    "content_type__app_label",
+                    "codename",
+                )
+            ),
+            EVENT_EDITOR_PERMISSION_KEYS,
+        )
+        self.assertFalse(
+            administrator.permissions.filter(
+                pk__in=permission_ids
+            ).exists()
+        )
+
+        self.migration.revoke_editor_event_permissions(apps, None)
+
+        self.assertFalse(
+            editor.permissions.filter(
+                pk__in=permission_ids
+            ).exists()
+        )
+        self.assertEqual(
+            reader.permissions.filter(pk__in=permission_ids).count(),
+            2,
+        )

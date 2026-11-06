@@ -15,7 +15,19 @@ from django.utils.text import slugify
 from django.views.decorators.http import require_GET, require_http_methods
 
 from common.choices import AccessLevel
-from events.selectors import get_visible_person_events
+from common.permissions import can_view_access_level
+from events.forms import PersonLifeEventForm
+from events.models import Event, EventType
+from events.selectors import (
+    get_visible_person_events,
+    get_visible_person_life_event,
+)
+from events.services import EventInput
+from events.use_cases import (
+    create_person_life_event,
+    get_person_life_event_for_update,
+    update_person_life_event,
+)
 from health.forms import (
     HealthRecordArchiveForm,
     HealthRecordForm,
@@ -319,22 +331,383 @@ def person_events(
     request: HttpRequest,
     person_id: int,
 ) -> HttpResponse:
-    """Zobraz bezpečný read-only přehled událostí osoby."""
+    """Zobraz bezpečný přehled a povolené akce událostí osoby."""
 
     presentations, presentation = _visible_person_page(request, person_id)
-    events = get_visible_person_events(
-        person=presentation.person,
-        actor=request.user,
+    return _render_person_events(
+        request,
+        presentations=presentations,
+        presentation=presentation,
     )
+
+
+_LIFE_EVENT_NAMES = {
+    "birth": "narození",
+    "death": "úmrtí",
+}
+
+
+def _can_write_life_event(
+    request: HttpRequest,
+    *,
+    permission: str,
+    event: Event | None = None,
+) -> bool:
+    actor = _current_actor_with_permission(request, permission)
+    if actor is None:
+        return False
+    if event is None:
+        return True
+    if not can_view_access_level(
+        actor=actor,
+        access_level=event.access_level,
+    ):
+        return False
+    if event.place_id is None:
+        return True
+    try:
+        place = event.place
+    except Place.DoesNotExist:
+        return False
+    return (
+        place.archived_at is None
+        and place.deleted_at is None
+        and can_view_access_level(
+            actor=actor,
+            access_level=place.access_level,
+        )
+    )
+
+
+def _life_event_context(
+    request: HttpRequest,
+    *,
+    person: Person,
+) -> dict[str, object]:
+    events = get_visible_person_events(person=person, actor=request.user)
+    birth_event = get_visible_person_life_event(
+        person=person,
+        actor=request.user,
+        event_type_code="birth",
+    )
+    death_event = get_visible_person_life_event(
+        person=person,
+        actor=request.user,
+        event_type_code="death",
+    )
+    active_person = (
+        person.archived_at is None and person.deleted_at is None
+    )
+    return {
+        "active_person_tab": "events",
+        "events": events,
+        "birth_event": birth_event,
+        "death_event": death_event,
+        "can_add_birth": (
+            active_person
+            and birth_event is None
+            and _can_write_life_event(
+                request,
+                permission="events.add_event",
+            )
+        ),
+        "can_add_death": (
+            active_person
+            and death_event is None
+            and _can_write_life_event(
+                request,
+                permission="events.add_event",
+            )
+        ),
+        "can_edit_birth": (
+            birth_event is not None
+            and _can_write_life_event(
+                request,
+                permission="events.change_event",
+                event=birth_event,
+            )
+        ),
+        "can_edit_death": (
+            death_event is not None
+            and _can_write_life_event(
+                request,
+                permission="events.change_event",
+                event=death_event,
+            )
+        ),
+    }
+
+
+def _render_person_events(
+    request: HttpRequest,
+    *,
+    presentations: tuple[PersonPresentation, ...],
+    presentation: PersonPresentation,
+    saved: bool = False,
+    include_browser_oob: bool = False,
+) -> HttpResponse:
     return _render_person_content(
         request,
         presentations=presentations,
         presentation=presentation,
-        template_name="people/partials/person_events.html",
+        template_name=(
+            "people/partials/person_event_success.html"
+            if include_browser_oob
+            else "people/partials/person_events.html"
+        ),
+        context=_life_event_context(
+            request,
+            person=presentation.person,
+        )
+        | {"life_event_saved": saved},
+    )
+
+
+def _life_event_input_from_form(
+    *,
+    form: PersonLifeEventForm,
+    event_type: EventType,
+) -> EventInput:
+    values = form.cleaned_data
+    return EventInput(
+        event_type=event_type,
+        place=values["place"],
+        location_detail=values["location_detail"],
+        title=values["title"],
+        description=values["description"],
+        access_level=values["access_level"],
+        verification_status=values["verification_status"],
+        date_precision=values["date_precision"],
+        date_qualifier=values["date_qualifier"],
+        start_year=values["start_year"],
+        start_month=values["start_month"],
+        start_day=values["start_day"],
+        original_date_text=values["original_date_text"],
+        date_note=values["date_note"],
+    )
+
+
+def _life_event_type_or_404(event_type_code: str) -> EventType:
+    if event_type_code not in _LIFE_EVENT_NAMES:
+        raise Http404("Typ události nebyl nalezen.")
+    try:
+        return EventType.objects.get(
+            code=event_type_code,
+            is_system=True,
+        )
+    except EventType.DoesNotExist as exc:
+        raise Http404("Typ události nebyl nalezen.") from exc
+
+
+def _render_life_event_form(
+    request: HttpRequest,
+    *,
+    presentations: tuple[PersonPresentation, ...],
+    presentation: PersonPresentation,
+    form: PersonLifeEventForm,
+    event_type_code: str,
+    mode: str,
+    event: Event | None = None,
+) -> HttpResponse:
+    _prepare_accessible_form_errors(form)
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_life_event_form.html",
         context={
             "active_person_tab": "events",
-            "events": events,
+            "life_event_form": form,
+            "life_event_type_code": event_type_code,
+            "life_event_name": _LIFE_EVENT_NAMES[event_type_code],
+            "life_event_mode": mode,
+            "selected_life_event": event,
+            "form_submitted": request.method == "POST",
         },
+    )
+
+
+def _refreshed_person_page(
+    request: HttpRequest,
+    *,
+    person_id: int,
+) -> tuple[tuple[PersonPresentation, ...], PersonPresentation]:
+    if hasattr(request, "_stemma_person_browser"):
+        delattr(request, "_stemma_person_browser")
+    browser = _person_browser(request)
+    presentation = next(
+        item
+        for item in browser.visible_presentations
+        if item.person.pk == person_id
+    )
+    return browser.presentations, presentation
+
+
+@require_http_methods(["GET", "POST"])
+def person_life_event_create(
+    request: HttpRequest,
+    person_id: int,
+    event_type_code: str,
+) -> HttpResponse:
+    presentations, presentation = _visible_person_page(request, person_id)
+    if not _can_write_life_event(
+        request,
+        permission="events.add_event",
+    ):
+        raise PermissionDenied(
+            "K vytvoření této události nemáte oprávnění."
+        )
+    event_type = _life_event_type_or_404(event_type_code)
+    if get_visible_person_life_event(
+        person=presentation.person,
+        actor=request.user,
+        event_type_code=event_type_code,
+    ) is not None:
+        raise Http404("Událost nebyla nalezena.")
+    candidate = Event(
+        event_type=event_type,
+        access_level=event_type.default_access_level,
+        show_in_overview=event_type.default_show_in_overview,
+    )
+    form = PersonLifeEventForm(
+        request.POST or None,
+        instance=candidate,
+        actor=request.user,
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            create_person_life_event(
+                person=presentation.person,
+                event_type_code=event_type_code,
+                data=_life_event_input_from_form(
+                    form=form,
+                    event_type=event_type,
+                ),
+                actor=request.user,
+            )
+        except Person.DoesNotExist as exc:
+            raise Http404("Osoba nebyla nalezena.") from exc
+        except PermissionDenied:
+            raise
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            presentations, presentation = _refreshed_person_page(
+                request,
+                person_id=person_id,
+            )
+            if request.headers.get("HX-Request") == "true":
+                response = _render_person_events(
+                    request,
+                    presentations=presentations,
+                    presentation=presentation,
+                    saved=True,
+                    include_browser_oob=True,
+                )
+                response["HX-Push-Url"] = (
+                    reverse("people:events", args=(person_id,))
+                    + _person_browser_query_suffix(_person_browser(request))
+                )
+                return response
+            messages.success(
+                request,
+                f"Událost {_LIFE_EVENT_NAMES[event_type_code]} byla uložena.",
+            )
+            return redirect(
+                reverse("people:events", args=(person_id,))
+                + _person_browser_query_suffix(_person_browser(request))
+            )
+    return _render_life_event_form(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        form=form,
+        event_type_code=event_type_code,
+        mode="create",
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def person_life_event_edit(
+    request: HttpRequest,
+    person_id: int,
+    event_id: int,
+    event_type_code: str,
+) -> HttpResponse:
+    presentations, presentation = _visible_person_page(request, person_id)
+    if not _can_write_life_event(
+        request,
+        permission="events.change_event",
+    ):
+        raise PermissionDenied(
+            "K úpravě této události nemáte oprávnění."
+        )
+    try:
+        event = get_person_life_event_for_update(
+            person=presentation.person,
+            event=Event(pk=event_id),
+            event_type_code=event_type_code,
+            actor=request.user,
+        )
+    except (Person.DoesNotExist, Event.DoesNotExist) as exc:
+        raise Http404("Událost nebyla nalezena.") from exc
+    form = PersonLifeEventForm(
+        request.POST or None,
+        instance=event,
+        actor=request.user,
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            update_person_life_event(
+                person=presentation.person,
+                event=event,
+                event_type_code=event_type_code,
+                data=_life_event_input_from_form(
+                    form=form,
+                    event_type=event.event_type,
+                ),
+                actor=request.user,
+            )
+        except (Person.DoesNotExist, Event.DoesNotExist) as exc:
+            raise Http404("Událost nebyla nalezena.") from exc
+        except PermissionDenied:
+            raise
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            presentations, presentation = _refreshed_person_page(
+                request,
+                person_id=person_id,
+            )
+            if request.headers.get("HX-Request") == "true":
+                response = _render_person_events(
+                    request,
+                    presentations=presentations,
+                    presentation=presentation,
+                    saved=True,
+                    include_browser_oob=True,
+                )
+                response["HX-Push-Url"] = (
+                    reverse("people:events", args=(person_id,))
+                    + _person_browser_query_suffix(_person_browser(request))
+                )
+                return response
+            messages.success(
+                request,
+                f"Událost {_LIFE_EVENT_NAMES[event_type_code]} byla uložena.",
+            )
+            return redirect(
+                reverse("people:events", args=(person_id,))
+                + _person_browser_query_suffix(_person_browser(request))
+            )
+    return _render_life_event_form(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        form=form,
+        event_type_code=event_type_code,
+        mode="edit",
+        event=event,
     )
 
 
@@ -1283,7 +1656,7 @@ def _person_create_input_from_form(*, form: PersonCreateForm) -> PersonInput:
 
 
 def _add_service_errors(
-    form: PersonForm | PersonCreateForm,
+    form: PersonForm | PersonCreateForm | PersonLifeEventForm,
     error: ValidationError,
 ) -> None:
     if hasattr(error, "error_dict"):
@@ -1296,7 +1669,7 @@ def _add_service_errors(
 
 
 def _prepare_accessible_form_errors(
-    form: PersonForm | PersonCreateForm,
+    form: PersonForm | PersonCreateForm | PersonLifeEventForm,
 ) -> None:
     for field_name in form.errors:
         if field_name not in form.fields:

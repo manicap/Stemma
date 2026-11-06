@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.68
-**Stav:** vyhledávání, našeptávač, filtrování a řazení osob implementováno
-**Datum revize:** 5. 11. 2026
+**Verze:** 0.69
+**Stav:** person-centric vytvoření a úprava narození a úmrtí implementováno
+**Datum revize:** 6. 11. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -590,22 +590,20 @@ gate optimalizuje pouze průběžné řezy: PASS zůstává platný do změny re
 vstupu a kompletní release kontrola se nadále provede vždy, když ji acceptance
 kontrakt vyžaduje.
 
-## RC 0.2 – schválené read-only řezy
+## RC 0.2 – schválené person-centric řezy
 
-RC 0.2 probíhá na `agent/rc-0.2`. Dokončené samostatně schválené řezy jsou
+RC 0.2 probíhá na `agent/rc-0.2`. První samostatně schválené řezy byly
 read-only přehledy Vztahů, Bydliště, Hrobových míst a Událostí osoby ve
 stávajícím person-centric shellu. Používají actor-aware selectory, podporují
-full-page i HTMX režim a jednotný empty state bez existence leaku. Události
-doplňují nejmenší veřejný selector `get_visible_person_events()`, který vydává
-jen aktivní viditelné události, nenačítá jiné participanty a bezpečně omezuje
-text Place. Každý dokončený řez prošel příslušnou query regresí, nezávislými
-review a skutečným browser smoke. Aktuální stabilní baseline po Event řezu je
-1 573/1 573 testů.
+full-page i HTMX režim a jednotný empty state bez existence leaku. Navazující
+schválené řezy doplnily Materials prohlížení a upload, vytvoření osoby,
+vyhledávání a úzké vytvoření a úpravu narození a úmrtí. Obecný Event detail,
+ostatní typy událostí, participant management a lifecycle nadále nevznikly.
 
-Tento milestone sám nepovoluje Relationship, Residence, GraveSite,
-PersonGraveSite, Event ani participant write/lifecycle UI, obecný Event detail,
-Place nebo Materials UI ani implementaci dalšího tabu. Každý další funkční řez
-vyžaduje samostatné explicitní schválení.
+Tento milestone sám nepovoluje Relationship, Residence, GraveSite ani
+PersonGraveSite write/lifecycle UI, obecný Event detail nebo obecné Event a
+participant write/lifecycle UI, Place management ani obecné Materials UI.
+Každý další funkční řez vyžaduje samostatné explicitní schválení.
 
 ## M3 – Materials a bezpečné soubory
 
@@ -692,6 +690,16 @@ smoke ověřil běžného člena skupiny Editor bez individuální permission v 
 seznam → formulář → HTMX uložení → vybraný detail a aktualizovaný seznam;
 přímý browser POST Čtenáře skončil 403.
 
+Navazující úzký řez **narození a úmrtí osoby** přidává samostatné vytvoření a
+úpravu těchto dvou systémových Event typů. Vytvoření vyžaduje
+`events.add_event`, úprava `events.change_event`; datová migrace přiděluje obě
+existující permissions pouze skupině Editor. Actor-aware use-cases z čerstvého
+databázového stavu chrání osobu, událost, současný i navržený access, místo a
+všechny participanty. Typ a hlavní role zůstávají pevné, ostatní participanti
+se zachovají a zápis deleguje na existující atomické agregátní služby. Obecný
+Event detail, ostatní typy, participant management, lifecycle a Materials
+událostí nejsou součástí řezu.
+
 ## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
 
 **Dokončeno:**
@@ -705,7 +713,8 @@ přímý browser POST Čtenáře skončil 403.
 - read-only karta Vztahy ve full-page i HTMX režimu,
 - read-only karta Bydliště ve full-page i HTMX režimu,
 - read-only karta Hrobová místa ve full-page i HTMX režimu,
-- read-only karta Události ve full-page i HTMX režimu,
+- karta Události ve full-page i HTMX režimu s úzkým vytvořením a úpravou
+  narození a úmrtí,
 - karta Materiály osoby s prohlížením, otevřením, stažením a oprávněným uploadem
   nové přílohy přímo k osobě,
 - testy použitelnosti a browser smoke pro implementované průchody.
@@ -713,7 +722,8 @@ přímý browser POST Čtenáře skončil 403.
 **Plánováno:**
 
 - připojování již existujících příloh, editace, lifecycle a management grantů,
-- Event detail, formuláře a další uživatelské průchody Events a Materials.
+- obecný Event detail, formuláře ostatních typů a další uživatelské průchody
+  Events a Materials.
 
 Fáze proto není prohlášena za kompletní v celém původně zamýšleném rozsahu,
 přestože její UI základ je skutečně používán.
@@ -734,7 +744,9 @@ přestože její UI základ je skutečně používán.
 - read-only HTTP/UI přehled hrobových míst s actor-aware filtrováním vazby a
   GraveSite.
 - read-only HTTP/UI přehled událostí s actor-aware filtrováním Event a
-  bezpečným textovým kontextem Place bez participantů.
+  bezpečným textovým kontextem Place bez participantů,
+- úzké person-centric vytvoření a úprava narození a úmrtí přes actor-aware
+  use-cases, standardní Event permissions a existující agregátní služby.
 
 **Částečně dokončeno:**
 
@@ -744,8 +756,9 @@ přestože její UI základ je skutečně používán.
   lifecycle ani Materials UI,
 - hrobová místa mají robustní backend a read-only HTTP/UI, ale nemají zápis,
   lifecycle ani Materials UI,
-- události mají agregátní backend a read-only person-centric HTTP/UI, ale
-  nemají detail, zápis, lifecycle ani Materials UI,
+- události mají agregátní backend a person-centric HTTP/UI včetně vytvoření a
+  úpravy narození a úmrtí, ale nemají obecný detail, zápis ostatních typů,
+  participant management, lifecycle ani Materials UI,
 - fotografie mají metadata, explicitní přílohovou infrastrukturu a backendové
   doručení, nikoli produktové zobrazení nebo Materials UI.
 
@@ -768,8 +781,8 @@ přestože její UI základ je skutečně používán.
 - bydliště mají modely, služby, actor-aware čtení a read-only person-centric UI,
 - hrobová místa mají modely, služby, actor-aware čtení a read-only
   person-centric UI.
-- události mají modely, agregátní služby, actor-aware čtení a read-only
-  person-centric UI.
+- události mají modely, agregátní služby, actor-aware čtení a person-centric
+  vytvoření a úpravu narození a úmrtí,
 - osoba má actor-aware serverový PDF/A4 export základních údajů a již
   implementovaných bezpečných person-centric přehledů.
 
@@ -782,7 +795,8 @@ přestože její UI základ je skutečně používán.
 **Plánováno nebo odloženo:**
 
 - produktové Materials UI a lifecycle orchestrace příloh,
-- obecný detail a write/lifecycle UI událostí, dokumentů a zdrojů,
+- obecný detail, zápis ostatních typů a lifecycle UI událostí, dokumentů a
+  zdrojů,
 - rodokmen, časová osa, záloha a další produktové exportní formáty,
 - auditní historie a její UI.
 

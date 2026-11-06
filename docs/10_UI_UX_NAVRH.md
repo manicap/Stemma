@@ -1,9 +1,9 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.17
+**Verze:** 0.18
 **Stav:** schválený pracovní základ  
-**Datum revize:** 5. 11. 2026
+**Datum revize:** 6. 11. 2026
 
 ## 1. Účel dokumentu
 
@@ -466,7 +466,7 @@ Karta nenahrazuje samostatný rodokmen.
 
 ## 12. Karta Události
 
-Implementovaný první read-only řez zobrazuje bezpečně dostupné události v
+Implementovaná karta zobrazuje bezpečně dostupné události v
 jednoduchých responzivních kartách podle řazení actor-aware selectoru. Každá
 karta může obsahovat typ, datum nebo období bez falešné přesnosti, název,
 stručný popis, lokalizační detail a bezpečný textový název Place bez odkazu.
@@ -477,10 +477,25 @@ světlý i tmavý motiv. Prázdný stav nerozlišuje chybějící a skryté udá
 Archivované a soft-deleted události ani skryté, archivované či soft-deleted
 Place se v běžném přehledu nevydávají.
 
-**Plánovaný cílový stav:** svislá časová osa, klikací Event detail a oprávněním
-řízené tlačítko **+ Přidat událost** s formulářem. Tyto detailové a zápisové
-interakce, lifecycle a Materials nejsou součástí implementovaného read-only
-řezu.
+Aktivní uživatel s `events.add_event` vidí podle aktuálního stavu samostatné
+akce **Přidat narození** a **Přidat úmrtí**. U již dostupného narození nebo
+úmrtí vidí uživatel s `events.change_event` akci **Upravit**. Formulář v nadpisu
+zobrazuje pevný typ a vysvětluje, že hlavní role osoby je daná akcí; klient
+typ ani roli nemůže změnit. Umožňuje zadat
+neúplné datum, jeho kvalifikátor, původní text a poznámku, strukturované místo,
+lokalizační detail, název, popis, dostupný access a stav ověření. Jiní
+participanti se ve formuláři nezobrazují ani nemění.
+
+Full-page uložení vrací kartu Události osoby. HTMX uložení bez reloadu nahradí
+detail osoby i celý filtrovaný seznam jako OOB fragment, aby se ihned
+aktualizovalo záhlaví, věk, životní stav, rok v seznamu a odvozené římské
+pořadí. Chyby zůstávají ve formuláři a přímé URL jsou znovu autorizované na
+serveru; neexistující, skrytý nebo jinak nesprávný kontext nesmí prozradit
+událost.
+
+**Plánovaný cílový stav:** svislá časová osa, klikací obecný Event detail,
+zápis ostatních typů událostí, participant management, lifecycle a Materials.
+Úzké formuláře narození a úmrtí tyto obecné funkce nepředstavují.
 
 ## 13. Karta Bydliště
 

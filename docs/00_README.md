@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.68
-**Stav:** UI vytváření osob a oprávnění skupiny Editor implementováno
-**Datum revize:** 5. 11. 2026
+**Verze dokumentace:** 0.69
+**Stav:** person-centric vytvoření a úprava narození a úmrtí implementováno
+**Datum revize:** 6. 11. 2026
 
 ## Účel balíčku
 
@@ -42,6 +42,24 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.69
+
+Verze 0.69 doplňuje úzké person-centric UI narození a úmrtí:
+
+- aktivní actor s aktuálním `events.add_event` může u viditelné aktivní osoby
+  vytvořit narození nebo úmrtí; úprava vyžaduje `events.change_event`,
+- obě standardní permissions získává datovou migrací pouze systémová skupina
+  Editor a lokální demo bootstrap zůstává s tímto stavem synchronizovaný,
+- server vždy znovu načte actora, osobu, událost, participanty i místo a
+  kontroluje současný i navržený access a kontext přes přesnou systémovou roli,
+- typ a hlavní role jsou neměnné; aktualizace zachová identitu události a
+  všechny ostatní participanty, vyžaduje viditelnost jejich aktivních osob a
+  používá existující atomické Event služby,
+- full-page i HTMX tok aktualizuje kartu a po úspěchu také záhlaví, odvozené
+  životní údaje a aktuální person browser bez oslabení actor-aware čtení,
+- obecný Event detail, ostatní typy, participant management, lifecycle a
+  Materials událostí zůstávají mimo tento řez.
 
 ## Stav verze 0.68
 
@@ -1093,9 +1111,10 @@ Materials UI.
 - Všechna acceptance kritéria RC 0.1 A–H jsou uzavřená bez otevřeného
   blockeru. Historický post-RC baseline před zahájením RC 0.2 byl 1 514/1 514.
 - Kompletní uživatelský vertikální průchod má vedle základního UI osoby doména
-  Health. Vztahy, Bydliště, Hrobová místa a Události mají bezpečné read-only
-  person-centric přehledy; jejich zápis a lifecycle zůstávají plánované. Obecný
-  Event detail a write UI nevznikly. Materials poskytují
+  Health. Vztahy, Bydliště a Hrobová místa mají bezpečné read-only
+  person-centric přehledy. Události navíc umožňují úzké vytvoření a úpravu
+  narození a úmrtí; obecný Event detail, ostatní typy a lifecycle zůstávají
+  plánované. Materials poskytují
   metadata, explicitní vazby, chráněný upload/storage, granty a backendové
   kontextově autorizované doručení; karta osoby navíc umí bezpečný seznam a
   oprávněný upload nové přílohy přímo k osobě, nikoli obecnou správu Materials.

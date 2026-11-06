@@ -36,6 +36,8 @@ class BootstrapDemoAccountsCommandTests(TestCase):
         expected_permissions = {
             "stemma-demo-reader": set(),
             "stemma-demo-editor": {
+                "events.add_event",
+                "events.change_event",
                 "people.add_person",
                 "people.change_person",
             },

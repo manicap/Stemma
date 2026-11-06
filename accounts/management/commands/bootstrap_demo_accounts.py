@@ -46,6 +46,10 @@ _DEMO_ACCOUNTS = (
 )
 _PERSON_EDITOR_PERMISSION = ("people", "change_person")
 _PERSON_CREATOR_PERMISSION = ("people", "add_person")
+_EVENT_EDITOR_PERMISSIONS = (
+    ("events", "add_event"),
+    ("events", "change_event"),
+)
 _ELEVATED_PERMISSIONS = (
     ("accounts", "view_restricted_content"),
     ("accounts", "view_admin_only_content"),
@@ -60,6 +64,7 @@ _HEALTH_DEMO_PERMISSIONS = (
 _REQUIRED_PERMISSIONS = (
     _PERSON_EDITOR_PERMISSION,
     _PERSON_CREATOR_PERMISSION,
+    *_EVENT_EDITOR_PERMISSIONS,
     *_ELEVATED_PERMISSIONS,
     *_HEALTH_DEMO_PERMISSIONS,
 )
@@ -165,6 +170,7 @@ class Command(BaseCommand):
                 for key in (
                     _PERSON_EDITOR_PERMISSION,
                     _PERSON_CREATOR_PERMISSION,
+                    *_EVENT_EDITOR_PERMISSIONS,
                     *_ELEVATED_PERMISSIONS,
                 )
             )
@@ -176,6 +182,7 @@ class Command(BaseCommand):
                 for key in (
                     _PERSON_EDITOR_PERMISSION,
                     _PERSON_CREATOR_PERMISSION,
+                    *_EVENT_EDITOR_PERMISSIONS,
                 )
             )
             administrator_permissions = tuple(

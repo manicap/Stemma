@@ -8,7 +8,15 @@
         <p class="eyebrow">Životní a rodinné dění</p>
         <h3 id="events-heading">Události</h3>
       </div>
+      {% if can_add_birth or can_add_death %}
+        <div class="form-actions">
+          {% if can_add_birth %}<a class="primary-button" data-person-browser-link href="{% url 'people:birth-create' selected_person.pk %}{{ person_browser_query_suffix }}" hx-get="{% url 'people:birth-create' selected_person.pk %}{{ person_browser_query_suffix }}" hx-target="#person-detail" hx-push-url="true">Přidat narození</a>{% endif %}
+          {% if can_add_death %}<a class="primary-button" data-person-browser-link href="{% url 'people:death-create' selected_person.pk %}{{ person_browser_query_suffix }}" hx-get="{% url 'people:death-create' selected_person.pk %}{{ person_browser_query_suffix }}" hx-target="#person-detail" hx-push-url="true">Přidat úmrtí</a>{% endif %}
+        </div>
+      {% endif %}
     </div>
+
+    {% if life_event_saved %}<p class="success-message" role="status">Událost byla uložena.</p>{% endif %}
 
     {% if events %}
       <div class="related-list">
@@ -22,6 +30,11 @@
             {% if event.presentation_place_name %}<p>{{ event.presentation_place_name }}</p>{% endif %}
             {% if event.location_detail %}<p>{{ event.location_detail }}</p>{% endif %}
             {% if event.description %}<p>{{ event.description }}</p>{% endif %}
+            {% if event.pk == birth_event.pk and can_edit_birth %}
+              <a class="secondary-button" data-person-browser-link href="{% url 'people:birth-edit' selected_person.pk event.pk %}{{ person_browser_query_suffix }}" hx-get="{% url 'people:birth-edit' selected_person.pk event.pk %}{{ person_browser_query_suffix }}" hx-target="#person-detail" hx-push-url="true">Upravit narození</a>
+            {% elif event.pk == death_event.pk and can_edit_death %}
+              <a class="secondary-button" data-person-browser-link href="{% url 'people:death-edit' selected_person.pk event.pk %}{{ person_browser_query_suffix }}" hx-get="{% url 'people:death-edit' selected_person.pk event.pk %}{{ person_browser_query_suffix }}" hx-target="#person-detail" hx-push-url="true">Upravit úmrtí</a>
+            {% endif %}
           </article>
         {% endfor %}
       </div>

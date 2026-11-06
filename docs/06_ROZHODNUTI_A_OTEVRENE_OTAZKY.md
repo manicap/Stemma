@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.93
+**Verze:** 0.94
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 5. 11. 2026
+**Datum revize:** 6. 11. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -278,6 +278,21 @@ vidět. Full-page a HTMX tok zpřístupňují pouze tituly, jméno, příjmení,
 aktivní kategorii, poznámku a access; alespoň jedna část jména je povinná.
 Narození, úmrtí, vztahy, přílohy, životopis, ověření a lifecycle jsou mimo řez.
 Nevzniká vlastní permission, obecný permission framework ani nový ACP.
+204. Person-centric UI vytvoření narození a úmrtí používá existující standardní
+permissions `events.add_event`, úprava `events.change_event`; obě datová migrace
+automaticky přiděluje pouze systémové skupině Editor. Zápisová hranice vždy
+znovu načte aktivního actora, vyžaduje viditelnou aktivní osobu a u úpravy také
+viditelnou aktivní událost propojenou s touto osobou rolí `born_person`,
+respektive `deceased_person`. Actor musí smět zobrazit současnou i navrženou
+access úroveň a každé současné nebo navržené strukturované místo. Typy `birth`
+a `death` i jejich hlavní role jsou v tomto UI neměnné. `EventParticipant` nemá
+vlastní access úroveň; jeho ochrana se odvozuje od osoby a události. Úprava
+zachovává identitu události i všechny ostatní účastníky a deleguje na stávající
+agregátní Event služby. Změnu společných údajů dovolí jen tehdy, když actor smí
+vidět také všechny aktivní osoby ostatních participantů; skrytá osoba tak
+nemůže být nepřímo měněna přes sdílenou událost. Nadále platí nejvýše jedna
+měkce neodstraněná událost daného životního typu na osobu; archivace tento slot
+neuvolňuje. Nevzniká nová permission, obecný permission framework ani nový ACP.
 
 ## 2. Otevřené otázky
 

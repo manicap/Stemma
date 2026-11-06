@@ -12,7 +12,15 @@ from people.selectors import get_visible_person
 
 from .models import Event
 
-__all__ = ("get_visible_person_events",)
+__all__ = (
+    "get_visible_person_events",
+    "get_visible_person_life_event",
+)
+
+_LIFE_EVENT_ROLES = {
+    "birth": "born_person",
+    "death": "deceased_person",
+}
 
 
 def _load_visible_person(
@@ -71,4 +79,34 @@ def get_visible_person_events(
             )
         )
         .distinct()
+    )
+
+
+def get_visible_person_life_event(
+    *,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+    event_type_code: str,
+) -> Event | None:
+    """Return the visible birth/death event owned by the person's life role."""
+
+    role_code = _LIFE_EVENT_ROLES.get(event_type_code)
+    if role_code is None:
+        raise ValidationError(
+            {
+                "event_type": ValidationError(
+                    "Podporováno je pouze narození nebo úmrtí.",
+                    code="life_event_type_unsupported",
+                )
+            }
+        )
+    return (
+        get_visible_person_events(person=person, actor=actor)
+        .filter(
+            event_type__code=event_type_code,
+            event_type__is_system=True,
+            participants__person_id=person.pk,
+            participants__role__code=role_code,
+        )
+        .first()
     )

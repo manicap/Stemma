@@ -25,6 +25,30 @@ urlpatterns = [
         name="events",
     ),
     path(
+        "<int:person_id>/udalosti/narozeni/pridat/",
+        views.person_life_event_create,
+        {"event_type_code": "birth"},
+        name="birth-create",
+    ),
+    path(
+        "<int:person_id>/udalosti/umrti/pridat/",
+        views.person_life_event_create,
+        {"event_type_code": "death"},
+        name="death-create",
+    ),
+    path(
+        "<int:person_id>/udalosti/narozeni/<int:event_id>/upravit/",
+        views.person_life_event_edit,
+        {"event_type_code": "birth"},
+        name="birth-edit",
+    ),
+    path(
+        "<int:person_id>/udalosti/umrti/<int:event_id>/upravit/",
+        views.person_life_event_edit,
+        {"event_type_code": "death"},
+        name="death-edit",
+    ),
+    path(
         "<int:person_id>/bydliste/",
         views.person_residences,
         name="residences",

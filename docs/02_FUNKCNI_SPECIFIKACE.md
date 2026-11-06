@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.63
+**Verze:** 0.64
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
-**Datum revize:** 5. 11. 2026
+**Datum revize:** 6. 11. 2026
 
 ## 0. Jak číst stav funkcí
 
@@ -14,16 +14,19 @@ uživatelsky dostupný.
 **Implementováno:** globální shell a Přehled, actor-aware seznam, vyhledávání,
 filtrování, řazení a detail osob,
 omezená editace osoby, session autentizace a role, odvozené údaje osoby,
-read-only karty Vztahy, Bydliště, Hrobová místa a Události, actor-aware PDF/A4
+read-only karty Vztahy, Bydliště a Hrobová místa, karta Události s úzkým
+vytvořením a úpravou narození a úmrtí, actor-aware PDF/A4
 export osoby, read-only karta Materiály osoby a kompletní Health vertikála
 včetně archivu a Koše. Webové
 průchody podporují full-page i HTMX režim podle svého kontraktu; export je
 samostatný běžný GET odkaz na PDF.
 
 **Backendově implementováno, širší produktové UI plánováno:** modely a servisní
-nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy, Bydliště,
-Hrobová místa a Události mají read-only person-centric přehled; jejich zápis,
-lifecycle a vlastní kontextové Materials UI chybí. Události navíc nemají obecný detail. Rozsah autorizovaných
+nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy, Bydliště
+a Hrobová místa mají read-only person-centric přehled; jejich zápis, lifecycle
+a vlastní kontextové Materials UI chybí. Události navíc dovolují oprávněné
+vytvoření a úpravu narození a úmrtí, ale nemají obecný detail, zápis ostatních
+typů ani lifecycle UI. Rozsah autorizovaných
 write hranic není u všech těchto domén stejný; existence backendu se proto
 nesmí vykládat jako hotové UI.
 
@@ -38,7 +41,8 @@ zobrazuje pouze dostupná metadata. Browser upload, request/grant UI a obecné
 management UI Materials neexistují.
 
 **Plánováno / cílový stav:** obecné vyhledávání a filtry, write/lifecycle UI
-vztahů, bydlišť, hrobových míst a událostí, obecný Event detail a Materials UI, fotografie jako souborový
+vztahů, bydlišť a hrobových míst, obecný Event detail, zápis ostatních typů
+událostí, event lifecycle a Materials UI, fotografie jako souborový
 průchod a auditní historie. Tyto požadavky zůstávají
 součástí návrhu, ale nejsou podmínkou již uzavřeného RC 0.1.
 
@@ -231,15 +235,37 @@ lišit a nesmí mezerou prozradit skrytého jmenovce.
 ## 7. Události
 
 **Stav:** Datový model, agregátní zápisové služby, bezpečné odvození narození
-a úmrtí i actor-aware person-centric read-only seznam jsou implementované.
-Obecný Event detail a create/update/lifecycle UI zůstávají plánované.
+a úmrtí i actor-aware person-centric seznam jsou implementované. Karta navíc
+umožňuje oprávněné vytvoření a úpravu právě narození a úmrtí. Obecný Event
+detail, zápis ostatních typů a lifecycle UI zůstávají plánované.
 
-Read-only karta používá `get_visible_person_events(*, person, actor)` a
+Čtecí část karty používá `get_visible_person_events(*, person, actor)` a
 zobrazuje jen aktivní viditelné události propojené účastí vybrané osoby. Typ,
 neúplné datum, název, popis, lokalizační detail a bezpečný text Place jsou
 prezentační údaje; jiní participanti, jejich počty, přílohy a zdroje se
 nevydávají. Full-page i HTMX režim sdílejí jednotný empty state bez existence
 leaku.
+
+Úzké person-centric zápisové use-cases `create_person_life_event()` a
+`update_person_life_event()` přijímají pouze systémové typy `birth`/`death`
+a pevné role `born_person`/`deceased_person`. Vytvoření vyžaduje aktuální
+`events.add_event`, úprava `events.change_event`; obě standardní permissions
+získává systémová skupina Editor datovou migrací. Server při každém zápisu
+znovu načte aktivního actora i cílové záznamy. Osoba i upravovaná událost musí
+být viditelné, nearchivované a měkce neodstraněné a událost musí být s osobou
+propojena přesně požadovanou rolí.
+
+Actor musí smět zobrazit současnou i navrženou access úroveň události a
+současné i navržené strukturované místo. Formulář dovoluje neúplné datum bez
+falešné přesnosti, původní text a poznámku data, místo, lokalizační detail,
+název, popis, access a ověření; typ, hlavní role, participanty, autorství a
+lifecycle metadata nemění. Aktualizace zachovává identitu události a všechny
+ostatní participanty; před změnou společných údajů zároveň vyžaduje, aby actor
+směl vidět všechny jejich aktivní osoby, a deleguje na existující atomickou
+agregátní službu.
+Nadále platí nejvýše jedna nesmazaná událost narození a jedna úmrtí na osobu.
+Skrytá duplicita ani chybný kontext se nezpřístupní odlišnou odpovědí nebo
+metadaty.
 
 Událost může být spojena s jednou nebo více osobami.
 

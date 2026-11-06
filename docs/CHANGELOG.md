@@ -1,5 +1,26 @@
 # Historie změn dokumentace
 
+## Verze 1.07 – 6. 11. 2026
+
+- karta Události osoby doplňuje samostatné full-page/HTMX formuláře pro
+  vytvoření a úpravu systémového narození a úmrtí; typy `birth`/`death` a role
+  `born_person`/`deceased_person` nejsou uživatelsky měnitelné,
+- úzké actor-aware use-cases vyžadují `events.add_event`, respektive
+  `events.change_event`, čerstvého aktivního actora, viditelnou aktivní osobu a
+  při úpravě také viditelnou aktivní událost propojenou přesnou rolí,
+- datová migrace přiděluje obě existující Event permissions pouze skupině
+  Editor a lokální demo bootstrap je s tímto kontraktem synchronizovaný,
+- server ověřuje současný i navržený access a strukturované místo; úprava
+  zachovává identitu události i všechny ostatní participanty, vyžaduje
+  viditelnost jejich aktivních osob a deleguje na existující atomické
+  agregátní služby včetně pravidla jedné měkce neodstraněné životní události
+  daného typu na osobu; archivace slot neuvolní,
+- úspěšný HTMX zápis aktualizuje kartu, záhlaví a celý aktuální person browser,
+  takže se bez reloadu projeví odvozený věk, stav, rok života a římské pořadí,
+- obecný Event detail, zápis ostatních typů, participant management, lifecycle
+  a Materials událostí zůstávají mimo tento řez; nevznikla nová permission,
+  obecný permission framework ani nový ACP.
+
 ## Verze 1.06 – 5. 11. 2026
 
 - person-centric seznam používá nový úzký actor-aware browser pro společné

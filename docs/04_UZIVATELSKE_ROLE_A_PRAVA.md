@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.48
+**Verze:** 0.49
 **Stav:** pracovní návrh  
-**Datum revize:** 5. 11. 2026
+**Datum revize:** 6. 11. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -285,7 +285,8 @@ Databázové skupiny jsou `Čtenář`, `Editor` a `Správce`.
 
 - Čtenář automaticky nezískává zvýšená obsahová, lifecycle ani editační
   oprávnění.
-- Editor získává konkrétní `people.change_person` a `people.add_person`, ale
+- Editor získává konkrétní `people.change_person`, `people.add_person`,
+  `events.add_event` a `events.change_event`, ale
   automaticky nezískává přístup k omezenému nebo administrátorskému obsahu.
 - Správce získává `accounts.view_restricted_content`,
   `accounts.view_admin_only_content`, `people.view_archived_person` a
