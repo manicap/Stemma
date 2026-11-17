@@ -1,0 +1,13 @@
+{
+  "reasoningPolicy": "stemma-v1",
+  "purpose": "Native Cezar autonomous STEMMA development; approved 2026-11-17",
+  "protectedBranches": [
+    "main",
+    "master",
+    "feature/mvp",
+    "agent/rc-0.1",
+    "agent/rc-0.2",
+    "backup/*"
+  ],
+  "productionChanges": false
+}
