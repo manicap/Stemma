@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "name": "stemma-pilot-20261118",
+  "branch": "agent/stemma-pilot-20261118",
+  "base_commit": "5820ee48978817bfee1106f03ede9a54ded18ce9",
+  "mission": "docs/AI_PILOT_20261118.md",
+  "launch_requires_explicit_user_action": true,
+  "production_changes": false
+}
