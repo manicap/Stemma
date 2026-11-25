@@ -28,6 +28,7 @@ GitHub; tento dokument zůstává detailním indexem a zdrojem projektového sta
 11. `11_DATABAZOVY_NAVRH.md`
 12. `12_ARCHITEKTONICKA_ROZHODNUTI.md`
 13. `CHANGELOG.md`
+14. `changelog/` – jeden lidsky čitelný záznam na každý krok (od 25. 11. 2026, viz `changelog/README.md`)
 
 Přehledové výstupy:
 

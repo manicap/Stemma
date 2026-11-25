@@ -1,0 +1,4 @@
+{
+  "defaultRunner": "codex",
+  "baseBranch": "agent/rc-0.2"
+}
