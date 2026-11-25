@@ -42,6 +42,8 @@ v aplikaci jsou česky, uložené systémové hodnoty anglicky.
   a synchronizace `bootstrap_demo_accounts`.
 - Vzor posledních řezů: `events/use_cases.py` (narození a úmrtí) a
   `people/use_cases.py` (vztahy rodič, dítě, partner).
+- Při změně `people/static/people/stemma.js` nebo `stemma.css` vždy zvyš `?v=`
+  u obou souborů v `common/templates/common/base.html`.
 
 ## Příkazy
 
