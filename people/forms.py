@@ -194,6 +194,9 @@ class PersonRelationshipForm(forms.ModelForm):
             self.fields["counterpart"].queryset = Person.objects.filter(
                 pk__in=counterpart_ids,
             ).order_by("last_name", "first_name", "pk")
+            self.fields["counterpart"].widget.attrs[
+                "data-relationship-person-select"
+            ] = ""
             self.order_fields(("counterpart",))
         self.fields["access_level"].choices = tuple(
             (value, label)

@@ -269,6 +269,61 @@ class PersonRelationshipWriteWebTests(TestCase):
         self.assertNotContains(parent_range, 'name="end_year"')
         self.assertEqual(Relationship.objects.count(), 1)
 
+    def test_create_form_offers_progressive_person_picker(self) -> None:
+        self.client.force_login(self.editor())
+
+        response = self.client.get(self.create_url("partner"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="relationship-person-picker"')
+        self.assertContains(response, "data-relationship-person-select")
+        self.assertContains(
+            response,
+            '<div class="form-field" data-form-nondirty '
+            "data-relationship-person-search-container hidden>",
+            html=False,
+        )
+        self.assertContains(
+            response,
+            'aria-controls="id_counterpart"',
+        )
+        self.assertContains(
+            response,
+            "data-relationship-person-identification "
+            'aria-live="polite" hidden',
+        )
+        self.assertContains(response, "Dvořáková")
+        self.assertNotContains(response, "Skrytá")
+
+    def test_invalid_create_keeps_selected_counterpart_in_picker(self) -> None:
+        self.client.force_login(self.editor())
+
+        response = self.client.post(
+            self.create_url("partner"),
+            self.form_data(counterpart=self.third.pk, start_month=13),
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="relationship-person-picker"')
+        self.assertContains(
+            response,
+            f'<option value="{self.third.pk}" selected>',
+            html=False,
+        )
+        self.assertFalse(Relationship.objects.exists())
+
+    def test_edit_form_has_no_person_picker(self) -> None:
+        relationship = self.relationship()
+        self.client.force_login(self.editor())
+
+        response = self.client.get(self.edit_url(relationship))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "relationship-person-picker")
+        self.assertNotContains(response, "data-relationship-person-select")
+        self.assertNotContains(response, "data-relationship-person-search")
+
     def test_edit_changes_details_but_never_type_or_participants(self) -> None:
         relationship = self.relationship(note="Původní")
         self.client.force_login(self.editor())

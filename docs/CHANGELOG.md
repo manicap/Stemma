@@ -1,5 +1,16 @@
 # Historie změn dokumentace
 
+## Verze 1.11 – 25. 11. 2026
+
+- `10_UI_UX_NAVRH.md` 0.20: formulář vytvoření vztahu (rodič, dítě, partner)
+  doplňuje nad výběrem osoby progresivní klientské vyhledávání bez ohledu na
+  diakritiku a velikost písmen a oznámení vybrané osoby přes `aria-live`;
+  bez JavaScriptu zůstává obyčejný výběr,
+- vyhledávání neoznačuje formulář jako neuložený a nikdy neskryje vybranou
+  osobu; nabídka protistran, oprávnění ani serverová validace se nemění,
+- převzato jen z klientské části zálohy `codex/vztahy-lokalni` (`da17c2d`);
+  model, migrace, permission ani ACP nevznikly.
+
 ## Verze 1.10 – 25. 11. 2026
 
 - kořenový `CLAUDE.md` je stručný pracovní vstup pro Claude Code: aktivní

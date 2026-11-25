@@ -32,11 +32,26 @@
       </div>
     {% endif %}
     {% for field in relationship_form %}
-      <div class="form-field{% if field.errors %} has-error{% endif %}">
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}<div id="{{ field.id_for_label }}-errors" class="field-errors">{{ field.errors }}</div>{% endif %}
-      </div>
+      {% if field.name == "counterpart" %}
+        <div class="relationship-person-picker">
+          <div class="form-field" data-form-nondirty data-relationship-person-search-container hidden>
+            <label for="relationship-person-search">Vyhledat osobu v nabídce</label>
+            <input id="relationship-person-search" type="search" autocomplete="off" data-relationship-person-search aria-controls="{{ field.id_for_label }}" placeholder="Začněte psát jméno nebo příjmení">
+          </div>
+          <div class="form-field{% if field.errors %} has-error{% endif %}">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div id="{{ field.id_for_label }}-errors" class="field-errors">{{ field.errors }}</div>{% endif %}
+          </div>
+          <p class="muted-copy relationship-person-identification" data-relationship-person-identification aria-live="polite" hidden></p>
+        </div>
+      {% else %}
+        <div class="form-field{% if field.errors %} has-error{% endif %}">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div id="{{ field.id_for_label }}-errors" class="field-errors">{{ field.errors }}</div>{% endif %}
+        </div>
+      {% endif %}
     {% endfor %}
     <div class="form-actions">
       <button class="primary-button" type="submit" data-person-submit data-idle-label="Uložit" data-loading-label="Ukládám…">Uložit</button>

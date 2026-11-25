@@ -272,6 +272,10 @@ h1, h2, h3, .brand, .app-sidebar-title {
 .form-field { display: grid; gap: .35rem; }
 .form-field input, .form-field select, .form-field textarea { width: 100%; min-height: 2.75rem; padding: .6rem .7rem; color: var(--text); background: var(--surface-muted); border: 1px solid var(--border); border-radius: .4rem; }
 .form-field textarea { resize: vertical; }
+.relationship-person-picker { display: grid; gap: .75rem; padding: 1rem; background: var(--surface-muted); border: 1px solid var(--border); border-radius: .55rem; }
+.relationship-person-picker .form-field input, .relationship-person-picker .form-field select { background: var(--surface); }
+.relationship-person-identification { margin: 0; overflow-wrap: anywhere; }
+.relationship-person-picker [hidden] { display: none; }
 .form-field input:focus-visible, .form-field select:focus-visible, .form-field textarea:focus-visible { border-color: var(--primary); outline: .15rem solid var(--primary-soft); }
 .form-errors, .errorlist { color: var(--error); }
 .errorlist { margin: 0; padding-left: 1.2rem; }
@@ -316,6 +320,7 @@ h1, h2, h3, .brand, .app-sidebar-title {
 }
 
 @media (max-width: 44rem) {
+  .relationship-person-picker { padding: .75rem; }
   .topbar { gap: .35rem; padding-inline: .6rem; }
   .brand span:last-child { display: none; }
   .list-toggle { display: inline-block; }

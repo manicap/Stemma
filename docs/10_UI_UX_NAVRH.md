@@ -1,7 +1,7 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.19
+**Verze:** 0.20
 **Stav:** schválený pracovní základ  
 **Datum revize:** 25. 11. 2026
 
@@ -471,6 +471,15 @@ protistranu a vysvětluje, že je nelze měnit. Uložení ve full-page režimu v
 kartu Vztahy, HTMX uložení nahradí detail osoby a potvrdí uložení. Chyby
 zůstávají ve formuláři a přímé URL jsou znovu autorizované na serveru. Zápis
 ostatních typů, lifecycle a Materials vztahů nejsou součástí tohoto řezu.
+
+Výběr protistrany při vytvoření je běžný `<select>`, který funguje i bez
+JavaScriptu. Se zapnutým JavaScriptem se nad ním zobrazí pole **Vyhledat osobu
+v nabídce**, které filtruje už vydané volby podle jména bez ohledu na diakritiku
+a velikost písmen (například „dvorak“ najde „Dvořáková“), a text „Vybraná
+osoba: …“ oznamovaný přes `aria-live`. Filtrování nikdy neskryje právě vybranou
+osobu, psaní do vyhledávání neoznačí formulář jako neuložený a nabídka osob ani
+serverová autorizace se tím nemění. Při úpravě vztahu se výběr osoby
+nezobrazuje.
 
 Karta nenahrazuje samostatný rodokmen.
 
