@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.64
+**Verze:** 0.65
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
-**Datum revize:** 6. 11. 2026
+**Datum revize:** 25. 11. 2026
 
 ## 0. Jak číst stav funkcí
 
@@ -14,7 +14,8 @@ uživatelsky dostupný.
 **Implementováno:** globální shell a Přehled, actor-aware seznam, vyhledávání,
 filtrování, řazení a detail osob,
 omezená editace osoby, session autentizace a role, odvozené údaje osoby,
-read-only karty Vztahy, Bydliště a Hrobová místa, karta Události s úzkým
+karta Vztahy s úzkým vytvořením a úpravou rodičů, dětí a partnerů,
+read-only karty Bydliště a Hrobová místa, karta Události s úzkým
 vytvořením a úpravou narození a úmrtí, actor-aware PDF/A4
 export osoby, read-only karta Materiály osoby a kompletní Health vertikála
 včetně archivu a Koše. Webové
@@ -22,9 +23,11 @@ průchody podporují full-page i HTMX režim podle svého kontraktu; export je
 samostatný běžný GET odkaz na PDF.
 
 **Backendově implementováno, širší produktové UI plánováno:** modely a servisní
-nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy, Bydliště
+nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Bydliště
 a Hrobová místa mají read-only person-centric přehled; jejich zápis, lifecycle
-a vlastní kontextové Materials UI chybí. Události navíc dovolují oprávněné
+a vlastní kontextové Materials UI chybí. Vztahy dovolují oprávněné vytvoření a
+úpravu vazby `biological_parent` a `partner`; ostatní typy, lifecycle a
+Relationship Materials UI chybí. Události navíc dovolují oprávněné
 vytvoření a úpravu narození a úmrtí, ale nemají obecný detail, zápis ostatních
 typů ani lifecycle UI. Rozsah autorizovaných
 write hranic není u všech těchto domén stejný; existence backendu se proto
@@ -40,8 +43,8 @@ vazby, základní metadata a odkazy na tyto endpointy. Health detail bezpečně
 zobrazuje pouze dostupná metadata. Browser upload, request/grant UI a obecné
 management UI Materials neexistují.
 
-**Plánováno / cílový stav:** obecné vyhledávání a filtry, write/lifecycle UI
-vztahů, bydlišť a hrobových míst, obecný Event detail, zápis ostatních typů
+**Plánováno / cílový stav:** obecné vyhledávání a filtry, zápis ostatních typů
+vztahů, lifecycle UI vztahů, write/lifecycle UI bydlišť a hrobových míst, obecný Event detail, zápis ostatních typů
 událostí, event lifecycle a Materials UI, fotografie jako souborový
 průchod a auditní historie. Tyto požadavky zůstávají
 součástí návrhu, ale nejsou podmínkou již uzavřeného RC 0.1.
@@ -315,8 +318,22 @@ automaticky neodstraňuje při změně typu.
 čtecí přehled jsou implementované a testované. Endpoint
 `/osoby/<person_id>/vztahy/` jej zobrazuje read-only ve full-page i HTMX režimu.
 UI používá pouze bezpečně vydané jméno protějšku a směrový popisek; skrytý vztah
-nebo osoba nezanechá odkaz, ID, metadata ani odlišný empty state. Formuláře,
-lifecycle a Relationship Materials UI jsou plánované.
+nebo osoba nezanechá odkaz, ID, metadata ani odlišný empty state.
+
+Úzký zápis z karty Vztahy podporuje tři akce: **Přidat rodiče**, **Přidat dítě**
+a **Přidat partnera**. Rodič i dítě ukládají orientovanou vazbu
+`biological_parent` (rodič → dítě), partner symetrickou vazbu `partner`
+uloženou jednou v kanonickém pořadí. Typ i orientaci určuje výhradně akce;
+klient je nemůže zadat. Protistranu lze vybrat jen z aktivních osob, které
+actorovi vydá autorizovaný person browser, a nesmí jít o tutéž osobu. Formulář
+dále přijímá neúplné datum (u typu bez podpory rozmezí bez `RANGE` a konce),
+jeho kvalifikátor, původní text a poznámku, poznámku k vazbě, dostupný access a
+stav ověření. Úprava mění pouze tyto údaje; typ ani účastníky změnit nelze a
+upravit jde jen měkce neodstraněnou a nearchivovanou vazbu typu
+`biological_parent` nebo `partner`, kterou actor vidí a jejíž obě osoby jsou
+aktivní a viditelné. Duplicitní vazba a rodičovský cyklus se odmítnou
+srozumitelnou chybou. Ostatní typy vazeb, archivace, mazání a Relationship
+Materials UI jsou plánované.
 
 Vazby jsou univerzální a ukládají se pouze jednou.
 

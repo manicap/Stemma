@@ -1,7 +1,7 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.70
-**Stav:** aktivní vývoj přesunut na `agent/rc-0.2-dev`
+**Verze dokumentace:** 0.71
+**Stav:** úzký zápis vztahů rodič, dítě a partner implementován
 **Datum revize:** 25. 11. 2026
 
 ## Účel balíčku
@@ -1103,7 +1103,8 @@ Materials UI.
   25. 11. 2026 z `9f596f7`); `agent/rc-0.2` je pozastavená větev s prací na
   nástrojích Cezar/swarm, uchovaná pro pozdější použití. Dokončené jsou
   samostatně schválené read-only karty Vztahy, Bydliště, Hrobová místa a
-  Události osoby a actor-aware PDF/A4 export osoby. Validační a review workflow
+  Události osoby a actor-aware PDF/A4 export osoby. Karta Vztahy navíc
+  dovoluje Editorovi vytvořit a upravit rodiče, dítě a partnera. Validační a review workflow
   upřesňuje ACP-009; baseline 1 587/1 587 patřil stavu RC 0.2 před následnými
   M3 změnami; M3.4 baseline byl 1 681/1 681 a navazující M3.5a/M3.5b jsou
   cíleně ověřované samostatnými HTTP, upload a bezpečnostními testy.

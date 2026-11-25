@@ -50,6 +50,10 @@ _EVENT_EDITOR_PERMISSIONS = (
     ("events", "add_event"),
     ("events", "change_event"),
 )
+_RELATIONSHIP_EDITOR_PERMISSIONS = (
+    ("people", "add_relationship"),
+    ("people", "change_relationship"),
+)
 _ELEVATED_PERMISSIONS = (
     ("accounts", "view_restricted_content"),
     ("accounts", "view_admin_only_content"),
@@ -65,6 +69,7 @@ _REQUIRED_PERMISSIONS = (
     _PERSON_EDITOR_PERMISSION,
     _PERSON_CREATOR_PERMISSION,
     *_EVENT_EDITOR_PERMISSIONS,
+    *_RELATIONSHIP_EDITOR_PERMISSIONS,
     *_ELEVATED_PERMISSIONS,
     *_HEALTH_DEMO_PERMISSIONS,
 )
@@ -171,6 +176,7 @@ class Command(BaseCommand):
                     _PERSON_EDITOR_PERMISSION,
                     _PERSON_CREATOR_PERMISSION,
                     *_EVENT_EDITOR_PERMISSIONS,
+                    *_RELATIONSHIP_EDITOR_PERMISSIONS,
                     *_ELEVATED_PERMISSIONS,
                 )
             )
@@ -183,6 +189,7 @@ class Command(BaseCommand):
                     _PERSON_EDITOR_PERMISSION,
                     _PERSON_CREATOR_PERMISSION,
                     *_EVENT_EDITOR_PERMISSIONS,
+                    *_RELATIONSHIP_EDITOR_PERMISSIONS,
                 )
             )
             administrator_permissions = tuple(

@@ -1,8 +1,8 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.70
-**Stav:** aktivní vývoj přesunut na `agent/rc-0.2-dev`
+**Verze:** 0.71
+**Stav:** úzký zápis vztahů rodič, dítě a partner implementován
 **Datum revize:** 25. 11. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
@@ -598,10 +598,11 @@ read-only přehledy Vztahů, Bydliště, Hrobových míst a Událostí osoby ve
 stávajícím person-centric shellu. Používají actor-aware selectory, podporují
 full-page i HTMX režim a jednotný empty state bez existence leaku. Navazující
 schválené řezy doplnily Materials prohlížení a upload, vytvoření osoby,
-vyhledávání a úzké vytvoření a úpravu narození a úmrtí. Obecný Event detail,
-ostatní typy událostí, participant management a lifecycle nadále nevznikly.
+vyhledávání, úzké vytvoření a úpravu narození a úmrtí a úzký zápis vztahů
+rodič, dítě a partner. Obecný Event detail, ostatní typy událostí, participant
+management, zápis ostatních typů vztahů a lifecycle nadále nevznikly.
 
-Tento milestone sám nepovoluje Relationship, Residence, GraveSite ani
+Tento milestone sám nepovoluje další Relationship, Residence, GraveSite ani
 PersonGraveSite write/lifecycle UI, obecný Event detail nebo obecné Event a
 participant write/lifecycle UI, Place management ani obecné Materials UI.
 Každý další funkční řez vyžaduje samostatné explicitní schválení.
@@ -711,7 +712,8 @@ událostí nejsou součástí řezu.
 - základ person-centric záložek, responzivní shell a světlý i tmavý motiv,
 - formuláře a uživatelské průchody vytvoření a editace osoby a kompletní Health
   vertikály,
-- read-only karta Vztahy ve full-page i HTMX režimu,
+- karta Vztahy ve full-page i HTMX režimu s úzkým vytvořením a úpravou
+  rodičů, dětí a partnerů,
 - read-only karta Bydliště ve full-page i HTMX režimu,
 - read-only karta Hrobová místa ve full-page i HTMX režimu,
 - karta Události ve full-page i HTMX režimu s úzkým vytvořením a úpravou

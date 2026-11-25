@@ -348,3 +348,57 @@ class EventEditorPermissionMigrationTests(TestCase):
             reader.permissions.filter(pk__in=permission_ids).count(),
             2,
         )
+
+
+class RelationshipEditorPermissionMigrationTests(TestCase):
+    migration = import_module(
+        "accounts.migrations.0008_editor_relationship_permissions"
+    )
+
+    def permissions(self):
+        return Permission.objects.filter(
+            content_type__app_label="people",
+            content_type__model="relationship",
+            codename__in={"add_relationship", "change_relationship"},
+        )
+
+    def test_forward_and_reverse_touch_only_editor_bindings(self) -> None:
+        permissions = tuple(self.permissions())
+        self.assertEqual(len(permissions), 2)
+        permission_ids = tuple(item.pk for item in permissions)
+        reader = Group.objects.get(name="Čtenář")
+        editor = Group.objects.get(name="Editor")
+        administrator = Group.objects.get(name="Správce")
+        self.assertEqual(
+            editor.permissions.filter(pk__in=permission_ids).count(),
+            2,
+        )
+        self.assertFalse(
+            reader.permissions.filter(pk__in=permission_ids).exists()
+        )
+        reader.permissions.add(*permissions)
+        editor.permissions.remove(*permissions)
+
+        self.migration.grant_editor_relationship_permissions(apps, None)
+        self.migration.grant_editor_relationship_permissions(apps, None)
+
+        self.assertEqual(
+            editor.permissions.filter(pk__in=permission_ids).count(),
+            2,
+        )
+        self.assertFalse(
+            administrator.permissions.filter(pk__in=permission_ids).exists()
+        )
+
+        self.migration.revoke_editor_relationship_permissions(apps, None)
+
+        self.assertFalse(
+            editor.permissions.filter(pk__in=permission_ids).exists()
+        )
+        self.assertEqual(
+            reader.permissions.filter(pk__in=permission_ids).count(),
+            2,
+        )
+        self.assertTrue(
+            Permission.objects.filter(pk__in=permission_ids).count() == 2
+        )

@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.94
+**Verze:** 0.95
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 6. 11. 2026
+**Datum revize:** 25. 11. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -293,6 +293,20 @@ vidět také všechny aktivní osoby ostatních participantů; skrytá osoba tak
 nemůže být nepřímo měněna přes sdílenou událost. Nadále platí nejvýše jedna
 měkce neodstraněná událost daného životního typu na osobu; archivace tento slot
 neuvolňuje. Nevzniká nová permission, obecný permission framework ani nový ACP.
+205. Person-centric zápis vztahů používá existující standardní permissions
+`people.add_relationship` pro vytvoření a `people.change_relationship` pro
+úpravu; datová migrace `accounts.0008` je přiděluje pouze systémové skupině
+Editor. Úzké use-cases v `people/use_cases.py` vždy znovu načtou aktivního
+actora, vyžadují aktivní viditelnou osobu i protistranu a actor musí smět
+zobrazit navrženou access úroveň. Podporované akce jsou rodič a dítě (typ
+`biological_parent`, orientace rodič → dítě daná akcí) a partner (symetrický typ
+`partner`, uložený jednou). Úprava nikdy nemění typ ani účastníky a dovolí jen
+měkce neodstraněnou, nearchivovanou systémovou vazbu těchto dvou typů, kterou
+actor vidí a jejíž obě osoby jsou aktivní a viditelné; jinak selže jednotně jako
+nenalezená. Zápis deleguje na existující atomické služby `create_relationship`
+a `update_relationship` včetně serializace zápisů, kontroly rodičovského cyklu a
+duplicity. Obecná hláška porušeného omezení duplicity se převádí na českou
+zprávu. Nevzniká nová permission, obecný permission framework ani nový ACP.
 
 ## 2. Otevřené otázky
 

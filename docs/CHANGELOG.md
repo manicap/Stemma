@@ -1,5 +1,22 @@
 # Historie změn dokumentace
 
+## Verze 1.09 – 25. 11. 2026
+
+- karta Vztahy osoby doplňuje full-page/HTMX formuláře pro vytvoření rodiče,
+  dítěte a partnera a úpravu existujících vazeb `biological_parent` a `partner`;
+  typ i orientaci určuje akce, účastníky nelze při úpravě měnit,
+- úzké actor-aware use-cases vyžadují `people.add_relationship`, respektive
+  `people.change_relationship`, čerstvého aktivního actora, aktivní viditelnou
+  osobu i protistranu a viditelnou navrženou access úroveň; výběr protistrany
+  je omezen na autorizovaný person browser,
+- datová migrace `accounts.0008` přiděluje obě existující Relationship
+  permissions pouze skupině Editor a lokální demo bootstrap je s tímto
+  kontraktem synchronizovaný,
+- zápis deleguje na existující atomické služby včetně kontroly cyklu a
+  duplicity; obecná hláška porušeného omezení se převádí na českou zprávu,
+- ostatní typy vazeb, lifecycle a Relationship Materials UI zůstávají mimo
+  tento řez; nevznikla nová permission, model ani ACP.
+
 ## Verze 1.08 – 25. 11. 2026
 
 - aktivní vývojová větev je nově `agent/rc-0.2-dev`, vytvořená z `9f596f7`,

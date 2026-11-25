@@ -8,32 +8,39 @@
         <p class="eyebrow">Rodinné a další vazby</p>
         <h3 id="relationships-heading">Vztahy</h3>
       </div>
+      {% if relationship_add_actions %}
+        <div class="form-actions">
+          {% for action in relationship_add_actions %}
+            <a class="primary-button" data-person-browser-link href="{{ action.url }}" hx-get="{{ action.url }}" hx-target="#person-detail" hx-push-url="true">{{ action.label }}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
+
+    {% if relationship_saved %}<p class="success-message" role="status">Vztah byl uložen.</p>{% endif %}
 
     {% if relationship_overview %}
       <div class="related-list">
         {% for item in relationship_overview %}
-          {% if item.detail_url %}
-            <a
-              class="related-card"
-              href="{{ item.detail_url }}"
-              hx-get="{{ item.detail_url }}"
-              hx-target="#person-detail"
-              hx-push-url="true"
-              hx-indicator="#detail-loading"
-            >
-          {% else %}
-            <div class="related-card">
-          {% endif %}
+          <div class="related-card">
+            {% if item.detail_url %}
+              <a
+                href="{{ item.detail_url }}"
+                hx-get="{{ item.detail_url }}"
+                hx-target="#person-detail"
+                hx-push-url="true"
+                hx-indicator="#detail-loading"
+              ><strong>{{ item.person.first_name }} {{ item.person.last_name }}</strong></a>
+            {% else %}
               <strong>{{ item.person.first_name }} {{ item.person.last_name }}</strong>
-              {% for reason in item.reasons %}
-                <small>{{ reason.label }}</small>
+            {% endif %}
+            {% for reason in item.reasons %}
+              <small>{{ reason.label }}</small>
+              {% for edit_url in reason.edit_urls %}
+                <a class="secondary-button" data-person-browser-link href="{{ edit_url }}" hx-get="{{ edit_url }}" hx-target="#person-detail" hx-push-url="true">Upravit vztah</a>
               {% endfor %}
-          {% if item.detail_url %}
-            </a>
-          {% else %}
-            </div>
-          {% endif %}
+            {% endfor %}
+          </div>
         {% endfor %}
       </div>
     {% else %}

@@ -20,6 +20,29 @@ urlpatterns = [
         name="relationships",
     ),
     path(
+        "<int:person_id>/vztahy/rodic/pridat/",
+        views.person_relationship_create,
+        {"kind": "parent"},
+        name="relationship-create-parent",
+    ),
+    path(
+        "<int:person_id>/vztahy/dite/pridat/",
+        views.person_relationship_create,
+        {"kind": "child"},
+        name="relationship-create-child",
+    ),
+    path(
+        "<int:person_id>/vztahy/partner/pridat/",
+        views.person_relationship_create,
+        {"kind": "partner"},
+        name="relationship-create-partner",
+    ),
+    path(
+        "<int:person_id>/vztahy/<int:relationship_id>/upravit/",
+        views.person_relationship_edit,
+        name="relationship-edit",
+    ),
+    path(
         "<int:person_id>/udalosti/",
         views.person_events,
         name="events",

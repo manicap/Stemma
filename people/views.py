@@ -69,8 +69,8 @@ from places.selectors import (
 from .derived_selectors import (
     PersonPresentation,
 )
-from .forms import PersonCreateForm, PersonForm
-from .models import Person
+from .forms import PersonCreateForm, PersonForm, PersonRelationshipForm
+from .models import Person, Relationship, RelationshipType
 from .pdf_exports import build_person_pdf, get_person_pdf_export
 from .selectors import get_visible_person, get_visible_relationship_overview
 from .search_selectors import (
@@ -84,6 +84,14 @@ from .services import (
     PersonInput,
     create_person,
     update_person_basic,
+)
+from .use_cases import (
+    PERSON_RELATIONSHIP_KINDS,
+    PERSON_RELATIONSHIP_TYPE_CODES,
+    RelationshipDetailsInput,
+    create_person_relationship,
+    get_person_relationship_for_update,
+    update_person_relationship,
 )
 
 
@@ -290,39 +298,335 @@ def person_relationships(
     request: HttpRequest,
     person_id: int,
 ) -> HttpResponse:
-    """Zobraz bezpečný read-only přehled vztahů osoby."""
+    """Zobraz bezpečný přehled a povolené akce vztahů osoby."""
 
     presentations, presentation = _visible_person_page(request, person_id)
+    return _render_person_relationships(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+    )
+
+
+_RELATIONSHIP_ADD_LABELS = {
+    "parent": "Přidat rodiče",
+    "child": "Přidat dítě",
+    "partner": "Přidat partnera",
+}
+_RELATIONSHIP_FORM_TITLES = {
+    "parent": "Přidat rodiče",
+    "child": "Přidat dítě",
+    "partner": "Přidat partnera nebo partnerku",
+}
+
+
+def _relationship_context(
+    request: HttpRequest,
+    *,
+    person: Person,
+) -> dict[str, object]:
     relationship_overview = get_visible_relationship_overview(
-        person=presentation.person,
+        person=person,
         actor=request.user,
     )
+    query_suffix = _person_browser_query_suffix(_person_browser(request))
     detail_person_ids = {
         item.person.pk
         for item in _person_browser(request).visible_presentations
     }
-    relationship_presentations = tuple(
-        {
-            "person": item.person,
-            "reasons": item.reasons,
-            "detail_url": (
-                reverse("people:detail", args=(item.person.pk,))
-                + _person_browser_query_suffix(_person_browser(request))
-                if item.person.pk in detail_person_ids
-                else None
-            ),
-        }
-        for item in relationship_overview
+    active_person = (
+        person.archived_at is None and person.deleted_at is None
     )
+    can_add = active_person and (
+        _current_actor_with_permission(request, "people.add_relationship")
+        is not None
+    )
+    can_change = active_person and (
+        _current_actor_with_permission(
+            request,
+            "people.change_relationship",
+        )
+        is not None
+    )
+    relationship_presentations = []
+    for item in relationship_overview:
+        editable = (
+            can_change
+            and item.person.archived_at is None
+            and item.person.deleted_at is None
+        )
+        reasons = tuple(
+            {
+                "label": reason.label,
+                "edit_urls": tuple(
+                    reverse(
+                        "people:relationship-edit",
+                        args=(person.pk, relationship_id),
+                    )
+                    + query_suffix
+                    for relationship_id in reason.relationship_ids
+                )
+                if (
+                    editable
+                    and not reason.is_derived
+                    and reason.relationship_code
+                    in PERSON_RELATIONSHIP_TYPE_CODES
+                )
+                else (),
+            }
+            for reason in item.reasons
+        )
+        relationship_presentations.append(
+            {
+                "person": item.person,
+                "reasons": reasons,
+                "detail_url": (
+                    reverse("people:detail", args=(item.person.pk,))
+                    + query_suffix
+                    if item.person.pk in detail_person_ids
+                    else None
+                ),
+            }
+        )
+    return {
+        "active_person_tab": "relationships",
+        "relationship_overview": tuple(relationship_presentations),
+        "relationship_add_actions": tuple(
+            {
+                "label": label,
+                "url": reverse(
+                    f"people:relationship-create-{kind}",
+                    args=(person.pk,),
+                )
+                + query_suffix,
+            }
+            for kind, label in _RELATIONSHIP_ADD_LABELS.items()
+        )
+        if can_add
+        else (),
+    }
+
+
+def _render_person_relationships(
+    request: HttpRequest,
+    *,
+    presentations: tuple[PersonPresentation, ...],
+    presentation: PersonPresentation,
+    saved: bool = False,
+) -> HttpResponse:
     return _render_person_content(
         request,
         presentations=presentations,
         presentation=presentation,
         template_name="people/partials/person_relationships.html",
+        context=_relationship_context(request, person=presentation.person)
+        | {"relationship_saved": saved},
+    )
+
+
+def _relationship_details_from_form(
+    form: PersonRelationshipForm,
+) -> RelationshipDetailsInput:
+    values = form.cleaned_data
+    return RelationshipDetailsInput(
+        note=values["note"],
+        access_level=values["access_level"],
+        verification_status=values["verification_status"],
+        date_precision=values["date_precision"],
+        date_qualifier=values["date_qualifier"],
+        start_year=values["start_year"],
+        start_month=values["start_month"],
+        start_day=values["start_day"],
+        end_year=values.get("end_year"),
+        end_month=values.get("end_month"),
+        end_day=values.get("end_day"),
+        original_date_text=values["original_date_text"],
+        date_note=values["date_note"],
+    )
+
+
+def _system_relationship_type_or_404(code: str) -> RelationshipType:
+    try:
+        return RelationshipType.objects.get(code=code, is_system=True)
+    except RelationshipType.DoesNotExist as exc:
+        raise Http404("Typ vztahu nebyl nalezen.") from exc
+
+
+def _render_relationship_form(
+    request: HttpRequest,
+    *,
+    presentations: tuple[PersonPresentation, ...],
+    presentation: PersonPresentation,
+    form: PersonRelationshipForm,
+    form_title: str,
+    form_url: str,
+    counterpart: Person | None = None,
+) -> HttpResponse:
+    _prepare_accessible_form_errors(form)
+    return _render_person_content(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        template_name="people/partials/person_relationship_form.html",
         context={
             "active_person_tab": "relationships",
-            "relationship_overview": relationship_presentations,
+            "relationship_form": form,
+            "relationship_form_title": form_title,
+            "relationship_form_url": (
+                form_url
+                + _person_browser_query_suffix(_person_browser(request))
+            ),
+            "relationship_counterpart": counterpart,
+            "form_submitted": request.method == "POST",
         },
+    )
+
+
+def _relationship_saved_response(
+    request: HttpRequest,
+    *,
+    person_id: int,
+) -> HttpResponse:
+    presentations, presentation = _refreshed_person_page(
+        request,
+        person_id=person_id,
+    )
+    target_url = reverse(
+        "people:relationships",
+        args=(person_id,),
+    ) + _person_browser_query_suffix(_person_browser(request))
+    if request.headers.get("HX-Request") == "true":
+        response = _render_person_relationships(
+            request,
+            presentations=presentations,
+            presentation=presentation,
+            saved=True,
+        )
+        response["HX-Push-Url"] = target_url
+        return response
+    messages.success(request, "Vztah byl uložen.")
+    return redirect(target_url)
+
+
+@require_http_methods(["GET", "POST"])
+def person_relationship_create(
+    request: HttpRequest,
+    person_id: int,
+    kind: str,
+) -> HttpResponse:
+    """Vytvoř rodičovskou nebo partnerskou vazbu k vybrané osobě."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    person = presentation.person
+    if (
+        _current_actor_with_permission(request, "people.add_relationship")
+        is None
+    ):
+        raise PermissionDenied("K vytvoření vztahu nemáte oprávnění.")
+    if kind not in PERSON_RELATIONSHIP_KINDS:
+        raise Http404("Typ vztahu nebyl nalezen.")
+    if person.archived_at is not None or person.deleted_at is not None:
+        raise Http404("Osoba nebyla nalezena.")
+    relationship_type = _system_relationship_type_or_404(
+        PERSON_RELATIONSHIP_KINDS[kind]
+    )
+    counterpart_ids = tuple(
+        item.person.pk
+        for item in _person_browser(request).visible_presentations
+        if item.person.pk != person.pk
+    )
+    form = PersonRelationshipForm(
+        request.POST or None,
+        instance=Relationship(relationship_type=relationship_type),
+        actor=request.user,
+        kind=kind,
+        counterpart_ids=counterpart_ids,
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            create_person_relationship(
+                person=person,
+                kind=kind,
+                counterpart=form.cleaned_data["counterpart"],
+                data=_relationship_details_from_form(form),
+                actor=request.user,
+            )
+        except Person.DoesNotExist as exc:
+            raise Http404("Osoba nebyla nalezena.") from exc
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            return _relationship_saved_response(request, person_id=person_id)
+    return _render_relationship_form(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        form=form,
+        form_title=_RELATIONSHIP_FORM_TITLES[kind],
+        form_url=reverse(
+            f"people:relationship-create-{kind}",
+            args=(person_id,),
+        ),
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def person_relationship_edit(
+    request: HttpRequest,
+    person_id: int,
+    relationship_id: int,
+) -> HttpResponse:
+    """Uprav údaje vazby; typ ani účastníci se nemění."""
+
+    presentations, presentation = _visible_person_page(request, person_id)
+    if (
+        _current_actor_with_permission(request, "people.change_relationship")
+        is None
+    ):
+        raise PermissionDenied("K úpravě vztahu nemáte oprávnění.")
+    try:
+        relationship = get_person_relationship_for_update(
+            person=presentation.person,
+            relationship=Relationship(pk=relationship_id),
+            actor=request.user,
+        )
+    except (Person.DoesNotExist, Relationship.DoesNotExist) as exc:
+        raise Http404("Vztah nebyl nalezen.") from exc
+    counterpart = (
+        relationship.person_b
+        if relationship.person_a_id == person_id
+        else relationship.person_a
+    )
+    form = PersonRelationshipForm(
+        request.POST or None,
+        instance=relationship,
+        actor=request.user,
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            update_person_relationship(
+                person=presentation.person,
+                relationship=relationship,
+                data=_relationship_details_from_form(form),
+                actor=request.user,
+            )
+        except (Person.DoesNotExist, Relationship.DoesNotExist) as exc:
+            raise Http404("Vztah nebyl nalezen.") from exc
+        except ValidationError as error:
+            _add_service_errors(form, error)
+        else:
+            return _relationship_saved_response(request, person_id=person_id)
+    return _render_relationship_form(
+        request,
+        presentations=presentations,
+        presentation=presentation,
+        form=form,
+        form_title="Upravit vztah",
+        form_url=reverse(
+            "people:relationship-edit",
+            args=(person_id, relationship_id),
+        ),
+        counterpart=counterpart,
     )
 
 
@@ -1656,7 +1960,12 @@ def _person_create_input_from_form(*, form: PersonCreateForm) -> PersonInput:
 
 
 def _add_service_errors(
-    form: PersonForm | PersonCreateForm | PersonLifeEventForm,
+    form: (
+        PersonForm
+        | PersonCreateForm
+        | PersonLifeEventForm
+        | PersonRelationshipForm
+    ),
     error: ValidationError,
 ) -> None:
     if hasattr(error, "error_dict"):
@@ -1669,7 +1978,12 @@ def _add_service_errors(
 
 
 def _prepare_accessible_form_errors(
-    form: PersonForm | PersonCreateForm | PersonLifeEventForm,
+    form: (
+        PersonForm
+        | PersonCreateForm
+        | PersonLifeEventForm
+        | PersonRelationshipForm
+    ),
 ) -> None:
     for field_name in form.errors:
         if field_name not in form.fields:

@@ -39,7 +39,9 @@ class BootstrapDemoAccountsCommandTests(TestCase):
                 "events.add_event",
                 "events.change_event",
                 "people.add_person",
+                "people.add_relationship",
                 "people.change_person",
+                "people.change_relationship",
             },
             "stemma-demo-administrator": {
                 "people.change_person",

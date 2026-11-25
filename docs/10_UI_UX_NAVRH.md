@@ -1,9 +1,9 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.18
+**Verze:** 0.19
 **Stav:** schválený pracovní základ  
-**Datum revize:** 6. 11. 2026
+**Datum revize:** 25. 11. 2026
 
 ## 1. Účel dokumentu
 
@@ -452,15 +452,25 @@ Událost může mít příznak **Zobrazit v přehledu osoby**. Takto označené 
 
 ## 11. Karta Vztahy
 
-Implementovaný read-only řez zobrazuje jednoduchý seznam bezpečně dostupných
+Implementovaná karta zobrazuje jednoduchý seznam bezpečně dostupných
 propojených osob. U každé osoby se zobrazuje pouze jméno, příjmení a jeden nebo
 více směrových popisků, které vydal actor-aware overview. Pokud je protějšek
 dostupný i v běžném person detailu, karta na něj bezpečně odkazuje.
 
 Full-page i HTMX režim zachovávají společný person header a navigaci. Skryté
 vztahy ani osoby nezanechávají jméno, odkaz, počet nebo odlišný prázdný stav.
-Seznam používá stávající responzivní karty a světlý i tmavý motiv. Zápis,
-lifecycle a Materials vztahů nejsou součástí tohoto řezu.
+Seznam používá stávající responzivní karty a světlý i tmavý motiv.
+
+Aktivní uživatel s `people.add_relationship` vidí u aktivní osoby akce
+**Přidat rodiče**, **Přidat dítě** a **Přidat partnera**. Formulář nabízí výběr
+protistrany z osob dostupných v person browseru (bez vybrané osoby), neúplné
+datum, poznámku, dostupný access a stav ověření; typ vazby je daný akcí. U
+vazeb `biological_parent` a `partner` vidí uživatel s
+`people.change_relationship` akci **Upravit vztah**; formulář uvádí typ a
+protistranu a vysvětluje, že je nelze měnit. Uložení ve full-page režimu vrací
+kartu Vztahy, HTMX uložení nahradí detail osoby a potvrdí uložení. Chyby
+zůstávají ve formuláři a přímé URL jsou znovu autorizované na serveru. Zápis
+ostatních typů, lifecycle a Materials vztahů nejsou součástí tohoto řezu.
 
 Karta nenahrazuje samostatný rodokmen.
 
