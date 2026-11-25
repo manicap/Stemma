@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.69
-**Stav:** person-centric vytvoření a úprava narození a úmrtí implementováno
-**Datum revize:** 6. 11. 2026
+**Verze:** 0.70
+**Stav:** person-centric zápis základních rodinných vazeb implementován
+**Datum revize:** 9. 11. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -597,11 +597,12 @@ read-only přehledy Vztahů, Bydliště, Hrobových míst a Událostí osoby ve
 stávajícím person-centric shellu. Používají actor-aware selectory, podporují
 full-page i HTMX režim a jednotný empty state bez existence leaku. Navazující
 schválené řezy doplnily Materials prohlížení a upload, vytvoření osoby,
-vyhledávání a úzké vytvoření a úpravu narození a úmrtí. Obecný Event detail,
+vyhledávání, úzké vytvoření a úpravu narození a úmrtí a zápis základních
+rodinných vazeb. Obecný Event detail,
 ostatní typy událostí, participant management a lifecycle nadále nevznikly.
 
-Tento milestone sám nepovoluje Relationship, Residence, GraveSite ani
-PersonGraveSite write/lifecycle UI, obecný Event detail nebo obecné Event a
+Tento milestone sám nepovoluje obecný Relationship write/lifecycle UI,
+Residence, GraveSite ani PersonGraveSite write/lifecycle UI, obecný Event detail nebo obecné Event a
 participant write/lifecycle UI, Place management ani obecné Materials UI.
 Každý další funkční řez vyžaduje samostatné explicitní schválení.
 
@@ -700,6 +701,17 @@ se zachovají a zápis deleguje na existující atomické agregátní služby. O
 Event detail, ostatní typy, participant management, lifecycle a Materials
 událostí nejsou součástí řezu.
 
+Navazující úzký řez **rodinné vazby osoby** přidává z karty Vztahy vytvoření
+existující osoby jako biologického rodiče, biologického dítěte nebo partnera a
+editaci atributů explicitního vztahu. Standardní `people.add_relationship` a
+`people.change_relationship` přiděluje úzká datová migrace pouze skupině
+Editor. Actor-aware use-cases z čerstvého databázového stavu chrání actora,
+obě osoby, vztah a současný i navržený access; editace zachovává typ i
+účastníky. Zápis deleguje na existující atomické služby, takže platí dosavadní
+duplicity, normalizace symetrie a kontrola rodičovských cyklů. Obecný editor
+typů či účastníků, další vztahové typy, lifecycle a Materials vztahů nejsou
+součástí řezu.
+
 ## Fáze 4 – Interaktivní prototyp — implementovaný základ, širší obsah částečný
 
 **Dokončeno:**
@@ -710,7 +722,8 @@ událostí nejsou součástí řezu.
 - základ person-centric záložek, responzivní shell a světlý i tmavý motiv,
 - formuláře a uživatelské průchody vytvoření a editace osoby a kompletní Health
   vertikály,
-- read-only karta Vztahy ve full-page i HTMX režimu,
+- karta Vztahy ve full-page i HTMX režimu s úzkým vytvořením a úpravou
+  rodinných vazeb,
 - read-only karta Bydliště ve full-page i HTMX režimu,
 - read-only karta Hrobová místa ve full-page i HTMX režimu,
 - karta Události ve full-page i HTMX režimu s úzkým vytvořením a úpravou
@@ -739,7 +752,8 @@ přestože její UI základ je skutečně používán.
   viditelného odvozeného narození,
 - bezpečná prezentace narození, úmrtí, věku a životního stavu z událostí,
 - modely, služby a actor-aware čtecí přehled základních vazeb,
-- read-only HTTP/UI přehled vztahů s bezpečným filtrováním protějšku,
+- HTTP/UI přehled vztahů s bezpečným filtrováním protějšku a úzkým vytvořením
+  biologického rodiče, dítěte a partnerství a editací atributů vztahu,
 - read-only HTTP/UI přehled bydlišť s actor-aware filtrováním Residence,
 - read-only HTTP/UI přehled hrobových míst s actor-aware filtrováním vazby a
   GraveSite.
@@ -750,8 +764,8 @@ přestože její UI základ je skutečně používán.
 
 **Částečně dokončeno:**
 
-- vazby mají robustní backend a read-only HTTP/UI, ale nemají zápis, lifecycle
-  ani Materials UI,
+- vazby mají robustní backend a úzký person-centric zápis základních rodinných
+  vazeb, ale nemají obecný editor typů či účastníků, lifecycle ani Materials UI,
 - bydliště mají robustní backend a read-only HTTP/UI, ale nemají zápis,
   lifecycle ani Materials UI,
 - hrobová místa mají robustní backend a read-only HTTP/UI, ale nemají zápis,
@@ -766,7 +780,7 @@ přestože její UI základ je skutečně používán.
 
 - širší globální vyhledávání mimo person-centric seznam a lifecycle filtr
   archivovaných osob,
-- write/lifecycle a Materials UI vazeb,
+- širší write, lifecycle a Materials UI vazeb,
 - write/lifecycle a Materials UI bydlišť a Place management,
 - write/lifecycle a Materials UI hrobových míst a jejich vazeb,
 - auditní historie změn.
@@ -777,7 +791,7 @@ přestože její UI základ je skutečně používán.
 
 - kompletní Health vertikála: list, detail, create/update, archiv/obnova,
   soft-delete/Koš/obnova odstraněného a bezpečná metadata příloh a zdrojů,
-- vztahy mají modely, služby, actor-aware čtení a read-only person-centric UI,
+- vztahy mají modely, služby, actor-aware čtení a úzký person-centric zápis,
 - bydliště mají modely, služby, actor-aware čtení a read-only person-centric UI,
 - hrobová místa mají modely, služby, actor-aware čtení a read-only
   person-centric UI.

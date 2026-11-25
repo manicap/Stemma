@@ -25,6 +25,7 @@ __all__ = (
     "RelationshipInput",
     "create_person",
     "create_relationship",
+    "lock_relationship_mutations",
     "update_person",
     "update_person_basic",
     "update_relationship",
@@ -300,7 +301,7 @@ def _load_relationship_type(
         )
 
 
-def _lock_relationship_mutations() -> None:
+def lock_relationship_mutations() -> None:
     """Serializuj vztahové zápisy společným prvním řádkovým zámkem."""
 
     sentinel_ids = list(
@@ -541,7 +542,7 @@ def create_relationship(
     candidate: Relationship | None = None
     try:
         with transaction.atomic():
-            _lock_relationship_mutations()
+            lock_relationship_mutations()
             relationship_type = _load_relationship_type(
                 data.relationship_type
             )
@@ -606,7 +607,7 @@ def update_relationship(
     relationship_id = relationship.pk
     try:
         with transaction.atomic():
-            _lock_relationship_mutations()
+            lock_relationship_mutations()
             try:
                 candidate = Relationship.objects.select_for_update().get(
                     pk=relationship_id

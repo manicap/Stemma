@@ -164,7 +164,23 @@
       replacePersonBrowserQuery(form, "data-edit-url", query);
     });
   };
+  const syncRelationshipPersonIdentification = (scope = document) => {
+    scope.querySelectorAll?.("[data-relationship-person-select]").forEach((select) => {
+      const picker = select.closest(".relationship-person-picker");
+      picker
+        ?.querySelector("[data-relationship-person-search-container]")
+        ?.removeAttribute("hidden");
+      const identification = picker?.querySelector(
+        "[data-relationship-person-identification]",
+      );
+      if (!identification) return;
+      identification.textContent = select.selectedOptions[0]?.value
+        ? `Vybraná osoba: ${select.selectedOptions[0].textContent.trim()}`
+        : "Dosud nebyla vybrána žádná osoba.";
+    });
+  };
   syncPersonSearchAccessibility();
+  syncRelationshipPersonIdentification();
   document.body.addEventListener("htmx:afterSwap", (event) => {
     const target = event.detail?.target;
     if (!(target instanceof Element)) return;
@@ -177,6 +193,7 @@
     if (target.id === "person-detail") {
       selectCurrentPerson();
       setListOpen(false);
+      syncRelationshipPersonIdentification(target);
       target.querySelector("[data-form-error-summary]")?.focus();
     }
   });
@@ -256,11 +273,35 @@
 
   const dirtyPersonForm = () => document.querySelector('[data-person-form][data-dirty="true"]');
   const blockingPersonForm = () => document.querySelector('[data-person-form][data-dirty="true"]:not([data-submitting="true"])');
-  document.body.addEventListener("input", (event) => {
+  const markPersonFormDirty = (event) => {
+    if (event.target.closest?.("[data-form-nondirty]")) return;
     event.target.closest?.("[data-person-form]")?.setAttribute("data-dirty", "true");
-  });
+  };
+  document.body.addEventListener("input", markPersonFormDirty);
   document.body.addEventListener("change", (event) => {
-    event.target.closest?.("[data-person-form]")?.setAttribute("data-dirty", "true");
+    markPersonFormDirty(event);
+    const personSelect = event.target.closest?.("[data-relationship-person-select]");
+    if (personSelect) syncRelationshipPersonIdentification(personSelect.parentElement);
+  });
+  document.body.addEventListener("input", (event) => {
+    const search = event.target.closest?.("[data-relationship-person-search]");
+    if (!search) return;
+    const select = search
+      .closest(".relationship-person-picker")
+      ?.querySelector("[data-relationship-person-select]");
+    if (!select) return;
+    const query = search.value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLocaleLowerCase("cs");
+    Array.from(select.options).forEach((option, index) => {
+      if (index === 0) return;
+      const label = option.textContent
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLocaleLowerCase("cs");
+      option.hidden = Boolean(query) && !label.includes(query);
+    });
   });
   document.body.addEventListener("submit", (event) => {
     event.target.closest?.("[data-person-form]")?.setAttribute("data-submitting", "true");

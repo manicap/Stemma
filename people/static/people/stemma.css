@@ -242,6 +242,13 @@ h1, h2, h3, .brand, .app-sidebar-title {
 .person-tab small { display: block; margin-top: .15rem; font-size: .65rem; }
 .section-heading, .health-record-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .section-heading h3, .health-record-heading h3 { margin: .2rem 0; }
+.relationship-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
+.relationship-person-link { color: var(--text); text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: .18rem; }
+.relationship-person-link:hover { color: var(--primary); text-decoration-color: currentColor; }
+.relationship-person-link:focus-visible { color: var(--primary); outline: .15rem solid var(--primary); outline-offset: .15rem; border-radius: .15rem; }
+.relationship-reason { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+.relationship-edit-link { min-height: 2.2rem; padding: .35rem .65rem; font-size: .85rem; }
+.relationship-person-picker { display: grid; gap: .75rem; padding: 1rem; background: var(--surface-muted); border: 1px solid var(--border); border-radius: .55rem; }
 .health-record-list, .related-list { display: grid; gap: .75rem; margin-top: 1rem; }
 .health-record-card, .related-card { display: grid; gap: .3rem; padding: 1rem; color: var(--text); background: var(--surface-muted); border: 1px solid var(--border); border-radius: .65rem; text-decoration: none; }
 .health-record-card:hover, .health-record-card:focus-visible { border-color: var(--primary); outline: none; }
@@ -313,6 +320,12 @@ h1, h2, h3, .brand, .app-sidebar-title {
     border: 0;
     background: rgb(0 0 0 / 48%);
   }
+}
+
+@media (max-width: 44rem) {
+  .section-heading { display: grid; }
+  .relationship-actions { justify-content: stretch; }
+  .relationship-actions .primary-button { flex: 1 1 100%; text-align: center; text-decoration: none; }
 }
 
 @media (max-width: 44rem) {

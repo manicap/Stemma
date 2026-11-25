@@ -26,6 +26,7 @@ class RelationshipSelectorApiTests(SimpleTestCase):
                 "get_relationship_overview",
                 "get_sibling_overview",
                 "get_visible_people",
+                "get_visible_active_relationship_ids",
                 "get_visible_person",
                 "get_visible_relationship_overview",
             ),

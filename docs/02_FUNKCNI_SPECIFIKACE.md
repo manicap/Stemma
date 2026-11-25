@@ -1,9 +1,9 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.64
+**Verze:** 0.65
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
-**Datum revize:** 6. 11. 2026
+**Datum revize:** 9. 11. 2026
 
 ## 0. Jak číst stav funkcí
 
@@ -14,7 +14,7 @@ uživatelsky dostupný.
 **Implementováno:** globální shell a Přehled, actor-aware seznam, vyhledávání,
 filtrování, řazení a detail osob,
 omezená editace osoby, session autentizace a role, odvozené údaje osoby,
-read-only karty Vztahy, Bydliště a Hrobová místa, karta Události s úzkým
+zápisová karta Vztahy, read-only karty Bydliště a Hrobová místa, karta Události s úzkým
 vytvořením a úpravou narození a úmrtí, actor-aware PDF/A4
 export osoby, read-only karta Materiály osoby a kompletní Health vertikála
 včetně archivu a Koše. Webové
@@ -22,9 +22,11 @@ průchody podporují full-page i HTMX režim podle svého kontraktu; export je
 samostatný běžný GET odkaz na PDF.
 
 **Backendově implementováno, širší produktové UI plánováno:** modely a servisní
-nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy, Bydliště
-a Hrobová místa mají read-only person-centric přehled; jejich zápis, lifecycle
-a vlastní kontextové Materials UI chybí. Události navíc dovolují oprávněné
+nebo čtecí vrstvy vztahů, událostí, bydlišť a hrobových míst. Vztahy mají úzké
+person-centric vytvoření biologického rodiče, dítěte a partnerství a editaci
+atributů existující vazby; jejich lifecycle, obecný editor a vlastní kontextové
+Materials UI chybí. Bydliště a Hrobová místa mají read-only person-centric
+přehled. Události navíc dovolují oprávněné
 vytvoření a úpravu narození a úmrtí, ale nemají obecný detail, zápis ostatních
 typů ani lifecycle UI. Rozsah autorizovaných
 write hranic není u všech těchto domén stejný; existence backendu se proto
@@ -148,8 +150,8 @@ Archivované osoby se ve výchozím seznamu nezobrazují. Oprávněný uživatel
 ## 3. Detail osoby
 
 **Stav:** Implementován je skutečný actor-aware detail, základní záhlaví,
-odvozené životní údaje, přehled, omezená editace osoby, read-only karty Vztahy,
-Bydliště, Hrobová místa, Události a Materiály, actor-aware PDF/A4 export a
+odvozené životní údaje, přehled, omezená editace osoby, zápisové karty Vztahy
+a Události, read-only karty Bydliště, Hrobová místa a Materiály, actor-aware PDF/A4 export a
 kompletní karta Zdraví. Hlavní fotografie, lokální historie Zpět/Vpřed, Event
 detail a širší Materials management UI jsou plánované.
 
@@ -313,10 +315,30 @@ automaticky neodstraňuje při změně typu.
 
 **Stav:** Model, doménové create/update služby, odvození sourozenců a actor-aware
 čtecí přehled jsou implementované a testované. Endpoint
-`/osoby/<person_id>/vztahy/` jej zobrazuje read-only ve full-page i HTMX režimu.
-UI používá pouze bezpečně vydané jméno protějšku a směrový popisek; skrytý vztah
-nebo osoba nezanechá odkaz, ID, metadata ani odlišný empty state. Formuláře,
-lifecycle a Relationship Materials UI jsou plánované.
+`/osoby/<person_id>/vztahy/` jej zobrazuje ve full-page i HTMX režimu. UI používá
+pouze bezpečně vydané jméno protějšku a směrový popisek; skrytý vztah nebo osoba
+nezanechá odkaz, ID, metadata ani odlišný empty state. Oprávněný aktivní actor
+může přidat existující osobu jako biologického rodiče, biologické dítě nebo
+partnera a upravit obsahové, přístupové, ověřovací a časové atributy existující
+aktivní vazby. Obecný editor typů a účastníků, lifecycle a Relationship
+Materials UI jsou plánované.
+
+Vytvoření používá person-centric actor-aware use-case a standardní permission
+`people.add_relationship`; úprava používá `people.change_relationship`. Obě
+existující permissions získává datovou migrací pouze systémová skupina Editor.
+Server při každém zápisu načte aktuálního aktivního actora, obě osoby, typ a při
+úpravě také vztah. Obě osoby musí být viditelné, nearchivované a měkce
+neodstraněné; actor musí smět zobrazit současnou i požadovanou access úroveň.
+Skrytý, chybný nebo cizí kontext končí bez prozrazení identity protistrany.
+
+Akce **Přidat rodiče** a **Přidat dítě** používají pevný orientovaný typ
+`biological_parent`; akce **Přidat partnera** používá pevný symetrický typ
+`partner`, který služba normalizuje a ukládá pouze jednou. Výběr protistrany
+obsahuje jen osoby z aktuálního actor-aware person browseru a server podstrčené
+ID znovu ověřuje. Editace nepřijímá typ ani účastníky a zachovává identitu
+záznamu, oba FK, autorství a lifecycle. Duplicity, symetrická normalizace,
+zákaz vztahu k sobě a rodičovské cykly zůstávají vynucené existující atomickou
+doménovou službou.
 
 Vazby jsou univerzální a ukládají se pouze jednou.
 

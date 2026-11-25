@@ -17,6 +17,7 @@ from .selectors import (
     RelationshipOverviewItem,
     RelationshipOverviewReason,
     get_relationship_overview,
+    get_visible_active_relationship_ids,
     get_visible_relationship_overview,
 )
 
@@ -35,6 +36,7 @@ class VisibleRelationshipOverviewApiTests(SimpleTestCase):
                 "get_relationship_overview",
                 "get_sibling_overview",
                 "get_visible_people",
+                "get_visible_active_relationship_ids",
                 "get_visible_person",
                 "get_visible_relationship_overview",
             ),
@@ -47,6 +49,19 @@ class VisibleRelationshipOverviewApiTests(SimpleTestCase):
             all(
                 parameter.kind is Parameter.KEYWORD_ONLY
                 for parameter in parameters.values()
+            )
+        )
+        active_parameters = signature(
+            get_visible_active_relationship_ids
+        ).parameters
+        self.assertEqual(
+            tuple(active_parameters),
+            ("person", "actor", "relationship_ids"),
+        )
+        self.assertTrue(
+            all(
+                parameter.kind is Parameter.KEYWORD_ONLY
+                for parameter in active_parameters.values()
             )
         )
 
@@ -433,6 +448,37 @@ class VisibleRelationshipOverviewSelectorTests(TestCase):
             self.assertIsNone(
                 self.item_for(self.visible(person, actor), deleted)
             )
+
+    def test_active_relationship_ids_exclude_historical_contexts(self) -> None:
+        person = self.create_person("Vstup")
+        active_other = self.create_person("Aktivní")
+        archived_other = self.create_person("Archivovaná", archived=True)
+        active = self.create_relationship("partner", person, active_other)
+        archived_relationship = self.create_relationship(
+            "family_friend",
+            person,
+            active_other,
+            archived=True,
+        )
+        archived_person_relationship = self.create_relationship(
+            "partner",
+            person,
+            archived_other,
+        )
+        actor = self.create_user("active-context-superuser", is_superuser=True)
+
+        result = get_visible_active_relationship_ids(
+            person=person,
+            actor=actor,
+            relationship_ids=(
+                active.pk,
+                archived_relationship.pk,
+                archived_person_relationship.pk,
+                999_999,
+            ),
+        )
+
+        self.assertEqual(result, (active.pk,))
 
     def test_explicit_reasons_are_filtered_by_access_level(self) -> None:
         person = self.create_person("Vstup")

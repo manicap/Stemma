@@ -8,32 +8,44 @@
         <p class="eyebrow">Rodinné a další vazby</p>
         <h3 id="relationships-heading">Vztahy</h3>
       </div>
+      {% if can_add_relationship %}
+        <div class="relationship-actions" data-person-browser-links>
+          <a class="primary-button" href="{% url 'people:relationship-create' selected_person.pk 'parent' %}{{ person_browser_query_suffix }}" hx-get="{% url 'people:relationship-create' selected_person.pk 'parent' %}{{ person_browser_query_suffix }}" hx-target="#person-detail" hx-push-url="true">Přidat rodiče</a>
+          <a class="primary-button" href="{% url 'people:relationship-create' selected_person.pk 'child' %}{{ person_browser_query_suffix }}" hx-get="{% url 'people:relationship-create' selected_person.pk 'child' %}{{ person_browser_query_suffix }}" hx-target="#person-detail" hx-push-url="true">Přidat dítě</a>
+          <a class="primary-button" href="{% url 'people:relationship-create' selected_person.pk 'partner' %}{{ person_browser_query_suffix }}" hx-get="{% url 'people:relationship-create' selected_person.pk 'partner' %}{{ person_browser_query_suffix }}" hx-target="#person-detail" hx-push-url="true">Přidat partnera</a>
+        </div>
+      {% endif %}
     </div>
 
+    {% if relationship_saved %}<p class="success-message" role="status">Vazba byla uložena.</p>{% endif %}
     {% if relationship_overview %}
       <div class="related-list">
         {% for item in relationship_overview %}
-          {% if item.detail_url %}
+          <div class="related-card">
+            {% if item.detail_url %}
             <a
-              class="related-card"
+              class="relationship-person-link"
+              data-person-browser-link
               href="{{ item.detail_url }}"
               hx-get="{{ item.detail_url }}"
               hx-target="#person-detail"
               hx-push-url="true"
               hx-indicator="#detail-loading"
             >
-          {% else %}
-            <div class="related-card">
-          {% endif %}
               <strong>{{ item.person.first_name }} {{ item.person.last_name }}</strong>
-              {% for reason in item.reasons %}
-                <small>{{ reason.label }}</small>
-              {% endfor %}
-          {% if item.detail_url %}
             </a>
-          {% else %}
-            </div>
-          {% endif %}
+            {% else %}
+              <strong>{{ item.person.first_name }} {{ item.person.last_name }}</strong>
+            {% endif %}
+            {% for reason in item.reasons %}
+              <div class="relationship-reason">
+                <small>{{ reason.label }}</small>
+                {% for edit_url in reason.edit_urls %}
+                  <a class="secondary-button relationship-edit-link" data-person-browser-link href="{{ edit_url }}" hx-get="{{ edit_url }}" hx-target="#person-detail" hx-push-url="true">Upravit vztah</a>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
         {% endfor %}
       </div>
     {% else %}

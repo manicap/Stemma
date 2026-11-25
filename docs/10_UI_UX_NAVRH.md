@@ -1,9 +1,9 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.18
+**Verze:** 0.19
 **Stav:** schválený pracovní základ  
-**Datum revize:** 6. 11. 2026
+**Datum revize:** 9. 11. 2026
 
 ## 1. Účel dokumentu
 
@@ -412,7 +412,7 @@ Aktivní záložka bude označena kombinací:
 
 Obsah každé karty bude mít vlastní nadpis a může obsahovat velmi jemný tematický piktogram v pozadí. Piktogram je pouze dekorativní a nesmí rušit text.
 
-Implementované taby zpřístupňují Přehled, read-only Vztahy, read-only Bydliště,
+Implementované taby zpřístupňují Přehled, zápisové Vztahy, read-only Bydliště,
 read-only Hrobová místa, Zdraví a Materiály osoby; ostatní karty jsou ve
 společné navigaci jasně označené jako plánované. Všechny funkční
 karty používají stejný person header, full-page fallback a HTMX výměnu
@@ -452,15 +452,40 @@ Událost může mít příznak **Zobrazit v přehledu osoby**. Takto označené 
 
 ## 11. Karta Vztahy
 
-Implementovaný read-only řez zobrazuje jednoduchý seznam bezpečně dostupných
+Implementovaný řez zobrazuje jednoduchý seznam bezpečně dostupných
 propojených osob. U každé osoby se zobrazuje pouze jméno, příjmení a jeden nebo
 více směrových popisků, které vydal actor-aware overview. Pokud je protějšek
 dostupný i v běžném person detailu, karta na něj bezpečně odkazuje.
 
 Full-page i HTMX režim zachovávají společný person header a navigaci. Skryté
 vztahy ani osoby nezanechávají jméno, odkaz, počet nebo odlišný prázdný stav.
-Seznam používá stávající responzivní karty a světlý i tmavý motiv. Zápis,
+Seznam používá stávající responzivní karty a světlý i tmavý motiv. Aktivní actor
+s `people.add_relationship` vidí akce **Přidat rodiče**, **Přidat dítě** a
+**Přidat partnera**. Formulář zůstává v kontextu osoby, nabízí vyhledávací pole
+filtrující pouze autorizované existující osoby a přehlednou volbu s názvem a
+ID. Po výběru zopakuje základní identifikaci protistrany. Bez JavaScriptu lze
+bezpečně použít celý serverem autorizovaný select.
+
+Vytvoření má pevný význam podle akce: biologický rodič, biologické dítě nebo
+obecné partnerství. U explicitního vztahu vidí actor s
+`people.change_relationship` akci **Upravit vztah**. Editační formulář
+nezobrazuje ani nepřijímá typ a účastníky; mění jen poznámku, dostupný access,
+ověření a podporované neúplné datum nebo období. Chybový souhrn, ochrana
+neuložených změn, full-page fallback a HTMX chování odpovídají ostatním
+person-centric formulářům.
+
+Úspěšný full-page zápis vrací kartu Vztahy. HTMX bez reloadu nahradí tutéž
+kartu, zachová `q`, `category`, `sort` a aktuální osobu a ihned zobrazí nový
+směrový popisek. Skrytá protistrana není v nabídce ani HTML a podstrčený přímý
+POST je znovu autorizován serverem. Obecný editor typů nebo účastníků,
 lifecycle a Materials vztahů nejsou součástí tohoto řezu.
+
+Archivovaný vztah nebo vztah s archivovanou protistranou může zůstat podle
+actorových lifecycle práv v historickém přehledu, ale nenabízí akci
+**Upravit vztah**. Pomocné klientské filtrování výběru se bez JavaScriptu
+nezobrazuje; plný autorizovaný select zůstává funkční. Odkazy na propojené
+osoby mají viditelnou affordanci a keyboard focus a stejně jako ostatní
+person-centric odkazy průběžně zachovávají stav browseru.
 
 Karta nenahrazuje samostatný rodokmen.
 

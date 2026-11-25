@@ -21,6 +21,7 @@ __all__ = (
     "get_relationship_overview",
     "get_sibling_overview",
     "get_visible_people",
+    "get_visible_active_relationship_ids",
     "get_visible_person",
     "get_visible_relationship_overview",
 )
@@ -653,3 +654,67 @@ def get_visible_relationship_overview(
             )
 
     return tuple(result)
+
+
+def get_visible_active_relationship_ids(
+    *,
+    person: Person,
+    actor: AbstractBaseUser | AnonymousUser,
+    relationship_ids: tuple[int, ...],
+) -> tuple[int, ...]:
+    """Return requested active relationships in one visible person context."""
+
+    visible_access_levels = tuple(
+        access_level
+        for access_level in _ACCESS_LEVELS
+        if can_view_access_level(
+            actor=actor,
+            access_level=access_level,
+        )
+    )
+    current_person = _load_current_person(person)
+    if (
+        current_person.archived_at is not None
+        or current_person.deleted_at is not None
+        or current_person.access_level not in visible_access_levels
+    ):
+        raise PermissionDenied("Nemáte oprávnění zobrazit tuto osobu.")
+
+    requested_ids = tuple(
+        sorted(
+            {
+                relationship_id
+                for relationship_id in relationship_ids
+                if isinstance(relationship_id, int)
+                and not isinstance(relationship_id, bool)
+            }
+        )
+    )
+    if not requested_ids:
+        return ()
+
+    active_context = (
+        Q(
+            person_a=current_person,
+            person_b__archived_at__isnull=True,
+            person_b__deleted_at__isnull=True,
+            person_b__access_level__in=visible_access_levels,
+        )
+        | Q(
+            person_b=current_person,
+            person_a__archived_at__isnull=True,
+            person_a__deleted_at__isnull=True,
+            person_a__access_level__in=visible_access_levels,
+        )
+    )
+    return tuple(
+        Relationship.objects.filter(
+            active_context,
+            pk__in=requested_ids,
+            archived_at__isnull=True,
+            deleted_at__isnull=True,
+            access_level__in=visible_access_levels,
+        )
+        .order_by("pk")
+        .values_list("pk", flat=True)
+    )

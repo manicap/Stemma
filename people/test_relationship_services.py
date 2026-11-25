@@ -38,6 +38,7 @@ class RelationshipServiceApiTests(SimpleTestCase):
                 "RelationshipInput",
                 "create_person",
                 "create_relationship",
+                "lock_relationship_mutations",
                 "update_person",
                 "update_person_basic",
                 "update_relationship",

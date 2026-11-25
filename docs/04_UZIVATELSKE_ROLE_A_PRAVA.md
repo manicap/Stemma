@@ -1,9 +1,9 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.49
+**Verze:** 0.50
 **Stav:** pracovní návrh  
-**Datum revize:** 6. 11. 2026
+**Datum revize:** 9. 11. 2026
 
 ## 1. Nepřihlášený návštěvník
 
@@ -51,6 +51,20 @@ aktivního uživatele a formulář nabízí pouze access úrovně dostupné podl
 centrální policy. Systémová skupina Editor toto oprávnění získává automaticky;
 nejde o právo k `restricted` nebo `admin_only` obsahu a nepřidává jiné add,
 change ani lifecycle pravomoci.
+
+Person-centric zápis rodinných vazeb používá existující standardní permissions
+`people.add_relationship` pro vytvoření a `people.change_relationship` pro
+úpravu. Úzká datová migrace je přiděluje pouze skupině Editor; Čtenář ani
+Správce je automaticky nezískají. UI tím dovoluje pouze pevné typy
+`biological_parent` pro rodiče/dítě a `partner` pro obecné partnerství.
+Nevzniká právo měnit typ nebo účastníky existující vazby ani spravovat její
+lifecycle či Materials.
+
+Permission sama nestačí. Zápisová hranice znovu načte aktivního actora, obě
+aktivní osoby a při úpravě také aktivní vztah. Vyžaduje viditelnost obou osob,
+vztahu a současné i navržené access úrovně. Přímý POST na skrytou protistranu,
+cizí vztah nebo vztah se skrytou osobou je fail-closed a nesmí prozradit její
+identitu. Úprava zachovává typ, účastníky, autorství a lifecycle.
 
 Nemůže:
 
@@ -286,7 +300,8 @@ Databázové skupiny jsou `Čtenář`, `Editor` a `Správce`.
 - Čtenář automaticky nezískává zvýšená obsahová, lifecycle ani editační
   oprávnění.
 - Editor získává konkrétní `people.change_person`, `people.add_person`,
-  `events.add_event` a `events.change_event`, ale
+  `people.add_relationship`, `people.change_relationship`, `events.add_event`
+  a `events.change_event`, ale
   automaticky nezískává přístup k omezenému nebo administrátorskému obsahu.
 - Správce získává `accounts.view_restricted_content`,
   `accounts.view_admin_only_content`, `people.view_archived_person` a

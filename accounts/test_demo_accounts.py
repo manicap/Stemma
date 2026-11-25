@@ -39,7 +39,9 @@ class BootstrapDemoAccountsCommandTests(TestCase):
                 "events.add_event",
                 "events.change_event",
                 "people.add_person",
+                "people.add_relationship",
                 "people.change_person",
+                "people.change_relationship",
             },
             "stemma-demo-administrator": {
                 "people.change_person",
@@ -121,17 +123,29 @@ class BootstrapDemoAccountsCommandTests(TestCase):
             content_type__app_label="people",
             codename="add_person",
         )
+        relationship_permissions = tuple(
+            Permission.objects.filter(
+                content_type__app_label="people",
+                codename__in={
+                    "add_relationship",
+                    "change_relationship",
+                },
+            )
+        )
         user.groups.set((administrator,))
         user.user_permissions.add(editor_permission)
         Group.objects.get(name="Čtenář").permissions.add(
             editor_permission,
             creator_permission,
+            *relationship_permissions,
         )
         Group.objects.get(name="Editor").permissions.remove(
             editor_permission,
             creator_permission,
+            *relationship_permissions,
         )
         administrator.permissions.remove(editor_permission)
+        administrator.permissions.add(*relationship_permissions)
         demo_administrator = get_user_model().objects.get(
             username="stemma-demo-administrator"
         )
@@ -175,6 +189,22 @@ class BootstrapDemoAccountsCommandTests(TestCase):
         )
         self.assertFalse(
             administrator.permissions.filter(pk=creator_permission.pk).exists()
+        )
+        self.assertFalse(
+            Group.objects.get(name="Čtenář").permissions.filter(
+                pk__in=tuple(item.pk for item in relationship_permissions)
+            ).exists()
+        )
+        self.assertEqual(
+            Group.objects.get(name="Editor").permissions.filter(
+                pk__in=tuple(item.pk for item in relationship_permissions)
+            ).count(),
+            2,
+        )
+        self.assertFalse(
+            administrator.permissions.filter(
+                pk__in=tuple(item.pk for item in relationship_permissions)
+            ).exists()
         )
         demo_administrator.refresh_from_db()
         self.assertEqual(

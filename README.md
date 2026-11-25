@@ -6,9 +6,10 @@ vztahů, událostí, míst, zdravotních údajů a souvisejících materiálů.
 ## Stav projektu
 
 - **Milestone:** RC 0.2
-- **Aktuální řez:** UI vytváření osoby po dokončených M3.5a/M3.5b
-- **Dostupné person-centric funkce:** read-only Vztahy, Bydliště, Hrobová místa
-  a Události; A4/PDF export osoby; vytvoření a základní editace osoby
+- **Aktuální řez:** person-centric zápis základních rodinných vazeb
+- **Dostupné person-centric funkce:** vytvoření a základní editace osoby,
+  vyhledávání, zápis základních Vztahů, narození a úmrtí, read-only Bydliště a
+  Hrobová místa a A4/PDF export osoby
 - **Aktuální etapa:** M3 – Materials a bezpečné soubory
 - **Poslední dokončený návrhový řez:** M3.0 – Návrh Materials/File Storage
   architektury

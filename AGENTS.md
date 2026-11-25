@@ -397,25 +397,28 @@ protected baseline.
 Milestones M0, M1, and M2 are complete. All RC 0.1 acceptance areas A-H are
 recorded as complete in `docs/07_ROADMAPA.md`. Autonomous feature expansion
 toward RC 0.1 has therefore stopped. RC 0.2 has completed the explicitly
-approved read-only person relationship, residence, grave-site and event tabs
-and the actor-aware PDF/A4 person export.
+approved person relationship, residence, grave-site and event tabs, the
+actor-aware PDF/A4 person export, Materials person browsing/upload, person
+creation and search, and the narrow birth/death editor.
 
-The completed current slice is **M3.4 – Kontextové doručení příloh**. It adds
-server-authorized inline and download delivery through a concrete supported
-context and explicit attachment link, reuses the existing target/link/
-Attachment access and lifecycle policies, enforces the private owner-or-active-
-grant rule, and opens blobs only through the protected Vault-aware storage
-boundary. ACP-012 remains the authoritative storage and access contract.
-`PlaceAttachment`, request/grant UI, Materials management UI, lifecycle
-delete/cancel/revoke orchestration, audit logging of downloads, encryption,
-reconciliation and a shared Materials recycle bin remain outside this slice.
-No later functional slice is authorized by this mission.
+The completed current slice is **person-centric write of basic family
+relationships**. It adds fixed actions for a biological parent, biological
+child and partner plus attribute-only editing of an explicit active
+relationship. Existing `people.add_relationship` and
+`people.change_relationship` permissions are granted only to the Editor group
+by a data migration. Actor-aware use-cases recheck the active actor, both active
+visible people, the relationship, current and proposed access and the fixed
+system type, preserve type/participants/authorship/lifecycle on edit, and enter
+the existing Relationship mutation lock protocol before any other domain row
+lock.
 
-The approved PDF/A4 slice is complete. It does not authorize broader exports,
-Health or Materials export, attachment export, Materials management UI, domain
-writes or lifecycle actions, or another planned person feature. Further
-functional slices require separate explicit approval. Use the established
-architectural boundaries and the ACP-009 invalidation-based gate.
+General relationship type or participant editing, relationship lifecycle and
+Materials UI, Residence and GraveSite writes, broader Event editing, broader
+exports, Materials management, attachment lifecycle orchestration, audit
+logging of downloads, encryption, reconciliation and a shared Materials
+recycle bin remain outside this slice. No later functional slice is authorized
+by this mission. Further functional slices require separate explicit approval
+and must use the established architectural boundaries and ACP-009 gate.
 
 Do not declare Stemma production-ready merely because roadmap items or automated
 tests are complete. Production deployment, integration into `feature/mvp` or

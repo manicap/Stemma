@@ -19,6 +19,10 @@ EVENT_EDITOR_PERMISSION_KEYS = {
     ("events", "add_event"),
     ("events", "change_event"),
 }
+RELATIONSHIP_EDITOR_PERMISSION_KEYS = {
+    ("people", "add_relationship"),
+    ("people", "change_relationship"),
+}
 
 
 class InitialPermissionGroupTests(TestCase):
@@ -346,5 +350,58 @@ class EventEditorPermissionMigrationTests(TestCase):
         )
         self.assertEqual(
             reader.permissions.filter(pk__in=permission_ids).count(),
+            2,
+        )
+
+
+class RelationshipEditorPermissionMigrationTests(TestCase):
+    migration = import_module(
+        "accounts.migrations.0008_editor_relationship_permissions"
+    )
+
+    def permissions(self):
+        return Permission.objects.filter(
+            content_type__app_label="people",
+            codename__in={"add_relationship", "change_relationship"},
+        )
+
+    def test_forward_and_reverse_touch_only_editor_bindings(self) -> None:
+        permissions = tuple(self.permissions())
+        permission_ids = tuple(item.pk for item in permissions)
+        reader = Group.objects.get(name="Čtenář")
+        editor = Group.objects.get(name="Editor")
+        administrator = Group.objects.get(name="Správce")
+        reader.permissions.add(*permissions)
+        editor.permissions.remove(*permissions)
+        administrator.permissions.add(*permissions)
+
+        self.migration.grant_editor_relationship_permissions(apps, None)
+        self.migration.grant_editor_relationship_permissions(apps, None)
+
+        self.assertEqual(
+            set(
+                editor.permissions.filter(pk__in=permission_ids).values_list(
+                    "content_type__app_label",
+                    "codename",
+                )
+            ),
+            RELATIONSHIP_EDITOR_PERMISSION_KEYS,
+        )
+
+        self.migration.revoke_editor_relationship_permissions(apps, None)
+
+        self.assertFalse(
+            editor.permissions.filter(pk__in=permission_ids).exists()
+        )
+        self.assertEqual(
+            reader.permissions.filter(pk__in=permission_ids).count(),
+            2,
+        )
+        self.assertEqual(
+            administrator.permissions.filter(pk__in=permission_ids).count(),
+            2,
+        )
+        self.assertEqual(
+            Permission.objects.filter(pk__in=permission_ids).count(),
             2,
         )

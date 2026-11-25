@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.69
-**Stav:** person-centric vytvoření a úprava narození a úmrtí implementováno
-**Datum revize:** 6. 11. 2026
+**Verze dokumentace:** 0.70
+**Stav:** person-centric zápis základních rodinných vazeb implementován
+**Datum revize:** 9. 11. 2026
 
 ## Účel balíčku
 
@@ -42,6 +42,26 @@ Přehledové výstupy:
 - Důležitá nová rozhodnutí se po schválení zapracují do dokumentace.
 - Dokumentace se neaktualizuje po každé drobnosti, ale vždy dříve, než by hrozila ztráta kontextu.
 - Starší verze se nemažou; přesouvají se do archivu.
+
+## Stav verze 0.70
+
+Verze 0.70 doplňuje úzký person-centric zápis základních rodinných vazeb:
+
+- Editor získává existující `people.add_relationship` a
+  `people.change_relationship`; Čtenář ani Správce je automaticky nezískají,
+- karta Vztahy dovoluje přidat existující viditelnou osobu jako biologického
+  rodiče, biologické dítě nebo partnera a upravit atributy aktivní explicitní
+  vazby bez změny typu či účastníků,
+- actor-aware use-cases znovu ověřují aktuálního actora, obě aktivní osoby,
+  vztah, systémový typ a současný i navržený access a vstupují do společného
+  Relationship lock protokolu před dalším doménovým řádkovým zámkem,
+- historické vztahy a vztahy k archivované protistraně zůstávají oprávněnému
+  actorovi čitelné bez nefunkční editační akce; skrytý nebo cizí kontext končí
+  bez prozrazení,
+- full-page i HTMX tok zachovává stav person browseru, bezpečný no-JS select,
+  chybový souhrn a ochranu neuložených změn,
+- obecný editor typů a účastníků, lifecycle a Relationship Materials UI
+  zůstávají mimo tento řez.
 
 ## Stav verze 0.69
 
@@ -1100,8 +1120,8 @@ Materials UI.
 - M0, M1 a M2 jsou na uzavřeném `agent/rc-0.1` skutečně dokončené; `feature/mvp`
   zůstává nedotčeným pre-agentním integračním základem.
 - Aktivní vývoj pokračuje jako RC 0.2 na `agent/rc-0.2`; dokončené jsou
-  samostatně schválené read-only karty Vztahy, Bydliště, Hrobová místa a
-  Události osoby a actor-aware PDF/A4 export osoby. Validační a review workflow
+  person-centric karty Vztahy a Události s úzkými zápisovými toky, read-only
+  karty Bydliště a Hrobová místa a actor-aware PDF/A4 export osoby. Validační a review workflow
   upřesňuje ACP-009; baseline 1 587/1 587 patřil stavu RC 0.2 před následnými
   M3 změnami; M3.4 baseline byl 1 681/1 681 a navazující M3.5a/M3.5b jsou
   cíleně ověřované samostatnými HTTP, upload a bezpečnostními testy.
@@ -1111,10 +1131,10 @@ Materials UI.
 - Všechna acceptance kritéria RC 0.1 A–H jsou uzavřená bez otevřeného
   blockeru. Historický post-RC baseline před zahájením RC 0.2 byl 1 514/1 514.
 - Kompletní uživatelský vertikální průchod má vedle základního UI osoby doména
-  Health. Vztahy, Bydliště a Hrobová místa mají bezpečné read-only
-  person-centric přehledy. Události navíc umožňují úzké vytvoření a úpravu
-  narození a úmrtí; obecný Event detail, ostatní typy a lifecycle zůstávají
-  plánované. Materials poskytují
+  Health. Vztahy umožňují úzké vytvoření a úpravu základních rodinných vazeb;
+  Bydliště a Hrobová místa mají bezpečné read-only person-centric přehledy.
+  Události umožňují úzké vytvoření a úpravu narození a úmrtí; obecný Event
+  detail, ostatní typy a lifecycle zůstávají plánované. Materials poskytují
   metadata, explicitní vazby, chráněný upload/storage, granty a backendové
   kontextově autorizované doručení; karta osoby navíc umí bezpečný seznam a
   oprávněný upload nové přílohy přímo k osobě, nikoli obecnou správu Materials.

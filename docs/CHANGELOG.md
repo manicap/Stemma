@@ -1,5 +1,32 @@
 # Historie změn dokumentace
 
+## Verze 1.08 – 9. 11. 2026
+
+- karta Vztahy osoby přidává full-page/HTMX akce pro biologického rodiče,
+  biologické dítě a obecné partnerství s výběrem pouze z aktuálně viditelných
+  existujících osob; symetrické partnerství se ukládá jednou,
+- nové actor-aware use-cases používají existující atomické Relationship služby,
+  při každém zápisu znovu ověřují aktivního actora, obě aktivní osoby, současný
+  i navržený access a při úpravě také viditelný aktivní vztah,
+- editace zachovává identitu vztahu, typ, oba účastníky, autorství a lifecycle a
+  mění pouze existující obsahové, ověřovací, přístupové a časové atributy;
+  skrytá protistrana ani podstrčený přímý POST kontext neobejdou,
+- úzká datová migrace přiděluje existující `people.add_relationship` a
+  `people.change_relationship` pouze skupině Editor a opakovatelný demo
+  bootstrap je s kontraktem synchronizovaný,
+- úspěšný HTMX zápis obnoví kartu bez reloadu a zachová `q`, `category`, `sort`
+  i vybranou osobu; bez JavaScriptu zůstává funkční autorizovaný select a
+  full-page uložení,
+- outer actor-aware transakce získávají společný Relationship sentinel před
+  ostatními doménovými zámky; update dále zamyká vztah, typ a osoby v
+  deterministickém pořadí kompatibilním s nízkoúrovňovou službou,
+- archivované vztahy a vazby s archivovanou protistranou zůstávají podle
+  actorových práv čitelné, ale nedostávají nefunkční editační odkaz; person
+  odkazy mají viditelný focus a zachovávají aktuální stav browseru,
+- nevznikl nový model, typ vztahu, permission ani obecný permission framework;
+  obecný editor typů či účastníků, lifecycle a Relationship Materials UI
+  zůstávají mimo řez.
+
 ## Verze 1.07 – 6. 11. 2026
 
 - karta Události osoby doplňuje samostatné full-page/HTMX formuláře pro

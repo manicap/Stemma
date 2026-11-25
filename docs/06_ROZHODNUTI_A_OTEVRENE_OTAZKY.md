@@ -1,9 +1,9 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.94
+**Verze:** 0.95
 **Stav:** průběžně doplňovaný dokument  
-**Datum revize:** 6. 11. 2026
+**Datum revize:** 9. 11. 2026
 
 ## 1. Přijatá rozhodnutí
 
@@ -293,6 +293,24 @@ vidět také všechny aktivní osoby ostatních participantů; skrytá osoba tak
 nemůže být nepřímo měněna přes sdílenou událost. Nadále platí nejvýše jedna
 měkce neodstraněná událost daného životního typu na osobu; archivace tento slot
 neuvolňuje. Nevzniká nová permission, obecný permission framework ani nový ACP.
+205. Person-centric UI rodinných vazeb používá existující standardní Django
+permissions `people.add_relationship` a `people.change_relationship`, které
+úzká datová migrace automaticky přiděluje pouze systémové skupině Editor;
+Čtenář ani Správce je automaticky nezískají a reverse odebere jen obě vazby
+Editorovi. Demo bootstrap stejný stav opakovatelně obnovuje. Vytvoření používá
+pevný orientovaný typ `biological_parent` pro akce rodič/dítě a pevný symetrický
+typ `partner` pro partnerství; symetrická vazba vzniká pouze jednou. Úzké
+actor-aware use-cases v jedné transakci znovu načtou aktivního actora, obě
+viditelné nearchivované a neodstraněné osoby, systémový aktivní typ a současnou
+i navrženou access úroveň a před dalším doménovým zámkem získají společný
+Relationship sentinel. Editace navíc vyžaduje viditelný nearchivovaný a
+neodstraněný vztah v kontextu osoby, zachovává jeho identitu, typ, účastníky,
+autorství a lifecycle a nedovolí nepřímou změnu přes skrytou protistranu.
+Formulář mění pouze existující obsahové, ověřovací, přístupové a časové
+atributy. Duplicity, kanonická symetrie, zákaz self-linku a rodičovské cykly
+vynucují nezměněné doménové služby. Neexistující, skrytý nebo cizí kontext se
+nevydává; podstrčené ID z autorizované nabídky není důkazem oprávnění. Nevzniká
+nová permission, model, obecný permission framework ani ACP.
 
 ## 2. Otevřené otázky
 

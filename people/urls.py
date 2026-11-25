@@ -20,6 +20,16 @@ urlpatterns = [
         name="relationships",
     ),
     path(
+        "<int:person_id>/vztahy/pridat/<str:relationship_kind>/",
+        views.person_relationship_create,
+        name="relationship-create",
+    ),
+    path(
+        "<int:person_id>/vztahy/<int:relationship_id>/upravit/",
+        views.person_relationship_edit,
+        name="relationship-edit",
+    ),
+    path(
         "<int:person_id>/udalosti/",
         views.person_events,
         name="events",

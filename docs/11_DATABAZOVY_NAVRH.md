@@ -1,9 +1,9 @@
 # Databázový návrh
 
 **Dokument:** 11  
-**Verze:** 0.86
-**Stav:** M3.5b – Nahrávání a připojování příloh k osobě implementováno
-**Datum revize:** 5. 11. 2026
+**Verze:** 0.87
+**Stav:** person-centric zápis základních rodinných vazeb implementován
+**Datum revize:** 9. 11. 2026
 
 ## 1. Účel
 
@@ -63,6 +63,12 @@ hrobová místa; RC 0.1 je nad tímto základem rovněž připravené.
   ověření a zámku mění jen jméno, příjmení, pohlaví, kategorii a poznámku.
   Tituly a životopis proto zachovává přímo z čerstvého databázového řádku a
   zatím je uživatelsky nezpřístupňuje.
+- Person-centric zápis vztahů používá actor-aware use-cases nad existujícími
+  `create_relationship()` a `update_relationship()`. Vytvoření podporuje pouze
+  pevné systémové typy `biological_parent` a `partner`; editace zachovává typ,
+  osoby, autora i lifecycle. Outer transakce získá přes veřejný servisní
+  primitiv `lock_relationship_mutations()` stejný sentinel jako nízkoúrovňová
+  služba dříve, než zamkne vztah, typ nebo osoby.
 - Business modely `Place`, `Residence`, `GraveSite` a `PersonGraveSite`
   nejsou registrovány v Django adminu. Jejich dřívější výchozí admin obcházel
   existující hranice u bydlišť a hrobových míst a zároveň zveřejňoval
@@ -939,6 +945,31 @@ potvrzený konflikt převede na `ValidationError` s klíčem `__all__` a kódem
 M2.5c nevytváří migraci. Nekontroluje rodičovské cykly, věk,
 genealogickou pravděpodobnost ani překryvy období a nevytváří opačné,
 odvozené či z událostí plynoucí vztahy. `is_derivable` zápis neomezuje.
+
+#### 9.9.1 Actor-aware person-centric zápis vztahů
+
+Úzké aplikační rozhraní v `people/use_cases.py` zpřístupňuje vytvoření
+biologického rodiče, biologického dítěte a partnera a atributovou úpravu
+existující vazby. Vyžaduje čerstvého aktivního actora s
+`people.add_relationship`, respektive `people.change_relationship`, a z
+aktuálního databázového stavu kontroluje obě aktivní nearchivované a
+neodstraněné osoby, aktivní vztah, současnou i navrženou access úroveň a při
+create aktivní systémový typ. Skrytý, cizí nebo historický write kontext se
+nevydává.
+
+`lock_relationship_mutations()` je jediný veřejný servisní primitiv pro
+společný sentinel zámek. Actor-aware create jej získá před typem a osobami;
+update před cílovým `Relationship`, jeho typem a oběma osobami zamčenými v
+rostoucím pořadí PK. Vnořené nízkoúrovňové služby tentýž zámek získají znovu v
+téže transakci. Read-only načtení formuláře řádky nezamyká, protože zámek nelze
+držet mezi samostatným GET a následným POST.
+
+Editace sestaví úplný `RelationshipInput` z čerstvě zamčeného vztahu a obou
+osob, ale z formuláře převezme pouze obsahové, ověřovací, přístupové a časové
+atributy. Identita, typ, oba účastníci, `created_by` a lifecycle se proto
+zachovají. Historický vztah může zůstat v actor-aware přehledu čitelný, avšak
+selector aktivních kontextů pro něj ani pro vztah s archivovanou protistranou
+nevydá editační ID.
 
 ### 9.10 Genealogická validace rodičovských cyklů
 
