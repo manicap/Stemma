@@ -7,11 +7,19 @@ steps:
     name: Příprava prostředí
     command: |
       set -e
-      PY=$(command -v python3.14 || command -v python3)
-      [ -x .venv/bin/python ] || "$PY" -m venv .venv
-      .venv/bin/pip install -q -r requirements.txt
-      [ -f config/settings_local.py ] || cp config/settings_local.example.py config/settings_local.py
+      PY=$(command -v python3.14 || command -v python3 || true)
+      echo "[setup] python: ${PY:-NENALEZEN}"; [ -n "$PY" ] || { echo "[setup] CHYBA: na serveru chybí python3"; exit 1; }
+      "$PY" --version
+      if [ ! -x .venv/bin/python ]; then
+        echo "[setup] vytvářím .venv"
+        "$PY" -m venv .venv || { echo "[setup] CHYBA: venv nejde vytvořit (Debian/Ubuntu: sudo apt install python3-venv)"; exit 1; }
+      fi
+      echo "[setup] instaluji requirements.txt"
+      .venv/bin/pip install --disable-pip-version-check -r requirements.txt || { echo "[setup] CHYBA: instalace závislostí selhala (výpis výše)"; exit 1; }
+      [ -f config/settings_local.py ] || { echo "[setup] kopíruji settings_local.example.py"; cp config/settings_local.example.py config/settings_local.py; }
+      echo "[setup] migrace"
       .venv/bin/python manage.py migrate --noinput
+      echo "[setup] hotovo"
 
   - id: implement
     name: Implementace
