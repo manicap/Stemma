@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import date
+import re
 import unicodedata
 
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -28,6 +29,9 @@ PERSON_SORT_CHOICES = (
 )
 PERSON_SUGGESTION_LIMIT = 8
 PERSON_SEARCH_QUERY_MAX_LENGTH = 200
+_ROMAN_TOKEN_PATTERN = re.compile(
+    r"(?=[ivxlcdm])m*(?:cm|cd|d?c{0,3})(?:xc|xl|l?x{0,3})(?:ix|iv|v?i{0,3})"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,6 +57,20 @@ def normalize_person_search_text(value: object) -> str:
         if not unicodedata.combining(character)
     )
     return " ".join(without_marks.casefold().split())
+
+
+def _search_tokens(normalized_query: str) -> tuple[str, ...]:
+    """Split a normalized query; tokens without letters or digits are ignored."""
+
+    return tuple(
+        token
+        for token in normalized_query.split()
+        if any(character.isalnum() for character in token)
+    )
+
+
+def _is_roman_token(token: str) -> bool:
+    return _ROMAN_TOKEN_PATTERN.fullmatch(token.rstrip(".")) is not None
 
 
 def _visible_access_levels(
@@ -218,8 +236,18 @@ def _matches_query(
         *alternative_names.get(person.pk, ()),
     )
     normalized_values = tuple(normalize_person_search_text(value) for value in values)
+    # Římské pořadí je odvozené jen z osob viditelných actorovi; token
+    # vypadající jako římská číslice se s ním porovnává přesně.
+    roman_suffix = normalize_person_search_text(
+        presentation.facts.roman_suffix
+    ).rstrip(".")
     return all(
         any(token in value for value in normalized_values)
+        or (
+            bool(roman_suffix)
+            and _is_roman_token(token)
+            and token.rstrip(".") == roman_suffix
+        )
         for token in query_tokens
     )
 
@@ -281,7 +309,7 @@ def get_visible_person_browser(
     selected_sort = sort if sort in valid_sorts else DEFAULT_PERSON_SORT
     bounded_query = str(query or "")[:PERSON_SEARCH_QUERY_MAX_LENGTH].strip()
     normalized_query = normalize_person_search_text(bounded_query)
-    query_tokens = tuple(normalized_query.split())
+    query_tokens = _search_tokens(normalized_query)
     person_ids = tuple(
         presentation.person.pk for presentation in visible_presentations
     )
@@ -315,7 +343,7 @@ def get_visible_person_browser(
                 ),
             )[: max(suggestion_limit, 0)]
         )
-        if normalized_query
+        if query_tokens
         else ()
     )
     return PersonBrowserResult(

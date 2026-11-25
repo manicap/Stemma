@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.66
+**Verze:** 0.67
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
 **Datum revize:** 25. 11. 2026
 
@@ -118,9 +118,20 @@ Vyhledávání pracuje minimálně s:
 - rodným příjmením,
 - dalšími jmény,
 - přezdívkou,
-- rokem narození.
+- rokem narození,
+- odvozeným římským pořadím jmenovců.
 
 Vyhledávání nerozlišuje velikost písmen a je tolerantní k diakritice.
+
+Dotaz se dělí na tokeny a každý token musí něco najít. Token, který vypadá
+jako římská číslice (`i`, `ii`, `iii`, `iv`… s tečkou i bez ní), se navíc
+porovnává s odvozeným pořadím osoby **přesně**: „I.“ nenajde „II.“ a „II“
+nenajde „III.“. Platí-li token zároveň jako část jména (např. `i` v „Marie“),
+tato shoda zůstává. Kombinace jako „dvorak ii“ nebo „josef dvorak ii.“ proto
+fungují; pořadí se počítá jen z osob viditelných actorovi, skrytá osoba jej
+neovlivní. Tokeny bez písmene a číslice (např. samotná „.“) se ignorují;
+dotaz složený jen z nich nefiltruje a nenabízí našeptávač. Stejné pravidlo
+používá klientský filtr výběru osoby u vztahu.
 
 Implementované hledání používá úzký actor-aware person browser nad
 `get_visible_people(*, actor)` a odvozenými prezentacemi. Porovnává částečné

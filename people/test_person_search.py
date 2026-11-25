@@ -359,3 +359,59 @@ class PersonSearchTests(TestCase):
             f"category={self.family.pk}&sort=last_name_asc",
             fallback_response.headers["Location"],
         )
+
+    def test_roman_suffix_search_is_exact_and_actor_aware(self) -> None:
+        first = Person.objects.create(first_name="Josef", last_name="Dvořák")
+        second = Person.objects.create(first_name="Josef", last_name="Dvořák")
+        third = Person.objects.create(first_name="Josef", last_name="Dvořák")
+        hidden = Person.objects.create(
+            first_name="Josef",
+            last_name="Dvořák",
+            access_level=AccessLevel.RESTRICTED,
+        )
+        for person, year in ((first, 1890), (second, 1921), (third, 1950)):
+            self.create_birth(person, year=year)
+        self.create_birth(hidden, year=1800)
+
+        def search(query: str) -> list[int]:
+            return self.person_ids(
+                get_visible_person_browser(
+                    actor=AnonymousUser(),
+                    query=query,
+                )
+            )
+
+        # Skrytá osoba nezapočítává pořadí viditelným osobám.
+        self.assertEqual(search("I."), [first.pk])
+        self.assertEqual(search("II"), [second.pk])
+        self.assertEqual(search("ii."), [second.pk])
+        self.assertEqual(search("III."), [third.pk])
+        self.assertEqual(search("dvorak ii"), [second.pk])
+        self.assertEqual(search("josef dvorak ii."), [second.pk])
+        self.assertEqual(search("dvorak josef ii."), [second.pk])
+        self.assertEqual(search("IV"), [])
+
+    def test_roman_token_still_matches_name_substring(self) -> None:
+        marie = Person.objects.create(first_name="Marie", last_name="Nová")
+
+        result = get_visible_person_browser(
+            actor=AnonymousUser(),
+            query="i",
+        )
+
+        self.assertEqual(self.person_ids(result), [marie.pk])
+
+    def test_tokens_without_letters_or_digits_are_ignored(self) -> None:
+        anna = Person.objects.create(first_name="Anna", last_name="Nová")
+        self.create_birth(anna, year=1890)
+        Person.objects.create(first_name="Jan", last_name="Nový")
+
+        dot = get_visible_person_browser(actor=AnonymousUser(), query=".")
+        mixed = get_visible_person_browser(
+            actor=AnonymousUser(),
+            query="anna .",
+        )
+
+        self.assertEqual(len(dot.presentations), 2)
+        self.assertEqual(dot.suggestions, ())
+        self.assertEqual(self.person_ids(mixed), [anna.pk])

@@ -1,5 +1,14 @@
 # Historie změn dokumentace
 
+## Verze 1.14 – 25. 11. 2026
+
+- `02_FUNKCNI_SPECIFIKACE.md` 0.67: vyhledávání osob zahrnuje odvozené římské
+  pořadí; token podobný římské číslici se porovnává přesně („I.“ nenajde
+  „II.“), kombinace „dvorak ii“ i „josef dvorak ii.“ fungují,
+- tokeny bez písmene a číslice (např. „.“) se ignorují, dříve „.“ našla každého
+  s datem narození; stejné pravidlo má klientský filtr výběru osoby u vztahu,
+- model, migrace ani oprávnění se nemění; pořadí vychází jen z viditelných osob.
+
 ## Verze 1.13 – 25. 11. 2026
 
 - `04_UZIVATELSKE_ROLE_A_PRAVA.md` 0.51, `06_ROZHODNUTI_A_OTEVRENE_OTAZKY.md`

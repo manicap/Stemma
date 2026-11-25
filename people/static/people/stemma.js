@@ -168,6 +168,21 @@
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLocaleLowerCase("cs");
+  const romanTokenPattern =
+    /^(?=[ivxlcdm])m*(?:cm|cd|d?c{0,3})(?:xc|xl|l?x{0,3})(?:ix|iv|v?i{0,3})$/;
+  // Římské pořadí volby („Dvořák Josef II. (nar. 1921)“) se porovnává přesně,
+  // aby „I.“ nenašlo „II.“; zbytek textu se hledá jako podřetězec.
+  const optionMatchesQuery = (text, query) => {
+    const suffixMatch = text.match(/(?:^|\s)([IVXLCDM]+)\.(?=\s|$)/);
+    const suffix = suffixMatch ? foldPersonText(suffixMatch[1]) : "";
+    const rest = foldPersonText(
+      suffixMatch ? text.replace(suffixMatch[0], " ") : text,
+    );
+    return query.split(/\s+/).filter((token) => /[\p{L}\p{N}]/u.test(token))
+      .every((token) => rest.includes(token)
+        || (suffix && romanTokenPattern.test(token.replace(/\.+$/, ""))
+          && token.replace(/\.+$/, "") === suffix));
+  };
   const syncRelationshipPersonIdentification = (scope = document) => {
     scope.querySelectorAll?.("[data-relationship-person-select]").forEach((select) => {
       const picker = select.closest(".relationship-person-picker");
@@ -199,7 +214,7 @@
         return;
       }
       option.hidden = Boolean(query)
-        && !foldPersonText(option.textContent).includes(query);
+        && !optionMatchesQuery(option.textContent, query);
     });
   };
   syncPersonSearchAccessibility();
