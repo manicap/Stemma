@@ -1,9 +1,9 @@
 # Roadmapa projektu
 
 **Dokument:** 07  
-**Verze:** 0.69
-**Stav:** person-centric vytvoření a úprava narození a úmrtí implementováno
-**Datum revize:** 6. 11. 2026
+**Verze:** 0.70
+**Stav:** aktivní vývoj přesunut na `agent/rc-0.2-dev`
+**Datum revize:** 25. 11. 2026
 
 ## Fáze 1 – Konsolidace návrhu ✅
 
@@ -592,7 +592,8 @@ kontrakt vyžaduje.
 
 ## RC 0.2 – schválené person-centric řezy
 
-RC 0.2 probíhá na `agent/rc-0.2`. První samostatně schválené řezy byly
+RC 0.2 probíhá od 25. 11. 2026 na `agent/rc-0.2-dev`, vytvořené z `9f596f7`;
+`agent/rc-0.2` s prací na nástrojích Cezar/swarm je pozastavená. První samostatně schválené řezy byly
 read-only přehledy Vztahů, Bydliště, Hrobových míst a Událostí osoby ve
 stávajícím person-centric shellu. Používají actor-aware selectory, podporují
 full-page i HTMX režim a jednotný empty state bez existence leaku. Navazující

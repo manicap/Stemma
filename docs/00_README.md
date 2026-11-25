@@ -1,8 +1,8 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.69
-**Stav:** person-centric vytvoření a úprava narození a úmrtí implementováno
-**Datum revize:** 6. 11. 2026
+**Verze dokumentace:** 0.70
+**Stav:** aktivní vývoj přesunut na `agent/rc-0.2-dev`
+**Datum revize:** 25. 11. 2026
 
 ## Účel balíčku
 
@@ -1099,7 +1099,9 @@ Materials UI.
 - Databázový a technický návrh je dokončen jako schválený pracovní základ.
 - M0, M1 a M2 jsou na uzavřeném `agent/rc-0.1` skutečně dokončené; `feature/mvp`
   zůstává nedotčeným pre-agentním integračním základem.
-- Aktivní vývoj pokračuje jako RC 0.2 na `agent/rc-0.2`; dokončené jsou
+- Aktivní vývoj pokračuje jako RC 0.2 na `agent/rc-0.2-dev` (vytvořena
+  25. 11. 2026 z `9f596f7`); `agent/rc-0.2` je pozastavená větev s prací na
+  nástrojích Cezar/swarm, uchovaná pro pozdější použití. Dokončené jsou
   samostatně schválené read-only karty Vztahy, Bydliště, Hrobová místa a
   Události osoby a actor-aware PDF/A4 export osoby. Validační a review workflow
   upřesňuje ACP-009; baseline 1 587/1 587 patřil stavu RC 0.2 před následnými

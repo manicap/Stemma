@@ -1,5 +1,14 @@
 # Historie změn dokumentace
 
+## Verze 1.08 – 25. 11. 2026
+
+- aktivní vývojová větev je nově `agent/rc-0.2-dev`, vytvořená z `9f596f7`,
+  posledního commitu `agent/rc-0.2` před změnami pro nástroje Cezar/swarm,
+- `agent/rc-0.2` je pozastavená a uchovaná pro pozdější použití; bez
+  výslovného souhlasu se do ní dál nevyvíjí ani se nemerguje,
+- `AGENTS.md`, `00_README.md` a `07_ROADMAPA.md` odkazují na novou větev;
+  aplikační kód, architektura ani ACP se nemění.
+
 ## Verze 1.07 – 6. 11. 2026
 
 - karta Události osoby doplňuje samostatné full-page/HTMX formuláře pro
