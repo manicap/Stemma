@@ -120,13 +120,17 @@
       else link.removeAttribute("aria-current");
     });
   };
+  let personSuggestionsDismissed = false;
   const syncPersonSearchAccessibility = () => {
     const input = document.querySelector("[data-person-search-input]");
     const results = document.querySelector("#person-browser-results");
     if (!input || !results) return;
+    if (personSuggestionsDismissed) {
+      results.querySelector("#person-suggestions")?.setAttribute("hidden", "");
+    }
     input.setAttribute(
       "aria-expanded",
-      String(results.dataset.hasSuggestions === "true"),
+      String(results.dataset.hasSuggestions === "true" && !personSuggestionsDismissed),
     );
   };
   const currentPersonBrowserQuery = () => {
@@ -165,6 +169,11 @@
     });
   };
   syncPersonSearchAccessibility();
+  document.body.addEventListener("htmx:oobAfterSwap", (event) => {
+    if (event.detail?.target?.id === "person-browser-results") {
+      syncPersonSearchAccessibility();
+    }
+  });
   document.body.addEventListener("htmx:afterSwap", (event) => {
     const target = event.detail?.target;
     if (!(target instanceof Element)) return;
@@ -180,10 +189,16 @@
       target.querySelector("[data-form-error-summary]")?.focus();
     }
   });
+  document.body.addEventListener("input", (event) => {
+    if (event.target.matches?.("[data-person-search-input]")) {
+      personSuggestionsDismissed = false;
+    }
+  });
   document.body.addEventListener("keydown", (event) => {
     const input = event.target.closest?.("[data-person-search-input]");
     if (input && event.key === "Escape") {
       event.preventDefault();
+      personSuggestionsDismissed = true;
       document.querySelector("#person-suggestions")?.setAttribute("hidden", "");
       input.setAttribute("aria-expanded", "false");
       return;
@@ -192,6 +207,7 @@
       const firstSuggestion = document.querySelector(".person-suggestion");
       if (firstSuggestion) {
         event.preventDefault();
+        personSuggestionsDismissed = false;
         document.querySelector("#person-suggestions")?.removeAttribute("hidden");
         input.setAttribute("aria-expanded", "true");
         firstSuggestion.focus();
@@ -219,6 +235,7 @@
       else document.querySelector("[data-person-search-input]")?.focus();
     } else if (event.key === "Escape") {
       event.preventDefault();
+      personSuggestionsDismissed = true;
       document.querySelector("[data-person-search-input]")?.focus();
       document.querySelector("#person-suggestions")?.setAttribute("hidden", "");
       document.querySelector("[data-person-search-input]")?.setAttribute(

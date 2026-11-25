@@ -191,6 +191,7 @@ h1, h2, h3, .brand, .app-sidebar-title {
 .person-browser-selects { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
 .person-browser-selects label { display: grid; gap: .3rem; min-width: 0; }
 .person-suggestions { display: grid; gap: .2rem; margin: 0 .5rem .75rem; padding: .35rem; background: var(--surface-raised); border: 1px solid var(--border); border-radius: .5rem; box-shadow: 0 .45rem 1rem var(--shadow); }
+.person-suggestions[hidden] { display: none; }
 .person-suggestion { display: grid; gap: .15rem; padding: .6rem; color: var(--text); border-radius: .35rem; text-decoration: none; }
 .person-suggestion:hover, .person-suggestion:focus-visible { background: var(--primary-soft); outline: none; }
 .person-suggestion small { color: var(--muted); }
