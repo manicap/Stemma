@@ -179,6 +179,8 @@ Implementace nemá předbíhat schválený návrh, pokud uživatel výslovně ne
 
 Každá významná aktualizace musí být zaznamenána v `CHANGELOG.md`.
 
+Od 25. 11. 2026 navíc každá úloha (ruční i od agenta) přidá jeden krátký lidsky čitelný záznam do `docs/changelog/` podle `docs/changelog/_sablona.md`. Souhrnný `CHANGELOG.md` se z nich doplní při uzavření verze.
+
 ## 14. Dlouhodobá srozumitelnost
 
 Dokumentace musí být dostatečná k tomu, aby projekt bylo možné pochopit a dále rozvíjet bez nutnosti pročítat celou historii chatu.

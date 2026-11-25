@@ -1,0 +1,65 @@
+# Workflow „slice“: jeden malý řez, jeden agent, pak deterministické kontroly.
+# Vzniklo z šablony Multipoolu (manicap/multipool, templates/cezar/slice.yaml).
+name: slice
+description: Jeden malý řez. Jeden agent se skillem stemma-context, pak testy, Django kontroly, velikost diffu a changelog; při chybě zpět agentovi.
+steps:
+  - id: setup
+    name: Příprava prostředí
+    command: |
+      set -e
+      PY=$(command -v python3.14 || command -v python3)
+      [ -x .venv/bin/python ] || "$PY" -m venv .venv
+      .venv/bin/pip install -q -r requirements.txt
+      [ -f config/settings_local.py ] || cp config/settings_local.example.py config/settings_local.py
+      .venv/bin/python manage.py migrate --noinput
+
+  - id: implement
+    name: Implementace
+    skill: stemma-context
+    prompt: |
+      {{task}}
+
+      Pravidla projektu máš ve skillu stemma-context. Celý adresář docs/ nečti;
+      otevři jen soubor a sekci, na kterou skill nebo úloha výslovně odkazuje.
+      Python spouštěj přes .venv/bin/python (prostředí je připravené).
+      Drž se jednoho řezu z úlohy. Když se kontrola nepovede, oprav jen to, co selhalo.
+
+      Na konci přidej záznam do changelogu: nový soubor docs/changelog/RRRR-MM-DD-<krátký-název>.md
+      podle šablony docs/changelog/_sablona.md. Piš česky a lidsky: co se změnilo z pohledu
+      uživatele, proč, jak to vyzkoušet. Žádné výpisy kódu. Pak commitni s explicitními cestami.
+
+  - id: django-checks
+    name: Django kontroly
+    command: |
+      .venv/bin/python manage.py check &&
+      .venv/bin/python manage.py makemigrations --check --dry-run
+    onFail:
+      retry: implement
+      max: 2
+
+  - id: tests
+    name: Testy
+    command: .venv/bin/python manage.py test
+    onFail:
+      retry: implement
+      max: 2
+
+  - id: diff-size
+    name: Velikost diffu
+    command: |
+      lines=$(git diff --numstat "$CEZ_BASE" | awk '{s+=$1+$2} END {print s+0}')
+      echo "změněných řádků: $lines (limit 600)"
+      [ "$lines" -le 600 ]
+    onFail:
+      retry: implement
+      max: 1
+
+  - id: changelog
+    name: Changelog
+    command: |
+      { git diff --name-only --diff-filter=A "$CEZ_BASE" -- 'docs/changelog/*.md'
+        git ls-files --others --exclude-standard -- 'docs/changelog/*.md'; } | grep -v '_sablona.md' | grep -q . \
+        || { echo "Chybí nový záznam v docs/changelog/ (viz docs/changelog/_sablona.md)."; exit 1; }
+    onFail:
+      retry: implement
+      max: 1
