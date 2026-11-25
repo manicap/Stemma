@@ -276,6 +276,7 @@ class PersonCreatorPermissionMigrationTests(TestCase):
         editor = Group.objects.get(name="Editor")
         administrator = Group.objects.get(name="Správce")
         editor.permissions.remove(permission)
+        administrator.permissions.remove(permission)
 
         self.migration.grant_editor_add_person_permission(apps, None)
         self.migration.grant_editor_add_person_permission(apps, None)
@@ -318,6 +319,7 @@ class EventEditorPermissionMigrationTests(TestCase):
         administrator = Group.objects.get(name="Správce")
         reader.permissions.add(*permissions)
         editor.permissions.remove(*permissions)
+        administrator.permissions.remove(*permissions)
 
         self.migration.grant_editor_event_permissions(apps, None)
         self.migration.grant_editor_event_permissions(apps, None)
@@ -378,6 +380,7 @@ class RelationshipEditorPermissionMigrationTests(TestCase):
         )
         reader.permissions.add(*permissions)
         editor.permissions.remove(*permissions)
+        administrator.permissions.remove(*permissions)
 
         self.migration.grant_editor_relationship_permissions(apps, None)
         self.migration.grant_editor_relationship_permissions(apps, None)
@@ -401,4 +404,72 @@ class RelationshipEditorPermissionMigrationTests(TestCase):
         )
         self.assertTrue(
             Permission.objects.filter(pk__in=permission_ids).count() == 2
+        )
+
+
+class AdministratorEditorPermissionMigrationTests(TestCase):
+    migration = import_module(
+        "accounts.migrations.0009_administrator_editor_permissions"
+    )
+    keys = {
+        ("people", "add_person"),
+        ("events", "add_event"),
+        ("events", "change_event"),
+        ("people", "add_relationship"),
+        ("people", "change_relationship"),
+    }
+
+    def permissions(self):
+        return [
+            Permission.objects.get(
+                content_type__app_label=app_label, codename=codename
+            )
+            for app_label, codename in self.keys
+        ]
+
+    def keys_of(self, group: Group) -> set[tuple[str, str]]:
+        return set(
+            group.permissions.values_list(
+                "content_type__app_label", "codename"
+            )
+        )
+
+    def test_administrator_has_editor_write_permissions_after_migration(
+        self,
+    ) -> None:
+        administrator = Group.objects.get(name="Správce")
+        self.assertTrue(self.keys <= self.keys_of(administrator))
+
+    def test_forward_is_idempotent_and_reverse_touches_only_administrator(
+        self,
+    ) -> None:
+        permissions = self.permissions()
+        reader = Group.objects.get(name="Čtenář")
+        editor = Group.objects.get(name="Editor")
+        administrator = Group.objects.get(name="Správce")
+        administrator.permissions.remove(*permissions)
+        editor_before = self.keys_of(editor)
+        reader_before = self.keys_of(reader)
+
+        self.migration.grant_administrator_editor_permissions(apps, None)
+        self.migration.grant_administrator_editor_permissions(apps, None)
+
+        self.assertTrue(self.keys <= self.keys_of(administrator))
+        self.assertEqual(self.keys_of(editor), editor_before)
+        self.assertEqual(self.keys_of(reader), reader_before)
+        self.assertTrue(self.keys_of(reader).isdisjoint(self.keys))
+
+        self.migration.revoke_administrator_editor_permissions(apps, None)
+
+        administrator_keys = self.keys_of(administrator)
+        self.assertTrue(administrator_keys.isdisjoint(self.keys))
+        self.assertIn(PERSON_EDITOR_PERMISSION_KEY, administrator_keys)
+        self.assertTrue(ELEVATED_PERMISSION_KEYS <= administrator_keys)
+        self.assertEqual(self.keys_of(editor), editor_before)
+        self.assertEqual(self.keys_of(reader), reader_before)
+        self.assertEqual(
+            Permission.objects.filter(
+                pk__in=[item.pk for item in permissions]
+            ).count(),
+            len(self.keys),
         )

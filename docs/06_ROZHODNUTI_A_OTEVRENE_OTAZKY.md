@@ -1,7 +1,7 @@
 # Rozhodnutí a otevřené otázky
 
 **Dokument:** 06  
-**Verze:** 0.95
+**Verze:** 0.96
 **Stav:** průběžně doplňovaný dokument  
 **Datum revize:** 25. 11. 2026
 
@@ -307,6 +307,15 @@ nenalezená. Zápis deleguje na existující atomické služby `create_relations
 a `update_relationship` včetně serializace zápisů, kontroly rodičovského cyklu a
 duplicity. Obecná hláška porušeného omezení duplicity se převádí na českou
 zprávu. Nevzniká nová permission, obecný permission framework ani nový ACP.
+206. Skupina Správce získává všechna zápisová oprávnění Editora:
+`people.add_person`, `events.add_event`, `events.change_event`,
+`people.add_relationship` a `people.change_relationship` (datová migrace
+`accounts.0009`, bootstrap demo účtu `stemma-demo-administrator`). Rozhodnutí
+uživatele z 25. 11. 2026 je prozatímní („prozatím, možná časem změníme“).
+Nahrazuje formulace „Správce je automaticky nezískává“ v bodech 203–205
+(osoby, události, vztahy); Správce už měl `people.change_person`. Use-cases,
+views ani autorizační logika se nemění, protože kontrolují jen permission.
+Čtenář a Editor se nemění; nevzniká nová permission ani ACP.
 
 ## 2. Otevřené otázky
 

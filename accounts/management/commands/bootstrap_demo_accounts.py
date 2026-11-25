@@ -196,6 +196,9 @@ class Command(BaseCommand):
                 permissions[key]
                 for key in (
                     _PERSON_EDITOR_PERMISSION,
+                    _PERSON_CREATOR_PERMISSION,
+                    *_EVENT_EDITOR_PERMISSIONS,
+                    *_RELATIONSHIP_EDITOR_PERMISSIONS,
                     *_ELEVATED_PERMISSIONS,
                 )
             )

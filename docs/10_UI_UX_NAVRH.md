@@ -1,7 +1,7 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.21
+**Verze:** 0.22
 **Stav:** schválený pracovní základ  
 **Datum revize:** 25. 11. 2026
 
@@ -283,7 +283,7 @@ Pokud našeptávač nenajde shodu, zobrazí:
 
 > Nebyla nalezena žádná odpovídající osoba.
 
-Stejná informace se zobrazí také v prostoru seznamu. Editor může navíc vidět akci **+ Přidat novou osobu**.
+Stejná informace se zobrazí také v prostoru seznamu. Editor a Správce mohou navíc vidět akci **+ Přidat novou osobu**.
 
 ### 7.3 Filtr kategorie
 
@@ -628,7 +628,7 @@ vysvětlí, že je nejprve nutné doplnit katalogy ve správě systému.
 
 Implementovaný řez zobrazuje nad seznamem tlačítko **+ Přidat osobu** pouze
 aktuálnímu aktivnímu uživateli s `people.add_person`. Skupina Editor toto
-oprávnění získává automaticky; Čtenář je nemá.
+oprávnění získává automaticky, stejně jako Správce; Čtenář je nemá.
 
 Po kliknutí se formulář zobrazí v pravém panelu místo detailu osoby.
 
@@ -714,7 +714,8 @@ Rozhraní zobrazuje jen akce, které může uživatel skutečně provést.
 
 - Nepřihlášený uživatel a čtenář nevidí editační akce.
 - Editor vidí přidávání a úpravy v rozsahu svých oprávnění.
-- Správce vidí správní akce podle konkrétně přidělených permissions; Health Koš
+- Správce vidí stejné zápisové akce jako Editor (osoby, narození a úmrtí,
+  vztahy) a správní akce podle konkrétně přidělených permissions; Health Koš
   ani odstranění nezískává systémová skupina Správce automaticky.
 - Akce bez oprávnění se většinou vůbec nezobrazují.
 - Zamčený obsah může zůstat označen jako existující, ale jeho data se nezobrazí.

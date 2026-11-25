@@ -1,5 +1,17 @@
 # Historie změn dokumentace
 
+## Verze 1.13 – 25. 11. 2026
+
+- `04_UZIVATELSKE_ROLE_A_PRAVA.md` 0.51, `06_ROZHODNUTI_A_OTEVRENE_OTAZKY.md`
+  0.96 (bod 206), `02_FUNKCNI_SPECIFIKACE.md` 0.66, `10_UI_UX_NAVRH.md` 0.22 a
+  `00_README.md` 0.72: skupina Správce získává všechna zápisová oprávnění
+  Editora (`people.add_person`, `events.add_event`, `events.change_event`,
+  `people.add_relationship`, `people.change_relationship`) datovou migrací
+  `accounts.0009` a bootstrapem `stemma-demo-administrator`; prozatímní
+  rozhodnutí uživatele z 25. 11. 2026,
+- nahrazuje „Správce je automaticky nezískává“ u osob, událostí a vztahů;
+  use-cases, views ani autorizační logika se nemění, Čtenář a Editor také ne.
+
 ## Verze 1.12 – 25. 11. 2026
 
 - `10_UI_UX_NAVRH.md` 0.21: výběr osoby ve formuláři vztahu rozlišuje

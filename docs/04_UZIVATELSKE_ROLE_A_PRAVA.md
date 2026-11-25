@@ -1,7 +1,7 @@
 # Uživatelské role a oprávnění
 
 **Dokument:** 04  
-**Verze:** 0.50
+**Verze:** 0.51
 **Stav:** pracovní návrh  
 **Datum revize:** 25. 11. 2026
 
@@ -292,7 +292,11 @@ Databázové skupiny jsou `Čtenář`, `Editor` a `Správce`.
 - Správce získává `accounts.view_restricted_content`,
   `accounts.view_admin_only_content`, `people.view_archived_person` a
   `people.view_deleted_person` a pro tentýž průchod také
-  `people.change_person`.
+  `people.change_person`. Rozhodnutím z 25. 11. 2026 („prozatím, možná časem
+  změníme“) získává Správce také všechna zápisová oprávnění Editora:
+  `people.add_person`, `events.add_event`, `events.change_event`,
+  `people.add_relationship` a `people.change_relationship` (datová migrace
+  `accounts.0009`).
 
 Správce tím nezískává všechna standardní add/change/delete/view oprávnění,
 `is_staff` ani `is_superuser`. Konkrétní permission lze uživateli nebo jiné

@@ -455,3 +455,30 @@ class PersonLifeEventWriteWebTests(TestCase):
             self.form_data(start_year=1980),
         )
         self.assertEqual(revoked_change.status_code, 403)
+
+    def test_administrator_creates_birth(self) -> None:
+        actor = get_user_model().objects.create_user(
+            username="life-event-administrator"
+        )
+        actor.groups.add(Group.objects.get(name="Správce"))
+        self.assertTrue(actor.has_perm("events.add_event"))
+        self.assertTrue(actor.has_perm("events.change_event"))
+        self.client.force_login(actor)
+
+        response = self.client.post(
+            reverse("people:birth-create", args=(self.person.pk,)),
+            self.form_data(start_year=1885),
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        event = Event.objects.get(event_type=self.birth_type)
+        self.assertEqual(event.start_year, 1885)
+        self.assertEqual(event.created_by, actor)
+        self.assertTrue(
+            EventParticipant.objects.filter(
+                event=event,
+                person=self.person,
+                role=self.born_role,
+            ).exists()
+        )

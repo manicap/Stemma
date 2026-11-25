@@ -1,7 +1,7 @@
 # Funkční specifikace
 
 **Dokument:** 02  
-**Verze:** 0.65
+**Verze:** 0.66
 **Stav:** pracovní návrh; implementovaný a cílový stav jsou rozlišeny
 **Datum revize:** 25. 11. 2026
 
@@ -1179,7 +1179,8 @@ pro oprávněné zobrazení archivovaných osob zůstává navazujícím krokem.
 Vytvoření osoby používá `/osoby/nova/` ve full-page i HTMX režimu. Server z
 aktuálního databázového stavu vyžaduje aktivního uživatele s
 `people.add_person`; systémová skupina Editor toto oprávnění získává datovou
-migrací, zatímco Čtenář ani Správce je automaticky nezískávají. Formulář
+migrací; od migrace `accounts.0009` ji má i Správce, Čtenář ji nezískává.
+Formulář
 zpřístupňuje titul před a za jménem, jméno, příjmení, pohlaví, aktivní
 kategorii, poznámku a pouze takový `access_level`, který actor smí podle
 stávající obsahové policy zobrazit. Alespoň jméno nebo příjmení je povinné.

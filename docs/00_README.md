@@ -1,6 +1,6 @@
 # Rodinná databáze – dokumentace projektu
 
-**Verze dokumentace:** 0.71
+**Verze dokumentace:** 0.72
 **Stav:** úzký zápis vztahů rodič, dítě a partner implementován
 **Datum revize:** 25. 11. 2026
 
@@ -60,6 +60,15 @@ Verze 0.69 doplňuje úzké person-centric UI narození a úmrtí:
   životní údaje a aktuální person browser bez oslabení actor-aware čtení,
 - obecný Event detail, ostatní typy, participant management, lifecycle a
   Materials událostí zůstávají mimo tento řez.
+
+## Stav verze 0.72
+
+Verze 0.72 dává skupině Správce všechna zápisová oprávnění Editora
+(`people.add_person`, `events.add_event`, `events.change_event`,
+`people.add_relationship`, `people.change_relationship`) datovou migrací
+`accounts.0009`; rozhodnutí je prozatímní (bod 206 v dokumentu 06). Nahrazuje
+v níže uvedených starších odstavcích formulaci, že Správce tato oprávnění
+automaticky nezískává.
 
 ## Stav verze 0.68
 

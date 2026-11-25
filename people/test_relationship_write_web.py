@@ -581,3 +581,33 @@ class PersonRelationshipWriteWebTests(TestCase):
         self.assertEqual(create.status_code, 404)
         self.assertEqual(edit.status_code, 404)
         self.assertEqual(Relationship.objects.count(), 1)
+
+    def test_administrator_sees_buttons_and_creates_parent(self) -> None:
+        actor = get_user_model().objects.create_user(
+            username="relationship-administrator"
+        )
+        actor.groups.add(Group.objects.get(name="Správce"))
+        self.assertTrue(actor.has_perm("people.add_relationship"))
+        self.assertTrue(actor.has_perm("people.change_relationship"))
+        self.client.force_login(actor)
+
+        page = self.client.get(
+            reverse("people:relationships", args=(self.person.pk,)),
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertContains(page, "Přidat rodiče")
+        self.assertContains(page, "Přidat dítě")
+        self.assertContains(page, "Přidat partnera")
+
+        response = self.client.post(
+            self.create_url("parent"),
+            self.form_data(),
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        relationship = Relationship.objects.get()
+        self.assertEqual(relationship.relationship_type, self.parent_type)
+        self.assertEqual(relationship.person_a, self.other)
+        self.assertEqual(relationship.person_b, self.person)
+        self.assertEqual(relationship.created_by, actor)

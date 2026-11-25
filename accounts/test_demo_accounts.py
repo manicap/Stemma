@@ -44,7 +44,12 @@ class BootstrapDemoAccountsCommandTests(TestCase):
                 "people.change_relationship",
             },
             "stemma-demo-administrator": {
+                "events.add_event",
+                "events.change_event",
+                "people.add_person",
+                "people.add_relationship",
                 "people.change_person",
+                "people.change_relationship",
                 "health.add_healthrecord",
                 "health.change_healthrecord",
                 "health.delete_healthrecord",
@@ -175,7 +180,7 @@ class BootstrapDemoAccountsCommandTests(TestCase):
         self.assertTrue(
             administrator.permissions.filter(pk=editor_permission.pk).exists()
         )
-        self.assertFalse(
+        self.assertTrue(
             administrator.permissions.filter(pk=creator_permission.pk).exists()
         )
         demo_administrator.refresh_from_db()
