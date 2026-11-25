@@ -37,6 +37,12 @@ steps:
       Python spouštěj přes .venv/bin/python (prostředí je připravené).
       Drž se jednoho řezu z úlohy. Když se kontrola nepovede, oprav jen to, co selhalo.
 
+      Šetři kroky, každý další krok znovu posílá celý kontext:
+      - Celou sadu testů ani prohlížečové skripty nespouštěj; po tobě je spustí workflow.
+        Pusť nanejvýš jeden cílený test modulu, kterého se změna týká.
+      - Velké soubory (stemma.css, stemma.js) nečti celé; hledej rg a čti jen potřebné řádky.
+      - Když úloha jmenuje commity nebo soubory k převzetí, použij git (cherry-pick/checkout), nepřepisuj je ručně.
+
       Na konci přidej záznam do changelogu: nový soubor docs/changelog/RRRR-MM-DD-<krátký-název>.md
       podle šablony docs/changelog/_sablona.md. Piš česky a lidsky: co se změnilo z pohledu
       uživatele, proč, jak to vyzkoušet. Žádné výpisy kódu. Pak commitni s explicitními cestami.
