@@ -7,8 +7,13 @@ steps:
     name: Příprava prostředí
     command: |
       set -e
-      PY=$(command -v python3.14 || command -v python3 || true)
-      echo "[setup] python: ${PY:-NENALEZEN}"; [ -n "$PY" ] || { echo "[setup] CHYBA: na serveru chybí python3"; exit 1; }
+      # Cezar běží v Dockeru: Python 3.14 s venv je v image v /opt/stemma-python (systémový python3 je 3.11 bez ensurepip).
+      PY=""
+      for c in /opt/stemma-python/bin/python3.14 python3.14 python3; do
+        p=$(command -v "$c" || true)
+        if [ -n "$p" ] && "$p" -c 'import ensurepip' 2>/dev/null; then PY=$p; break; fi
+      done
+      echo "[setup] python: ${PY:-NENALEZEN}"; [ -n "$PY" ] || { echo "[setup] CHYBA: nenašel jsem python3 s modulem venv/ensurepip"; exit 1; }
       "$PY" --version
       if [ ! -x .venv/bin/pip ]; then
         echo "[setup] vytvářím .venv"
