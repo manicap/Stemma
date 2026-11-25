@@ -1,7 +1,7 @@
 # Návrh UI/UX
 
 **Dokument:** 10  
-**Verze:** 0.20
+**Verze:** 0.21
 **Stav:** schválený pracovní základ  
 **Datum revize:** 25. 11. 2026
 
@@ -480,6 +480,12 @@ osoba: …“ oznamovaný přes `aria-live`. Filtrování nikdy neskryje právě
 osobu, psaní do vyhledávání neoznačí formulář jako neuložený a nabídka osob ani
 serverová autorizace se tím nemění. Při úpravě vztahu se výběr osoby
 nezobrazuje.
+
+Text volby rozlišuje jmenovce: za jménem následuje římské pořadí a rok
+narození, například „Dvořák Josef II. (nar. 1921)“ (u nejistého data i s
+upřesněním „asi“, „před“, „po“). Údaje se berou z odvozených faktů pro
+aktuálního actora, takže skrytý rok narození ani pořadí v textu nikdy
+nevznikne; nic se neukládá. Vyhledávání hledá i v tomto textu.
 
 Karta nenahrazuje samostatný rodokmen.
 

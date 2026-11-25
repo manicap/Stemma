@@ -182,6 +182,7 @@ class PersonRelationshipForm(forms.ModelForm):
         actor: AbstractBaseUser | AnonymousUser,
         kind: str | None = None,
         counterpart_ids: tuple[int, ...] = (),
+        counterpart_labels: dict[int, str] | None = None,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
@@ -194,6 +195,12 @@ class PersonRelationshipForm(forms.ModelForm):
             self.fields["counterpart"].queryset = Person.objects.filter(
                 pk__in=counterpart_ids,
             ).order_by("last_name", "first_name", "pk")
+            if counterpart_labels:
+                self.fields["counterpart"].label_from_instance = (
+                    lambda person: counterpart_labels.get(
+                        person.pk, str(person)
+                    )
+                )
             self.fields["counterpart"].widget.attrs[
                 "data-relationship-person-select"
             ] = ""

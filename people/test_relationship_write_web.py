@@ -12,6 +12,8 @@ from common.choices import (
     VerificationStatus,
 )
 
+from events.models import Event, EventParticipant, EventType, ParticipantRole
+
 from .models import Person, Relationship, RelationshipType
 from .use_cases import (
     RelationshipDetailsInput,
@@ -294,6 +296,60 @@ class PersonRelationshipWriteWebTests(TestCase):
         )
         self.assertContains(response, "Dvořáková")
         self.assertNotContains(response, "Skrytá")
+
+    def add_birth(self, person, year, access_level=AccessLevel.PUBLIC):
+        event = Event.objects.create(
+            event_type=EventType.objects.get(code="birth"),
+            access_level=access_level,
+            date_precision=DatePrecision.EXACT,
+            date_qualifier=DateQualifier.NONE,
+            start_year=year,
+            start_month=1,
+            start_day=1,
+        )
+        EventParticipant.objects.create(
+            event=event,
+            person=person,
+            role=ParticipantRole.objects.get(code="born_person"),
+        )
+
+    def test_picker_distinguishes_namesakes_by_roman_and_birth_year(
+        self,
+    ) -> None:
+        older = Person.objects.create(
+            first_name="Josef",
+            last_name="Dvořák",
+            access_level=AccessLevel.PUBLIC,
+        )
+        younger = Person.objects.create(
+            first_name="Josef",
+            last_name="Dvořák",
+            access_level=AccessLevel.PUBLIC,
+        )
+        self.add_birth(older, 1921)
+        self.add_birth(younger, 1950)
+        self.client.force_login(self.editor())
+
+        response = self.client.get(self.create_url("partner"))
+
+        self.assertContains(response, "Dvořák Josef I. (nar. 1921)")
+        self.assertContains(response, "Dvořák Josef II. (nar. 1950)")
+        self.assertContains(response, f'value="{older.pk}"')
+
+    def test_picker_label_omits_hidden_birth_year(self) -> None:
+        hidden_birth = Person.objects.create(
+            first_name="Karel",
+            last_name="Skrytý",
+            access_level=AccessLevel.PUBLIC,
+        )
+        self.add_birth(hidden_birth, 1888, AccessLevel.RESTRICTED)
+        self.client.force_login(self.editor())
+
+        response = self.client.get(self.create_url("partner"))
+
+        self.assertContains(response, "Skrytý Karel")
+        self.assertNotContains(response, "1888")
+        self.assertNotContains(response, "Skrytý Karel (nar.")
 
     def test_invalid_create_keeps_selected_counterpart_in_picker(self) -> None:
         self.client.force_login(self.editor())

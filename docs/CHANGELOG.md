@@ -1,5 +1,13 @@
 # Historie změn dokumentace
 
+## Verze 1.12 – 25. 11. 2026
+
+- `10_UI_UX_NAVRH.md` 0.21: výběr osoby ve formuláři vztahu rozlišuje
+  jmenovce římským pořadím a rokem narození („Dvořák Josef II. (nar. 1921)“),
+  jen z údajů viditelných pro actora; skrytý rok se do textu nedostane,
+- klientské vyhledávání hledá i v novém textu; model, migrace ani oprávnění
+  se nemění.
+
 ## Verze 1.11 – 25. 11. 2026
 
 - `10_UI_UX_NAVRH.md` 0.20: formulář vytvoření vztahu (rodič, dítě, partner)

@@ -1,3 +1,4 @@
+import re
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -148,6 +149,26 @@ def _shell_context(
             else None
         ),
     }
+
+
+def _counterpart_option_label(item) -> str:
+    """Text volby protistrany: jméno, římské pořadí a viditelný rok narození.
+
+    Údaje pocházejí z actor-aware odvozených faktů, takže skrytý rok
+    narození se do textu nikdy nedostane.
+    """
+
+    name = str(item.person)
+    if item.facts.roman_suffix:
+        name = f"{name} {item.facts.roman_suffix}"
+    birth_text = item.facts.birth_text
+    if birth_text:
+        years = re.findall(r"\d+", birth_text.split("–")[0])
+        if years:
+            qualifier = re.match(r"(asi|před|po) ", birth_text)
+            prefix = f"{qualifier.group(1)} " if qualifier else ""
+            name = f"{name} (nar. {prefix}{years[-1]})"
+    return name
 
 
 def _person_browser(request: HttpRequest) -> PersonBrowserResult:
@@ -530,8 +551,8 @@ def person_relationship_create(
     relationship_type = _system_relationship_type_or_404(
         PERSON_RELATIONSHIP_KINDS[kind]
     )
-    counterpart_ids = tuple(
-        item.person.pk
+    counterpart_items = tuple(
+        item
         for item in _person_browser(request).visible_presentations
         if item.person.pk != person.pk
     )
@@ -540,7 +561,11 @@ def person_relationship_create(
         instance=Relationship(relationship_type=relationship_type),
         actor=request.user,
         kind=kind,
-        counterpart_ids=counterpart_ids,
+        counterpart_ids=tuple(item.person.pk for item in counterpart_items),
+        counterpart_labels={
+            item.person.pk: _counterpart_option_label(item)
+            for item in counterpart_items
+        },
     )
     if request.method == "POST" and form.is_valid():
         try:
