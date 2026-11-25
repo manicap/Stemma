@@ -10,9 +10,9 @@ steps:
       PY=$(command -v python3.14 || command -v python3 || true)
       echo "[setup] python: ${PY:-NENALEZEN}"; [ -n "$PY" ] || { echo "[setup] CHYBA: na serveru chybí python3"; exit 1; }
       "$PY" --version
-      if [ ! -x .venv/bin/python ]; then
+      if [ ! -x .venv/bin/pip ]; then
         echo "[setup] vytvářím .venv"
-        "$PY" -m venv .venv || { echo "[setup] CHYBA: venv nejde vytvořit (Debian/Ubuntu: sudo apt install python3-venv)"; exit 1; }
+        rm -rf .venv; "$PY" -m venv .venv || { echo "[setup] CHYBA: venv nejde vytvořit (Debian/Ubuntu: sudo apt install python3.X-venv podle verze)"; exit 1; }
       fi
       echo "[setup] instaluji requirements.txt"
       .venv/bin/pip install --disable-pip-version-check -r requirements.txt || { echo "[setup] CHYBA: instalace závislostí selhala (výpis výše)"; exit 1; }
