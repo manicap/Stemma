@@ -1,5 +1,12 @@
 # Historie změn dokumentace
 
+## Verze 1.10 – 25. 11. 2026
+
+- kořenový `CLAUDE.md` je stručný pracovní vstup pro Claude Code: aktivní
+  větev, závazná architektonická pravidla, příkazy a mapa dokumentů podle
+  oblasti; podrobná procesní pravidla zůstávají v `AGENTS.md`,
+- aplikační kód, architektura ani ACP se nemění.
+
 ## Verze 1.09 – 25. 11. 2026
 
 - karta Vztahy osoby doplňuje full-page/HTMX formuláře pro vytvoření rodiče,
