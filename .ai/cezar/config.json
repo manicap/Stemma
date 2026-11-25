@@ -1,4 +1,10 @@
 {
   "defaultRunner": "codex",
-  "baseBranch": "agent/rc-0.2"
+  "baseBranch": "agent/rc-0.2",
+  "worktreeRetention": 60,
+  "namerModel": "gpt-6.1-sol",
+  "plannerModel": "gpt-6.1-sol",
+  "liveTitleUpdates": false,
+  "skillsRepos": [],
+  "taskWorkspace": "worktree"
 }
